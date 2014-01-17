@@ -1,5 +1,5 @@
 /**
- * Provides ease of access to liza entry points
+ * Provides version information
  *
  *  Copyright (C) 2014 LoVullo Associates, Inc.
  *
@@ -17,11 +17,27 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Taken from GNU ease.js.
  */
 
-// as soon as we have something useful to export, this will contain classes
-// that represent common, viable entry points for the framework (e.g.
-// facades).
-module.exports = {
-    version: require( __dirname + '/src/version' )
+var major  = @MAJOR@,
+    minor  = @MINOR@,
+    rev    = @REV@,
+    suffix = '@SUFFIX@',
+
+    version = [ major, minor, rev, suffix ];
+
+version.major  = major;
+version.minor  = minor;
+version.rev    = rev;
+version.suffix = suffix;
+
+version.toString = function()
+{
+    return this.join( '.' )
+        .replace( /\.([^.]+)$/, '-$1' )
+        .replace( /-$/, '' );
 };
+
+module.exports = version;
