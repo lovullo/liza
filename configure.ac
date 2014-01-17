@@ -23,5 +23,5 @@ AC_CONFIG_AUX_DIR([tools])
 AM_INIT_AUTOMAKE([foreign])
 
 # generate files from their *.in counterparts
-AC_CONFIG_FILES([Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile package.json])
 AC_OUTPUT

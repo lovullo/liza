@@ -20,7 +20,10 @@
 
 SUBDIRS = doc
 
+.PHONY: todo
+
+all-am: package.json todo
+
 # placeholder
-all:
+todo:
 	@echo "You are too early! Liza is not ready; check back later."
-	@exit 1

@@ -1,0 +1,35 @@
+{
+  "name":        "liza",
+  "description": "A data collection, validation, and processing framework for JavaScript",
+  "version":     "@VERSION@",
+  "author":      "LoVullo Associates, Inc. (https://www.lovullo.com)",
+  "homepage":    "https://github.com/lovullo/liza",
+
+  "repository": {
+    "type": "git",
+    "url":  "https://github.com/lovullo/liza.git"
+  },
+
+  "engines": {
+    "node": ">0.0.0"
+  },
+
+  "dependencies": {},
+  "devDependencies": {},
+
+  "licenses": [
+    {
+      "type": "GPLv3+",
+      "url": "http://www.gnu.org/licenses/gpl.html"
+    }
+  ],
+
+  "tags": [
+      "data collection",
+      "input validation",
+      "user input",
+      "user interface",
+      "validation",
+      "form"
+  ]
+}
