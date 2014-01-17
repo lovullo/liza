@@ -18,6 +18,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+SUBDIRS = doc
+
 # placeholder
 all:
 	@echo "You are too early! Liza is not ready; check back later."
