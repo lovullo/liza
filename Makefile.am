@@ -22,7 +22,7 @@ SUBDIRS = doc
 
 .PHONY: todo
 
-all-am: package.json todo
+all-am: todo
 
 # placeholder
 todo:
