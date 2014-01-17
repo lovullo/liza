@@ -1,4 +1,4 @@
-## For use my automake and autoconf
+## liza documentation Makefile.am for automake
 #
 #  Copyright (C) 2014 LoVullo Associates, Inc.
 #
@@ -18,10 +18,4 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-AC_INIT([liza], [0.0.1-dev], [dev@lovullo.com])
-AC_CONFIG_AUX_DIR([tools])
-AM_INIT_AUTOMAKE([foreign])
-
-# generate files from their *.in counterparts
-AC_CONFIG_FILES([Makefile doc/Makefile])
-AC_OUTPUT
+info_TEXINFOS = liza.texi
