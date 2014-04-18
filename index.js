@@ -3,9 +3,9 @@
  *
  *  Copyright (C) 2014 LoVullo Associates, Inc.
  *
- *  This file is part of liza.
+ *  This file is part of the Liza Data Collection Framework
  *
- *  liza is free software: you can redistribute it and/or modify it under
+ *  Liza is free software: you can redistribute it and/or modify it under
  *  the terms of the GNU General Public License as published by the Free
  *  Software Foundation, either version 3 of the License, or (at your
  *  option) any later version.
