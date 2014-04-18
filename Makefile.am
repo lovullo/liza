@@ -30,4 +30,5 @@ todo:
 
 test: check
 check:
-	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" mocha --recursive
+	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
+		mocha --recursive $(TESTARGS)
