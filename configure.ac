@@ -19,7 +19,7 @@
 ##
 
 AC_INIT([liza], [0.0.1-dev], [dev@lovullo.com])
-AC_CONFIG_AUX_DIR([tools])
+AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 
 # provide more granular version numbers based on the above AC_INIT line
