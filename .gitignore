@@ -10,3 +10,6 @@ src/version.js
 config.*
 Makefile
 package.json
+
+# npm
+node_modules
