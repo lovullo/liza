@@ -18,17 +18,22 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+namespaces=$(shell find src -type d)
+nsindex=$(addsuffix /index.js, $(namespaces))
+
 SUBDIRS = doc
 
-.PHONY: todo
+.PHONY: FORCE todo
 
-all-am: todo
+all-am: modindex
 
-# placeholder
-todo:
-	@echo "You are too early! Liza is not ready; check back later."
+modindex: $(nsindex)
+%/index.js: FORCE
+	./tools/gen-index "$*" > "$@"
 
 test: check
 check:
 	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
 		mocha --recursive $(TESTARGS)
+
+FORCE:
