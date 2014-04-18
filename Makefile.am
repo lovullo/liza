@@ -27,3 +27,7 @@ all-am: todo
 # placeholder
 todo:
 	@echo "You are too early! Liza is not ready; check back later."
+
+test: check
+check:
+	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" mocha --recursive
