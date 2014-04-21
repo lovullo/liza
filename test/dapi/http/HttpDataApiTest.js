@@ -27,7 +27,7 @@ var dapi   = require( '../../../' ).dapi,
     dummy_url  = 'http://foo',
     dummy_impl = Class
         .implement( dapi.http.HttpImpl )
-        .extend( { requestData: function( _, __, ___, ____ ) {} } ),
+        .extend( { requestData: function( _, __, ___, ____ ) {} } )(),
 
     dummy_sut  = Sut( dummy_url, 'GET', dummy_impl );
 
