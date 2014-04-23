@@ -32,13 +32,13 @@ EOH
 # generate require for each module
 for module in "$destpath"/!(index).js; do
   modname="$( basename "$module" .js )"
-  echo "    '$modname': require( __dirname + '/$modname' ),"
+  echo "    '$modname': require( './$modname' ),"
 done
 
 # include index.js for any sub-directories (namespace)
 for dir in $( find "$destpath" -maxdepth 1 -mindepth 1 -type d ); do
   ns=$( basename "$dir" )
-  echo "    '$ns': require( __dirname + '/$ns' ),"
+  echo "    '$ns': require( './$ns' ),"
 done
 
 echo '};'
