@@ -104,7 +104,7 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {TypeError} on validation failure
      */
-    'public request': function( data, callback )
+    'virtual public request': function( data, callback )
     {
         this._validateDataType( data );
 
