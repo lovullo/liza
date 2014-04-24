@@ -23,37 +23,19 @@ var dapi    = require( '../../../' ).dapi,
     expect  = require( 'chai' ).expect,
     Class   = require( 'easejs' ).Class,
     DataApi = dapi.DataApi,
-    Sut     = dapi.format.JsonDataApi;
+    Sut     = dapi.format.JsonResponse;
 
 
-describe( 'JsonDataApi', function()
+describe( 'dapi.format.JsonRepsonse trait', function()
 {
-    it( 'errors if not provided a DataApi', function()
-    {
-        expect( function()
-        {
-            Sut( {} );
-        } ).to.throw( TypeError, 'DataApi' );
-    } );
-
-
-    it( 'accepts a DataApi', function()
-    {
-        expect( function()
-        {
-            Sut( _createStubDapi( null, '' ) );
-        } ).to.not.throw( TypeError );
-    } );
-
-
     describe( '.request', function()
     {
         it( 'passes data to encapsulated DataApi', function()
         {
-            var stubs    = _createStubDapi( null, '0' ),
+            var stubs    = _createStubbedDapi( null, '0' ),
                 expected = {};
 
-            Sut( stubs ).request( expected, function() {} );
+            stubs.request( expected, function() {} );
             expect( stubs.given ).to.equal( expected );
         } );
 
@@ -61,19 +43,21 @@ describe( 'JsonDataApi', function()
         it( 'converts response to JSON', function( done )
         {
             var raw = '{"foo": "bar"}';
-            Sut( _createStubDapi( null, raw ) ).request( '', function( err, data )
-            {
-                // should have been converted to JSON
-                expect( data ).to.deep.equal( { foo: 'bar' } );
-                expect( err ).to.equal( null );
-                done();
-            } );
+
+            _createStubbedDapi( null, raw )
+                .request( '', function( err, data )
+                {
+                    // should have been converted to JSON
+                    expect( data ).to.deep.equal( { foo: 'bar' } );
+                    expect( err ).to.equal( null );
+                    done();
+                } );
         } );
 
 
         it( 'returns error if JSON parsing fails', function( done )
         {
-            Sut( _createStubDapi( null, 'ERR' ) )
+            _createStubbedDapi( null, 'ERR' )
                 .request( '', function( err, data )
                 {
                     expect( err ).to.be.instanceOf( Error );
@@ -87,7 +71,7 @@ describe( 'JsonDataApi', function()
         {
             var e = Error( 'foo' );
 
-            Sut( _createStubDapi( e, '0' ) )
+            _createStubbedDapi( e, '0' )
                 .request( '', function( err, data )
                 {
                     // data should also be cleared out
@@ -100,17 +84,17 @@ describe( 'JsonDataApi', function()
 } );
 
 
-function _createStubDapi( err, resp )
+function _createStubbedDapi( err, resp )
 {
     return Class.implement( DataApi ).extend(
     {
         given: null,
 
-        request: function( data, callback )
+        'virtual public request': function( data, callback )
         {
             this.given = data;
             callback( err, resp );
         }
-    } )();
+    } ).use( Sut )();
 }
 

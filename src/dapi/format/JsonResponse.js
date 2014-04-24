@@ -19,51 +19,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class   = require( 'easejs' ).Class,
+var Trait   = require( 'easejs' ).Trait,
     DataApi = require( '../DataApi' );
 
 
 /**
  * Processes DataApi return data as JSON
  */
-module.exports = Class( 'JsonDataApi' )
+module.exports = Trait( 'JsonResponse' )
     .implement( DataApi )
     .extend(
 {
     /**
-     * DataAPI to decorate
-     * @type {DataApi}
-     */
-    'private _dapi': null,
-
-
-    /**
-     * Decorate provided DataAPI to parse response data as JSON
+     * Processes response as JSON
      *
-     * @param {DataApi} dapi DataApi to decorate
-     */
-    __construct: function( dapi )
-    {
-        if ( !( Class.isA( DataApi, dapi ) ) )
-        {
-            throw TypeError( "Expecting DataApi" );
-        }
-
-        this._dapi = dapi;
-    },
-
-
-    /**
-     * Proxies request to encapsulated DataApi and parses the result as JSON
+     * Will return an error if the response is not valid JSON.
      *
      * @param {string}             data     binary data to transmit
      * @param {function(?Error,*)} callback continuation upon reply
      *
      * @return {DataApi} self
      */
-    'public request': function( data, callback )
+    'abstract override public request': function( data, callback )
     {
-        this._dapi.request( data, function( err, resp )
+        this.__super( data, function( err, resp )
         {
             if ( err !== null )
             {
