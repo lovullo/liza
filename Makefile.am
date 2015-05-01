@@ -24,7 +24,7 @@ namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
 
 SUBDIRS = doc
-EXTRA_DIST = src package.json $(path_src)/version.js
+EXTRA_DIST = src package.json $(path_src)/version.js README.md
 
 .PHONY: FORCE todo
 
