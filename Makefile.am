@@ -18,10 +18,13 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+path_src = $(top_builddir)/src
+
 namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
 
 SUBDIRS = doc
+EXTRA_DIST = package.json $(path_src)/version.js
 
 .PHONY: FORCE todo
 
