@@ -1,5 +1,10 @@
 /**
- * Contains program GroupUi decorator class
+ * @needsLove
+ *   - References to "quote" should be replaced with generic terminology
+ *     representing a document.
+ *   - Dependencies need to be liberated: Styler; Group.
+ *   - This class is doing too much.
+ * @end needsLove
  */
 
 var Class        = require( 'easejs' ).Class,
