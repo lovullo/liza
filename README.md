@@ -1,5 +1,5 @@
 <!--
-  Copyright (C) 2014 LoVullo Associates, Inc.
+  Copyright (C) 2015 LoVullo Associates, Inc.
 
   This file is part of liza.
 
@@ -25,6 +25,18 @@ of user input for insurance quoting.  As existing code is refactored or its
 design improved upon, it will begin its life as part of Liza; please be
 patient as the entire core framework makes its way into this repository and
 others.
+
+
+## Configuring
+If your distribution does not contain a `configure' file in the project
+root, then you likely have the sources as committed to the project
+repository; you may generate the script by issuing the following command:
+
+```
+  $ autoreconf -fvi
+```
+
+You may then see `./configure --help` for more information.
 
 
 ## License
