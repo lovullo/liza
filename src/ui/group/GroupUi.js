@@ -33,7 +33,8 @@ var Class        = require( 'easejs' ).Class,
 /**
  * Styles a group for display in the UI
  */
-module.exports = Class( 'GroupUi' ).extend( EventEmitter,
+module.exports = Class( 'GroupUi' )
+    .extend( EventEmitter,
 {
     /**
      * Raised when an index is added to the group (e.g. row addition)
@@ -150,14 +151,16 @@ module.exports = Class( 'GroupUi' ).extend( EventEmitter,
      * @param Group         group    group to style
      * @param jQuery        $content the group content
      * @param ElementStyler styler   styler to use to style elements
+     * @param jQuery        jquery   jQuery-compatible object
      *
      * @return  {undefined}
      */
-    'public __construct': function( group, $content, styler )
+    'public __construct': function( group, $content, styler, jquery )
     {
         this.group    = group;
         this.$content = $content;
         this.styler   = styler;
+        this._jquery  = jquery;
     },
 
 
@@ -301,7 +304,7 @@ module.exports = Class( 'GroupUi' ).extend( EventEmitter,
             e.preventDefault();
 
             // TODO: index
-            var $this = $( this ),
+            var $this = _self._jquery( this ),
                 ref   = $this.attr( 'data-ref' ),
                 type  = $this.attr( 'data-type' ),
                 index = +$this.attr( 'data-index' ) || 0;
@@ -341,9 +344,11 @@ module.exports = Class( 'GroupUi' ).extend( EventEmitter,
      */
     'protected setElementIdIndexes': function( $elements, index )
     {
+        var _self = this;
+
         $elements.each( function( i )
         {
-            var $element     = $( this );
+            var $element     = _self._jquery( this );
             var id           = $element.attr( 'id' );
             var element_data = 0;
 
