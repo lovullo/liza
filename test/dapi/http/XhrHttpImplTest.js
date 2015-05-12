@@ -181,6 +181,22 @@ describe( 'XhrHttpImpl', function()
         } );
 
 
+        it( 'considers any 2xx status to be successful', function( done )
+        {
+            var StubXhr = createStubXhr();
+            StubXhr.prototype.status = 250;
+
+            Sut( StubXhr )
+                .requestData( 'http://foo', 'GET', '', function( err, _ )
+                {
+                    expect( err ).to.equal( null );
+                    done();
+                } );
+
+            StubXhr.inst.send( '' );
+        } );
+
+
         it( 'allows overriding notion of success/failure', function( done )
         {
             var chk = 12345;

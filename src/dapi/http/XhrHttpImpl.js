@@ -151,13 +151,16 @@ module.exports = Class( 'XhrHttpImpl' )
      * Determine whether the given HTTP status indicates a success or
      * failure
      *
+     * The default implementation is to consider any 2xx status code to be
+     * successful, as indicated by RFC 2616.
+     *
      * @param {number} status HTTP response status
      *
      * @return {bool} whether HTTP status represents a success
      */
     'virtual protected isSuccessful': function( status )
     {
-        return +status === 200;
+        return ( +status >= 200 ) && ( +status < 300 );
     }
 } );
 
