@@ -109,10 +109,15 @@ module.exports = Class( 'XhrHttpImpl' )
      * Subtypes may override this method to alter the ready state change
      * actions taken (e.g. to display progress, handle errors, etc.)  If
      * only the HTTP status needs to be checked, subtypes may override
-     * success/failure determination via `#isSuccessful'.
+     * success/failure determination via `#isSuccessful'.  If the error
+     * response needs to be customized, override `#serveError'.
      *
-     * @param {XMLHttpRequest}   req      request to hook
-     * @param {function(string)} callback continuation to invoke with response
+     * When overriding this method, please either call the parent method or
+     * invoke the aforementioned two methods.
+     *
+     * @param {XMLHttpRequest}          req      request to hook
+     * @param {function(?Error,string)} callback continuation to invoke with
+     *                                           response
      *
      * @return {undefined}
      *
@@ -131,13 +136,7 @@ module.exports = Class( 'XhrHttpImpl' )
             }
             else if ( !( _self.isSuccessful( req.status ) ) )
             {
-                callback(
-                    Error( req.status + " error from server" ),
-                    {
-                        status: req.status,
-                        data:   req.responseText
-                    }
-                );
+                _self.serveError( req, callback );
                 return;
             }
 
@@ -161,6 +160,38 @@ module.exports = Class( 'XhrHttpImpl' )
     'virtual protected isSuccessful': function( status )
     {
         return ( +status >= 200 ) && ( +status < 300 );
+    },
+
+
+    /**
+     * Serve an error response
+     *
+     * The default behavior is to return an Error and content containing the
+     * HTTP status and response text.
+     *
+     * When overriding this method, keep in mind that it should always
+     * return an Error for the first argument, or set it to null, indicating
+     * a success.
+     *
+     * This method exposes the original XMLHttpRequest used to make the
+     * request, so it can be used to perform additional analysis for error
+     * handling, or to override the error and instead return a successful
+     * response.
+     *
+     * @param {XMLHttpRequest}          req      request to hook
+     * @param {function(?Error,string)} callback continuation to invoke with
+     *                                           response
+     * @return {undefined}
+     */
+    'virtual protected serveError': function( req, callback )
+    {
+        callback(
+            Error( req.status + " error from server" ),
+            {
+                status: req.status,
+                data:   req.responseText
+            }
+        );
     }
 } );
 

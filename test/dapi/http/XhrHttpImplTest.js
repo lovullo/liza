@@ -222,6 +222,38 @@ describe( 'XhrHttpImpl', function()
         } );
 
 
+        it( 'allows customizing error', function( done )
+        {
+            var _self = this,
+                chk   = {};
+
+            var StubXhr = createStubXhr();
+            StubXhr.prototype.status = 404;
+
+            Sut.extend(
+            {
+                'override protected serveError': function( req, callback )
+                {
+                    var e = Error( 'foobunny' );
+                    e.foo = true;
+
+                    expect( req ).to.be.an.instanceOf( StubXhr );
+
+                    callback( e, chk );
+                },
+            } )( StubXhr )
+                .requestData( 'http://foo', 'GET', '', function( err, resp )
+                {
+                    expect( ( err || {} ).foo ).to.be.ok;
+                    expect( resp ).to.equal( chk );
+
+                    done();
+                } );
+
+            StubXhr.inst.send( '' );
+        } );
+
+
         it( 'returns self', function()
         {
             var sut = Sut( function() {} ),
