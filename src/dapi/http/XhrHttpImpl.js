@@ -107,7 +107,9 @@ module.exports = Class( 'XhrHttpImpl' )
      * Hooks ready state change to handle data
      *
      * Subtypes may override this method to alter the ready state change
-     * actions taken (e.g. to display progress, handle errors, etc.)
+     * actions taken (e.g. to display progress, handle errors, etc.)  If
+     * only the HTTP status needs to be checked, subtypes may override
+     * success/failure determination via `#isSuccessful'.
      *
      * @param {XMLHttpRequest}   req      request to hook
      * @param {function(string)} callback continuation to invoke with response
@@ -118,6 +120,8 @@ module.exports = Class( 'XhrHttpImpl' )
      */
     'virtual protected onLoad': function( req, callback )
     {
+        var _self = this;
+
         req.onreadystatechange = function()
         {
             // ready state of 4 (DONE) indicates that the request is complete
@@ -125,7 +129,7 @@ module.exports = Class( 'XhrHttpImpl' )
             {
                 return;
             }
-            else if ( req.status !== 200 )
+            else if ( !( _self.isSuccessful( req.status ) ) )
             {
                 callback(
                     Error( req.status + " error from server" ),
@@ -140,6 +144,20 @@ module.exports = Class( 'XhrHttpImpl' )
             // successful
             callback( null, req.responseText );
         };
+    },
+
+
+    /**
+     * Determine whether the given HTTP status indicates a success or
+     * failure
+     *
+     * @param {number} status HTTP response status
+     *
+     * @return {bool} whether HTTP status represents a success
+     */
+    'virtual protected isSuccessful': function( status )
+    {
+        return +status === 200;
     }
 } );
 

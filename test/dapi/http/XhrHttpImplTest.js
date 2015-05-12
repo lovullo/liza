@@ -133,7 +133,7 @@ describe( 'XhrHttpImpl', function()
         } );
 
 
-        describe( 'if return status code is not 200', function()
+        describe( 'if return status code is not successful', function()
         {
             /**
              * This is the default behavior, but can be changed by overriding
@@ -178,6 +178,31 @@ describe( 'XhrHttpImpl', function()
 
                 StubXhr.inst.send( '' );
             } );
+        } );
+
+
+        it( 'allows overriding notion of success/failure', function( done )
+        {
+            var chk = 12345;
+
+            // succeed on CHK
+            var StubXhr = createStubXhr();
+            StubXhr.prototype.status = chk;
+
+            Sut.extend(
+            {
+                'override protected isSuccessful': function( status )
+                {
+                    return status === chk;
+                },
+            } )( StubXhr )
+                .requestData( 'http://foo', 'GET', '', function( err, resp )
+                {
+                    expect( err ).to.equal( null );
+                    done();
+                } );
+
+            StubXhr.inst.send( '' );
         } );
 
 
