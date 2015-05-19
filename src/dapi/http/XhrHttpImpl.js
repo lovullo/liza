@@ -1,7 +1,7 @@
 /**
  * XMLHttpRequest HTTP protocol implementation
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2015 LoVullo Associates, Inc.
  *
  *  This file is part of the Liza Data Collection Framework
  *
