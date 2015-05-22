@@ -194,4 +194,3 @@ module.exports = Class( 'XhrHttpImpl' )
         );
     }
 } );
-

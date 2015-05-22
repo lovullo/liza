@@ -40,10 +40,10 @@ module.exports = Trait( 'AutoRetry' )
     'private _tries': 0,
 
     /**
-     * Delay in milliseconds before making the nth request as a function
-     * of n
+     * Function to be passed a continuation to introduce a delay between
+     * requests
      *
-     * @var {function(number): number}
+     * @var {function(number,function(),function())} delay
      */
     'private _delay': null,
 
@@ -52,33 +52,42 @@ module.exports = Trait( 'AutoRetry' )
      * Initialize auto-retry
      *
      * If TRIES is negative, then requests will continue indefinitely until
-     * one succeeds.  If TRIES is 0, then no requests will be performed.
+     * one succeeds or is aborted by DELAY.  If TRIES is 0, then no requests
+     * will be performed.
      *
-     * @param {function(?Error,*): boolean} pred  predicate determining if
-     *                                            a retry is needed
-     * @param {number}                      tries maximum number of tries,
-     *                                            including the initial
-     *                                            request
-     * @param {function(number): number}    delay delay in milliseconds before
-     *                                            making the nth request as
-     *                                            a function of n
+     * If DELAY is a function, then it invoked with a retry continuation
+     * before each retry, the number of tries remaining, and a failure
+     * continuation that may be used to abort the process at an arbitrary
+     * time.
      *
-     * @return {undefined}
-     */
+     * @param {function(?Error,*): boolean}   pred  predicate determining if
+     *                                              a retry is needed
+     * @param {number}                        tries maximum number of tries,
+     *                                              including the initial
+     *                                              request
+     *
+     * @param {?function(number,function(),function())} delay
+     *                                              an optional function
+     *                                              accepting a continuation
+     *                                              to continue with the next
+     *                                              request
+     *
+    * @return {undefined}
+    */
     __mixin: function( pred, tries, delay )
     {
         if ( typeof pred !== 'function' )
         {
             throw TypeError( 'Predicate must be a function' );
         }
-        if ( typeof delay !== 'function' )
+        if ( delay && ( typeof delay !== 'function' ) )
         {
             throw TypeError( "Delay must be a function" );
         }
 
         this._pred  = pred;
         this._tries = +tries;
-        this._delay = delay;
+        this._delay = delay || function( _, c ) { c(); };
     },
 
 
@@ -96,9 +105,8 @@ module.exports = Trait( 'AutoRetry' )
      * data from the final request are returned.
      *
      * If the number of tries is negative, then requests will be performed
-     * indefinitely until success.
-     *
-     * TODO: A means of aborting.
+     * indefinitely until success; the delay function (as provided via the
+     * constructor) may be used to abort in this case.
      *
      * @param {string}             input    binary data to transmit
      * @param {function(?Error,*)} callback continuation upon reply
@@ -144,14 +152,26 @@ module.exports = Trait( 'AutoRetry' )
                 return _self._succeed( output, callback );
             }
 
+            var fail = function()
+            {
+                _self._fail( err, output, callback );
+            };
+
             // note that we intentionally do not want to check <= 1, so that
             // we can proceed indefinitely (JavaScript does not wrap on overflow)
             if ( n === 1 )
             {
-                return _self._fail( err, output, callback );
+                return fail();
             }
 
-            _self._try( input, callback, ( n - 1 ) );
+            _self._delay(
+                ( n - 1 ),
+                function()
+                {
+                    _self._try( input, callback, ( n - 1 ) );
+                },
+                fail
+            );
         } );
     },
 
@@ -184,4 +204,3 @@ module.exports = Trait( 'AutoRetry' )
         callback( err, output );
     },
 } );
-
