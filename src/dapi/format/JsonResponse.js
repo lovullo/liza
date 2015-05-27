@@ -1,7 +1,7 @@
 /**
  * Processes DataApi return data as JSON
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -40,7 +40,7 @@ module.exports = Trait( 'JsonResponse' )
      *
      * @return {DataApi} self
      */
-    'abstract override public request': function( data, callback )
+    'virtual abstract override public request': function( data, callback )
     {
         this.__super( data, function( err, resp )
         {
