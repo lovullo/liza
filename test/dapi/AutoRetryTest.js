@@ -32,9 +32,9 @@ var _void = function() {},
 describe( 'dapi.AutoRetry trait', function()
 {
     /**
-     * If there are no failures, then AutoRetry has no observable effects.
+     * If there are no retries, then AutoRetry has no observable effects.
      */
-    describe( 'when the request is successful', function()
+    describe( 'when the request does not need retrying', function()
     {
         it( 'makes only one request', function( done )
         {
@@ -55,19 +55,25 @@ describe( 'dapi.AutoRetry trait', function()
         } );
 
 
-        it( 'returns the response data with no error', function( done )
+        /**
+         * We expect that any error will be proxied back to us; this is an
+         * important concept, since it allow separating the idea of a
+         * "retry" from that of a "failure": the latter represents a problem
+         * with the request, whereas the former indicates that a request
+         * should be performed once again.
+         */
+        it( 'returns the response data, including any error', function( done )
         {
-            var chk = { foo: 'bar' };
+            var chk     = { foo: 'bar' },
+                chk_err = Error( 'foo' );
 
-            // notice that we provide an error to the stub; this will ensure
-            // that the returned error is null even when one is provided
-            var stub = _createStub( {}, chk )
+            var stub = _createStub( chk_err, chk )
                 .use( Sut( _void, 1 ) )
                 ();
 
             stub.request( '', function( err, data )
             {
-                expect( err ).to.equal( null );
+                expect( err ).to.equal( chk_err );
                 expect( data ).to.equal( chk );
                 done();
             } );
@@ -78,9 +84,9 @@ describe( 'dapi.AutoRetry trait', function()
     /**
      * This is when we care.
      */
-    describe( 'when the request fails', function()
+    describe( 'when the retry predicate is true', function()
     {
-        it( 'will re-perform request N-1 times until failure', function( done )
+        it( 'will re-perform request N-1 times until false', function( done )
         {
             var n = 5;
 
@@ -207,7 +213,7 @@ describe( 'dapi.AutoRetry trait', function()
         } );
 
 
-        it( 'will call delay function until success', function()
+        it( 'will call delay function until predicate falsity', function()
         {
             var n = 5;
             var wait = function( tries_left, c )

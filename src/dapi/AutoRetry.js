@@ -23,6 +23,14 @@ var Trait   = require( 'easejs' ).Trait,
     DataApi = require( './DataApi' );
 
 
+/**
+ * Automatically retries requests while satisfying a given predicate
+ *
+ * It is important to distinguish between the concept of a request failure
+ * and a retry predicate: the former represents a problem with the request,
+ * whereas the latter indicates that a retry should be performed, but may
+ * not necessarily imply a request failure.
+ */
 module.exports = Trait( 'AutoRetry' )
     .implement( DataApi )
     .extend(
@@ -51,9 +59,9 @@ module.exports = Trait( 'AutoRetry' )
     /**
      * Initialize auto-retry
      *
-     * If TRIES is negative, then requests will continue indefinitely until
-     * one succeeds or is aborted by DELAY.  If TRIES is 0, then no requests
-     * will be performed.
+     * If TRIES is negative, then requests will continue indefinitely while
+     * the retry predicate is true, or is aborted by DELAY.  If TRIES is 0,
+     * then no requests will be performed.
      *
      * If DELAY is a function, then it invoked with a retry continuation
      * before each retry, the number of tries remaining, and a failure
@@ -87,7 +95,7 @@ module.exports = Trait( 'AutoRetry' )
 
         this._pred  = pred;
         this._tries = +tries;
-        this._delay = delay || function( _, c ) { c(); };
+        this._delay = delay || function( _, c, __ ) { c(); };
     },
 
 
@@ -100,13 +108,13 @@ module.exports = Trait( 'AutoRetry' )
      * necessarily asynchronously---that remains undefined).
      *
      * Otherwise, requests will continue to be re-issued until either the
-     * request succeeds or the number of retries are exhausted, whichever
-     * comes first.  Once the retries are exhausted, the error and output
-     * data from the final request are returned.
+     * retry predicate fails or the number of retries are exhausted,
+     * whichever comes first.  Once the retries are exhausted, the error and
+     * output data from the final request are returned.
      *
      * If the number of tries is negative, then requests will be performed
-     * indefinitely until success; the delay function (as provided via the
-     * constructor) may be used to abort in this case.
+     * indefinitely while the retry predicate is met; the delay function (as
+     * provided via the constructor) may be used to abort in this case.
      *
      * @param {string}             input    binary data to transmit
      * @param {function(?Error,*)} callback continuation upon reply
@@ -122,7 +130,8 @@ module.exports = Trait( 'AutoRetry' )
 
 
     /**
-     * Recursively perform request until success or try exhaustion
+     * Recursively perform request until retry predicate failure or try
+     * count exhaustion
      *
      * For more information, see `#request'.
      *
@@ -146,22 +155,22 @@ module.exports = Trait( 'AutoRetry' )
 
         this.request.super.call( this, input, function( err, output )
         {
+            var complete = function()
+            {
+                callback( err, output );
+            };
+
             // predicate determines whether a retry is necessary
             if ( !!_self._pred( err, output ) === false )
             {
-                return _self._succeed( output, callback );
+                return complete();
             }
-
-            var fail = function()
-            {
-                _self._fail( err, output, callback );
-            };
 
             // note that we intentionally do not want to check <= 1, so that
             // we can proceed indefinitely (JavaScript does not wrap on overflow)
             if ( n === 1 )
             {
-                return fail();
+                return complete();
             }
 
             _self._delay(
@@ -170,37 +179,8 @@ module.exports = Trait( 'AutoRetry' )
                 {
                     _self._try( input, callback, ( n - 1 ) );
                 },
-                fail
+                complete
             );
         } );
-    },
-
-
-    /**
-     * Produce a successful response
-     *
-     * @param {*}                  output   output data
-     * @param {function(?Error,*)} callback continuation to invoke
-     *
-     * @return {undefined}
-     */
-    'private _succeed': function( output, callback )
-    {
-        callback( null, output );
-    },
-
-
-    /**
-     * Produce a negative response
-     *
-     * @param {Error}              err      most recent error
-     * @param {*}                  output   most recent output data
-     * @param {function(?Error,*)} callback continuation to invoke
-     *
-     * @return {undefined}
-     */
-    'private _fail': function( err, output, callback )
-    {
-        callback( err, output );
     },
 } );
