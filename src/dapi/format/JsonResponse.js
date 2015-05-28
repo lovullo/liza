@@ -38,6 +38,10 @@ module.exports = Trait( 'JsonResponse' )
      * property---`text`---containing the response text that failed to
      * parse.
      *
+     * If a request error occurs in conjunction with a parse error, then
+     * both errors will be returned in a single error object under the
+     * `list` property.
+     *
      * @param {string}             data     binary data to transmit
      * @param {function(?Error,*)} callback continuation upon reply
      *
@@ -45,32 +49,70 @@ module.exports = Trait( 'JsonResponse' )
      */
     'virtual abstract override public request': function( data, callback )
     {
+        var _self = this;
+
         this.__super( data, function( err, resp )
         {
-            if ( err !== null )
-            {
-                callback( err, resp );
-                return;
-            }
-
-            try
-            {
-                var data = JSON.parse( resp );
-            }
-            catch ( e )
-            {
-                // parsing failed; provide response text in addition to
-                // original data so that the caller can handle how they
-                // please
-                callback( e, { text: resp } );
-
-                return;
-            }
-
-            callback( null, data );
+            _self._tryParse( err, resp, callback );
         } );
 
         return this;
+    },
+
+
+    /**
+     * Attempt to parse SRC as JSON and invoke callback according to the
+     * rules of `#request`
+     *
+     * @param {?Error}             err      response error
+     * @param {string}             src      JSON string
+     * @param {function(?Error,*)} callback continuation
+     *
+     * @return {undefined}
+     */
+    'private _tryParse': function( err, src, callback )
+    {
+        try
+        {
+            var data = JSON.parse( src );
+        }
+        catch ( e )
+        {
+            // parsing failed; provide response text in addition to
+            // original data so that the caller can handle how they
+            // please
+            callback(
+                this._getReturnError( err, e ),
+                { text: src }
+            );
+
+            return;
+        }
+
+        callback( err, data );
+    },
+
+
+    /**
+     * Produce the parse error, or a combined error containing both the
+     * original and parse errors
+     *
+     * @param {?Error} orig  response error
+     * @param {Error}  parse parse error
+     *
+     * @return {Error} parse error or combined error
+     */
+    'private _getReturnError': function( orig, parse )
+    {
+        if ( !orig )
+        {
+            return parse;
+        }
+
+        var e = Error( "Multiple errors occurred; see `list` property" );
+        e.list = [ orig, parse ];
+
+        return e;
     }
 } );
 

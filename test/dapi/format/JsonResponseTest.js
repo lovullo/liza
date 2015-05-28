@@ -83,19 +83,54 @@ describe( 'dapi.format.JsonRepsonse trait', function()
         } );
 
 
-        it( 'proxy error from encapsulated DataApi', function( done )
+        describe( 'on request error from supertype', function()
         {
-            var e   = Error( 'foo' ),
-                chk = {};
+            it( 'attempts to format output as JSON', function( done )
+            {
+                var chk = '{"foo": "bar"}';
 
-            _createStubbedDapi( e, chk )
-                .request( '', function( err, data )
-                {
-                    // data should also be cleared out
-                    expect( err ).to.equal( e );
-                    expect( data ).to.equal( chk );
-                    done();
-                } );
+                _createStubbedDapi( null, chk )
+                    .request( '', function( _, data )
+                    {
+                        expect( data ).to.be.a( 'object' );
+                        expect( data.foo ).to.equal( "bar" );
+                        done();
+                    } );
+            } );
+
+
+            it( 'proxies error when JSON output valid', function( done )
+            {
+                var e = Error( 'foo' );
+
+                _createStubbedDapi( e, '{}' )
+                    .request( '', function( err, _ )
+                    {
+                        expect( err ).to.equal( e );
+                        done();
+                    } );
+            } );
+
+
+            it( 'produces both errors on bad JSON output', function( done )
+            {
+                var e = Error( 'foo' );
+
+                _createStubbedDapi( e, 'BAD JSON' )
+                    .request( '', function( err, _ )
+                    {
+                        // the main error should indicate both
+                        expect( err ).to.be.instanceOf( Error );
+
+                        // and we should provide references to both
+                        expect( err.list[ 0 ] ).to.equal( e );
+                        expect( err.list[ 1 ] ).to.be.instanceOf(
+                            SyntaxError
+                        );
+
+                        done();
+                    } );
+            } );
         } );
     } );
 } );
