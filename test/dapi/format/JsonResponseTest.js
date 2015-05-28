@@ -62,7 +62,7 @@ describe( 'dapi.format.JsonRepsonse trait', function()
                 _createStubbedDapi( null, 'ERR' )
                     .request( '', function( err, data )
                     {
-                        expect( err ).to.be.instanceOf( Error );
+                        expect( err ).to.be.instanceOf( SyntaxError );
                         done();
                     } );
             } );
