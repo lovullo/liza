@@ -1,7 +1,7 @@
 /**
  * Test case for XMLHttpRequest HTTP protocol implementation
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -127,9 +127,6 @@ describe( 'XhrHttpImpl', function()
                     expect( resp ).to.equal( retdata );
                     done();
                 } );
-
-            // invoke callback
-            StubXhr.inst.send( src );
         } );
 
 
@@ -154,8 +151,6 @@ describe( 'XhrHttpImpl', function()
 
                         done();
                     } );
-
-                StubXhr.inst.send( '' );
             } );
 
 
@@ -175,8 +170,6 @@ describe( 'XhrHttpImpl', function()
                         expect( resp.data ).to.equal( reply );
                         done();
                     } );
-
-                StubXhr.inst.send( '' );
             } );
         } );
 
@@ -192,8 +185,6 @@ describe( 'XhrHttpImpl', function()
                     expect( err ).to.equal( null );
                     done();
                 } );
-
-            StubXhr.inst.send( '' );
         } );
 
 
@@ -217,8 +208,6 @@ describe( 'XhrHttpImpl', function()
                     expect( err ).to.equal( null );
                     done();
                 } );
-
-            StubXhr.inst.send( '' );
         } );
 
 
@@ -249,8 +238,6 @@ describe( 'XhrHttpImpl', function()
 
                     done();
                 } );
-
-            StubXhr.inst.send( '' );
         } );
 
 
