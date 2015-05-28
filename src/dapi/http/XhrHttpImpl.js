@@ -168,8 +168,10 @@ module.exports = Class( 'XhrHttpImpl' )
     /**
      * Serve an error response
      *
-     * The default behavior is to return an Error and content containing the
-     * HTTP status and response text.
+     * The default behavior is to return an Error with the status code as a
+     * `status` property, and the original response text as the output
+     * value; the philosophy here is that we should never modify the output,
+     * since a certain format may be expected as the result.
      *
      * When overriding this method, keep in mind that it should always
      * return an Error for the first argument, or set it to null, indicating
@@ -187,12 +189,9 @@ module.exports = Class( 'XhrHttpImpl' )
      */
     'virtual protected serveError': function( req, callback )
     {
-        callback(
-            Error( req.status + " error from server" ),
-            {
-                status: req.status,
-                data:   req.responseText
-            }
-        );
+        var e = Error( req.status + " error from server" );
+        e.status = req.status;
+
+        callback( e, req.responseText );
     }
 } );

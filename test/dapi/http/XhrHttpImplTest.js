@@ -136,7 +136,7 @@ describe( 'XhrHttpImpl', function()
              * This is the default behavior, but can be changed by overriding
              * the onLoad method.
              */
-            it( 'returns an error to the callback', function( done )
+            it( 'returns error to callback with status code', function( done )
             {
                 var StubXhr = createStubXhr();
                 StubXhr.prototype.status = 404;
@@ -145,7 +145,12 @@ describe( 'XhrHttpImpl', function()
                     .requestData( 'http://foo', 'GET', '', function( err, _ )
                     {
                         expect( err ).to.be.instanceOf( Error );
+
                         expect( err.message ).to.contain(
+                            StubXhr.prototype.status
+                        );
+
+                        expect( err.status ).to.equal(
                             StubXhr.prototype.status
                         );
 
@@ -154,20 +159,18 @@ describe( 'XhrHttpImpl', function()
             } );
 
 
-            it( 'returns response text with error code', function( done )
+            it( 'returns response text as output', function( done )
             {
                 var StubXhr = createStubXhr(),
                     status  = 404,
                     reply   = 'foobunny';
 
-                StubXhr.prototype.status       = status;
                 StubXhr.prototype.responseText = reply;
 
                 Sut( StubXhr )
                     .requestData( 'http://foo', 'GET', '', function( _, resp )
                     {
-                        expect( resp.status ).to.equal( status );
-                        expect( resp.data ).to.equal( reply );
+                        expect( resp ).to.equal( reply );
                         done();
                     } );
             } );
