@@ -49,7 +49,7 @@ module.exports = Trait( 'JsonResponse' )
         {
             if ( err !== null )
             {
-                callback( err, null );
+                callback( err, resp );
                 return;
             }
 

@@ -85,14 +85,15 @@ describe( 'dapi.format.JsonRepsonse trait', function()
 
         it( 'proxy error from encapsulated DataApi', function( done )
         {
-            var e = Error( 'foo' );
+            var e   = Error( 'foo' ),
+                chk = {};
 
-            _createStubbedDapi( e, '0' )
+            _createStubbedDapi( e, chk )
                 .request( '', function( err, data )
                 {
                     // data should also be cleared out
                     expect( err ).to.equal( e );
-                    expect( data ).to.equal( null );
+                    expect( data ).to.equal( chk );
                     done();
                 } );
         } );
