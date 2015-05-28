@@ -33,7 +33,10 @@ module.exports = Trait( 'JsonResponse' )
     /**
      * Processes response as JSON
      *
-     * Will return an error if the response is not valid JSON.
+     * If the response is not valid JSON, an error will be returned.  The
+     * output value will be an object with a single
+     * property---`text`---containing the response text that failed to
+     * parse.
      *
      * @param {string}             data     binary data to transmit
      * @param {function(?Error,*)} callback continuation upon reply
@@ -56,8 +59,11 @@ module.exports = Trait( 'JsonResponse' )
             }
             catch ( e )
             {
-                // parsing failed
-                callback( e, null );
+                // parsing failed; provide response text in addition to
+                // original data so that the caller can handle how they
+                // please
+                callback( e, { text: resp } );
+
                 return;
             }
 

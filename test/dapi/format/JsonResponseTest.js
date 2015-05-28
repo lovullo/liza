@@ -55,15 +55,31 @@ describe( 'dapi.format.JsonRepsonse trait', function()
         } );
 
 
-        it( 'returns error if JSON parsing fails', function( done )
+        describe( 'when JSON parsing fails', function()
         {
-            _createStubbedDapi( null, 'ERR' )
-                .request( '', function( err, data )
-                {
-                    expect( err ).to.be.instanceOf( Error );
-                    expect( data ).to.equal( null );
-                    done();
-                } );
+            it( 'returns error', function( done )
+            {
+                _createStubbedDapi( null, 'ERR' )
+                    .request( '', function( err, data )
+                    {
+                        expect( err ).to.be.instanceOf( Error );
+                        done();
+                    } );
+            } );
+
+
+            it( 'provides bad text as object.text', function( done )
+            {
+                var text = 'NOT JSON';
+
+                _createStubbedDapi( null, text )
+                    .request( '', function( err, data )
+                    {
+                        expect( data ).to.be.a( 'object' );
+                        expect( data.text ).to.equal( text );
+                        done();
+                    } );
+            } );
         } );
 
 
