@@ -42,6 +42,8 @@ module.exports = Class( 'XhrHttpImpl' )
      * Initializes with constructor to the object through which XHRs will be
      * made
      *
+     * TODO: Accept URI encoders
+     *
      * @param {Object} XMLHttpRequest ctor to object to perform requests
      */
     __construct: function( XMLHttpRequest )
@@ -53,14 +55,26 @@ module.exports = Class( 'XhrHttpImpl' )
     /**
      * Perform HTTP request using the standard XMLHttpRequest
      *
-     * @param {Object|string}           data     request params
+     * If METHOD is `"GET"`, the data will be appended to the URL;
+     * otherwise, the URL remains unchanged.
+     *
+     * If DATA is an object, its keys will be encoded and added to the URL
+     * an in undefined order.
+     *
+     * @param {string} url    base request URL
+     * @param {string} method RFC-2616-compliant HTTP method
+     *
+     * @param {?Object<string,string>|string=} data request params or
+     *                                              post data
+     *
      * @param {function(Error, Object)} callback server response callback
      *
      * @return {HttpImpl} self
      */
     'public requestData': function( url, method, data, callback )
     {
-        var req = new this._Xhr();
+        var req = new this._Xhr(),
+            url = this._genUrl( url, method, data );
 
         try
         {
@@ -70,7 +84,7 @@ module.exports = Class( 'XhrHttpImpl' )
                 callback( err, resp );
             } );
 
-            req.send( data );
+            req.send( this._getSendData( method, data ) );
         }
         catch ( e )
         {
@@ -78,6 +92,107 @@ module.exports = Class( 'XhrHttpImpl' )
         }
 
         return this;
+    },
+
+
+    /**
+     * Generate URL according to METHOD and provided DATA
+     *
+     * See `#requestData` for more information.
+     *
+     * @param {string}          url      base request URL
+     * @param {string}          method   RFC-2616-compliant HTTP method
+     *
+     * @param {?Object<string,string>|string=} data request params or
+     *                                              post data
+     *
+     * @return {string} original URL, or appended with params
+     */
+    'private _genUrl': function( url, method, data )
+    {
+        if ( method !== 'GET' )
+        {
+            return url;
+        }
+
+        var encoded;
+
+        // TODO: reject nonsense types, including arrays
+        switch ( typeof data )
+        {
+            case 'object':
+                encoded = this._encodeKeys( data );
+                break;
+
+            default:
+                encoded = encodeURI( data );
+                break;
+        }
+
+        return url +
+            ( ( encoded )
+              ? ( '?' + encoded )
+              : ''
+            );
+    },
+
+
+    /**
+     * Generate params for URI from key-value DATA
+     *
+     * @param {?Object<string,string>|string=} data key-value request params
+     *
+     * @return {string} generated URI, or empty if no keys
+     */
+    'private _encodeKeys': function( obj )
+    {
+        var uri = '';
+
+        // ES3 support
+        for ( var key in obj )
+        {
+            if ( !Object.prototype.hasOwnProperty.call( obj, key ) )
+            {
+                continue;
+            }
+
+            uri += ( uri )
+                ? '&'
+                : '';
+
+            uri += key + '=' + encodeURIComponent( obj[ key ] );
+        }
+
+        return uri;
+    },
+
+
+    /**
+     * Determine what DATA to post to the server
+     *
+     * If method is GET, no data are posted
+     *
+     * @param {string}                         url  base request URL
+     * @param {?Object<string,string>|string=} data post data
+     *
+     * @return {string|undefined} data to post to server
+     */
+    'private _getSendData': function( method, data )
+    {
+        if ( method === 'GET' )
+        {
+            return undefined;
+        }
+
+        // TODO: reject nonsense types, including arrays
+        switch ( typeof data )
+        {
+            case 'object':
+                return this._encodeKeys( data );
+
+            default:
+                return data;
+        }
     },
 
 

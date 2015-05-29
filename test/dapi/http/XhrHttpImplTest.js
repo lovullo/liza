@@ -31,7 +31,9 @@ var dapi     = require( '../../../' ).dapi,
         {
             DummyXhr.args = arguments;
         };
-    };
+    },
+
+    _void = function() {};
 
 
 describe( 'XhrHttpImpl', function()
@@ -58,18 +60,15 @@ describe( 'XhrHttpImpl', function()
 
     describe( '.requestData', function()
     {
-        it( 'requests a connection using the given url and method', function()
+        it( 'requests a connection using the given method', function()
         {
-            var url    = 'http://foonugget',
-                method = 'GET',
+            var method = 'GET',
                 sut    = Sut( DummyXhr );
 
-            sut.requestData( url, method, {}, function() {} );
+            sut.requestData( 'http://foo', method, {}, function() {} );
 
             var args = DummyXhr.args;
             expect( args[ 0 ] ).to.equal( method );
-            expect( args[ 1 ] ).to.equal( url );
-            expect( args[ 1 ] ).to.be.ok;  // async
         } );
 
 
@@ -107,26 +106,167 @@ describe( 'XhrHttpImpl', function()
         it( 'returns XHR response via callback when no error', function( done )
         {
             var retdata = "foobar",
-                src     = "moocow",
                 StubXhr = createStubXhr();
 
             StubXhr.prototype.responseText = retdata;
             StubXhr.prototype.readyState   = 4; // done
             StubXhr.prototype.status       = 200; // OK
 
-            StubXhr.prototype.send = function( data )
-            {
-                expect( data ).is.equal( src );
-                StubXhr.inst.onreadystatechange();
-            };
-
             Sut( StubXhr )
-                .requestData( 'http://bar', 'GET', src, function( err, resp )
+                .requestData( 'http://bar', 'GET', {}, function( err, resp )
                 {
                     expect( err ).to.equal( null );
                     expect( resp ).to.equal( retdata );
                     done();
                 } );
+        } );
+
+
+        describe( 'HTTP method is GET', function()
+        {
+            it( 'appends encoded non-obj data to URL', function( done )
+            {
+                var url     = 'http://bar',
+                    src     = "moocow %foocow%",
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState = 4; // done
+                StubXhr.prototype.status     = 200; // OK
+
+                StubXhr.prototype.open = function( _, given_url )
+                {
+                    expect( given_url ).to.equal(
+                        url + '?' + encodeURI( src )
+                    );
+                };
+
+                StubXhr.prototype.send = function( data )
+                {
+                    // no posting on GET
+                    expect( data ).is.equal( undefined );
+                    StubXhr.inst.onreadystatechange();
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'GET', src, done );
+            } );
+
+
+            it( 'appends encoded key-val data to URL', function( done )
+            {
+                var url     = 'http://bar',
+                    src     = { foo: "bar=baz", bar: "moo%cow" },
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState = 4; // done
+                StubXhr.prototype.status     = 200; // OK
+
+                StubXhr.prototype.open = function( _, given_url )
+                {
+                    // XXX: the docblock for requestData says "undefined
+                    // order", but fundamentally we need to pass in our own
+                    // encoder
+                    expect( given_url ).to.equal(
+                        url + '?foo=' + encodeURIComponent( src.foo ) +
+                            '&bar=' + encodeURIComponent( src.bar )
+                    );
+                };
+
+                StubXhr.prototype.send = function( data )
+                {
+                    // no posting on GET
+                    expect( data ).is.equal( undefined );
+                    StubXhr.inst.onreadystatechange();
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'GET', src, done );
+            } );
+
+
+            it( 'leaves URL unaltered with empty data', function( done )
+            {
+                var url     = 'http://bar',
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState = 4; // done
+                StubXhr.prototype.status     = 200; // OK
+
+                StubXhr.prototype.open = function( _, given_url )
+                {
+                    // unaltered
+                    expect( given_url ).to.equal( url );
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'GET', undefined, _void )
+                    .requestData( url, 'GET', null, _void )
+                    .requestData( url, 'GET', "", _void )
+                    .requestData( url, 'GET', {}, done );
+            } );
+
+        } );
+
+
+        describe( 'HTTP method is not GET', function()
+        {
+            it( 'posts non-object data verbatim', function( done )
+            {
+                var url     = 'http://bar',
+                    src     = "moocow",
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState   = 4; // done
+                StubXhr.prototype.status       = 200; // OK
+
+                StubXhr.prototype.open = function( _, given_url )
+                {
+                    // URL should be unchanged
+                    expect( given_url ).to.equal( url );
+                };
+
+                StubXhr.prototype.send = function( data )
+                {
+                    expect( data ).is.equal( src );
+                    StubXhr.inst.onreadystatechange();
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'POST', src, done );
+            } );
+
+
+            it( 'encodes key-value data', function( done )
+            {
+                var url     = 'http://bar',
+                    src     = { foo: "bar=baz", bar: "moo%cow" },
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState = 4; // done
+                StubXhr.prototype.status     = 200; // OK
+
+                StubXhr.prototype.open = function( _, given_url )
+                {
+                    // unaltered
+                    expect( given_url ).to.equal( url );
+                };
+
+                StubXhr.prototype.send = function( data )
+                {
+                    // XXX: the docblock for requestData says "undefined
+                    // order", but fundamentally we need to pass in our own
+                    // encoder
+                    expect( data ).to.equal(
+                        'foo=' + encodeURIComponent( src.foo ) +
+                            '&bar=' + encodeURIComponent( src.bar )
+                    );
+
+                    StubXhr.inst.onreadystatechange();
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'POST', src, done );
+            } );
         } );
 
 
