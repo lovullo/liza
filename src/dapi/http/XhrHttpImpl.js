@@ -42,8 +42,6 @@ module.exports = Class( 'XhrHttpImpl' )
      * Initializes with constructor to the object through which XHRs will be
      * made
      *
-     * TODO: Accept URI encoders
-     *
      * @param {Object} XMLHttpRequest ctor to object to perform requests
      */
     __construct: function( XMLHttpRequest )
@@ -58,14 +56,13 @@ module.exports = Class( 'XhrHttpImpl' )
      * If METHOD is `"GET"`, the data will be appended to the URL;
      * otherwise, the URL remains unchanged.
      *
-     * If DATA is an object, its keys will be encoded and added to the URL
-     * an in undefined order.
+     * No additional encoding is preformed on DATA; that is assumed to have
+     * already been performed.
      *
      * @param {string} url    base request URL
      * @param {string} method RFC-2616-compliant HTTP method
      *
-     * @param {?Object<string,string>|string=} data request params or
-     *                                              post data
+     * @param {string} data request data
      *
      * @param {function(Error, Object)} callback server response callback
      *
@@ -73,6 +70,13 @@ module.exports = Class( 'XhrHttpImpl' )
      */
     'public requestData': function( url, method, data, callback )
     {
+        if ( typeof data !== 'string' )
+        {
+            throw TypeError(
+                "Request data must be a string; " + typeof data + " given"
+            );
+        }
+
         var req = new this._Xhr(),
             url = this._genUrl( url, method, data );
 
@@ -115,55 +119,11 @@ module.exports = Class( 'XhrHttpImpl' )
             return url;
         }
 
-        var encoded;
-
-        // TODO: reject nonsense types, including arrays
-        switch ( typeof data )
-        {
-            case 'object':
-                encoded = this._encodeKeys( data );
-                break;
-
-            default:
-                encoded = encodeURI( data );
-                break;
-        }
-
         return url +
-            ( ( encoded )
-              ? ( '?' + encoded )
+            ( ( data )
+              ? ( '?' + data )
               : ''
             );
-    },
-
-
-    /**
-     * Generate params for URI from key-value DATA
-     *
-     * @param {?Object<string,string>|string=} data key-value request params
-     *
-     * @return {string} generated URI, or empty if no keys
-     */
-    'private _encodeKeys': function( obj )
-    {
-        var uri = '';
-
-        // ES3 support
-        for ( var key in obj )
-        {
-            if ( !Object.prototype.hasOwnProperty.call( obj, key ) )
-            {
-                continue;
-            }
-
-            uri += ( uri )
-                ? '&'
-                : '';
-
-            uri += key + '=' + encodeURIComponent( obj[ key ] );
-        }
-
-        return uri;
     },
 
 

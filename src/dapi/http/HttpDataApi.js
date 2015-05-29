@@ -1,7 +1,7 @@
 /**
  * Data transmission over HTTP(S)
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -69,6 +69,8 @@ module.exports = Class( 'HttpDataApi' )
      * requests, which permits the user to use whatever implementation works
      * well with their existing system.
      *
+     * TODO: Accept URI encoder.
+     *
      * @param {string}   url    destination URL
      * @param {string}   method RFC-2616-compliant HTTP method
      * @param {HttpImpl} impl   HTTP implementation
@@ -91,13 +93,19 @@ module.exports = Class( 'HttpDataApi' )
     /**
      * Perform an asynchronous request and invoke the callback with the reply
      *
+     * DATA must be either a string or an object; the latter is treated as a
+     * key-value parameter list, which will have each key and value
+     * individually URI-encoded and converted into a string, delimited by
+     * ampersands.
+     *
      * In the event of an error, the first parameter is the error; otherwise, it
      * is null. The return data shall not be used in the event of an error.
      *
      * The return value shall be a raw string; conversion to other formats must
      * be handled by a wrapper.
      *
-     * @param {string}                    data     binary data to transmit
+     * @param {?Object<string,string>|string} data request params or post data
+     *
      * @param {function(?Error,*):string} callback continuation upon reply
      *
      * @return {DataApi} self
@@ -109,7 +117,10 @@ module.exports = Class( 'HttpDataApi' )
         this._validateDataType( data );
 
         this._impl.requestData(
-            this._url, this._method, data, callback
+            this._url,
+            this._method,
+            this._encodeData( data ),
+            callback
         );
 
         return this;
@@ -156,5 +167,55 @@ module.exports = Class( 'HttpDataApi' )
                 "key-value params"
             );
         }
-    }
+    },
+
+
+    /**
+     * If the data are an object, it's converted to an encoded key-value
+     * URI; otherwise, the original string datum is returned.
+     *
+     * @param {?Object<string,string>|string=} data raw data or key-value
+     *
+     * @return {string} encoded data
+     */
+    'private _encodeData': function( data )
+    {
+        if ( typeof data !== 'object' )
+        {
+            return ''+data;
+        }
+
+        return this._encodeKeys( data );
+    },
+
+
+    /**
+     * Generate params for URI from key-value DATA
+     *
+     * @param {Object<string,string>} data key-value request params
+     *
+     * @return {string} generated URI, or empty if no keys
+     */
+    'private _encodeKeys': function( obj )
+    {
+        var uri = '';
+
+        // ES3 support
+        for ( var key in obj )
+        {
+            if ( !Object.prototype.hasOwnProperty.call( obj, key ) )
+            {
+                continue;
+            }
+
+            uri += ( uri )
+                ? '&'
+                : '';
+
+            uri += encodeURIComponent( key ) + '=' +
+                encodeURIComponent( obj[ key ] );
+        }
+
+        return uri;
+    },
 } );

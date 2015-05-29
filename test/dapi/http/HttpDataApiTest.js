@@ -1,7 +1,7 @@
 /**
  * Test case for data transmission over HTTP(S)
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -100,7 +100,7 @@ describe( 'HttpDataApi', function()
         it( 'delegates to provided HTTP implementation', function()
         {
             var method = 'POST',
-                data   = {},
+                data   = "ribbit",
                 c      = function() {};
 
             Sut( dummy_url, method, impl ).request( data, c );
@@ -110,6 +110,41 @@ describe( 'HttpDataApi', function()
             expect( provided[ 1 ] ).to.equal( method );
             expect( provided[ 2 ] ).to.equal( data );
             expect( provided[ 3 ] ).to.equal( c );
+        } );
+
+
+        /**
+         * It's nice to do this for the HttpImpl so that they don't have to
+         * worry about the proper way to handle it, or duplicate the logic.
+         */
+        describe( 'given key-value data', function()
+        {
+            it( 'converts data into encoded string', function()
+            {
+                var method = 'POST',
+                    data   = { foo: "bar=baz", '&bar': "moo%cow" },
+                    c      = function() {};
+
+                Sut( dummy_url, method, impl ).request( data, c );
+
+                expect( impl.provided[ 2 ] ).to.equal(
+                    'foo=' + encodeURIComponent( data.foo ) +
+                        '&' + encodeURIComponent( '&bar' ) + '=' +
+                        encodeURIComponent( data[ '&bar' ] )
+                );
+            } );
+
+
+            it( 'with no keys, results in empty string', function()
+            {
+                var method = 'POST',
+                    data   = {},
+                    c      = function() {};
+
+                Sut( dummy_url, method, impl ).request( data, c );
+
+                expect( impl.provided[ 2 ] ).to.equal( "" );
+            } );
         } );
 
 

@@ -31,9 +31,7 @@ var dapi     = require( '../../../' ).dapi,
         {
             DummyXhr.args = arguments;
         };
-    },
-
-    _void = function() {};
+    };
 
 
 describe( 'XhrHttpImpl', function()
@@ -65,7 +63,7 @@ describe( 'XhrHttpImpl', function()
             var method = 'GET',
                 sut    = Sut( DummyXhr );
 
-            sut.requestData( 'http://foo', method, {}, function() {} );
+            sut.requestData( 'http://foo', method, "", function() {} );
 
             var args = DummyXhr.args;
             expect( args[ 0 ] ).to.equal( method );
@@ -93,7 +91,7 @@ describe( 'XhrHttpImpl', function()
             {
                 // should instead provide to callback
                 Sut( Xhr )
-                    .requestData( 'http://foo', 'GET', {}, function( err, data )
+                    .requestData( 'http://foo', 'GET', "", function( err, data )
                     {
                         expect( err ).to.equal( e );
                         expect( data ).to.equal( null );
@@ -113,7 +111,7 @@ describe( 'XhrHttpImpl', function()
             StubXhr.prototype.status       = 200; // OK
 
             Sut( StubXhr )
-                .requestData( 'http://bar', 'GET', {}, function( err, resp )
+                .requestData( 'http://bar', 'GET', "", function( err, resp )
                 {
                     expect( err ).to.equal( null );
                     expect( resp ).to.equal( retdata );
@@ -124,10 +122,10 @@ describe( 'XhrHttpImpl', function()
 
         describe( 'HTTP method is GET', function()
         {
-            it( 'appends encoded non-obj data to URL', function( done )
+            it( 'appends data to URL', function( done )
             {
                 var url     = 'http://bar',
-                    src     = "moocow %foocow%",
+                    src     = "moocow%foocow%",
                     StubXhr = createStubXhr();
 
                 StubXhr.prototype.readyState = 4; // done
@@ -135,8 +133,10 @@ describe( 'XhrHttpImpl', function()
 
                 StubXhr.prototype.open = function( _, given_url )
                 {
+                    // no additional encoding should be performed; it's
+                    // assumed to have already been done
                     expect( given_url ).to.equal(
-                        url + '?' + encodeURI( src )
+                        url + '?' + src
                     );
                 };
 
@@ -152,39 +152,7 @@ describe( 'XhrHttpImpl', function()
             } );
 
 
-            it( 'appends encoded key-val data to URL', function( done )
-            {
-                var url     = 'http://bar',
-                    src     = { foo: "bar=baz", bar: "moo%cow" },
-                    StubXhr = createStubXhr();
-
-                StubXhr.prototype.readyState = 4; // done
-                StubXhr.prototype.status     = 200; // OK
-
-                StubXhr.prototype.open = function( _, given_url )
-                {
-                    // XXX: the docblock for requestData says "undefined
-                    // order", but fundamentally we need to pass in our own
-                    // encoder
-                    expect( given_url ).to.equal(
-                        url + '?foo=' + encodeURIComponent( src.foo ) +
-                            '&bar=' + encodeURIComponent( src.bar )
-                    );
-                };
-
-                StubXhr.prototype.send = function( data )
-                {
-                    // no posting on GET
-                    expect( data ).is.equal( undefined );
-                    StubXhr.inst.onreadystatechange();
-                };
-
-                Sut( StubXhr )
-                    .requestData( url, 'GET', src, done );
-            } );
-
-
-            it( 'leaves URL unaltered with empty data', function( done )
+            it( 'leaves URL unaltered when data is empty', function( done )
             {
                 var url     = 'http://bar',
                     StubXhr = createStubXhr();
@@ -199,10 +167,7 @@ describe( 'XhrHttpImpl', function()
                 };
 
                 Sut( StubXhr )
-                    .requestData( url, 'GET', undefined, _void )
-                    .requestData( url, 'GET', null, _void )
-                    .requestData( url, 'GET', "", _void )
-                    .requestData( url, 'GET', {}, done );
+                    .requestData( url, 'GET', "", done );
             } );
 
         } );
@@ -210,7 +175,7 @@ describe( 'XhrHttpImpl', function()
 
         describe( 'HTTP method is not GET', function()
         {
-            it( 'posts non-object data verbatim', function( done )
+            it( 'sends data verbatim', function( done )
             {
                 var url     = 'http://bar',
                     src     = "moocow",
@@ -228,39 +193,6 @@ describe( 'XhrHttpImpl', function()
                 StubXhr.prototype.send = function( data )
                 {
                     expect( data ).is.equal( src );
-                    StubXhr.inst.onreadystatechange();
-                };
-
-                Sut( StubXhr )
-                    .requestData( url, 'POST', src, done );
-            } );
-
-
-            it( 'encodes key-value data', function( done )
-            {
-                var url     = 'http://bar',
-                    src     = { foo: "bar=baz", bar: "moo%cow" },
-                    StubXhr = createStubXhr();
-
-                StubXhr.prototype.readyState = 4; // done
-                StubXhr.prototype.status     = 200; // OK
-
-                StubXhr.prototype.open = function( _, given_url )
-                {
-                    // unaltered
-                    expect( given_url ).to.equal( url );
-                };
-
-                StubXhr.prototype.send = function( data )
-                {
-                    // XXX: the docblock for requestData says "undefined
-                    // order", but fundamentally we need to pass in our own
-                    // encoder
-                    expect( data ).to.equal(
-                        'foo=' + encodeURIComponent( src.foo ) +
-                            '&bar=' + encodeURIComponent( src.bar )
-                    );
-
                     StubXhr.inst.onreadystatechange();
                 };
 
@@ -388,7 +320,7 @@ describe( 'XhrHttpImpl', function()
         {
             var sut = Sut( function() {} ),
                 ret = sut.requestData(
-                    'http://foo', 'GET', {}, function() {}
+                    'http://foo', 'GET', "", function() {}
                 );
 
             expect( ret ).to.equal( sut );
