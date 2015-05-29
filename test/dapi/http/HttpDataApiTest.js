@@ -175,11 +175,24 @@ describe( 'HttpDataApi', function()
         } );
 
 
+        it( 'accepts null data, converting to empty string', function()
+        {
+            expect( function()
+            {
+                Sut( dummy_url, 'GET', impl )
+                    .request( null, function()
+                    {
+                        expect( impl.provided[ 2 ] ).to.equal( "" );
+                    } );
+            } ).to.not.throw( Error );
+        } );
+
+
         it( 'rejects all other data types', function()
         {
             var sut = Sut( dummy_url, 'GET', impl );
 
-            [ 123, null, Infinity, undefined, NaN, function() {} ]
+            [ 123, Infinity, undefined, NaN, function() {} ]
                 .forEach( function( data )
                 {
                     expect( function()

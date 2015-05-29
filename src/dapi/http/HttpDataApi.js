@@ -96,7 +96,8 @@ module.exports = Class( 'HttpDataApi' )
      * DATA must be either a string or an object; the latter is treated as a
      * key-value parameter list, which will have each key and value
      * individually URI-encoded and converted into a string, delimited by
-     * ampersands.
+     * ampersands.  `null` may be used to indicate that no data should be
+     * sent.
      *
      * In the event of an error, the first parameter is the error; otherwise, it
      * is null. The return data shall not be used in the event of an error.
@@ -114,6 +115,13 @@ module.exports = Class( 'HttpDataApi' )
      */
     'virtual public request': function( data, callback )
     {
+        // null is a good indicator of "I have no intent to send any data";
+        // empty strings and objects are not, since those are valid data
+        if ( data === null )
+        {
+            data = "";
+        }
+
         this._validateDataType( data );
 
         this._impl.requestData(
@@ -158,9 +166,7 @@ module.exports = Class( 'HttpDataApi' )
     {
         var type = typeof data;
 
-        if ( ( data === null )
-            || !( ( type === 'string' ) || ( type === 'object' ) )
-        )
+        if( !( ( type === 'string' ) || ( type === 'object' ) ) )
         {
             throw TypeError(
                 "Data must be a string of raw data or object containing " +
