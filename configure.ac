@@ -1,6 +1,6 @@
 ## For use my automake and autoconf
 #
-#  Copyright (C) 2014 LoVullo Associates, Inc.
+#  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
 #
 #  This file is part of liza.
 #
@@ -18,7 +18,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-AC_INIT([liza], [0.0.2], [dev@lovullo.com])
+AC_INIT([liza], [0.0.3], [dev@lovullo.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 
