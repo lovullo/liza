@@ -19,7 +19,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-shopt -s extglob
+shopt -s extglob nullglob
 
 destpath="${1?Destination path required}"
 
