@@ -223,5 +223,5 @@ module.exports = Class( 'HttpDataApi' )
         }
 
         return uri;
-    },
+    }
 } );

@@ -29,16 +29,30 @@ cat <<EOH
 module.exports = {
 EOH
 
+declare -i i
+
 # generate require for each module
 for module in "$destpath"/!(index).js; do
   modname="$( basename "$module" .js )"
-  echo "    '$modname': require( './$modname' ),"
+
+  # humor ECMAScript 3 for now
+  if ((i++)); then
+    echo ,
+  fi
+
+  echo -n "    '$modname': require( './$modname' )"
 done
 
 # include index.js for any sub-directories (namespace)
 for dir in $( find "$destpath" -maxdepth 1 -mindepth 1 -type d ); do
   ns=$( basename "$dir" )
-  echo "    '$ns': require( './$ns' ),"
+
+  # humor ECMAScript 3 for now
+  if ((i++)); then
+    echo ,
+  fi
+
+  echo -n "    '$ns': require( './$ns' )"
 done
 
-echo '};'
+echo -e "\n};"

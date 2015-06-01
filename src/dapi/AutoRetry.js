@@ -153,7 +153,8 @@ module.exports = Trait( 'AutoRetry' )
             return;
         }
 
-        this.request.super.call( this, input, function( err, output )
+        // super ES3 compatibility (for now)
+        this.request['super'].call( this, input, function( err, output )
         {
             var complete = function()
             {
@@ -182,5 +183,5 @@ module.exports = Trait( 'AutoRetry' )
                 complete
             );
         } );
-    },
+    }
 } );
