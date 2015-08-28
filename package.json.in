@@ -15,7 +15,7 @@
   },
 
   "dependencies": {
-    "easejs": "0.2.4"
+    "easejs": "0.2.x"
   },
   "devDependencies": {
     "chai":   ">=1.9.1",
