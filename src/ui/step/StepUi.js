@@ -211,7 +211,7 @@ module.exports = Class( 'StepUi' )
             _self._hookBucket();
             _self._processAnswerFields();
             _self.invalidate();
-        });
+        } );
 
         return this;
     },
@@ -288,14 +288,15 @@ module.exports = Class( 'StepUi' )
 
 
     /**
-     * Will mark the step as dirty when the content is changed and update the
-     * staging bucket
+     * Will mark the step as dirty when the content is changed and update
+     * the staging bucket
      *
      * @return undefined
      */
     setDirtyTrigger: function()
     {
         var step = this;
+
         this.$content.bind( 'change.program', function( event )
         {
             // do nothing if the step is locked
@@ -328,34 +329,46 @@ module.exports = Class( 'StepUi' )
             {
                 index = 0;
             }
-            else if ( $element.attr( 'type' ) === 'radio' || $element.attr( 'type' ) === 'checkbox'  )
+            else if ( $element.attr( 'type' ) === 'radio'
+                || $element.attr( 'type' ) === 'checkbox'
+            )
             {
                 // if it's not checked, then this isn't the radio we're
                 // interested in. Sorry!
                 if ( !( $element.attr( 'checked' ) ) )
                 {
-                    $element.attr( 'checked', true )
+                    $element.attr( 'checked', true );
 
                     return;
                 }
 
                 // 2 in this instance is the yes/no group length.
-                var group_length = $element.attr( 'data-question-length' ) ? $element.attr( 'data-question-length' ) : 2;
+                var group_length = $element.attr( 'data-question-length' )
+                    ? $element.attr( 'data-question-length' )
+                    : 2;
 
                 index = Math.floor( index / group_length );
             }
 
-            var values          = {};
-            values[name]        = [];
-            values[name][index] = val;
+            var values              = {};
+            values[ name ]          = [];
+            values[ name ][ index ] = val;
 
 
             // update our bucket with this new data
             step.emit( step.__self.$('EVENT_DATA_CHANGE'), values );
-        });
+        } );
 
         // @note This is a hack. In IE8, checkbox change events don't properly fire.
-        this.$content.delegate('input[type="checkbox"]', 'click', function () { jQuery(this).change(); } );
+        this.$content.delegate(
+            'input[type="checkbox"]',
+            'click',
+            function ()
+            {
+                // XXX: remove global
+                jQuery( this ).change();
+            }
+        );
     },
 
 
@@ -630,7 +643,7 @@ module.exports = Class( 'StepUi' )
                     );
                 }
             }
-        });
+        } );
     },
 
 
@@ -802,11 +815,15 @@ module.exports = Class( 'StepUi' )
      */
     'public getFirstInvalidField': function( cmatch )
     {
-        var $element = this.$content.find( '.invalid_field[data-field-name]:visible:first' );
+        var $element = this.$content.find(
+            '.invalid_field[data-field-name]:visible:first'
+        );
 
         if ( $element.length === 0 )
         {
-            $element = this.$content.find( '.invalid_field[data-field-name]:first' );
+            $element = this.$content.find(
+                '.invalid_field[data-field-name]:first'
+            );
         }
 
         var name = $element.attr( 'data-field-name' );
