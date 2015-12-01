@@ -263,7 +263,7 @@ module.exports = Class( 'StepUi' )
     /**
      * Returns the generated step content as a jQuery object
      *
-     * @return jQuery generated step content
+     * @return {jQuery} generated step content
      */
     getContent: function()
     {

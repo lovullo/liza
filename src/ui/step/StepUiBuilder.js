@@ -162,9 +162,8 @@ module.exports = Class( 'StepUiBuilder' )
         // enclose it in a div so that we have a single element we can query,
         // making our lives much easier
         ui.setContent(
-            $( '<div class="raterStepDiv" />' )
-                .attr( 'id', '__step' + ui.getStep().getId() )
-                .html( data.content.html )
+            $( '<div class="step-groups" />')
+                .append( $( data.content.html ) )
         );
 
         // free the content from memory, as it's no longer needed (we don't need
