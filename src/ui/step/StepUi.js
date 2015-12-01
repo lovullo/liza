@@ -272,22 +272,6 @@ module.exports = Class( 'StepUi' )
 
 
     /**
-     * Detaches the step from the DOM
-     *
-     * @return StepUi self to allow for method chaining
-     */
-    detach: function()
-    {
-        if ( this.$content instanceof jQuery )
-        {
-            this.$content.detach();
-        }
-
-        return this;
-    },
-
-
-    /**
      * Will mark the step as dirty when the content is changed and update
      * the staging bucket
      *
