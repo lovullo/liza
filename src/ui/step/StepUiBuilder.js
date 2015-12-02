@@ -160,10 +160,11 @@ module.exports = Class( 'StepUiBuilder' )
         }
 
         // enclose it in a div so that we have a single element we can query,
-        // making our lives much easier
+        // making our lives much easier (TODO: this is transitional code
+        // moving from jQuery to vanilla DOM)
         ui.setContent(
             $( '<div class="step-groups" />')
-                .append( $( data.content.html ) )
+                .append( $( data.content.html ) )[ 0 ]
         );
 
         // free the content from memory, as it's no longer needed (we don't need
@@ -203,8 +204,10 @@ module.exports = Class( 'StepUiBuilder' )
 
             step = ui.getStep();
 
+        var $content = $( ui.getContent() );
+
         // instantiate a group object for each of the groups within this step
-        var $groups = ( ui.getContent().find( '.stepGroup' ) ).each( function()
+        var $groups = $content.find( '.stepGroup' ).each( function()
         {
             group    = _self._groupBuilder( $( this ), _self._elementStyler );
             group_id = group.getGroupId();

@@ -25,6 +25,9 @@
  *       - ElementStyler;
  *       - BucketDataValidator.
  *   - Global references (e.g. jQuery) must be removed.
+ *   - jQuery must be eliminated.
+ *     - The public API now accepts and returns vanilla DOM content, so at
+ *       least it's encapsulated now.
  *   - Checkbox-specific logic must be extracted.
  *   - This class is doing too much.
  * @end needsLove
@@ -235,13 +238,14 @@ module.exports = Class( 'StepUi' )
     /**
      * Sets content to be displayed
      *
-     * @param {jQuery} $content content to display
+     * @param {HTMLElement} content content to display
      *
      * @return {StepUi} self
      */
-    'public setContent': function( $content )
+    'public setContent': function( content )
     {
-        this.$content = $content;
+        // TODO: transition away from jQuery
+        this.$content = $( content );
 
         this._processAnswerFields();
 
@@ -263,11 +267,11 @@ module.exports = Class( 'StepUi' )
     /**
      * Returns the generated step content as a jQuery object
      *
-     * @return {jQuery} generated step content
+     * @return {HTMLElement} generated step content
      */
-    getContent: function()
+    'virtual getContent': function()
     {
-        return this.$content;
+        return this.$content[ 0 ];
     },
 
 
