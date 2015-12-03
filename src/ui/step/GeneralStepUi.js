@@ -1066,8 +1066,12 @@ module.exports = Class( 'StepUi' )
             return;
         }
 
-        var parent    = prev.parentNode,
+        // TODO: this makes the assumption that there is a parent node; we
+        // should not be concerned with that, and should find some other way
+        // of hiding the entire step while sorting (which the Ui handles)
+        var parent    = this.$content[ 0 ].parentNode,
             container = parent.parentNode,
+            sibling   = parent.nextSibling,
             i         = len - 1;
 
         if ( !container )
@@ -1117,8 +1121,15 @@ module.exports = Class( 'StepUi' )
             }
 
             // now that sorting is complete, re-add the groups in one large DOM
-            // update
-            container.appendChild( parent );
+            // update, maintaining element order
+            if ( sibling )
+            {
+                container.insertBefore( parent, sibling );
+            }
+            else
+            {
+                container.appendChild( parent );
+            }
 
             callback();
         }, 25 );
