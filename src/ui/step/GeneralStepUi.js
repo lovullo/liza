@@ -1069,9 +1069,10 @@ module.exports = Class( 'StepUi' )
         // TODO: this makes the assumption that there is a parent node; we
         // should not be concerned with that, and should find some other way
         // of hiding the entire step while sorting (which the Ui handles)
-        var parent    = this.$content[ 0 ].parentNode,
-            container = parent.parentNode,
-            sibling   = parent.nextSibling,
+        var step_node = this.$content[ 0 ].parentNode,
+            container = step_node.parentNode,
+            sibling   = step_node.nextSibling,
+            parent    = prev.parentNode,
             i         = len - 1;
 
         if ( !container )
@@ -1082,7 +1083,7 @@ module.exports = Class( 'StepUi' )
         // to prevent DOM updates for each and every group move, detach the node
         // that contains all the groups from the DOM; we'll re-add it after
         // we're done
-        container.removeChild( parent );
+        container.removeChild( step_node );
 
         // we can sort the groups in place without screwing up the DOM by simply
         // starting with the last node and progressively inserting nodes
@@ -1124,11 +1125,11 @@ module.exports = Class( 'StepUi' )
             // update, maintaining element order
             if ( sibling )
             {
-                container.insertBefore( parent, sibling );
+                container.insertBefore( step_node, sibling );
             }
             else
             {
-                container.appendChild( parent );
+                container.appendChild( step_node );
             }
 
             callback();
