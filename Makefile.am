@@ -18,7 +18,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-path_src = $(top_builddir)/src
+path_src  = $(top_builddir)/src
+path_test = $(top_builddir)/test
 
 namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
@@ -37,6 +38,6 @@ modindex: $(nsindex)
 test: check
 check:
 	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
-		mocha --recursive $(TESTARGS)
+		mocha --require $(path_test)/pre.js --recursive $(TESTARGS)
 
 FORCE:
