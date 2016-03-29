@@ -346,18 +346,6 @@ module.exports = Class( 'CollapseTableGroupUi' )
         this._initBlocks( $unit );
         this._initToggle( $unit );
 
-        // only collapse if we have multiple units
-        if ( index > 0 )
-        {
-            this._collapse( $unit );
-
-            // if this is the 2nd unit, we need to collapse the first
-            if ( index === 1 )
-            {
-                this._collapse( this._getUnitByIndex( index - 1 ) );
-            }
-        }
-
         // this will handle post-add processing, such as answer hooking
         this.postAddRow( $unit, index );
     },
