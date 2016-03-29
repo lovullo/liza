@@ -1,0 +1,19 @@
+This project is developed internally at LoVullo Associates.
+
+
+Publishing New Versions
+=======================
+To build and publish a new version on NPM:
+
+- Bump version in configure.ac
+- Test:
+    $ ./autogen.sh && ./configure && make
+- Tag version with 'v' prefix
+- Create tarball:
+    $ make dist
+- Publish:
+    $ npm publish liza-VERSION.tar.gz
+
+If you have a personal account on NPM, you may use that; otherwise,
+use the `lovullo' account.
+
