@@ -1,3 +1,4 @@
+# Liza Data Collection Framework
 <!--
   Copyright (C) 2015 LoVullo Associates, Inc.
 
@@ -9,7 +10,6 @@
   of any kind.
 -->
 
-# Liza Data Collection Framework
 
 Liza is a data collection, validation, and processing framework for JavaScript.
 
