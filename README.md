@@ -33,7 +33,7 @@ root, then you likely have the sources as committed to the project
 repository; you may generate the script by issuing the following command:
 
 ```
-  $ autoreconf -fvi
+  $ ./autogen.sh
 ```
 
 You may then see `./configure --help` for more information.

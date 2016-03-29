@@ -1,6 +1,7 @@
-## liza Makefile.am for automake
+#!/bin/bash
+# Autoreconf runner
 #
-#  Copyright (C) 2014 LoVullo Associates, Inc.
+#  Copyright (C) 2016 LoVullo Associates, Inc.
 #
 #  This file is part of liza.
 #
@@ -18,26 +19,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-path_src  = $(top_builddir)/src
-path_test = $(top_builddir)/test
+which autoreconf &>/dev/null || {
+  echo "\`autoreconf' not found in PATH"
+  exit 1
+}
 
-namespaces=$(shell find src -type d)
-nsindex=$(addsuffix /index.js, $(namespaces))
+exec autoreconf -fvi
 
-SUBDIRS = doc
-EXTRA_DIST = src package.json $(path_src)/version.js README.md autogen.sh
-
-.PHONY: FORCE todo
-
-all-am: modindex
-
-modindex: $(nsindex)
-%/index.js: FORCE
-	./tools/gen-index "$*" > "$@"
-
-test: check
-check:
-	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
-		mocha --require $(path_test)/pre.js --recursive $(TESTARGS)
-
-FORCE:
