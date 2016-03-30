@@ -375,13 +375,10 @@ module.exports = Class( 'TabbedGroupUi' )
             }, 25 );
         }
 
-        var $element = this.getElementByName( field, index );
-
-        var $elements = ( $element.parents( 'dd' ).length )
-            ? $element.parents( 'dd' ).prev( 'dt' ).andSelf()
-            : $element;
+        var $elements = this.getFieldElements( field, index );
 
         $elements.stop( true, true );
+
         if ( this.isOnVisibleTab( field, index ) )
         {
             $elements.slideUp( 500, function()
@@ -410,11 +407,7 @@ module.exports = Class( 'TabbedGroupUi' )
             }, 25 );
         }
 
-        var $element = this.getElementByName( field, index );
-
-        var $elements = ( $element.parents( 'dd' ).length )
-            ? $element.parents( 'dd' ).prev( 'dt' ).andSelf()
-            : $element;
+        var $elements = this.getFieldElements( field, index );
 
         // it's important to stop animations *before* removing the hidden class,
         // since forcing its completion may add it

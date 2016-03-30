@@ -747,6 +747,29 @@ module.exports = Class( 'GroupUi' )
     },
 
 
+    /**
+     * Retrieve field elements for show/hide operations
+     *
+     * If the field is a child of another field, then only the element
+     * associated with it will be selected; otherwise, the parent container
+     * of the field (which may be multiple elements) will be returned.
+     *
+     * @param {string} field field name
+     * @param {number} index field index
+     *
+     * @return {jQuery} field elements
+     */
+    'virtual protected getFieldElements': function( field, index )
+    {
+        var $element = this.getElementByName( field, index ),
+            is_sub   = $element.parent().hasClass( 'widget' );
+
+        return ( !is_sub && $element.parents( 'dd' ).length )
+            ? $element.parents( 'dd' ).prev( 'dt' ).andSelf()
+            : $element;
+    },
+
+
     'public hideField': function( field, index )
     {
         if ( this.isFieldVisible( field, index ) === false )
@@ -764,17 +787,13 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        var $element = this.getElementByName( field, index );
+        var $elements = this.getFieldElements( field, index );
 
-        // fall back to self if we cannot match on $p
-        var $p = $element.parents( 'dd' ).prev( 'dt' ).andSelf(),
-            $e = ( $p.length ) ? $p : $element;
-
-        $e.stop( true, true ).slideUp( 500, function()
+        $elements.stop( true, true ).slideUp( 500, function()
         {
             // be sure to remove the display:none added by jQuery so that we can
             // perform our own handling of what it means to be "hidden"
-            $e.addClass( 'hidden' ).attr( 'style', '' );
+            $elements.addClass( 'hidden' ).attr( 'style', '' );
         } );
     },
 
@@ -796,12 +815,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        var $element = this.getElementByName( field, index );
-
-        // static element or a question
-        var $elements = ( $element.is( 'dt.static' ) )
-            ? $element
-            : $element.parents( 'dd' ).prev( 'dt' ).andSelf();
+        var $elements = this.getFieldElements( field, index );
 
         $elements.find( '.hidden' ).andSelf()
             .stop( true, true )
