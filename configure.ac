@@ -1,6 +1,6 @@
 ## For use my automake and autoconf
 #
-#  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
+#  Copyright (C) 2014, 2015, 2016 LoVullo Associates, Inc.
 #
 #  This file is part of liza.
 #
