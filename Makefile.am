@@ -31,6 +31,8 @@ EXTRA_DIST = src package.json $(path_src)/version.js README.md autogen.sh
 
 all-am: modindex
 
+dist-hook: check
+
 modindex: $(nsindex)
 %/index.js: FORCE
 	./tools/gen-index "$*" > "$@"
