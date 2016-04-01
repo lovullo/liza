@@ -23,17 +23,53 @@ var AbstractClass = require( 'easejs' ).AbstractClass;
 
 
 /**
- * Style fields using CSS
+ * Style DOM fields
+ *
+ * @todo perhaps this should be called DomFieldStyler
  */
 module.exports = AbstractClass( 'FieldStyler',
 {
+    /**
+     * Retrieve unique identifier
+     *
+     * @return {string} unique identifier
+     */
     'abstract public getId': [],
 
+    /**
+     * Apply style to field
+     *
+     * @param {DomField}            field   field to style
+     * @param {HTMLElement}         element DOM element to style
+     * @param {Array.<HTMLElement>} row     DOM elements of containing row
+     *
+     * @return {FieldStyler} self
+     */
     'abstract public applyStyle': [ 'field', 'element', 'row' ],
 
+    /**
+     * Remove style from field
+     *
+     * @param {DomField}            field   field to unstyle
+     * @param {HTMLElement}         element DOM element to unstyle
+     * @param {Array.<HTMLElement>} row     DOM elements of containing row
+     *
+     * @return {FieldStyler} self
+     */
     'abstract public revokeStyle': [ 'field', 'element', 'row' ],
 
 
+    /**
+     * Add CSS class CLS to element ELEMENT
+     *
+     * This method is needed until support is dropped for browsers that do
+     * not support classList.
+     *
+     * @param {HTMLElement} element DOM element to style
+     * @param {string}      cls     class name
+     *
+     * @return {FieldStyler} self
+     */
     'protected addClass': function( element, cls )
     {
         if ( !element )
@@ -60,6 +96,17 @@ module.exports = AbstractClass( 'FieldStyler',
     },
 
 
+    /**
+     * Add CSS class CLS to element ELEMENT
+     *
+     * This method is needed until support is dropped for browsers that do
+     * not support classList.
+     *
+     * @param {HTMLElement} element DOM element to style
+     * @param {string}      cls     class name
+     *
+     * @return {FieldStyler} self
+     */
     'protected removeClass': function( element, cls )
     {
         if ( !element )
