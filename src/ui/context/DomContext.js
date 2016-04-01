@@ -332,6 +332,9 @@ module.exports = Class( 'DomContext' )
     },
 
 
+    /**
+     * @todo: rename me to unqueue; dequeue is a data structure
+     */
     'private _dequeue': function( q )
     {
         // transfer continuation queue onto the JS timeout stack
