@@ -418,9 +418,9 @@ module.exports = Class( 'ElementStyler',
     },
 
 
-    __construct: function()
+    __construct: function( jquery )
     {
-        this._$context = jQuery;
+        this._$context = jquery;
     },
 
 
