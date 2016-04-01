@@ -21,7 +21,6 @@
  * @needsLove
  *   - Global references to jQuery must be removed.
  *   - Dependencies need to be liberated:
- *       - ElementStyler;
  *       - UI.
  *   - This may not be needed, may be able to be handled differently, and
  *     really should load from data rather than a pre-generated template (?)

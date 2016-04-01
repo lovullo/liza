@@ -22,7 +22,6 @@
  *   - References to "quote" should be replaced with generic terminology
  *     representing a document.
  *   - Dependencies need to be liberated:
- *       - ElementStyler;
  *       - BucketDataValidator.
  *   - Global references (e.g. jQuery) must be removed.
  *   - jQuery must be eliminated.
