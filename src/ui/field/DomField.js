@@ -254,8 +254,8 @@ module.exports = Class( 'DomField' )
             return parent;
         }
 
-        // nodeName is in caps
-        if ( type.toUpperCase() === parent.nodeName )
+        // nodeName might not be in caps
+        if ( type.toUpperCase() === parent.nodeName.toUpperCase() )
         {
             return parent;
         }
