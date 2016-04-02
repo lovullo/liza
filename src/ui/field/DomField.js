@@ -222,9 +222,16 @@ module.exports = Class( 'DomField' )
     },
 
 
-    // TODO: move me
+    // TODO: move me; too many odd exceptions; standardize
     'protected getContainingRow': function()
     {
+        var node_name = this._element.nodeName.toUpperCase();
+
+        if ( ( node_name === 'DT' ) || ( node_name === 'DD' ) )
+        {
+            return [ this._element ];
+        }
+
         var dd = this.getParent( this._element, 'dd' ),
             dt = ( dd ) ? this.getPrecedingSibling( dd, 'dt' ) : null;
 
