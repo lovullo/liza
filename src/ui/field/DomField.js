@@ -37,13 +37,13 @@ module.exports = Class( 'DomField' )
 
     'private _element': null,
 
-    'private _idPrefix': 'q_',
-
     /**
-     * Currently active styles
-     * @type {Object}
+     * Function used to query for element
+     * @type {function(function(HTMLElement))}
      */
-    'private _styles': {},
+    'private _query': null,
+
+    'private _idPrefix': 'q_',
 
     /**
      * Cached immediate parent
@@ -59,8 +59,8 @@ module.exports = Class( 'DomField' )
             throw TypeError( "Invalid field provided" );
         }
 
-        this._field   = field;
-        this._element = element;
+        this._field = field;
+        this._query = element;
     },
 
 
@@ -68,82 +68,117 @@ module.exports = Class( 'DomField' )
     'public proxy getIndex': '_field',
 
 
+    /**
+     * Attempt to retrieve element associated with field
+     *
+     * CALLBACK will be invoked with the element, if found.  The DOM is
+     * always queried in case the element associated with this field
+     * changes, but if the element is not found, then it is assumed to be
+     * detached and the last known element is returned.
+     *
+     * @param {function(HTMLElement)} callback element callback
+     *
+     * @return {undefined}
+     */
     'private _getElement': function( callback )
     {
         // if the provided root is a function, then it should be lazily laoded
-        if ( this._element === null )
+        if ( this._query === null )
         {
             // if the element is null, then we have some serious problems; do
             // not even invoke the callback
             return;
         }
-        else if ( typeof this._element === 'function' )
+
+        this.queryElement( callback );
+    },
+
+
+    /**
+     * Locate field element on the DOM, or return last known element
+     *
+     * @todo We used to cache the element in memory, period, but we have no
+     * reliable way to clear it from memory in older versions of
+     * browsers.  For browsers that support DOM mutator events, we should
+     * use them.
+     *
+     * @param {function(HTMLElement)} callback element callback
+     *
+     * @return {undefined}
+     */
+    'protected queryElement': function( callback )
+    {
+        var _self      = this,
+            orig_query = this._query;
+
+        // any further requests for this element should be queued rather
+        // than resulting in a thundering herd toward the DOM (imporant: do
+        // this *before* invoking the function, since it may be synchronous)
+        var queue = [];
+        this._query = function( c )
         {
-            var _self = this,
-                f     = this._element;
+            queue.push( c );
+        };
 
-            // any further requests for this element should be queued rather
-            // than resulting in a thundering herd toward the DOM (imporant: do
-            // this *before* invoking the function, since it may be synchronous)
-            var queue = [];
-            this._element = function( c )
+        // attempt to retrieve our element from the DOM
+        orig_query( function( element )
+        {
+            var new_element = element || _self._element;
+
+            if ( !new_element )
             {
-                queue.push( c );
-            };
+                _self._element = null;
+                _self.emit( 'error', Error(
+                    "Cannot locate DOM element for field " +
+                    _self.getName() + "[" + _self.getIndex() + "]"
+                ) );
 
-            // attempt to retrieve our element from the DOM
-            f( function( element )
+                // do not even finish; this shit is for real.
+                return;
+            }
+
+            if ( new_element !== _self._element )
             {
-                if ( !element )
-                {
-                    _self._element = null;
-                    _self.emit( 'error', Error(
-                        "Cannot locate DOM element for field " +
-                        _self.getName() + "[" + _self.getIndex() + "]"
-                    ) );
+                _self.updateElement( new_element );
+            }
 
-                    // do not even finish; this shit is for real.
-                    return;
-                }
+            // restore original query
+            _self._query = orig_query;
 
-                _self._element = element;
+            callback( new_element );
 
-                // parent is cached in case we're detached (allows us to
-                // re-attach)
-                _self._parent = element.parentElement;
-
-                callback( element );
-
-                // if we have any queued requests, process them when we're not
-                // busy
-                var c;
-                while ( c = queue.shift() )
+            // if we have any queued requests, process them when we're not
+            // busy
+            var c;
+            while ( c = queue.shift() )
+            {
+                ( function( c )
                 {
                     setTimeout( function()
                     {
                         // return the element to the queued callback
                         c( element );
                     }, 25 );
-                }
-            } );
-
-            return;
-        }
-
-        // we already have the element; immediately return it
-        callback( this._element );
+                } )( c );
+            }
+        } );
     },
 
 
-    'private _hasStyle': function( style )
+    /**
+     * Update cached element
+     *
+     * The parent of NEW_ELEMENT is cached so that it can be reattached to
+     * the DOM after a detach.
+     *
+     * @param {HTMLElement} new_element new field element
+     *
+     * @return {undefined}
+     */
+    'protected updateElement': function( new_element )
     {
-        return !!this._styles[ style.getId() ];
-    },
-
-
-    'private _flagStyle': function( style, flag )
-    {
-        this._styles[ style.getId() ] = !!flag;
+        this._element = new_element;
+        this._parent  = new_element.parentElement;
     },
 
 
@@ -151,23 +186,19 @@ module.exports = Class( 'DomField' )
     {
         var _self = this;
 
-        // if we already have this style applied, then ignore this request
-        if ( this._hasStyle( style ) )
-        {
-            return this;
-        }
-
         // all remaining arguments should be passed to the style
         var sargs = Array.prototype.slice.call( arguments, 1 );
-
-        // flag style immediately to ensure we do not queue multiple application
-        // requests
-        this._flagStyle( style, true );
 
         // wait for our element to become available on the DOM and perform the
         // styling
         this._getElement( function( root )
         {
+            // if we already have this style applied, then ignore this request
+            if ( style.isApplied( _self.__inst, root ) )
+            {
+                return;
+            }
+
             style.applyStyle.apply(
                 style,
                 [ _self.__inst, root, _self.getContainingRow() ].concat( sargs )
@@ -182,18 +213,14 @@ module.exports = Class( 'DomField' )
     {
         var _self = this;
 
-        // if this style is not applied, then do nothing
-        if ( !( this._hasStyle( style ) ) )
-        {
-            return this;
-        }
-
-        // immediately flag style to ensure that we do not queue multiple
-        // revocation requests
-        this._flagStyle( style, false );
-
         this._getElement( function( root )
         {
+            // if we already have this style applied, then ignore this request
+            if ( !style.isApplied( _self.__inst, root ) )
+            {
+                return;
+            }
+
             style.revokeStyle( _self.__inst, root, _self.getContainingRow() );
         } );
 
