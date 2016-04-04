@@ -59,6 +59,14 @@ module.exports = Class( 'NaFieldStyler' )
         // removed once jQuery is eradicated from the framework
         element.style = '';
 
+        if ( this.isSubField( element ) )
+        {
+            // this is a child of another field; don't consider it a
+            // containing row, since we don't want our operations affecting
+            // it
+            return;
+        }
+
         for ( var i in row )
         {
             this.addClass( row[ i ], 'hidden' );
@@ -79,6 +87,34 @@ module.exports = Class( 'NaFieldStyler' )
     'public revokeStyle': function( field, element, row )
     {
         this.removeClass( element, 'hidden' );
+
+        if ( this.isSubField( element ) )
+        {
+            return;
+        }
+
         this.removeClass( row, 'hidden' );
+    },
+
+
+    /**
+     * Determine whether element ELEMENT represents a sub-field
+     *
+     * A sub-field is a field within a field; the distinction is important
+     * because we probably don't want operations on a sub-field affecting
+     * its parent.
+     *
+     * @todo: move somewhere else (Field perhaps?)
+     *
+     * @param {HTMLElement} element DOM element associated with field
+     *
+     * @return {boolean} whether ELEMENT represents a sub-field
+     */
+    'protected isSubField': function( element )
+    {
+        var parent = element.parentElement;
+
+        // ES3-compatible (don't use classList)
+        return !!( parent && /\bwidget\b/.test( parent.className ) );
     }
 } );
