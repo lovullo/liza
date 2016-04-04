@@ -45,7 +45,7 @@ describe( 'ui.styler.NaFieldStyler', function()
                 r2      = { className: '' },
                 row     = [ r1, r2 ];
 
-            Sut().applyStyle( {}, element, row );
+            Sut().applyStyle( getStubField( element ), element, row );
 
             [ element, r1, r2 ].forEach( function( ele )
             {
@@ -61,7 +61,7 @@ describe( 'ui.styler.NaFieldStyler', function()
                 r2      = { style: 'foo' },
                 row     = [ r1, r2 ];
 
-            Sut().applyStyle( {}, element, row );
+            Sut().applyStyle( getStubField( element ), element, row );
 
             [ element, r1, r2 ].forEach( function( ele )
             {
@@ -74,14 +74,17 @@ describe( 'ui.styler.NaFieldStyler', function()
         {
             var element = {
                 className: '',
-                parentElement: { className: 'widget' }
+                parentElement: {
+                    className: 'widget',
+                    removeChild: function() {},
+                }
             };
 
             var r1      = { className: '' },
                 r2      = { className: '' },
                 row     = [ r1, r2 ];
 
-            Sut().applyStyle( {}, element, row );
+            Sut().applyStyle( getStubField( element ), element, row );
 
             expect( element.className ).to.match( /\bhidden\b/ );
 
@@ -96,14 +99,17 @@ describe( 'ui.styler.NaFieldStyler', function()
         {
             var element = {
                 style: 'foo',
-                parentElement: { className: 'widget' }
+                parentElement: {
+                    className: 'widget',
+                    removeChild: function() {},
+                }
             };
 
             var r1      = { style: 'foo' },
                 r2      = { style: 'foo' },
                 row     = [ r1, r2 ];
 
-            Sut().applyStyle( {}, element, row );
+            Sut().applyStyle( getStubField( element ), element, row );
 
             expect( element.style ).to.equal( '' );
 
@@ -111,6 +117,25 @@ describe( 'ui.styler.NaFieldStyler', function()
             {
                 expect( ele.style ).to.equal( 'foo' );
             } );
+        } );
+
+
+        // f@#(& IE
+        it( 'removes subfield from DOM', function( done )
+        {
+            var element = {
+                style: '',
+                parentElement: {
+                    className: 'widget',
+                    removeChild: function( ele )
+                    {
+                        expect( ele ).to.equal( element );
+                        done();
+                    },
+                }
+            };
+
+            Sut().applyStyle( getStubField( element ), element, [] );
         } );
     } );
 
@@ -124,7 +149,7 @@ describe( 'ui.styler.NaFieldStyler', function()
                 r2      = { className: 'foo hidden' },
                 row     = [ r1, r2 ];
 
-            Sut().revokeStyle( {}, element, row );
+            Sut().revokeStyle( getStubField( element ), element, row );
 
             [ element, r1, r2 ].forEach( function( ele )
             {
@@ -141,7 +166,7 @@ describe( 'ui.styler.NaFieldStyler', function()
                 r2      = { style: 'foo' },
                 row     = [ r1, r2 ];
 
-            Sut().revokeStyle( {}, element, row );
+            Sut().revokeStyle( getStubField( element ), element, row );
 
             [ element, r1, r2 ].forEach( function( ele )
             {
@@ -154,14 +179,17 @@ describe( 'ui.styler.NaFieldStyler', function()
         {
             var element = {
                 className: 'foo hidden',
-                parentElement: { className: 'widget' }
+                parentElement: {
+                    className: 'widget',
+                    appendChild: function() {},
+                }
             };
 
             var r1      = { className: 'foo hidden' },
                 r2      = { className: 'foo hidden' },
                 row     = [ r1, r2 ];
 
-            Sut().revokeStyle( {}, element, row );
+            Sut().revokeStyle( getStubField( element ), element, row );
 
             expect( element.className ).to.not.match( /\bhidden\b/ );
             expect( element.className ).to.match( /foo/ );
@@ -170,6 +198,25 @@ describe( 'ui.styler.NaFieldStyler', function()
             {
                 expect( ele.className ).to.equal( 'foo hidden' );
             } );
+        } );
+
+
+        // we eventually need to care about where it's re-attached
+        it( 're-attaches subfield to DOM', function( done )
+        {
+            var element = {
+                className: '',
+                parentElement: {
+                    className: 'widget',
+                    appendChild: function( ele )
+                    {
+                        expect( ele ).to.equal( element );
+                        done();
+                    },
+                }
+            };
+
+            Sut().revokeStyle( getStubField( element ), element, [] );
         } );
     } );
 
@@ -182,10 +229,13 @@ describe( 'ui.styler.NaFieldStyler', function()
             {
                 var element = {
                     className: '',
-                    parentElement: { className: 'widget' }
+                    parentElement: {
+                        className: 'widget',
+                        removeChild: function() {},
+                    }
                 };
 
-                expect( protSut().protIsSubField( element ) )
+                expect( protSut().protIsSubField( getStubField( element ) ) )
                     .to.be.true;
             } );
 
@@ -196,12 +246,23 @@ describe( 'ui.styler.NaFieldStyler', function()
                     className: '',
                 };
 
-                expect( protSut().protIsSubField( element ) )
+                expect( protSut().protIsSubField( getStubField( element ) ) )
                     .to.be.false;
             } );
         } );
     } );
 } );
+
+
+function getStubField( element )
+{
+    return {
+        getParent: function()
+        {
+            return element.parentElement;
+        }
+    };
+}
 
 
 function protSut()

@@ -26,6 +26,8 @@ var Class       = require( 'easejs' ).Class,
 /**
  * Style fields that are not applicable (and so do not need to collect data
  * from the user)
+ *
+ * @todo Detaching should be done by DomField
  */
 module.exports = Class( 'NaFieldStyler' )
     .extend( FieldStyler,
@@ -59,8 +61,10 @@ module.exports = Class( 'NaFieldStyler' )
         // removed once jQuery is eradicated from the framework
         element.style = '';
 
-        if ( this.isSubField( element ) )
+        if ( this.isSubField( field ) )
         {
+            field.getParent().removeChild( element );
+
             // this is a child of another field; don't consider it a
             // containing row, since we don't want our operations affecting
             // it
@@ -88,8 +92,10 @@ module.exports = Class( 'NaFieldStyler' )
     {
         this.removeClass( element, 'hidden' );
 
-        if ( this.isSubField( element ) )
+        if ( this.isSubField( field ) )
         {
+            field.getParent().appendChild( element );
+
             return;
         }
 
@@ -110,9 +116,9 @@ module.exports = Class( 'NaFieldStyler' )
      *
      * @return {boolean} whether ELEMENT represents a sub-field
      */
-    'protected isSubField': function( element )
+    'protected isSubField': function( field )
     {
-        var parent = element.parentElement;
+        var parent = field.getParent();
 
         // ES3-compatible (don't use classList)
         return !!( parent && /\bwidget\b/.test( parent.className ) );
