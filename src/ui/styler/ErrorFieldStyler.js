@@ -35,6 +35,24 @@ module.exports = Class( 'ErrorFieldStyler' )
     },
 
 
+    /**
+     * Determines whether the field has been styled
+     *
+     * Having this predicate on the styler rather than the field ensures
+     * that, even if the two somehow get out of sync (or styles are applied
+     * elsewhere), application/revocation will function sanely.
+     *
+     * @param {DomField}            field   field to style
+     * @param {HTMLElement}         element DOM element to style
+     *
+     * @return {boolean} whether FIELD has been styled by this styler
+     */
+    'public isApplied': function( field, element )
+    {
+        return /\binvalid_field\b/.test( element.className );
+    },
+
+
     'public applyStyle': function( field, element, row, msg )
     {
         var _self = this;

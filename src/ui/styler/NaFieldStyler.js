@@ -44,6 +44,24 @@ module.exports = Class( 'NaFieldStyler' )
 
 
     /**
+     * Determines whether the field has been styled
+     *
+     * Having this predicate on the styler rather than the field ensures
+     * that, even if the two somehow get out of sync (or styles are applied
+     * elsewhere), application/revocation will function sanely.
+     *
+     * @param {DomField}            field   field to style
+     * @param {HTMLElement}         element DOM element to style
+     *
+     * @return {boolean} whether FIELD has been styled by this styler
+     */
+    'public isApplied': function( field, element )
+    {
+        return /\bhidden\b/.test( element.className );
+    },
+
+
+    /**
      * Apply style to field
      *
      * @param {DomField}            field   field to style

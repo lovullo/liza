@@ -37,6 +37,20 @@ module.exports = AbstractClass( 'FieldStyler',
     'abstract public getId': [],
 
     /**
+     * Determines whether the field has been styled
+     *
+     * Having this predicate on the styler rather than the field ensures
+     * that, even if the two somehow get out of sync (or styles are applied
+     * elsewhere), application/revocation will function sanely.
+     *
+     * @param {DomField}            field   field to style
+     * @param {HTMLElement}         element DOM element to style
+     *
+     * @return {boolean} whether FIELD has been styled by this styler
+     */
+    'abstract public isApplied': [ 'field', 'element' ],
+
+    /**
      * Apply style to field
      *
      * @param {DomField}            field   field to style

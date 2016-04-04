@@ -221,6 +221,30 @@ describe( 'ui.styler.NaFieldStyler', function()
     } );
 
 
+    describe( '#isApplied', function()
+    {
+        it( 'recognizes when applied', function()
+        {
+            var element = {
+                className: '',
+            };
+
+            var sut   = Sut(),
+                field = getStubField( element );
+
+            sut.applyStyle( field, element, [] );
+
+            expect( sut.isApplied( field, element ) )
+                .to.be.true;
+
+            sut.revokeStyle( field, element, [] );
+
+            expect( sut.isApplied( field, element ) )
+                .to.be.false;
+        } );
+    } );
+
+
     describe( 'protected API', function()
     {
         describe( '#isSubField', function()
