@@ -45,6 +45,12 @@ module.exports = Class( 'DomField' )
      */
     'private _styles': {},
 
+    /**
+     * Cached immediate parent
+     * @type {HTMLElement}
+     */
+    'private _parent': null,
+
 
     __construct: function( field, element )
     {
@@ -101,6 +107,11 @@ module.exports = Class( 'DomField' )
                 }
 
                 _self._element = element;
+
+                // parent is cached in case we're detached (allows us to
+                // re-attach)
+                _self._parent = element.parentElement;
+
                 callback( element );
 
                 // if we have any queued requests, process them when we're not
@@ -232,18 +243,35 @@ module.exports = Class( 'DomField' )
             return [ this._element ];
         }
 
-        var dd = this.getParent( this._element, 'dd' ),
+        var dd = this.getParent( 'dd' ),
             dt = ( dd ) ? this.getPrecedingSibling( dd, 'dt' ) : null;
 
         return ( dt )
             ? [ dd, dt ]
-            : [ this.getParent( this._element ) ];
+            : [ this.getParent() ];
     },
 
 
-    'protected getParent': function( element, type )
+    'public getParent': function( type )
+    {
+        return this.getElementParent( this._element, type );
+    },
+
+
+    'protected getElementParent': function( element, type )
     {
         var parent = element.parentElement;
+
+        if ( element === this._element )
+        {
+            parent = parent || this._parent;
+
+            // update parent reference if it's since changed
+            if ( this._parent !== parent )
+            {
+                this._parent = parent;
+            }
+        }
 
         if ( parent === null )
         {
@@ -261,7 +289,7 @@ module.exports = Class( 'DomField' )
         }
 
         // otherwise, keep looking
-        return this.getParent( parent, type );
+        return this.getElementParent( parent, type );
     },
 
 
