@@ -373,6 +373,8 @@ module.exports = Class( 'TabbedGroupUi' )
             {
                 _self.doHideField( field, index, true );
             }, 25 );
+
+            return;
         }
 
         var $elements = this.getFieldElements( field, index );
@@ -405,6 +407,8 @@ module.exports = Class( 'TabbedGroupUi' )
             {
                 _self.doShowField( field, index, true );
             }, 25 );
+
+            return;
         }
 
         var $elements = this.getFieldElements( field, index );
