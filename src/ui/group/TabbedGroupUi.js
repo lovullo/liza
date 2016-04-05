@@ -1,7 +1,7 @@
 /**
  * Group tabbed UI
  *
- *  Copyright (C) 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2015, 2016 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -373,23 +373,11 @@ module.exports = Class( 'TabbedGroupUi' )
             {
                 _self.doHideField( field, index, true );
             }, 25 );
+
+            return;
         }
 
-        var $elements = this.getFieldElements( field, index );
-
-        $elements.stop( true, true );
-
-        if ( this.isOnVisibleTab( field, index ) )
-        {
-            $elements.slideUp( 500, function()
-            {
-                $( this ).addClass( 'hidden' );
-            } );
-        }
-        else
-        {
-            $elements.hide().addClass( 'hidden' );
-        }
+        this.__super( field, index );
     },
 
 
@@ -405,26 +393,11 @@ module.exports = Class( 'TabbedGroupUi' )
             {
                 _self.doShowField( field, index, true );
             }, 25 );
+
+            return;
         }
 
-        var $elements = this.getFieldElements( field, index );
-
-        // it's important to stop animations *before* removing the hidden class,
-        // since forcing its completion may add it
-        $elements
-            .stop( true, true )
-            .find( '.hidden' )
-            .andSelf()
-            .removeClass( 'hidden' );
-
-        if ( this.isOnVisibleTab( field, index ) )
-        {
-            $elements.slideDown( 500 );
-        }
-        else
-        {
-            $elements.show();
-        }
+        this.__super( field, index );
     },
 
 

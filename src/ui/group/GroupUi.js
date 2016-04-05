@@ -1,7 +1,7 @@
 /**
  * General UI logic for groups
  *
- *  Copyright (C) 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2015, 2016 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -144,23 +144,45 @@ module.exports = Class( 'GroupUi' )
      */
     'private _rawFieldCount': 0,
 
+    /**
+     * DOM group context
+     * @type {DomContext}
+     */
+    'protected context': null,
+
+    /**
+     * Styler when fields are no longer applicable
+     * @type {FieldStyler}
+     */
+    'private _naStyler': null,
+
 
     /**
      * Initializes GroupUi
      *
-     * @param Group         group    group to style
-     * @param jQuery        $content the group content
-     * @param ElementStyler styler   styler to use to style elements
-     * @param jQuery        jquery   jQuery-compatible object
+     * @todo three of the below parameters might be able to be removed by
+     * using context instead; the separate context is transitional
+     * (refactoring).
+     *
+     * @param {Group}         group     group to style
+     * @param {jQuery}        $content  the group content
+     * @param {ElementStyler} styler    styler to use to style elements
+     * @param {jQuery}        jquery    jQuery-compatible object
+     * @param {DomContext}    context   group context
+     * @param {FieldStyler}   na_styler styler for fields that are N/A
      *
      * @return  {undefined}
      */
-    'public __construct': function( group, $content, styler, jquery )
+    'public __construct': function(
+        group, $content, styler, jquery, context, na_styler
+    )
     {
-        this.group    = group;
-        this.$content = $content;
-        this.styler   = styler;
-        this._jquery  = jquery;
+        this.group     = group;
+        this.$content  = $content;
+        this.styler    = styler;
+        this._jquery   = jquery;
+        this.context   = context;
+        this._naStyler = na_styler;
     },
 
 
@@ -787,14 +809,8 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        var $elements = this.getFieldElements( field, index );
-
-        $elements.stop( true, true ).slideUp( 500, function()
-        {
-            // be sure to remove the display:none added by jQuery so that we can
-            // perform our own handling of what it means to be "hidden"
-            $elements.addClass( 'hidden' ).attr( 'style', '' );
-        } );
+        this.context.getFieldByName( field, index )
+            .applyStyle( this._naStyler );
     },
 
 
@@ -815,12 +831,8 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        var $elements = this.getFieldElements( field, index );
-
-        $elements.find( '.hidden' ).andSelf()
-            .stop( true, true )
-            .removeClass( 'hidden' )
-            .slideDown( 500 );
+        this.context.getFieldByName( field, index )
+            .revokeStyle( this._naStyler );
     },
 
 

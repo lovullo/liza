@@ -1,7 +1,7 @@
 /**
  * Creates DomField
  *
- *  Copyright (C) 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2015, 2016 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -17,11 +17,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @needsLove
- *   - Dependencies need to be liberated:
- *       - ElementStyler.
- * @end needsLove
  */
 
 var Class = require( 'easejs' ).Class,
@@ -85,7 +80,7 @@ module.exports = Class( 'DomFieldFactory',
 
                 function c()
                 {
-                    callback( _self._elementStyler.getElementByName(
+                    callback( _self._elementStyler.getElementByNameLax(
                         name, index, null, root
                     )[0] );
                 }
