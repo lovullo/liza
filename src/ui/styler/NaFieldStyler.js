@@ -72,15 +72,10 @@ module.exports = Class( 'NaFieldStyler' )
      */
     'public applyStyle': function( field, element, row )
     {
-        this.addClass( element, 'hidden' );
-
-        // this is a workaround from the old days where jQuery would add
-        // styles to hide elements, which we wanted to override; this can be
-        // removed once jQuery is eradicated from the framework
-        element.style = '';
 
         if ( this.isSubField( field ) )
         {
+            this.hideField( element, [] );
             field.getParent().removeChild( element );
 
             // this is a child of another field; don't consider it a
@@ -89,11 +84,7 @@ module.exports = Class( 'NaFieldStyler' )
             return;
         }
 
-        for ( var i in row )
-        {
-            this.addClass( row[ i ], 'hidden' );
-            row[ i ].style = '';
-        }
+        this.hideField( element, row );
     },
 
 
@@ -108,16 +99,15 @@ module.exports = Class( 'NaFieldStyler' )
      */
     'public revokeStyle': function( field, element, row )
     {
-        this.removeClass( element, 'hidden' );
-
         if ( this.isSubField( field ) )
         {
+            this.showField( element, [] );
             field.getParent().appendChild( element );
 
             return;
         }
 
-        this.removeClass( row, 'hidden' );
+        this.showField( element, row );
     },
 
 
@@ -140,5 +130,29 @@ module.exports = Class( 'NaFieldStyler' )
 
         // ES3-compatible (don't use classList)
         return !!( parent && /\bwidget\b/.test( parent.className ) );
+    },
+
+
+    'virtual protected hideField': function( element, row )
+    {
+        this.addClass( element, 'hidden' );
+
+        // this is a workaround from the old days where jQuery would add
+        // styles to hide elements, which we wanted to override; this can be
+        // removed once jQuery is eradicated from the framework
+        element.style = '';
+
+        for ( var i in row )
+        {
+            this.addClass( row[ i ], 'hidden' );
+            row[ i ].style = '';
+        }
+    },
+
+
+    'virtual protected showField': function( element, row )
+    {
+        this.removeClass( element, 'hidden' );
+        this.removeClass( row, 'hidden' );
     }
 } );

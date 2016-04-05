@@ -27,6 +27,71 @@ var styler  = require( '../../../' ).ui.styler,
 
 describe( 'ui.styler.NaFieldStyler', function()
 {
+    function testApplyHidden()
+    {
+        var element = { className: '' },
+            r1      = { className: '' },
+            r2      = { className: '' },
+            row     = [ r1, r2 ];
+
+        Sut().applyStyle( getStubField( element ), element, row );
+
+        [ element, r1, r2 ].forEach( function( ele )
+        {
+            expect( ele.className ).to.match( /\bhidden\b/ );
+        } );
+    }
+
+
+    function testApplyClear()
+    {
+        var element = { style: 'foo' },
+            r1      = { style: 'foo' },
+            r2      = { style: 'foo' },
+            row     = [ r1, r2 ];
+
+        Sut().applyStyle( getStubField( element ), element, row );
+
+        [ element, r1, r2 ].forEach( function( ele )
+        {
+            expect( ele.style ).to.equal( '' );
+        } );
+    }
+
+
+    function testRevokeHidden()
+    {
+        var element = { className: 'foo hidden' },
+            r1      = { className: 'foo hidden' },
+            r2      = { className: 'foo hidden' },
+            row     = [ r1, r2 ];
+
+        Sut().revokeStyle( getStubField( element ), element, row );
+
+        [ element, r1, r2 ].forEach( function( ele )
+        {
+            expect( ele.className ).to.not.match( /\bhidden\b/ );
+            expect( ele.className ).to.match( /foo/ );
+        } );
+    }
+
+
+    function testRevokeStyle()
+    {
+        var element = { style: 'foo' },
+            r1      = { style: 'foo' },
+            r2      = { style: 'foo' },
+            row     = [ r1, r2 ];
+
+        Sut().revokeStyle( getStubField( element ), element, row );
+
+        [ element, r1, r2 ].forEach( function( ele )
+        {
+            expect( ele.style ).to.equal( 'foo' );
+        } );
+    }
+
+
     describe( '#getId', function()
     {
         it( 'returns unique identifier', function()
@@ -38,36 +103,8 @@ describe( 'ui.styler.NaFieldStyler', function()
 
     describe( '#applyStyle', function()
     {
-        it( 'sets hidden class on all elements', function()
-        {
-            var element = { className: '' },
-                r1      = { className: '' },
-                r2      = { className: '' },
-                row     = [ r1, r2 ];
-
-            Sut().applyStyle( getStubField( element ), element, row );
-
-            [ element, r1, r2 ].forEach( function( ele )
-            {
-                expect( ele.className ).to.match( /\bhidden\b/ );
-            } );
-        } );
-
-
-        it( 'clears style on all elements', function()
-        {
-            var element = { style: 'foo' },
-                r1      = { style: 'foo' },
-                r2      = { style: 'foo' },
-                row     = [ r1, r2 ];
-
-            Sut().applyStyle( getStubField( element ), element, row );
-
-            [ element, r1, r2 ].forEach( function( ele )
-            {
-                expect( ele.style ).to.equal( '' );
-            } );
-        } );
+        it( 'sets hidden class on all elements', testApplyHidden );
+        it( 'clears style on all elements', testApplyClear );
 
 
         it( 'does not set class on subfield parents', function()
@@ -142,37 +179,8 @@ describe( 'ui.styler.NaFieldStyler', function()
 
     describe( '#revokeStyle', function()
     {
-        it( 'removes hidden class on all elements', function()
-        {
-            var element = { className: 'foo hidden' },
-                r1      = { className: 'foo hidden' },
-                r2      = { className: 'foo hidden' },
-                row     = [ r1, r2 ];
-
-            Sut().revokeStyle( getStubField( element ), element, row );
-
-            [ element, r1, r2 ].forEach( function( ele )
-            {
-                expect( ele.className ).to.not.match( /\bhidden\b/ );
-                expect( ele.className ).to.match( /foo/ );
-            } );
-        } );
-
-
-        it( 'does not clear style on all elements', function()
-        {
-            var element = { style: 'foo' },
-                r1      = { style: 'foo' },
-                r2      = { style: 'foo' },
-                row     = [ r1, r2 ];
-
-            Sut().revokeStyle( getStubField( element ), element, row );
-
-            [ element, r1, r2 ].forEach( function( ele )
-            {
-                expect( ele.style ).to.equal( 'foo' );
-            } );
-        } );
+        it( 'removes hidden class on all elements', testRevokeHidden );
+        it( 'does not clear style on all elements', testRevokeStyle );
 
 
         it( 'does not remove hidden class on subfield parents', function()
@@ -273,6 +281,20 @@ describe( 'ui.styler.NaFieldStyler', function()
                 expect( protSut().protIsSubField( getStubField( element ) ) )
                     .to.be.false;
             } );
+        } );
+
+
+        describe( '#hideField', function()
+        {
+            it( 'sets hidden class on all elements', testApplyHidden );
+            it( 'clears style on all elements', testApplyClear );
+        } );
+
+
+        describe( '#showField', function()
+        {
+            it( 'removes hidden class on all elements', testRevokeHidden );
+            it( 'does not clear style on all elements', testRevokeStyle );
         } );
     } );
 } );
