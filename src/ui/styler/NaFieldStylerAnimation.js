@@ -61,10 +61,16 @@ module.exports = Trait.extend( NaFieldStyler,
      */
     'override protected showField': function( element, row )
     {
-        var $row = this._jquery( row );
+        var $row     = this._jquery( row ),
+            $element = this._jquery( element );
 
         $row.stop( true, true );
+
         this.__super( element, row );
+
+        // jQuery adds its own styling (e.g. display:none)
+        $element.show();
+
         $row
             .hide()
             .slideDown( 500 );
