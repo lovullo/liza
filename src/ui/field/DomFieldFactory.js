@@ -1,7 +1,7 @@
 /**
  * Creates DomField
  *
- *  Copyright (C) 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2015, 2016 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -80,7 +80,7 @@ module.exports = Class( 'DomFieldFactory',
 
                 function c()
                 {
-                    callback( _self._elementStyler.getElementByName(
+                    callback( _self._elementStyler.getElementByNameLax(
                         name, index, null, root
                     )[0] );
                 }
