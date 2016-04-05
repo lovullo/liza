@@ -1153,6 +1153,39 @@ module.exports = Class( 'ElementStyler',
 
 
     /**
+     * Attempt to retrieve DOM element by name, or id if not a field
+     *
+     * If NAME does not represent a known field, the element will be located
+     * using NAME as an element id; otherwise, this acts just as
+     * getElementByName.
+     *
+     * @param {string}  name     element name (question name)
+     * @param {number=} index    index of element to retrieve (bucket index)
+     * @param {string=} filter   filter to apply to widgets
+     * @param {jQuery=} $context filtering context
+     *
+     * @return {jQuery} matches
+     */
+    'public getElementByNameLax': function(
+        name, index, filter, $context
+    )
+    {
+        $context = $context || this._$context;
+
+        if ( !( this.isAField( name ) ) )
+        {
+            return $context.find(
+                '#' + name + ':nth(' + index + ')'
+            );
+        }
+
+        return this.getElementByName(
+            name, index, filter, $context
+        );
+    },
+
+
+    /**
      * Retrieve id of the element from the given name and index
      *
      * This is necessary both because we do not want id "guess" logic spread
