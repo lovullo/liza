@@ -29,9 +29,9 @@ describe( 'ui.styler.NaFieldStyler', function()
 {
     function testApplyHidden()
     {
-        var element = { className: '' },
-            r1      = { className: '' },
-            r2      = { className: '' },
+        var element = stubEle( { className: '' } ),
+            r1      = stubEle( { className: '' } ),
+            r2      = stubEle( { className: '' } ),
             row     = [ r1, r2 ];
 
         Sut().applyStyle( getStubField( element ), element, row );
@@ -45,9 +45,9 @@ describe( 'ui.styler.NaFieldStyler', function()
 
     function testApplyClear()
     {
-        var element = { style: 'foo' },
-            r1      = { style: 'foo' },
-            r2      = { style: 'foo' },
+        var element = stubEle( { style: 'foo' } ),
+            r1      = stubEle( { style: 'foo' } ),
+            r2      = stubEle( { style: 'foo' } ),
             row     = [ r1, r2 ];
 
         Sut().applyStyle( getStubField( element ), element, row );
@@ -61,9 +61,9 @@ describe( 'ui.styler.NaFieldStyler', function()
 
     function testRevokeHidden()
     {
-        var element = { className: 'foo hidden' },
-            r1      = { className: 'foo hidden' },
-            r2      = { className: 'foo hidden' },
+        var element = stubEle( { className: 'foo hidden' } ),
+            r1      = stubEle( { className: 'foo hidden' } ),
+            r2      = stubEle( { className: 'foo hidden' } ),
             row     = [ r1, r2 ];
 
         Sut().revokeStyle( getStubField( element ), element, row );
@@ -78,9 +78,9 @@ describe( 'ui.styler.NaFieldStyler', function()
 
     function testRevokeStyle()
     {
-        var element = { style: 'foo' },
-            r1      = { style: 'foo' },
-            r2      = { style: 'foo' },
+        var element = stubEle( { style: 'foo' } ),
+            r1      = stubEle( { style: 'foo' } ),
+            r2      = stubEle( { style: 'foo' } ),
             row     = [ r1, r2 ];
 
         Sut().revokeStyle( getStubField( element ), element, row );
@@ -109,16 +109,16 @@ describe( 'ui.styler.NaFieldStyler', function()
 
         it( 'does not set class on subfield parents', function()
         {
-            var element = {
+            var element = stubEle( {
                 className: '',
                 parentElement: {
                     className: 'widget',
                     removeChild: function() {},
                 }
-            };
+            } );
 
-            var r1      = { className: '' },
-                r2      = { className: '' },
+            var r1      = stubEle( { className: '' } ),
+                r2      = stubEle( { className: '' } ),
                 row     = [ r1, r2 ];
 
             Sut().applyStyle( getStubField( element ), element, row );
@@ -134,16 +134,16 @@ describe( 'ui.styler.NaFieldStyler', function()
 
         it( 'does not clears style subfield parents', function()
         {
-            var element = {
+            var element = stubEle( {
                 style: 'foo',
                 parentElement: {
                     className: 'widget',
                     removeChild: function() {},
                 }
-            };
+            } );
 
-            var r1      = { style: 'foo' },
-                r2      = { style: 'foo' },
+            var r1      = stubEle( { style: 'foo' } ),
+                r2      = stubEle( { style: 'foo' } ),
                 row     = [ r1, r2 ];
 
             Sut().applyStyle( getStubField( element ), element, row );
@@ -160,7 +160,7 @@ describe( 'ui.styler.NaFieldStyler', function()
         // f@#(& IE
         it( 'removes subfield from DOM', function( done )
         {
-            var element = {
+            var element = stubEle( {
                 style: '',
                 parentElement: {
                     className: 'widget',
@@ -170,7 +170,7 @@ describe( 'ui.styler.NaFieldStyler', function()
                         done();
                     },
                 }
-            };
+            } );
 
             Sut().applyStyle( getStubField( element ), element, [] );
         } );
@@ -233,9 +233,9 @@ describe( 'ui.styler.NaFieldStyler', function()
     {
         it( 'recognizes when applied', function()
         {
-            var element = {
+            var element = stubEle( {
                 className: '',
-            };
+            } );
 
             var sut   = Sut(),
                 field = getStubField( element );
@@ -319,4 +319,15 @@ function protSut()
             return this.isSubField( element );
         }
     } )();
+}
+
+
+function stubEle( obj )
+{
+    obj.setAttribute = function( name, value )
+    {
+        obj[ name ] = value;
+    }
+
+    return obj;
 }

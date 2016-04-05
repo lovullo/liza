@@ -137,15 +137,18 @@ module.exports = Class( 'NaFieldStyler' )
     {
         this.addClass( element, 'hidden' );
 
-        // this is a workaround from the old days where jQuery would add
+        // This is a workaround from the old days where jQuery would add
         // styles to hide elements, which we wanted to override; this can be
-        // removed once jQuery is eradicated from the framework
-        element.style = '';
+        // removed once jQuery is eradicated from the framework.
+        //
+        // setAttribute is intentional!  IE<9 doesn't support element.style
+        // as an lvalue.
+        element.setAttribute( 'style', '' );
 
         for ( var i in row )
         {
             this.addClass( row[ i ], 'hidden' );
-            row[ i ].style = '';
+            row[ i ].setAttribute( 'style', '' );
         }
     },
 
