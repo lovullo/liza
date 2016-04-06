@@ -19,10 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-    Field = require( '../../field/Field' ),
-
-    EventEmitter = require( 'events' ).EventEmitter;
+var Class                 = require( 'easejs' ).Class,
+    Field                 = require( '../../field/Field' ),
+    DomFieldNotFoundError = require( './DomFieldNotFoundError' ),
+    EventEmitter          = require( 'events' ).EventEmitter;
 
 
 module.exports = Class( 'DomField' )
@@ -128,7 +128,7 @@ module.exports = Class( 'DomField' )
             if ( !new_element )
             {
                 _self._element = null;
-                _self.emit( 'error', Error(
+                _self.emit( 'error', DomFieldNotFoundError(
                     "Cannot locate DOM element for field " +
                     _self.getName() + "[" + _self.getIndex() + "]"
                 ) );
