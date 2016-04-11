@@ -46,6 +46,12 @@ module.exports = Class( 'ClientFieldValidator' )
      */
     'private _validator': null,
 
+    /**
+     * Past validation failures
+     * @type {Object}
+     */
+    'private _past_fail': {},
+
 
     /**
      * Initializes monitor with a validator
@@ -59,28 +65,54 @@ module.exports = Class( 'ClientFieldValidator' )
 
 
     /**
-     * Monitors the given quote_client for field changes, performing validations
-     * and formatting automatically
+     * Monitor the given QUOTE_CLIENT for field changes and trigger validation     *
+     *
+     * @param {QuoteClient} quote_client quote client to validate against
+     *
+     * @param {function(Object)} failure_callback  function to call with errors
+     * @param {function(Object)} fix_callback      function to call with indexes
+     *                                             of fields that have previously
+     *                                             failed, but have since been
+     *                                             resolved
+     *
+     * @return {ClientFieldValidator} self
+     */
+    'public monitor': function( quote_client, failure_callback, fix_callback )
+    {
+        var _self = this;
+
+        // catch problems *before* the data is staged, altering the data
+        // directly if need be
+        quote_client.on( 'preDataUpdate', function( data )
+        {
+            _self.validate( data, failure_callback, fix_callback );
+        } );
+
+        return this;
+    },
+
+
+    /**
+     * Perform field validation
      *
      * The failure callback will be called only if there are errors to report,
      * in which case the object will contain each field that has errors with an
      * array of their failed indexes.
      *
-     * This validator will keep track of failures *per client* and can report on
-     * when the failure has been resolved. This feature is useful for clearing
-     * any error indicators.
+     * This validator will keep track of failures and can report on when the
+     * failure has been resolved. This feature is useful for clearing any
+     * error indicators.
      *
-     * @param {QuoteClient} quote_client quote client to validate against
-     *
-     * @param {function(Object)} failure_callback function to call with errors
-     * @param {function(Object)} fixcallback      function to call with indexes
-     *                                            of fields that have previously
-     *                                            failed, but have since been
-     *                                            resolved
+     * @param {Object}           data              bucket data diff
+     * @param {function(Object)} failure_callback  function to call with errors
+     * @param {function(Object)} fix_callback      function to call with indexes
+     *                                             of fields that have previously
+     *                                             failed, but have since been
+     *                                             resolved
      *
      * @return {ClientFieldValidator} self
      */
-    'public monitor': function( quote_client, failure_callback, fix_callback )
+    'public validate': function( data, failure_callback, fix_callback )
     {
         // minor overhead for default definition and invocation (likely to be
         // optimized away by most modern engines) for the sake of code clarity
@@ -88,74 +120,62 @@ module.exports = Class( 'ClientFieldValidator' )
         failure_callback = failure_callback || function() {};
         fix_callback     = fix_callback     || function() {};
 
-        var _self = this;
+        var failures = {};
 
-        // past failure are stored per-quote in order to call the fix callback
-        // once they are resolved
-        var past_fail = {};
-
-        // catch problems *before* the data is staged, altering the data
-        // directly if need be
-        quote_client.on( 'preDataUpdate', function( data )
+        // assert the correctness of the data, formatting it in-place for
+        // storage in the bucket
+        try
         {
-            var validator  = _self._validator,
-                failures   = {};
-
-            // assert the correctness of the data, formatting it in-place for
-            // storage in the bucket
-            try
+            this._validator.validate( data, function( name, value, i, e )
             {
-                validator.validate( data, function( name, value, i, e )
-                {
-                    // set failures to undefined, which will cause the staging
-                    // bucket to ignore the value entirely (we don't want crap
-                    // data to be staged)
-                    data[ name ][ i ] = undefined;
+                // set failures to undefined, which will cause the staging
+                // bucket to ignore the value entirely (we don't want crap
+                // data to be staged)
+                data[ name ][ i ] = undefined;
 
-                    // these failures will be returned (return as an object
-                    // rather than an array, even though our indexes are
-                    // numeric, to make debugging easier, since some values may
-                    // be undefined)
-                    ( failures[ name ] = failures[ name ] || {} )[ i ] = value;
-                }, true );
-            }
-            catch ( e )
-            {
-                _self.emit( 'error', e );
-            }
+                // these failures will be returned (return as an object
+                // rather than an array, even though our indexes are
+                // numeric, to make debugging easier, since some values may
+                // be undefined)
+                ( failures[ name ] = failures[ name ] || {} )[ i ] = value;
+            }, true );
+        }
+        catch ( e )
+        {
+            this.emit( 'error', e );
+        }
 
-            // allow others to add to the list of failures if needed
-            _self.emit( 'validate', data, failures );
+        // allow others to add to the list of failures if needed
+        this.emit( 'validate', data, failures );
 
-            var fixed = _self._detectFixes( past_fail, data, failures );
+        var fixed = this._detectFixes( this._past_fail, data, failures );
 
-            // quick pre-ES5 means of detecting object keys
-            var has_fail = false;
-            for ( var _ in failures )
-            {
-                has_fail = true;
-                break;
-            }
+        // quick pre-ES5 means of detecting object keys
+        var has_fail = false;
+        for ( var _ in failures )
+        {
+            has_fail = true;
+            break;
+        }
 
-            // it's important to do this *after* retrieving the fixed indexes,
-            // but we should do it *before* calling the callbacks just in case
-            // they themselves trigger the preDataUpdate event
-            _self._mergeFailures( past_fail, failures );
+        // it's important to do this *after* retrieving the fixed indexes,
+        // but we should do it *before* calling the callbacks just in case
+        // they themselves trigger the preDataUpdate event
+        this._mergeFailures( this._past_fail, failures );
 
-            // if we have failures, notify the caller via the callback so that
-            // they do not have to loop through each field to determine what
-            // failed based on their undefined values
-            if ( has_fail )
-            {
-                failure_callback( failures );
-            }
+        // if we have failures, notify the caller via the callback so that
+        // they do not have to loop through each field to determine what
+        // failed based on their undefined values
+        if ( has_fail )
+        {
+            failure_callback( failures );
+        }
 
-            // will be null if no fixes have been made
-            if ( fixed !== null )
-            {
-                fix_callback( fixed, _self._hasFailures( past_fail ) );
-            }
-        } );
+        // will be null if no fixes have been made
+        if ( fixed !== null )
+        {
+            fix_callback( fixed, this._hasFailures( this._past_fail ) );
+        }
 
         return this;
     },
