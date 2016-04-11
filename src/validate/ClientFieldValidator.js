@@ -17,20 +17,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @needsLove
- *   - Liberate QuoteClient
- * @end needsLove
  */
 
 var Class        = require( 'easejs' ).Class,
-    QuoteClient  = require( 'program/QuoteClient' ),
     EventEmitter = require( 'events' ).EventEmitter;
 
 
 /**
- * Passively monitors quote data, validating and formatting any fields that are
- * altered for the given QuoteClient
+ * Validate and format altered fields
  *
  * In the event of a validation failure, the data will not be added to the
  * bucket and the caller may be notified via a failure callback. This way, you
@@ -61,34 +55,6 @@ module.exports = Class( 'ClientFieldValidator' )
     __construct: function( validator )
     {
         this._validator = validator;
-    },
-
-
-    /**
-     * Monitor the given QUOTE_CLIENT for field changes and trigger validation     *
-     *
-     * @param {QuoteClient} quote_client quote client to validate against
-     *
-     * @param {function(Object)} failure_callback  function to call with errors
-     * @param {function(Object)} fix_callback      function to call with indexes
-     *                                             of fields that have previously
-     *                                             failed, but have since been
-     *                                             resolved
-     *
-     * @return {ClientFieldValidator} self
-     */
-    'public monitor': function( quote_client, failure_callback, fix_callback )
-    {
-        var _self = this;
-
-        // catch problems *before* the data is staged, altering the data
-        // directly if need be
-        quote_client.on( 'preDataUpdate', function( data )
-        {
-            _self.validate( data, failure_callback, fix_callback );
-        } );
-
-        return this;
     },
 
 
