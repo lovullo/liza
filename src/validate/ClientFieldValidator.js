@@ -17,6 +17,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @needsLove
+ *   - Liberate Bucket
+ * @end needsLove
  */
 
 var Class        = require( 'easejs' ).Class,
@@ -69,7 +73,8 @@ module.exports = Class( 'ClientFieldValidator' )
      * failure has been resolved. This feature is useful for clearing any
      * error indicators.
      *
-     * @param {Object}           data              bucket data diff
+     * @param {Bucket}           data              complete bucket data
+     * @param {Object}           diff              bucket data diff
      * @param {function(Object)} failure_callback  function to call with errors
      * @param {function(Object)} fix_callback      function to call with indexes
      *                                             of fields that have previously
@@ -78,7 +83,7 @@ module.exports = Class( 'ClientFieldValidator' )
      *
      * @return {ClientFieldValidator} self
      */
-    'public validate': function( data, failure_callback, fix_callback )
+    'public validate': function( data, diff, failure_callback, fix_callback )
     {
         // minor overhead for default definition and invocation (likely to be
         // optimized away by most modern engines) for the sake of code clarity
@@ -92,12 +97,12 @@ module.exports = Class( 'ClientFieldValidator' )
         // storage in the bucket
         try
         {
-            this._validator.validate( data, function( name, value, i, e )
+            this._validator.validate( diff, function( name, value, i, e )
             {
                 // set failures to undefined, which will cause the staging
                 // bucket to ignore the value entirely (we don't want crap
                 // data to be staged)
-                data[ name ][ i ] = undefined;
+                diff[ name ][ i ] = undefined;
 
                 // these failures will be returned (return as an object
                 // rather than an array, even though our indexes are
@@ -112,9 +117,9 @@ module.exports = Class( 'ClientFieldValidator' )
         }
 
         // allow others to add to the list of failures if needed
-        this.emit( 'validate', data, failures );
+        this.emit( 'validate', data, diff, failures );
 
-        var fixed = this._detectFixes( this._past_fail, data, failures );
+        var fixed = this._detectFixes( this._past_fail, diff, failures );
 
         // quick pre-ES5 means of detecting object keys
         var has_fail = false;
@@ -126,7 +131,7 @@ module.exports = Class( 'ClientFieldValidator' )
 
         // it's important to do this *after* retrieving the fixed indexes,
         // but we should do it *before* calling the callbacks just in case
-        // they themselves trigger the preDataUpdate event
+        // they themselves trigger the preDiffUpdate event
         this._mergeFailures( this._past_fail, failures );
 
         // if we have failures, notify the caller via the callback so that
