@@ -216,5 +216,5 @@ module.exports = Class( 'ValidStateMonitor' )
         return ( has_fixed )
             ? fixed
             : null;
-    },
+    }
 } );
