@@ -86,6 +86,12 @@ module.exports = Class( 'DataApiManager' )
     'private _fieldApiTimer': 0,
 
     /**
+     * Fields that require API requests
+     * @type {Object}}
+     */
+    'private _fieldStale': {},
+
+    /**
      * API descriptions
      * @type {Object}
      */
@@ -200,6 +206,9 @@ module.exports = Class( 'DataApiManager' )
             }
         };
 
+        // field is about to be re-loaded
+        this.fieldStale( name, index, false );
+
         this._setFieldApiTimer();
         return this;
     },
@@ -218,6 +227,43 @@ module.exports = Class( 'DataApiManager' )
     'public getPendingApiCalls': function()
     {
         return this._pendingApiCall;
+    },
+
+
+    /**
+     * Marks field for re-loading
+     *
+     * Stale fields will not be considered to have data, but the data
+     * will remain in memory until the next request.
+     *
+     * @param {string}   field field name
+     * @param {number}   index field index
+     * @param {?boolean} stale whether field is stale
+     *
+     * @return {DataApiManager} self
+     */
+    'public fieldStale': function( field, index, stale )
+    {
+        stale = ( stale === undefined ) ? true : !!stale;
+
+        this._fieldStale[ field ]          = this.fieldStale[ field ] || [];
+        this._fieldStale[ field ][ index ] = stale;
+
+        return this;
+    },
+
+
+    /**
+     * Whether field is marked stale
+     *
+     * @param {string} field field name
+     * @param {number} index field index
+     *
+     * @return {boolean} whether field is stale
+     */
+    'protected isFieldStale': function( field, index )
+    {
+        return ( this._fieldStale[ field ] || [] )[ index ] === true;
     },
 
 
@@ -436,6 +482,11 @@ module.exports = Class( 'DataApiManager' )
     {
         // default to "combined" index of -1 if no index is provided
         index = ( index === undefined ) ? -1 : +index;
+
+        if ( this.isFieldStale( name, index ) )
+        {
+            return false;
+        }
 
         return ( ( this._fieldData[ name ] || {} )[ index ] )
             ? true
