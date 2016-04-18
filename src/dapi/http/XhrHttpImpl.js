@@ -177,6 +177,14 @@ module.exports = Class( 'XhrHttpImpl' )
     {
         // alway async
         req.open( method, url, true );
+
+        if ( method === 'POST' )
+        {
+            req.setRequestHeader(
+                'Content-Type',
+                'application/x-www-form-urlencoded'
+            );
+        }
     },
 
 

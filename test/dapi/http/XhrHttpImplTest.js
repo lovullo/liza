@@ -170,34 +170,79 @@ describe( 'XhrHttpImpl', function()
                     .requestData( url, 'GET', "", done );
             } );
 
+
+            it( 'does not set Content-Type', function( done )
+            {
+                var url     = 'http://bar',
+                    StubXhr = createStubXhr();
+
+                StubXhr.prototype.readyState = 4; // done
+                StubXhr.prototype.status     = 200; // OK
+
+                StubXhr.prototype.setRequestHeader = function()
+                {
+                    // warning: this is fragile, if additional headers are
+                    // ever set
+                    throw Error( 'Headers should not be set on GET' );
+                };
+
+                Sut( StubXhr )
+                    .requestData( url, 'GET', "", done );
+            } );
         } );
 
 
         describe( 'HTTP method is not GET', function()
         {
-            it( 'sends data verbatim', function( done )
+            it( 'sends data verbatim as x-www-form-urlencoded', function( done )
             {
                 var url     = 'http://bar',
                     src     = "moocow",
-                    StubXhr = createStubXhr();
+                    StubXhr = createStubXhr(),
+
+                    open_called   = false,
+                    send_called   = false,
+                    header_called = false;
 
                 StubXhr.prototype.readyState   = 4; // done
                 StubXhr.prototype.status       = 200; // OK
 
                 StubXhr.prototype.open = function( _, given_url )
                 {
+                    open_called = true;
+
                     // URL should be unchanged
                     expect( given_url ).to.equal( url );
                 };
 
                 StubXhr.prototype.send = function( data )
                 {
+                    send_called = true;
+
                     expect( data ).is.equal( src );
                     StubXhr.inst.onreadystatechange();
                 };
 
+                StubXhr.prototype.setRequestHeader = function( name, val )
+                {
+                    header_called = true;
+
+                    // warning: this is fragile, if additional headers are
+                    // ever set
+                    expect( name ).to.equal( 'Content-Type' );
+                    expect( val ).to.equal(
+                        'application/x-www-form-urlencoded'
+                    );
+                };
+
                 Sut( StubXhr )
-                    .requestData( url, 'POST', src, done );
+                    .requestData( url, 'POST', src, function()
+                    {
+                    console.log( open_called, send_called, header_called  );
+                        expect( open_called && send_called && header_called )
+                            .to.be.true;
+                        done();
+                    } );
             } );
         } );
 
@@ -346,7 +391,8 @@ function createStubXhr()
         send: function( data )
         {
             this.onreadystatechange();
-        }
+        },
+        setRequestHeader: function() {},
     };
 
     return StubXhr;
