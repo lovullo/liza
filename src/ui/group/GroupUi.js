@@ -838,6 +838,11 @@ module.exports = Class( 'GroupUi' )
 
     'public isFieldVisible': function( id, index )
     {
+        if ( index > this.getCurrentIndex() )
+        {
+            return false;
+        }
+
         this._visCache[ id ] = this._visCache[ id ] || [];
 
         // if no index was provided, then determine if *any* of the indexes are
