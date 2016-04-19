@@ -151,6 +151,22 @@ describe( 'ValidStateMonitor', function()
                     } )
                     .update( data, {} );
             } );
+
+
+            it( 'does not trigger failure event for existing', function()
+            {
+                var called = 0;
+
+                Sut()
+                    .on( 'failure', function()
+                    {
+                        called++;
+                    } )
+                    .update( {}, { foo: [ 'bar' ] } )
+                    .update( {}, {} );  // do not trigger failure event
+
+                expect( called ).to.equal( 1 );
+            } );
         } );
 
 

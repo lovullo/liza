@@ -55,11 +55,10 @@ module.exports = Class( 'ValidStateMonitor' )
      */
     'public update': function( data, failures )
     {
-        var fixed = this.detectFixes( data, this._failures, failures );
+        var fixed     = this.detectFixes( data, this._failures, failures ),
+            count_new = this.mergeFailures( this._failures, failures );
 
-        this.mergeFailures( this._failures, failures );
-
-        if ( this.hasFailures() )
+        if ( this.hasFailures() && ( count_new > 0 ) )
         {
             this.emit( 'failure', this._failures );
         }
@@ -136,10 +135,12 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} past     past failures to merge with
      * @param {Object} failures new failures
      *
-     * @return {undefined}
+     * @return {number} number of new failures
      */
     'virtual protected mergeFailures': function( past, failures )
     {
+        var count_new = 0;
+
         for ( var name in failures )
         {
             past[ name ] = past[ name ] || [];
@@ -148,8 +149,11 @@ module.exports = Class( 'ValidStateMonitor' )
             for ( var i in failures[ name ] )
             {
                 past[ name ][ i ] = failures[ name ][ i ];
+                count_new++;
             }
         }
+
+        return count_new;
     },
 
 
