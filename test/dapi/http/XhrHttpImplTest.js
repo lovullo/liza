@@ -238,7 +238,6 @@ describe( 'XhrHttpImpl', function()
                 Sut( StubXhr )
                     .requestData( url, 'POST', src, function()
                     {
-                    console.log( open_called, send_called, header_called  );
                         expect( open_called && send_called && header_called )
                             .to.be.true;
                         done();
