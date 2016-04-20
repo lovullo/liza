@@ -204,6 +204,66 @@ describe( 'ValidStateMonitor', function()
 
                 expect( called ).to.equal( 1 );
             } );
+
+
+            describe( 'given a cause', function()
+            {
+                it( 'considers when recognizing fix', function( done )
+                {
+                    // same index
+                    var data  = { cause: [ 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 0 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', function( fixed )
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ 'bar' ] } );
+
+                            done();
+                        } )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+
+
+                it( 'considers different cause index', function( done )
+                {
+                    // different index
+                    var data  = { cause: [ undefined, 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 1 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', function( fixed )
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ 'bar' ] } );
+
+                            done();
+                        } )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+
+
+                it( 'recognizes non-fix', function()
+                {
+                    // no cause data
+                    var data  = { noncause: [ undefined, 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 1 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', nocall )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+            } );
         } );
 
 
