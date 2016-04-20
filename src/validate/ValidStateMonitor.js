@@ -20,7 +20,8 @@
  */
 
 var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( 'events' ).EventEmitter,
+    Failure      = require( './Failure' );
 
 
 /**
@@ -55,11 +56,10 @@ module.exports = Class( 'ValidStateMonitor' )
      */
     'public update': function( data, failures )
     {
-        var fixed = this.detectFixes( data, this._failures, failures );
+        var fixed     = this.detectFixes( data, this._failures, failures ),
+            count_new = this.mergeFailures( this._failures, failures );
 
-        this.mergeFailures( this._failures, failures );
-
-        if ( this.hasFailures() )
+        if ( this.hasFailures() && ( count_new > 0 ) )
         {
             this.emit( 'failure', this._failures );
         }
@@ -136,10 +136,12 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} past     past failures to merge with
      * @param {Object} failures new failures
      *
-     * @return {undefined}
+     * @return {number} number of new failures
      */
     'virtual protected mergeFailures': function( past, failures )
     {
+        var count_new = 0;
+
         for ( var name in failures )
         {
             past[ name ] = past[ name ] || [];
@@ -148,8 +150,11 @@ module.exports = Class( 'ValidStateMonitor' )
             for ( var i in failures[ name ] )
             {
                 past[ name ][ i ] = failures[ name ][ i ];
+                count_new++;
             }
         }
+
+        return count_new;
     },
 
 
@@ -178,15 +183,7 @@ module.exports = Class( 'ValidStateMonitor' )
 
         for ( var name in past )
         {
-            // we're only interested in detecting fixes on the data that has
-            // been set
-            if ( !( data[ name ] ) )
-            {
-                continue;
-            }
-
-            var field     = data[ name ],
-                past_fail = past[ name ],
+            var past_fail = past[ name ],
                 fail      = failures[ name ];
 
             // we must check each individual index because it is possible that
@@ -194,17 +191,29 @@ module.exports = Class( 'ValidStateMonitor' )
             // this because this is treated as a hash table, not an array)
             for ( var i in past_fail )
             {
+                var cause       = this._getCause( name, i, past_fail ),
+                    cause_name  = cause[ 0 ],
+                    cause_index = cause[ 1 ],
+                    field       = data[ cause_name ];
+
+                // if datum is unchanged, ignore it
+                if ( field === undefined )
+                {
+                    continue;
+                }
+
                 // to be marked as fixed, there must both me no failure and
                 // there must be data for this index for the field in question
                 // (if the field wasn't touched, then of course there's no
                 // failure!)
                 if ( ( fail === undefined )
-                    || ( !( fail[ i ] ) && ( field[ i ] !== undefined ) )
+                    || ( !( fail[ cause_index ] )
+                        && ( field[ cause_index ] !== undefined ) )
                 )
                 {
                     // looks like it has been resolved
                     ( fixed[ name ] = fixed[ name ] || [] )[ i ] =
-                        data[ name ][ i ];
+                        field[ cause_index ]
 
                     has_fixed = true;
 
@@ -216,5 +225,34 @@ module.exports = Class( 'ValidStateMonitor' )
         return ( has_fixed )
             ? fixed
             : null;
+    },
+
+
+    /**
+     * Produces name and index of the field causing a failure, or NAME
+     * and INDEX if unavailable
+     *
+     * This maintains backwards-compatibility for the old string-based
+     * system.
+     *
+     * @param {string} name  field name
+     * @param {number} index field index
+     *
+     * @param {Array.<Failure|string>} past_fail previous failure
+     *
+     * @return {Array} name/index tuple of cause field
+     */
+    'private _getCause': function( name, index, past_fail )
+    {
+        var failure = past_fail[ index ];
+
+        if ( Class.isA( Failure, failure ) )
+        {
+            var cause = failure.getCause();
+
+            return [ cause.getName(), cause.getIndex() ];
+        }
+
+        return [ name, index ];
     }
 } );

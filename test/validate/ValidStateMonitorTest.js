@@ -19,8 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Sut    = require( '../../' ).validate.ValidStateMonitor,
-    expect = require( 'chai' ).expect;
+var root    = require( '../../' ),
+    Sut     = root.validate.ValidStateMonitor,
+    expect  = require( 'chai' ).expect,
+    Failure = root.validate.Failure,
+    Field   = root.field.BucketField;
+
 
 var nocall = function( type )
 {
@@ -28,6 +32,16 @@ var nocall = function( type )
     {
         throw Error( type + ' should not be called' );
     };
+};
+
+var mkfail = function( name, arr )
+{
+    return arr.map( function( value, i )
+    {
+        return ( value === undefined )
+            ? undefined
+            : Failure( Field( name, i ), value );
+    } );
 };
 
 
@@ -49,7 +63,7 @@ describe( 'ValidStateMonitor', function()
             Sut()
                 .on( 'failure', nocall( 'failure' ) )
                 .on( 'fix', nocall( 'fix' ) )
-                .update( { foo: [ 'bar' ] }, {} );
+                .update( { foo: mkfail( 'foo', [ 'bar' ] ) }, {} );
         } );
 
 
@@ -59,40 +73,45 @@ describe( 'ValidStateMonitor', function()
         {
             it( 'marks failures even when given no data', function( done )
             {
+                var fail = mkfail( 'foo', [ 'bar', 'baz' ] );
+
                 Sut()
-                    .on( 'failure', function( failures  )
+                    .on( 'failure', function( failures )
                     {
                         expect( failures )
-                            .to.deep.equal( { foo: [ 'bar', 'baz' ] } );
+                            .to.deep.equal( { foo: [ fail[ 0 ], fail[ 1 ] ] } );
                         done();
                     } )
                     .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: [ 'bar', 'baz' ] } );
+                    .update( {}, { foo: fail } );
             } );
 
 
             it( 'marks failures with index gaps', function( done )
             {
+                var fail = mkfail( 'foo', [ undefined, 'baz' ] );
+
                 Sut()
-                    .on( 'failure', function( failures  )
+                    .on( 'failure', function( failures )
                     {
                         expect( failures )
-                            .to.deep.equal( { foo: [ undefined, 'baz' ] } );
+                            .to.deep.equal( { foo: [ undefined, fail[ 1 ] ] } );
                         done();
                     } )
                     .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: [ undefined, 'baz' ] } );
+                    .update( {}, { foo: fail } );
             } );
 
 
             it( 'retains past failures when setting new', function( done )
             {
-                var sut   = Sut();
+                var sut  = Sut(),
+                    fail = mkfail( 'foo', [ 'bar', 'baz' ] );
 
                 var test_first = function( failures )
                 {
                     expect( failures )
-                        .to.deep.equal( { foo: [ undefined, 'baz' ] } );
+                        .to.deep.equal( { foo: [ undefined, fail[ 1 ] ] } );
 
                     sut.once( 'failure', test_second );
                 };
@@ -100,7 +119,7 @@ describe( 'ValidStateMonitor', function()
                 var test_second = function( failures )
                 {
                     expect( failures )
-                        .to.deep.equal( { foo: [ 'bar', 'baz' ] } );
+                        .to.deep.equal( { foo: [ fail[ 0 ], fail[ 1 ] ] } );
 
                     done();
                 };
@@ -108,8 +127,25 @@ describe( 'ValidStateMonitor', function()
                 sut
                     .once( 'failure', test_first )
                     .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: [ undefined, 'baz' ] } )
-                    .update( {}, { foo: [ 'bar' ] } );
+                    .update( {}, { foo: [ undefined, fail[ 1 ] ] } )
+                    .update( {}, { foo: [ fail[ 0 ] ] } );
+            } );
+
+
+            // deprecated
+            it( 'accepts failures as string for BC', function( done )
+            {
+                var fail = [ 'foo', 'bar' ];
+
+                Sut()
+                    .on( 'failure', function( failures )
+                    {
+                        expect( failures )
+                            .to.deep.equal( { foo: fail } );
+                        done();
+                    } )
+                    .on( 'fix', nocall( 'fix' ) )
+                    .update( {}, { foo: fail } );
             } );
         } );
 
@@ -118,7 +154,8 @@ describe( 'ValidStateMonitor', function()
         {
             it( 'removes non-failures if field is present', function( done )
             {
-                var data = { foo: [ 'bardata', 'baz' ] };
+                var data = { foo: [ 'bardata', 'baz' ] },
+                    fail = mkfail( 'foo', [ 'bar', 'baz' ] );
 
                 Sut()
                     .on( 'fix', function( fixed )
@@ -127,16 +164,16 @@ describe( 'ValidStateMonitor', function()
                             .to.deep.equal( { foo: [ 'bardata' ] } );
                         done();
                     } )
-                    .update( data, { foo: [ 'bar', 'baz' ] } )
-                    .update( data, { foo: [ '', 'baz' ] } );
+                    .update( data, { foo: [ fail[ 0 ], fail[ 1 ] ] } )
+                    .update( data, { foo: [ undefined, fail[ 1 ] ] } );
             } );
 
 
             it( 'keeps failures if field is missing', function( done )
             {
-                var data = {
-                    bar: [ 'baz', 'quux' ],
-                };
+                var data     = { bar: [ 'baz', 'quux' ] },
+                    fail_foo = mkfail( 'foo', [ 'bar', 'baz' ] ),
+                    fail_bar = mkfail( 'bar', [ 'moo', 'cow' ] );
 
                 Sut()
                     .on( 'fix', function( fixed )
@@ -146,29 +183,104 @@ describe( 'ValidStateMonitor', function()
                         done();
                     } )
                     .update( data, {
-                        foo: [ 'bar', 'baz' ],  // does not exist in data
-                        bar: [ 'moo', 'cow' ],
+                        foo: fail_foo,  // does not exist in data
+                        bar: fail_bar,
                     } )
                     .update( data, {} );
+            } );
+
+
+            it( 'does not trigger failure event for existing', function()
+            {
+                var called = 0;
+
+                Sut()
+                    .on( 'failure', function()
+                    {
+                        called++;
+                    } )
+                    .update( {}, { foo: mkfail( 'foo', [ 'bar' ] ) } )
+                    .update( {}, {} );  // do not trigger failure event
+
+                expect( called ).to.equal( 1 );
+            } );
+
+
+            describe( 'given a cause', function()
+            {
+                it( 'considers when recognizing fix', function( done )
+                {
+                    // same index
+                    var data  = { cause: [ 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 0 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', function( fixed )
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ 'bar' ] } );
+
+                            done();
+                        } )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+
+
+                it( 'considers different cause index', function( done )
+                {
+                    // different index
+                    var data  = { cause: [ undefined, 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 1 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', function( fixed )
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ 'bar' ] } );
+
+                            done();
+                        } )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+
+
+                it( 'recognizes non-fix', function()
+                {
+                    // no cause data
+                    var data  = { noncause: [ undefined, 'bar' ] },
+                        field = Field( 'foo', 0 ),
+                        cause = Field( 'cause', 1 ),
+                        fail  = Failure( field, 'reason', cause );
+
+                    Sut()
+                        .on( 'fix', nocall )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
             } );
         } );
 
 
         it( 'can emit both failure and fix', function( done )
         {
-            var data = {
-                bar: [ 'baz', 'quux' ],
-            };
+            var data     = { bar: [ 'baz', 'quux' ] },
+                fail_foo = mkfail( 'foo', [ 'bar' ] );
 
             Sut()
                 .update( data, {
-                    bar: [ 'moo', 'cow' ]  // fail
+                    bar: mkfail( 'bar', [ 'moo', 'cow' ] )  // fail
                 } )
                 .on( 'failure', function( failed )
                 {
                     expect( failed )
                         .to.deep.equal( {
-                            foo: [ 'bar' ],
+                            foo: fail_foo,
                         } );
                 } )
                 .on( 'fix', function( fixed )
@@ -178,7 +290,7 @@ describe( 'ValidStateMonitor', function()
                     done();
                 } )
                 .update( data, {
-                    foo: [ 'bar' ],  // fail
+                    foo: fail_foo,  // fail
                     // fixes bar
                 } );
         } );
@@ -198,11 +310,13 @@ describe( 'ValidStateMonitor', function()
 
         it( 'retrieves current failures', function()
         {
+            var fail = mkfail( 'foo', [ 'fail' ] );
+
             expect(
                 Sut()
-                    .update( {}, { foo: [ 'fail' ] } )
+                    .update( {}, { foo: fail } )
                     .getFailures()
-            ).to.deep.equal( { foo: [ 'fail' ] } );
+            ).to.deep.equal( { foo: fail } );
         } );
     } );
 
@@ -220,7 +334,7 @@ describe( 'ValidStateMonitor', function()
         {
             expect(
                 Sut()
-                    .update( {}, { foo: [ 'fail' ] } )
+                    .update( {}, { foo: mkfail( 'foo', [ 'bar' ] ) } )
                     .hasFailures()
             ).to.be.true;
         } );
