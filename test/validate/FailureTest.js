@@ -43,12 +43,28 @@ describe( 'Failure', function()
     } );
 
 
-    it( 'throws error when not given a Field for cause', function()
+    it( 'throws error when not given a Field for causes', function()
     {
         expect( function()
         {
+            // not an array
             Sut( DummyField(), '', {} );
         } ).to.throw( TypeError );
+
+        expect( function()
+        {
+            // one not a Field
+            Sut( DummyField(), '', [ DummyField(), {} ] );
+        } ).to.throw( TypeError );
+    } );
+
+
+    it( 'does not throw error for empty clause list', function()
+    {
+        expect( function()
+        {
+            Sut( DummyField(), '', [] );
+        } ).to.not.throw( TypeError );
     } );
 
 
@@ -83,14 +99,14 @@ describe( 'Failure', function()
     } );
 
 
-    describe( '#getCause', function()
+    describe( '#getCauses', function()
     {
-        it( 'returns original cause field', function()
+        it( 'returns original cause fields', function()
         {
-            var cause = DummyField();
+            var causes = [ DummyField(), DummyField() ];
 
-            expect( Sut( DummyField(), '', cause ).getCause() )
-                .to.equal( cause );
+            expect( Sut( DummyField(), '', causes ).getCauses() )
+                .to.equal( causes );
         } );
 
 
@@ -99,8 +115,8 @@ describe( 'Failure', function()
         {
             var field = DummyField();
 
-            expect( Sut( field ).getCause() )
-                .to.equal( field );
+            expect( Sut( field ).getCauses() )
+                .to.deep.equal( [ field ] );
         } );
     } );
 
