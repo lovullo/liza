@@ -217,7 +217,7 @@ module.exports = Class( 'ValidStateMonitor' )
         // this because this is treated as a hash table, not an array)
         for ( var i in past_fail )
         {
-            var causes = this._getCauses( i, past_fail );
+            var causes = past_fail[ i ] && past_fail[ i ].getCauses();
 
             for ( var cause_i in causes )
             {
@@ -254,28 +254,5 @@ module.exports = Class( 'ValidStateMonitor' )
         }
 
         return has_fixed;
-    },
-
-
-    /**
-     * Produces name and index of the field causing a failure, or NAME
-     * and INDEX if unavailable
-     *
-     * This maintains backwards-compatibility for the old string-based
-     * system.
-     *
-     * @param {number}                 index     field index
-     * @param {Array.<Failure|string>} past_fail previous failure
-     *
-     * @return {Array} list of causes
-     */
-    'private _getCauses': function( index, past_fail )
-    {
-        var failure = past_fail[ index ];
-
-        if ( Class.isA( Failure, failure ) )
-        {
-            return failure.getCauses();
-        }
     }
 } );
