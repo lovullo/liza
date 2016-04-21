@@ -214,7 +214,7 @@ describe( 'ValidStateMonitor', function()
                     var data  = { cause: [ 'bar' ] },
                         field = Field( 'foo', 0 ),
                         cause = Field( 'cause', 0 ),
-                        fail  = Failure( field, 'reason', cause );
+                        fail  = Failure( field, 'reason', [ cause ] );
 
                     Sut()
                         .on( 'fix', function( fixed )
@@ -235,7 +235,33 @@ describe( 'ValidStateMonitor', function()
                     var data  = { cause: [ undefined, 'bar' ] },
                         field = Field( 'foo', 0 ),
                         cause = Field( 'cause', 1 ),
-                        fail  = Failure( field, 'reason', cause );
+                        fail  = Failure( field, 'reason', [ cause ] );
+
+                    Sut()
+                        .on( 'fix', function( fixed )
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ 'bar' ] } );
+
+                            done();
+                        } )
+                        .update( data, { foo: [ fail ] } )
+                        .update( data, {} );
+                } );
+
+
+                it( 'considers any number of causes', function( done )
+                {
+                    // different index
+                    var data   = { cause_fix: [ undefined, 'bar' ] },
+                        field  = Field( 'foo', 0 ),
+                        cause1 = Field( 'cause_no', 1 ),
+                        cause2 = Field( 'cause_fix', 1 ),
+                        fail   = Failure(
+                            field,
+                            'reason',
+                            [ cause1, cause2 ]
+                        );
 
                     Sut()
                         .on( 'fix', function( fixed )
@@ -253,10 +279,15 @@ describe( 'ValidStateMonitor', function()
                 it( 'recognizes non-fix', function()
                 {
                     // no cause data
-                    var data  = { noncause: [ undefined, 'bar' ] },
-                        field = Field( 'foo', 0 ),
-                        cause = Field( 'cause', 1 ),
-                        fail  = Failure( field, 'reason', cause );
+                    var data   = { noncause: [ undefined, 'bar' ] },
+                        field  = Field( 'foo', 0 ),
+                        cause1 = Field( 'cause', 1 ),
+                        cause2 = Field( 'cause', 2 ),
+                        fail   = Failure(
+                            field,
+                            'reason',
+                            [ cause1, cause2 ]
+                        );
 
                     Sut()
                         .on( 'fix', nocall )

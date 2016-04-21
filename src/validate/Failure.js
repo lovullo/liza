@@ -41,38 +41,65 @@ module.exports = Class( 'Failure',
     'private _reason': '',
 
     /**
-     * Field that caused the error
-     * @type {?Field}
+     * Fields that caused the error
+     * @type {?Array.<Field>}
      */
-    'private _cause': null,
+    'private _causes': null,
 
 
     /**
-     * Create failure with optional reason and cause
+     * Create failure with optional reason and causes
      *
      * The field FIELD is the target of the failure, which might have
-     * been caused by another field CAUSE.  If cause is omitted, it is
+     * been caused by another field CAUSES.  If cause is omitted, it is
      * assumed to be FIELD.  The string REASON describes the failure.
      *
      * @param {Field}   field  failed field
      * @param {string=} reason description of failure
-     * @param {Field=}  cause  field that triggered the failure
+     * @param {Field=}  causes field that triggered the failure
      */
-    __construct: function( field, reason, cause )
+    __construct: function( field, reason, causes )
     {
         if ( !Class.isA( Field, field ) )
         {
             throw TypeError( "Field expected" );
         }
 
-        if ( ( cause !== undefined ) && !Class.isA( Field, cause ) )
+        if ( causes !== undefined )
         {
-            throw TypeError( "Field expected for cause" );
+            this._checkCauses( causes );
         }
 
         this._field  = field;
         this._reason = ( reason === undefined ) ? '' : ''+reason;
-        this._cause  = cause || field;
+        this._causes = causes || [ field ];
+    },
+
+
+    /**
+     * Validate cause data types
+     *
+     * Ensures that CAUSES is an array of Field objects; otherwise, throws
+     * a TypeError.
+     *
+     * @param {Array.<Field>} causes failure causes
+     *
+     * @return {undefined}
+     */
+    'private _checkCauses': function( causes )
+    {
+        if ( Object.prototype.toString.call( causes ) !== '[object Array]' )
+        {
+            throw TypeError( "Array of causes expected" );
+        }
+
+        for ( var i in causes )
+        {
+            if ( !Class.isA( Field, causes[ i ] ) )
+            {
+                throw TypeError( "Field expected for causes" );
+            }
+        }
     },
 
 
@@ -101,14 +128,14 @@ module.exports = Class( 'Failure',
     /**
      * Retrieve field that caused the failure
      *
-     * Unless a separate cause was provided during instantiation, the
+     * Unless a separate causes was provided during instantiation, the
      * failure is assumed to have been caused by the target field itself.
      *
-     * @return {Field} cause of failure
+     * @return {Array.<Field>} causes of failure
      */
-    'public getCause': function()
+    'public getCauses': function()
     {
-        return this._cause;
+        return this._causes;
     },
 
 

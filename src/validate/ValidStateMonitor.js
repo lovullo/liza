@@ -186,14 +186,44 @@ module.exports = Class( 'ValidStateMonitor' )
             var past_fail = past[ name ],
                 fail      = failures[ name ];
 
-            // we must check each individual index because it is possible that
-            // not every index was modified or fixed (we must loop through like
-            // this because this is treated as a hash table, not an array)
-            for ( var i in past_fail )
+            has_fixed = has_fixed || this._checkFailureFix(
+                name, fail, past_fail, data, fixed
+            );
+        }
+
+        return ( has_fixed )
+            ? fixed
+            : null;
+    },
+
+
+    /**
+     * Check past failure fixes
+     *
+     * @param {string} name      failing field name
+     * @param {Array}  fail      failing field index/value
+     * @param {Array}  past_fail past failures for field name
+     * @param {Object} data      validated data
+     * @param {Object} fixed     destination for fixed field data
+     *
+     * @return {boolean} whether a field was fixed
+     */
+    'private _checkFailureFix': function( name, fail, past_fail, data, fixed )
+    {
+        var has_fixed = false;
+
+        // we must check each individual index because it is possible that
+        // not every index was modified or fixed (we must loop through like
+        // this because this is treated as a hash table, not an array)
+        for ( var i in past_fail )
+        {
+            var causes = this._getCauses( i, past_fail );
+
+            for ( var cause_i in causes )
             {
-                var cause       = this._getCause( name, i, past_fail ),
-                    cause_name  = cause[ 0 ],
-                    cause_index = cause[ 1 ],
+                var cause       = causes[ cause_i ],
+                    cause_name  = cause.getName(),
+                    cause_index = cause.getIndex(),
                     field       = data[ cause_name ];
 
                 // if datum is unchanged, ignore it
@@ -218,13 +248,12 @@ module.exports = Class( 'ValidStateMonitor' )
                     has_fixed = true;
 
                     delete past_fail[ i ];
+                    break;
                 }
             }
         }
 
-        return ( has_fixed )
-            ? fixed
-            : null;
+        return has_fixed;
     },
 
 
@@ -235,24 +264,18 @@ module.exports = Class( 'ValidStateMonitor' )
      * This maintains backwards-compatibility for the old string-based
      * system.
      *
-     * @param {string} name  field name
-     * @param {number} index field index
-     *
+     * @param {number}                 index     field index
      * @param {Array.<Failure|string>} past_fail previous failure
      *
-     * @return {Array} name/index tuple of cause field
+     * @return {Array} list of causes
      */
-    'private _getCause': function( name, index, past_fail )
+    'private _getCauses': function( index, past_fail )
     {
         var failure = past_fail[ index ];
 
         if ( Class.isA( Failure, failure ) )
         {
-            var cause = failure.getCause();
-
-            return [ cause.getName(), cause.getIndex() ];
+            return failure.getCauses();
         }
-
-        return [ name, index ];
     }
 } );
