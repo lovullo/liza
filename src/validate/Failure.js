@@ -150,5 +150,26 @@ module.exports = Class( 'Failure',
     __toString: function()
     {
         return this._reason;
+    },
+
+
+    /**
+     * Produce a new Failure merging two failures' messages and causes
+     */
+    'public merge': function( failure )
+    {
+        if ( !Class.isA( module.exports, failure ) )
+        {
+            throw TypeError( 'Cannot merge with non-Failure ' + failure );
+        }
+
+        var all_reasons = this._reason + '; ' + failure.getReason(),
+            all_causes  = this._causes.concat( failure.getCauses() );
+
+        return new this.constructor(
+            this._field,
+            all_reasons,
+            all_causes
+        );
     }
 } );

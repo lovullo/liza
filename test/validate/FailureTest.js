@@ -131,4 +131,44 @@ describe( 'Failure', function()
                 .to.equal( reason );
         } );
     } );
+
+
+    describe( '#merge', function()
+    {
+        it( 'rejects non-Failure merges', function()
+        {
+            expect( function()
+            {
+                Sut( DummyField() ).merge( {} );
+            } ).to.throw( TypeError );
+        } );
+
+
+        it( 'merges causes', function()
+        {
+            var cause1 = DummyField(),
+                cause2 = DummyField(),
+                cause3 = DummyField();
+
+            var result = Sut( DummyField(), '', [ cause1 ] )
+                .merge( Sut( DummyField(), '', [ cause2, cause3 ] ) );
+
+            expect( result.getCauses() )
+                .to.deep.equal( [ cause1, cause2, cause3 ] );
+        } );
+
+
+        it( 'merges reasons', function()
+        {
+            var msg1 = 'message 1',
+                msg2 = 'message 2';
+
+            var result = Sut( DummyField(), msg1 )
+                .merge( Sut( DummyField(), msg2 ) )
+                .getReason();
+
+            expect( result ).to.contain( msg1 );
+            expect( result ).to.contain( msg2 );
+        } );
+    } );
 } );
