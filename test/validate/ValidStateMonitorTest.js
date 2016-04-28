@@ -147,6 +147,50 @@ describe( 'ValidStateMonitor', function()
                     .on( 'fix', nocall( 'fix' ) )
                     .update( {}, { foo: fail } );
             } );
+
+
+            it( 'does not discard existing failures', function( done )
+            {
+                var sut = Sut();
+
+                // has both failures
+                var fail1 = Failure(
+                    Field( 'foo', 0 ),
+                    '',
+                    [ Field( 'cause1', 0 ), Field( 'cause2', 0 ) ]
+                );
+
+                // has only one of the two failures
+                var fail2 = Failure(
+                    Field( 'foo', 1 ),
+                    '',
+                    [ Field( 'cause2', 1 ) ]
+                );
+
+                // the second failure has fewer causes than the first;
+                // we need to make sure that it doesn't overwrite,
+                // leading to fewer caues
+                sut
+                    .update( {}, { foo: [ fail1 ] } )
+                    .update( {}, { foo: [ fail2 ] } );
+
+                // if cause1 wasn't removed, then this will fix it
+                sut
+                    .once( 'fix', function( fixed )
+                    {
+                        expect( fixed )
+                            .to.deep.equal( { foo: [ 'causefix1' ] } );
+
+                        // and then we should have no failures
+                        expect( sut.hasFailures() ).to.be.false;
+
+                        done();
+                    } )
+                    .update(
+                        { foo: [ 'moo' ], cause1: [ 'causefix1' ] },
+                        {}
+                    );
+            } );
         } );
 
 

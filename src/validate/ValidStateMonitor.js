@@ -146,10 +146,18 @@ module.exports = Class( 'ValidStateMonitor' )
         {
             past[ name ] = past[ name ] || [];
 
+            var cur_past = past[ name ];
+
             // copy each failure into the past failures table
             for ( var i in failures[ name ] )
             {
-                past[ name ][ i ] = failures[ name ][ i ];
+                var new_failure = failures[ name ][ i ];
+
+                // merge with past failure if present
+                cur_past[ i ] = ( cur_past[ i ] !== undefined )
+                    ? cur_past[ i ].merge( new_failure )
+                    : new_failure;
+
                 count_new++;
             }
         }
