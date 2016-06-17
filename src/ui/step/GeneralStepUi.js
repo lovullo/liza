@@ -407,14 +407,7 @@ module.exports = Class( 'StepUi' )
                     return;
                 }
 
-                // give the UI a chance to update the DOM; otherwise, the
-                // answer elements we update may no longer be used (this also
-                // has performance benefits since it allows repainting before
-                // potentially heavy processing)
-                setTimeout( function()
-                {
-                    _self._updateAnswerFieldData( data );
-                }, 25 );
+                _self.answerDataUpdate( data );
             } );
 
             doUpdate( bucket.getData() );
@@ -439,6 +432,28 @@ module.exports = Class( 'StepUi' )
 
             this._forceAnswerUpdate = doUpdate;
         } );
+    },
+
+
+    /**
+     * Update and style answer field data
+     *
+     * @param {Object} data key-value diff
+     *
+     * @return {undefined}
+     */
+    'virtual protected answerDataUpdate': function( data )
+    {
+        var _self = this;
+
+        // give the UI a chance to update the DOM; otherwise, the
+        // answer elements we update may no longer be used (this also
+        // has performance benefits since it allows repainting before
+        // potentially heavy processing)
+        setTimeout( function()
+        {
+            _self._updateAnswerFieldData( data );
+        }, 25 );
     },
 
 
