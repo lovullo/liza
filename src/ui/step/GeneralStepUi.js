@@ -446,13 +446,15 @@ module.exports = Class( 'StepUi' )
     {
         var _self = this;
 
+        var data_fmt = _self._formatter.format( data );
+
         // give the UI a chance to update the DOM; otherwise, the
         // answer elements we update may no longer be used (this also
         // has performance benefits since it allows repainting before
         // potentially heavy processing)
         setTimeout( function()
         {
-            _self._updateAnswerFieldData( data );
+            _self._updateAnswerFieldData( data_fmt );
         }, 25 );
     },
 
