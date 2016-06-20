@@ -84,44 +84,6 @@ module.exports = Class( 'ElementStyler',
 
 
     _answerStyles: {
-        'currency': function( value )
-        {
-            var pre = '$';
-
-            if ( !value )
-            {
-                value = 0;
-            }
-            else if ( value < 0 )
-            {
-                value *= -1;
-                pre = '-$';
-            }
-
-            var formatter = this._getAnswerStyler( 'number' );
-
-            return pre + formatter.call( this, ( +value ).toFixed( 2 ) );
-        },
-
-        'dollars': function( value )
-        {
-            var formatter = this._getAnswerStyler( 'currency' );
-
-            return formatter.call( this, ( +value ).toFixed( 0 ) );
-        },
-
-        'float': function( value )
-        {
-            if ( !value )
-            {
-                value = 0;
-            }
-
-            var formatter = this._getAnswerStyler( 'number' );
-
-            return formatter.call( this, ( +value ).toFixed( 2 ) );
-        },
-
         'limit': function( value, _, default_val )
         {
             value = ( value + '' ).replace( ',', '' );
@@ -254,7 +216,6 @@ module.exports = Class( 'ElementStyler',
             return ret;
         },
 
-
         'includeExclude': function( value, _, default_val  )
         {
             // use the default if no value
@@ -267,7 +228,6 @@ module.exports = Class( 'ElementStyler',
                 ? 'Excluded'
                 : 'Included';
         },
-
 
         /*
          * display as a limit, rejected or default if available
@@ -296,31 +256,6 @@ module.exports = Class( 'ElementStyler',
             }
 
             return ret;
-        },
-
-
-        /**
-         * format thousands
-         */
-        'number': function( value )
-        {
-            var str = value.toString().split( '.' );
-            var len = str[0].length,
-                ret = '';
-
-            for ( var i = 0; i < len; i++ )
-            {
-                ret += str[0].charAt( i );
-
-                if ( ( ( len - i ) % 3 ) === 1 )
-                {
-                    ret += ',';
-                }
-            }
-
-            str[0] = ret.replace( /,$/, '' );
-
-            return str.join( '.' )
         },
 
         'state': function( value )
@@ -365,27 +300,6 @@ module.exports = Class( 'ElementStyler',
             return ( val === undefined )
                 ? value
                 : val;
-        },
-
-        'manualDate': function( value )
-        {
-            if( value.replace )
-            {
-                return value.replace(
-                    /^([0-9]{4})-([0-9]+)-([0-9]+)$/,
-                    '$2/$3/$1'
-                );
-            }
-
-            return null;
-        },
-
-        'date': function( value )
-        {
-            var data = value.split( '-' );
-
-            // m/d/y
-            return data[1] + '/' + data[2] + '/' + data[0];
         },
 
         'dateTime': function( value )
