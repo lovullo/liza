@@ -458,6 +458,19 @@ module.exports = Class( 'StepUi' )
 
 
     /**
+     * Retrieve answer DOM context
+     *
+     * @param {string} name field name
+     *
+     * @return {jQuery} DOM context
+     */
+    'virtual protected getAnswerContext': function( name )
+    {
+        return this._answerContext[ name ];
+    },
+
+
+    /**
      * Update DOM answer fields with respective datum in diff DATA
      *
      * Only watched answer fields are updated.  The update is performed on
@@ -473,7 +486,7 @@ module.exports = Class( 'StepUi' )
         // changed
         for ( var name in data )
         {
-            if ( !( this._answerContext[ name ] ) )
+            if ( !( this.getAnswerContext( name ) ) )
             {
                 continue;
             }
@@ -488,7 +501,7 @@ module.exports = Class( 'StepUi' )
                 // update every index on the DOM
                 i = this.styler.getAnswerElementByName(
                     name, undefined, undefined,
-                    this._answerContext[ name ]
+                    this.getAnswerContext( name )
                 ).length;
             }
 
@@ -530,7 +543,7 @@ module.exports = Class( 'StepUi' )
             // if we've already found an element for this ref, then it is
             // referenced in multiple places; simply store the context as the
             // entire step
-            if ( _self._answerContext[ ref_id ] )
+            if ( _self.getAnswerContext( ref_id ) )
             {
                 _self._answerContext[ ref_id ] = _self.$content;
                 return;
@@ -560,7 +573,7 @@ module.exports = Class( 'StepUi' )
     'private _updateAnswer': function( name, index, value )
     {
         var $element = this.styler.getAnswerElementByName(
-            name, index, null, ( this._answerContext[ name ] || this.$content )
+            name, index, null, ( this.getAnswerContext( name ) || this.$content )
         );
 
         var i = $element.length;
