@@ -26,7 +26,7 @@ nsindex=$(addsuffix /index.js, $(namespaces))
 
 SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
-			 tools autogen.sh README.md
+			 Makefile tools autogen.sh README.md
 
 .PHONY: FORCE todo
 
