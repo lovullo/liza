@@ -1,5 +1,5 @@
 /**
- * Test validator-formatter
+ * Test pattern-based validator-formatter
  *
  *  Copyright (C) 2016 LoVullo Associates, Inc.
  *
@@ -19,8 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var liza   = require( '../../' ),
-    Sut    = liza.validate.VFormat,
+var liza   = require( '../../../' ),
+    Sut    = liza.validate.formatter.PatternFormatter,
+    VFmt   = liza.validate.ValidatorFormatter,
+    Class  = require( 'easejs' ).Class,
     expect = require( 'chai' ).expect,
     assert = require( 'assert' ),
     dfn    = [
@@ -30,8 +32,15 @@ var liza   = require( '../../' ),
     ];
 
 
-describe( 'VFormat', function()
+describe( 'PatternFormatter', function()
 {
+    it( 'is a ValidatorFormatter', function()
+    {
+        expect( Class.isA( VFmt, createSut( [] ) ) )
+            .to.be.true;
+    } );
+
+
     describe( '#parse', function()
     {
         it( 'formats string according to given definition', function()

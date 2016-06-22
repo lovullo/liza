@@ -1,5 +1,5 @@
 /**
- * Validator-formatter
+ * Pattern-based validator-formatter
  *
  *  Copyright (C) 2016 LoVullo Associates, Inc.
  *
@@ -20,13 +20,17 @@
  */
 
 
-var Class = require( 'easejs' ).Class;
+var Class              = require( 'easejs' ).Class,
+    ValidatorFormatter = require( '../ValidatorFormatter' );
 
 
 /**
- * Data validation and formatting
+ * Data validation and formatting based on patterns and their
+ * replacements
  */
-module.exports = Class( 'VFormat',
+module.exports = Class( 'VFormat' )
+    .implement( ValidatorFormatter )
+    .extend(
 {
     /**
      * Pattern definition
