@@ -20,14 +20,15 @@
  */
 
 
-var liza         = require( '../../../' ),
-    Sut          = liza.validate.formatter.UnorderedListFormatter,
-    testValidate = require( './common' ).testValidate;
+var liza          = require( '../../../' ),
+    Sut           = liza.validate.formatter.UnorderedList,
+    EchoFormatter = liza.validate.formatter.EchoFormatter,
+    common        = require( './common' );
 
 
-describe( 'UnorderedListFormatter', function()
+describe( 'UnorderedList', function()
 {
-    testValidate( Sut(), {
+    common.testValidate( EchoFormatter.use( Sut )(), {
         "":        [ "",        "" ],
         "no semi": [ "no semi", "<ul><li>no semi</li></ul>" ],
 
@@ -138,4 +139,14 @@ describe( 'UnorderedListFormatter', function()
             "<ul><li>semi</li><li>colon</li></ul>"
         ],
     } );
+
+
+    common.testMixin(
+        EchoFormatter,
+        Sut,
+        'foo;',
+        'bar',
+        'foo; bar',
+        '<ul><li>foo</li><li>bar</li></ul>'
+    );
 } );

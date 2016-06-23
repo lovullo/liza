@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class              = require( 'easejs' ).Class,
+var Trait              = require( 'easejs' ).Trait,
     ValidatorFormatter = require( '../ValidatorFormatter' );
 
 
@@ -27,7 +27,7 @@ var Class              = require( 'easejs' ).Class,
  * Formats delimited items as an HTML unordered list, storing as a
  * delimited string.
  */
-module.exports = Class( 'UnorderedListFormatter' )
+module.exports = Trait( 'UnorderedList' )
     .implement( ValidatorFormatter )
     .extend(
 {
@@ -41,12 +41,12 @@ module.exports = Class( 'UnorderedListFormatter' )
      *
      * @return {string} formatted string
      */
-    'public parse': function( data )
+    'virtual abstract override public parse': function( data )
     {
         // strip HTMl elements before processing (closing li tag
         // is translated into a semicolon)
         return this.getParts(
-            data
+            this.__super( data )
                 .replace( /<\/li>/g, ';' )
                 .replace( /\s*<.*?>\s*/g, '' )
         ).join( '; ' );
@@ -67,9 +67,9 @@ module.exports = Class( 'UnorderedListFormatter' )
      *
      * @return {string} data formatted for display
      */
-    'public retrieve': function( data )
+    'virtual abstract override public retrieve': function( data )
     {
-        var parts = this.getParts( data ),
+        var parts = this.getParts( this.__super( data ) ),
             items = '';
 
         for ( var i = 0; i < parts.length; i++ )
