@@ -91,5 +91,50 @@ module.exports = {
                 );
             } );
         } );
-    }
+    },
+
+
+    /**
+     * Test that mixin respects supertype data
+     *
+     * @param {Function} Super    supertype constructor to extend
+     * @param {Trait}    Sut      SUT trait
+     * @param {string}   base     string to serve as base to data
+     * @param {string}   given    given data to pass to extended Super
+     * @param {string}   parse    expected #parse result
+     * @param {string}   retrieve expected #retrieve result
+     *
+     * @return {undefined}
+     */
+    testMixin: function( Super, Sut, base, given, parse, retrieve )
+    {
+        describe( 'as a mixin', function()
+        {
+            var sut = Super.extend(
+            {
+                'virtual override parse': function( data )
+                {
+                    return base + data;
+                },
+                'virtual override retrieve': function( data )
+                {
+                    return base + data;
+                }
+            } ).use( Sut )();
+
+
+            it( 'respects supertype #parse', function()
+            {
+                expect( sut.parse( given ) )
+                    .to.equal( parse );
+            } );
+
+
+            it( 'respects supertype #retrieve', function()
+            {
+                expect( sut.retrieve( given ) )
+                    .to.equal( retrieve );
+            } );
+        } );
+    },
 };
