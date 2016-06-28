@@ -84,93 +84,6 @@ module.exports = Class( 'ElementStyler',
 
 
     _answerStyles: {
-        'limit': function( value, _, default_val )
-        {
-            value = ( value + '' ).replace( ',', '' );
-
-
-            // if no value was given, be sure that we use the proper default
-            // value
-            if ( ( value === '' ) && default_val )
-            {
-                return default_val;
-            }
-
-            // if the value is simply a string, return it
-            if ( /^[a-z_ -]+$/i.test( value ) )
-            {
-                return value;
-            }
-
-            // split on multiple limits (this will work fine if there's only
-            // one)
-            var data = ( ''+( value ) ).split( '/' ),
-                i    = data.length;
-
-            // simple comma addition (for thousands); XXX: this mess is an
-            // abomination
-            while ( i-- )
-            {
-                data[ i ] = data[ i ]
-                    .replace( /^.*(?:[0-9]{3}|[1-9]0{2})$/, function( number )
-                    {
-                        var len = number.length,
-                            ret = '';
-
-                        // insert thousands separators into their proper
-                        // positions
-                        for ( var i = 0; i < len; i++ )
-                        {
-                            ret += number.substr( i, 1 );
-
-                            if ( ( ( len - i ) % 3 ) === 1 )
-                            {
-                                ret += ',';
-                            }
-                        }
-
-                        // could handle this in the above loop, but this is more
-                        // clear
-                        return ret.replace( /,$/, '' );
-                    } )
-                    .replace( /^,?([0-9]{2,})$/, '$1,000' )
-                    .replace( /^,/, '' );
-            }
-
-            // re-join multiple limits
-            return data.join( '/' );
-        },
-
-        'multilimit': function( values, _, default_val )
-        {
-            var limit = this._getAnswerStyler( 'limit' );
-
-            // if we're not an array, fall back to the normal limit styler
-            if ( typeof values !== 'object' )
-            {
-                return limit.apply( this, arguments );
-            }
-
-            var formatted = [],
-                same      = true;
-
-            for ( var i in values )
-            {
-                formatted.push(
-                    limit.call( this, values[ i ], _, default_val )
-                );
-
-                if ( i > 0 )
-                {
-                    same = ( same && formatted[ i ] === formatted[ i - 1 ] );
-                }
-            }
-
-            return ( same )
-                ? formatted[ 0 ]
-                : formatted.join( '; ' );
-        },
-
         'multitext': function( values, _, default_val )
         {
             // for now
@@ -191,31 +104,6 @@ module.exports = Class( 'ElementStyler',
             return value + ' Deductible';
         },
 
-        /*
-         * display as accepted, rejected or default if available
-         */
-        'acceptReject': function( value, _, default_val  )
-        {
-            // use the default if no value
-            if ( ( value === '' ) && default_val )
-            {
-                return default_val;
-            }
-
-            var ret = value;
-
-            if ( +value === 0 )
-            {
-                ret = 'Rejected';
-            }
-            else if ( +value === 1 )
-            {
-                ret = 'Accepted';
-            }
-
-            return ret;
-        },
-
         'includeExclude': function( value, _, default_val  )
         {
             // use the default if no value
@@ -227,35 +115,6 @@ module.exports = Class( 'ElementStyler',
             return ( +value === 0 )
                 ? 'Excluded'
                 : 'Included';
-        },
-
-        /*
-         * display as a limit, rejected or default if available
-         */
-        'limitReject': function( value, _, default_val  )
-        {
-            // use the default if no value
-            if ( ( value === '' ) && default_val )
-            {
-                return default_val;
-            }
-
-            var limit = this._getAnswerStyler( 'number' );
-
-            if ( +value === 0 )
-            {
-                ret = 'Rejected';
-            }
-            else if ( +value === 1 )
-            {
-                ret = 'Accepted';
-            }
-            else
-            {
-                ret = limit.apply( this, arguments );
-            }
-
-            return ret;
         },
 
         'state': function( value )
