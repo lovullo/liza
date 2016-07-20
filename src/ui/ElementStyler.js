@@ -84,14 +84,6 @@ module.exports = Class( 'ElementStyler',
 
 
     _answerStyles: {
-        'multitext': function( values, _, default_val )
-        {
-            // for now
-            this._getAnswerStyler( 'multilimit' ).apply(
-                this, arguments
-            );
-        },
-
         'deductible': function( value, _, default_val  )
         {
             // if no value was given, be sure that we use the proper default
