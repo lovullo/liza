@@ -42,7 +42,7 @@ var Class        = require( 'easejs' ).Class,
  *
  * @return {StepUi}
  */
-module.exports = Class( 'StepUi' )
+module.exports = Class( 'GeneralStepUi' )
     .implement( StepUi )
     .extend( EventEmitter,
 {
