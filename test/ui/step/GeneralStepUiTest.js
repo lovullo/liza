@@ -46,7 +46,7 @@ describe( 'ui.GeneralStepUi', function()
                 .withExactArgs( orig_data )
                 .returns( fmt_data );
 
-            createSut( formatter, function( name, value )
+            createSut( formatter, createElementStyler( function( name, value )
             {
                 // by the time the answer data makes its way to the
                 // element styler, it should have already been
@@ -56,7 +56,226 @@ describe( 'ui.GeneralStepUi', function()
 
                 mock_fmt.verify();
                 done();
-            } ).answerDataUpdate( orig_data );
+            } ) ).answerDataUpdate( orig_data );
+        } );
+    } );
+
+
+    describe( '#scrollTo', function()
+    {
+        [
+            {
+                field:  '',
+                index:  0,
+                cause: 'foocause',
+            },
+            {
+                field:  undefined,
+                index:  0,
+                cause: 'foocause2',
+            },
+            {
+                field:  '',
+                index:  0,
+                cause: '',
+            },
+            {
+                field:  '',
+                index:  0,
+                cause:  undefined,
+            },
+            {
+                field:  'foo',
+                index:  -1,
+                cause:  undefined,
+            },
+            {
+                field:  'foo',
+                index:  undefined,
+                cause:  undefined,
+            },
+            {
+                field:  'foo',
+                index:  undefined,
+                cause:  'index cause',
+            },
+        ].forEach( function( args, i )
+        {
+            it( 'emits error given invalid field (' + i + ')', function( done )
+            {
+                var step = {
+                    getValidCause: function()
+                    {
+                        return args.cause;
+                    }
+                };
+
+                var sut  = createSut( {}, {}, step );
+
+                // should only throw a single error
+                sut.once( 'error', function( error )
+                {
+                    expect( error ).to.be.instanceof( Error );
+                    expect( error.message ).to.have.string( 'Could not scroll' );
+
+                    if ( args.cause )
+                    {
+                        expect( error.message ).to.have.string( 'cause: ' );
+                        expect( error.message ).to.have.string( args.cause );
+                    }
+                    else
+                    {
+                        expect( error.message ).to.not.have.string( 'cause:' );
+                    }
+
+                    done();
+                } );
+
+                sut.scrollTo( args.field, args.index, false, args.cause );
+            } );
+        } );
+
+
+        it( 'emits error when element is not found', function( done )
+        {
+            var field = 'foo',
+                index = 5;
+
+            var styler = {
+                getProperIndex: function()
+                {
+                },
+
+                getWidgetByName: function()
+                {
+                    // no element
+                    return [];
+                },
+            };
+
+            var sut = createSut( {}, styler, {} );
+
+            sut.once( 'error', function( error )
+            {
+                expect( error ).to.be.instanceof( Error );
+                expect( error.message ).to.have.string( 'Could not scroll' );
+                expect( error.message ).to.have.string( 'could not locate' );
+
+                expect( error.message ).to.have.string(
+                    field + '[' + index + ']'
+                );
+
+                done();
+            } );
+
+            sut.scrollTo( field, index, false, '' );
+        } );
+
+
+        it( 'emits error when element is not visible', function( done )
+        {
+            var field = 'foo',
+                index = 5;
+
+            var styler = {
+                getProperIndex: function()
+                {
+                },
+
+                getWidgetByName: function()
+                {
+                    // jQuery-ish
+                    var element = [ 0 ];
+
+                    element.is = function( selector )
+                    {
+                        expect( selector ).to.equal( ':visible' );
+                        return false;
+                    };
+
+                    return element;
+                },
+            };
+
+            var sut = createSut( {}, styler, {} );
+
+            sut.once( 'error', function( error )
+            {
+                expect( error ).to.be.instanceof( Error );
+                expect( error.message ).to.have.string( 'Could not scroll' );
+                expect( error.message ).to.have.string( 'not visible' );
+
+                expect( error.message ).to.have.string(
+                    field + '[' + index + ']'
+                );
+
+                done();
+            } );
+
+            sut.scrollTo( field, index, false, '' );
+        } );
+
+
+        it( 'scrolls to the failed element', function( done )
+        {
+            var field        = 'foo',
+                index        = 5,
+                content_html = '<html>something</html>',
+                element      = [ 0 ],
+                showm        = true,
+                message      = 'whatacluster';
+
+            var styler = {
+                getProperIndex: function()
+                {
+                },
+
+                getWidgetByName: function()
+                {
+                    element.is = function( selector )
+                    {
+                        expect( selector ).to.equal( ':visible' );
+                        return true;
+                    };
+
+                    return element;
+                },
+            };
+
+            var content = {
+                parent: function()
+                {
+                    return {
+                        scrollTo: scroll_mock
+                    };
+                },
+            };
+
+            function scroll_mock( given_element, duration, options )
+            {
+                expect( given_element ).to.equal( element );
+                expect( duration ).to.equal( 100 );
+                expect( options.offset.top ).to.equal( -150 );
+
+                styler.focus = function( given_element, given_showm, given_msg )
+                {
+                    expect( given_element ).to.equal( element );
+                    expect( given_showm ).to.equal( showm );
+                    expect( given_msg ).to.equal( message );
+
+                    done();
+                };
+
+                options.onAfter();
+            };
+
+            var sut = createSut( {}, styler, {} );
+
+            // XXX: SUT needs refactoring!
+            sut.$content = content;
+
+            var result = sut.scrollTo( field, index, true, message );
+            expect( result ).to.equal( sut );
         } );
     } );
 } );
@@ -67,12 +286,13 @@ describe( 'ui.GeneralStepUi', function()
  * Create new SUT with formatter FORMATTER and generated element
  * styler
  *
- * @param {Object}             formatter      validator/formatter mock
- * @param {function(string,*)} style_callback styler styleAnswer method dfn
+ * @param {Object} formatter validator/formatter mock
+ * @param {Object} styler    mock ElementStyler
+ * @param {Object} step      mock step
  *
  * @return {Sut}
  */
-function createSut( formatter, style_callback )
+function createSut( formatter, styler, step )
 {
     return Sut.extend(
     {
@@ -87,8 +307,8 @@ function createSut( formatter, style_callback )
             return {};
         },
     } )(
-        {},
-        createElementStyler( style_callback ),
+        step || {},
+        styler,
         formatter
     );
 }
@@ -98,6 +318,8 @@ function createSut( formatter, style_callback )
  * Create mock ElementStyler
  *
  * styleAnswer method is defined by STYLE_CALLBACK
+ *
+ * @param {function(string,*)} style_callback styler styleAnswer method dfn
  *
  * @return {Object} ElementStyler mock
  */
@@ -113,6 +335,15 @@ function createElementStyler( style_callback )
 
                 text: function() {},
             }
+        },
+
+        getProperIndex: function()
+        {
+        },
+
+        getWidgetByName: function()
+        {
+            return [];
         },
 
         styleAnswer: style_callback,
@@ -135,4 +366,14 @@ function createFormatter( expected, return_data )
         {
         },
     }
+}
+
+
+function createStep()
+{
+    return {
+        getValidCause: function()
+        {
+        }
+    };
 }

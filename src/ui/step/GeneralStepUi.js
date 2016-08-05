@@ -909,7 +909,7 @@ module.exports = Class( 'GeneralStepUi' )
     {
         show_message = ( show_message === undefined ) ? true : !!show_message;
 
-        if ( !( field ) || ( i < 0 ) || i === undefined )
+        if ( !field || ( i < 0 ) || ( i === undefined ) )
         {
             // cause may be empty
             var cause = this.step.getValidCause();
@@ -923,19 +923,24 @@ module.exports = Class( 'GeneralStepUi' )
                     )
                 )
             );
+
+            return this;
         }
 
         var index    = this.styler.getProperIndex( field, i ),
             $element = this.styler.getWidgetByName( field, index );
 
         // if the element couldn't be found, then this is useless
-        if ( $element.length == 0 )
+        if ( $element.length === 0 )
         {
             this.emit( 'error',
                 Error(
-                    'Could not scroll: could not locate ' + field + '['+i+']'
+                    'Could not scroll: could not locate ' +
+                    field + '[' + i + ']'
                 )
             );
+
+            return this;
         }
 
         // allow the groups to preprocess the scrolling
@@ -950,8 +955,11 @@ module.exports = Class( 'GeneralStepUi' )
         {
             // fail; don't bother scrolling
             this.emit( 'error', Error(
-                'Could not scroll: element ' + field + ' is not visible'
+                'Could not scroll: element ' + field + '[' + i + '] ' +
+                'is not visible'
             ) );
+
+            return this;
         }
 
         // scroll to just above the first invalid question so that it
