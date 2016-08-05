@@ -102,6 +102,12 @@ module.exports = Class( 'GeneralStepUi' )
     step: null,
 
     /**
+     * jQuery instance
+     * @type {jQuery}
+     */
+    'private _jquery': null,
+
+    /**
      * Step data (DOM representation)
      * @type {jQuery}
      */
@@ -187,17 +193,32 @@ module.exports = Class( 'GeneralStepUi' )
      * until the data loading is complete.  That is when the callback will be
      * triggered.
      *
+     * TODO: Remove jQuery
+     *
+     * @param {Step}                step      step to render
+     * @param {ElementStyler}       styler    element styler
+     * @param {BucketDataValidator} formatter validator/formatter
+     * @param {jQuery}              jquery    jQuery instance
+     *
      * @return {undefined}
      */
     'public __construct': function(
         step,
         styler,
-        formatter
+        formatter,
+        jquery
     )
     {
         this.step        = step;
         this.styler      = styler;
         this._formatter  = formatter;
+
+        // TODO: transition code; remove default
+        this._jquery = jquery || (
+            ( typeof $ !== 'undefined' )
+                ? $
+                : undefined
+        );
     },
 
 
@@ -246,7 +267,7 @@ module.exports = Class( 'GeneralStepUi' )
     'public setContent': function( content )
     {
         // TODO: transition away from jQuery
-        this.$content = $( content );
+        this.$content = this._jquery( content );
 
         this._processAnswerFields();
 
