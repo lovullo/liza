@@ -24,7 +24,7 @@ var Trait              = require( 'easejs' ).Trait,
 
 
 /**
- * Formats insurance limit(s)
+ * Formats numbers in en_US locale
  */
 module.exports = Trait( 'Number' )
     .implement( ValidatorFormatter )
