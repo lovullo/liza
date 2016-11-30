@@ -109,11 +109,19 @@ module.exports = Trait( 'Number' )
      * @param {string} data data to parse
      *
      * @return {string} data formatted for storage
+     *
+     * @throws Error if number is not of a valid format
      */
     'virtual abstract override public parse': function( data )
     {
-        var cleaned = this.__super( data ).replace( /[ ,]/g, '' ),
-            parts   = this.split( cleaned );
+        var cleaned = this.__super( data ).replace( /[ ,]/g, '' );
+
+        if ( !/^[0-9]*(\.[0-9]*)?$/.test( cleaned ) )
+        {
+            throw Error( "Invalid number: " + data );
+        }
+
+        var parts   = this.split( cleaned );
 
         return parts.integer + this.scale( parts.significand, this._scale );
     },

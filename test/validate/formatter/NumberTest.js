@@ -42,6 +42,10 @@ describe( 'validate.formatter.Number', function()
         // strip decimals
         "1.234":       [ "1",     "1"      ],
         "  1,  ,.":    [ "1",     "1"      ],
+
+        // non-numbers
+        "foo":    false,
+        "123foo": false,
     } );
 
 
@@ -62,6 +66,10 @@ describe( 'validate.formatter.Number', function()
 
         "12,345":      [ "12345.000", "12,345.000" ],
         "  1,  ,.":    [ "1.000",     "1.000"      ],
+
+        // non-numbers
+        "1.foo":      false,
+        "123foo.012": false,
     } );
 
 
