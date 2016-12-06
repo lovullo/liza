@@ -1,4 +1,5 @@
 /**
+ * @license
  * Number formatter
  *
  *  Copyright (C) 2016 LoVullo Associates, Inc.
@@ -24,22 +25,105 @@ var Trait              = require( 'easejs' ).Trait,
 
 
 /**
- * Formats insurance limit(s)
+ * Formats numbers in en_US locale
+ *
+ * Only whole numbers are permitted by default unless the mixin is
+ * initialized with a scale, where the scale represents the number of
+ * digits of the significand.  If the scale is positive, the
+ * significand will be padded with zeroes to meet the scale; if
+ * negative, trailing zeroes will be removed.  The significand will be
+ * truncated (not rounded) if it exceeds the scale:
+ *
+ * @example
+ *   EchoFormatter.use( Number ).parse( '00003' )          // => 3
+ *   EchoFormatter.use( Number( -6 ) ).parse( '3.14159' )  // => 3.14159
+ *   EchoFormatter.use( Number( 6 ) ).parse( '3.14159' )   // => 3.141590
+ *   EchoFormatter.use( Number( 2 ) ).parse( '3.14159' )   // => 3.14
+ *
+ * Leading zeroes are stripped.
  */
 module.exports = Trait( 'Number' )
     .implement( ValidatorFormatter )
     .extend(
 {
     /**
+     * Number of digits after the decimal point
+     *
+     * This value should never be negative.
+     *
+     * @type {number}
+     */
+    'private _scale': 0,
+
+    /**
+     * Pre-computed zero-padding of scale
+     *
+     * This conveniently allows prefixing this padding with a number
+     * and then truncating to scale.
+     *
+     * @type {string}
+     */
+    'private _scalestr': '',
+
+
+    /**
+     * Initialize optional scale
+     *
+     * The scale SCALE is an optional value that specifies the number
+     * of digits after the decimal point to display.  Note that
+     * trailing zeros are _not_ removed, making this ideal for
+     * i.e. currency.
+     *
+     * The "scale" terminology comes from the Unix bc tool.  If
+     * positive, the significand will be padded with zeros to meet the
+     * scale.  If negative, no padding will take place.
+     *
+     * If the significand has more digits than permitted by SCALE, it
+     * is truncated.
+     *
+     * @param {number} scale number of digits after decimal point
+     */
+    __mixin: function( scale )
+    {
+        this._scale    = Math.abs( scale ) || 0;
+        this._scalestr = this._padScale( +scale );
+    },
+
+
+    /**
+     * Create scale padding for significand
+     *
+     * @return {string} string with SCALE zeroes
+     */
+    'private _padScale': function( scale )
+    {
+        return ( scale > 0 )
+            ? ( new Array( this._scale + 1 ) ).join( '0' )
+            : '';
+    },
+
+
+    /**
      * Parse item as a number
      *
      * @param {string} data data to parse
      *
      * @return {string} data formatted for storage
+     *
+     * @throws Error if number is not of a valid format
      */
     'virtual abstract override public parse': function( data )
     {
-        return this.__super( data ).replace( /[ ,]/g, '' );
+        var cleaned = this.__super( data ).replace( /[ ,]/g, '' );
+
+        if ( !/^[0-9]*(\.[0-9]*)?$/.test( cleaned ) )
+        {
+            throw Error( "Invalid number: " + data );
+        }
+
+        var parts   = this.split( cleaned );
+
+        return parts.integer + this.scale( parts.significand, this._scale );
     },
 
 
@@ -65,7 +149,9 @@ module.exports = Trait( 'Number' )
      */
     'virtual protected styleNumber': function( number )
     {
-        var i     = number.length,
+        var parts = this.split( number );
+
+        var i     = parts.integer.length,
             ret   = [],
             chunk = '';
 
@@ -83,6 +169,56 @@ module.exports = Trait( 'Number' )
             ret.unshift( chunk );
         } while ( i > 0 );
 
-        return ret.join( ',' );
+        return ret.join( ',' ) +
+            this.scale( parts.significand, this._scale );
+    },
+
+
+    /**
+     * Parse significand and return scaled value
+     *
+     * If the result is non-empty, then the result will be prefixed
+     * with a decimal point.
+     *
+     * Truncation is determined by whether the initial scale was
+     * negative.  If so, this method will lack a zero padding string
+     * and return a result without trailing zeroes.
+     *
+     * @param {string} significand value after decimal point
+     * @param {number} scale       positive scale
+     *
+     * @return {string} scaled significand with decimal point as needed
+     */
+    'virtual protected scale': function( significand, scale )
+    {
+        if ( scale <= 0 )
+        {
+            return '';
+        }
+
+        // easy cheat: use the pre-filled scale and truncate
+        var result = ( significand + this._scalestr ).substr( 0, scale );
+
+        return ( result )
+            ? '.' + result
+            : '';
+    },
+
+
+    /**
+     * Split integer from significand in NUMBER
+     *
+     * @param {string} number number to split
+     *
+     * @return {Object.<integer,decimal>} integer and significand
+     */
+    'virtual protected split': function( number )
+    {
+        var parts = number.split( '.' );
+
+        return {
+            integer:     parts[ 0 ].replace( /^0+/, '' ) || '0',
+            significand: ( parts[ 1 ] || '' ).replace( /0+$/, '' ),
+        }
     }
 } );
