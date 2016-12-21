@@ -4,6 +4,7 @@
   "version":     "@VERSION@",
   "author":      "LoVullo Associates, Inc. (https://www.lovullo.com)",
   "homepage":    "https://github.com/lovullo/liza",
+  "license":     "GPL-3.0+",
 
   "repository": {
     "type": "git",
