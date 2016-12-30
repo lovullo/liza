@@ -19,8 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-    Store = require( './Store' );
+var Class          = require( 'easejs' ).Class,
+    Store          = require( './Store' ),
+    StoreMissError = require( './StoreMissError' );
 
 
 /**
@@ -107,7 +108,9 @@ module.exports = Class( 'MemoryStore' )
     {
         return ( this._store[ key ] !== undefined )
             ? Promise.resolve( this._store[ key ] )
-            : Promise.reject( 'Key ' + key + ' does not exist' );
+            : Promise.reject(
+                StoreMissError( "Key '" + key + "' does not exist" )
+            );
     },
 
 

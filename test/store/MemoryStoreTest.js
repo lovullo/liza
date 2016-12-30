@@ -78,7 +78,8 @@ describe( 'store.MemoryStore', () =>
         it( 'rejects promise if store item does not exist', () =>
         {
             return expect( Sut().get( 'unknown' ) )
-                .to.eventually.be.rejected;
+                .to.eventually.be.rejected
+                .and.be.instanceof( store.StoreMissError );
         } );
     } );
 
