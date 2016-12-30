@@ -21,11 +21,14 @@
 
 "use strict";
 
-var store   = require( '../../' ).store,
-    expect  = require( 'chai' ).expect,
-    Class   = require( 'easejs' ).Class,
-    Trait   = require( 'easejs' ).Trait,
-    Sut     = store.MemoryStore;
+var store  = require( '../../' ).store,
+    chai   = require( 'chai' ),
+    expect = chai.expect,
+    Class  = require( 'easejs' ).Class,
+    Trait  = require( 'easejs' ).Trait,
+    Sut    = store.MemoryStore;
+
+chai.use( require( 'chai-as-promised' ) );
 
 
 describe( 'store.MemoryStore', () =>
@@ -37,10 +40,10 @@ describe( 'store.MemoryStore', () =>
             const sut  = Sut();
             const item = {};
 
-            expect(
+            return expect(
                 sut.add( 'foo', item )
-                    .get( 'foo' )
-            ).to.equal( item );
+                    .then( () => sut.get( 'foo' ) )
+            ).to.eventually.equal( item );
         } );
 
 
@@ -49,11 +52,22 @@ describe( 'store.MemoryStore', () =>
             const sut  = Sut();
             const item = {};
 
-            expect(
+            return expect(
                 sut.add( 'foo', [] )
-                    .add( 'foo', item )
-                    .get( 'foo' )
-            ).to.equal( item );
+                    .then( () => sut.add( 'foo', item ) )
+                    .then( () => sut.get( 'foo' ) )
+            ).to.eventually.equal( item );
+        } );
+
+
+        it( 'provides the key and value of the added item', () =>
+        {
+            const key   = 'key';
+            const value = 'val';
+
+            return expect(
+                Sut().add( key, value )
+            ).to.eventually.deep.equal( { key: key, value: value } );
         } );
     } );
 
@@ -61,9 +75,10 @@ describe( 'store.MemoryStore', () =>
     // most things implicitly tested above
     describe( '#get', () =>
     {
-        it( 'returns undefined if store item does not exist', () =>
+        it( 'rejects promise if store item does not exist', () =>
         {
-            expect( Sut().get( 'unknown' ) ).to.be.undefined;
+            return expect( Sut().get( 'unknown' ) )
+                .to.eventually.be.rejected;
         } );
     } );
 
@@ -78,17 +93,15 @@ describe( 'store.MemoryStore', () =>
             keys.forEach( key => sut.add( key ) );
 
             // should remove all items
-            sut.clear();
-
-            keys.forEach( key => expect( sut.get( key ) ).to.be.undefined );
-        } );
-
-
-        it( 'returns self', () =>
-        {
-            const sut = Sut();
-
-            expect( sut.clear() ).to.equal( sut );
+            return sut.clear().then( () =>
+            {
+                return Promise.all(
+                    keys.map( key => {
+                        expect( sut.get( key ) )
+                            .to.eventually.be.rejected
+                    } )
+                );
+            } );
         } );
     } );
 
@@ -179,7 +192,8 @@ describe( 'store.MemoryStore', () =>
             );
 
             // implicitly tests initial
-            expect( sut.sum() ).to.equal( 11 );
+            return expect( sut.sum() )
+                to.equal( 11 );
         } );
     } );
 } );

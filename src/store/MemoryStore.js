@@ -36,14 +36,28 @@ var Class = require( 'easejs' ).Class,
  * @example
  *   let s = MemoryStore();
  *
- *   s.add( 'foo', 'bar' );
- *   s.add( 'baz', 'quux' );
- *   s.get( 'foo' );  // bar
- *   s.get( 'baz' );  // quux
+ *   Promise.all( [
+ *       s.add( 'foo', 'bar' ),
+ *       s.add( 'baz', 'quux' ),
+ *   ] )
+ *       .then( Promise.all( [
+ *       {
+ *           s.get( 'foo' ),
+ *           s.get( 'baz' ),
+ *       ] ) } )
+ *       .then( function( values )
+ *       {
+ *           // values = [ 'bar', 'quux' ]
+ *       } );
  *
- *   s.clear();
- *   s.get( 'foo' );  // undefined
- *   s.get( 'baz' );  // undefined
+ *   s.clear().then( function()
+ *   {
+ *       s.get( 'foo' )
+ *           .catch( function()
+ *           {
+ *               // foo is no longer defined
+ *           } );
+ *   } );
  */
 module.exports = Class( 'MemoryStore' )
     .implement( Store )
@@ -58,51 +72,62 @@ module.exports = Class( 'MemoryStore' )
 
 
     /**
-     * Add item to cache under `key` with value `value`
+     * Add item to store under `key` with value `value`
      *
-     * @param {string} key   cache key
+     * The promise will be fulfilled with an object containing the
+     * `key` and `value` added to the store; this is convenient for
+     * promises.
+     *
+     * @param {string} key   store key
      * @param {*}      value value for key
      *
-     * @return {Store} self
+     * @return {Promise} promise to add item to store
      */
     'virtual public add': function( key, value )
     {
         this._store[ key ] = value;
 
-        return this;
+        return Promise.resolve( {
+            key:   key,
+            value: value,
+        } );
     },
 
 
     /**
-     * Retrieve item from cache under `key`
+     * Retrieve item from store under `key`
      *
-     * @param {string} key cache key
+     * The promise will be rejected if the key is unavailable.
      *
-     * @return {*} `key` value
+     * @param {string} key store key
+     *
+     * @return {Promise} promise for the key value
      */
     'virtual public get': function( key )
     {
-        return this._store[ key ];
+        return ( this._store[ key ] !== undefined )
+            ? Promise.resolve( this._store[ key ] )
+            : Promise.reject( 'Key ' + key + ' does not exist' );
     },
 
 
     /**
-     * Clear all items in cache
+     * Clear all items in store
      *
-     * @return {Store} self
+     * @return {Promise} promise to clear store
      */
     'virtual public clear': function()
     {
         this._store = {};
 
-        return this;
+        return Promise.resolve( true );
     },
 
 
     /**
-     * Fold (reduce) all cached values
+     * Fold (reduce) all stored values
      *
-     * This provides a way to iterate through all cached values and
+     * This provides a way to iterate through all stored values and
      * their keys while providing a useful functional result (folding).
      *
      * The order of folding is undefined.
@@ -110,25 +135,30 @@ module.exports = Class( 'MemoryStore' )
      * The ternary function `callback` is of the same form as
      * {@link Array#fold}: the first argument is the value of the
      * accumulator (initialized to the value of `initial`; the second
-     * is the cached item; and the third is the key of that item.
+     * is the stored item; and the third is the key of that item.
+     *
+     * Warning: if a subtype or mixin has an intensive store lookup
+     * operating, reducing could take some time.
      *
      * @param {function(*,*,string=)} callback folding function
      * @param {*}                     initial  initial value for accumulator
      *
-     * @return {*} folded value (final accumulator value)
+     * @return {Promise} promise of a folded value (final accumulator value)
      */
     'public reduce': function( callback, initial )
     {
         var store = this._store;
 
-        return Object.keys( store )
-            .map( function( key )
-            {
-                return [ key, store[ key ] ];
-            } )
-            .reduce( function( accum, values )
-            {
-                return callback( accum, values[ 1 ], values[ 0 ] );
-            }, initial );
+        return Promise.resolve(
+            Object.keys( store )
+                .map( function( key )
+                {
+                    return [ key, store[ key ] ];
+                } )
+                .reduce( function( accum, values )
+                {
+                    return callback( accum, values[ 1 ], values[ 0 ] );
+                }, initial )
+        );
     }
 } );

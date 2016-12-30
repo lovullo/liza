@@ -32,22 +32,23 @@ var Trait = require( 'easejs' ).Trait,
  * when `#clear` is invoked on `S`.
  *
  * @example
- *   let store_a = Store().add( 'key', value' ),
- *       store_b = Store().add( 'foo', 'bar' );
+ *   let store_a = Store(),
+ *       store_b = Store();
  *
- *   store_a.get( 'key' );  // value
- *   store_b.get( 'foo' );  // bar
+ *   // assuming sync. store for example (ignore promises)
+ *   store_a.add( 'key', 'value' );
+ *   store_b.add( 'foo', 'bar' );
  *
- *   Store.use( Cascading )
- *       .add( 'a', store_a )
- *       .add( 'b', store_b )
- *       .clear();
+ *   let container = Store.use( Cascading );
+ *   container.add( 'a', store_a );
+ *   container.add( 'b', store_b );
+ *   container.clear();
  *
- *   store_a.get( 'key' );  // undefined
- *   store_b.get( 'foo' );  // undefined
+ *   store_a.get( 'key' );  // Promise rejects
+ *   store_b.get( 'foo' );  // Promise rejects
  *
  *   Store.use( Cascading ).add( 'invalid', 'value' );
- *   // TypeError: Can only add Store to Cascading stores
+ *   // rejected with TypeError: Can only add Store to Cascading stores
  *
  * Although clear cascades to each `Store`, other methods do not (for
  * example, `get` will not query all `Store`s); another trait should
@@ -71,13 +72,15 @@ module.exports = Trait( 'Cascading' )
      * @param {string} key   store key
      * @param {Store}  value Store to attach
      *
-     * @return {Store} self
+     * @return {Promise} promise to add item to store
      */
     'virtual abstract override public add': function( key, value )
     {
         if ( !Class.isA( Store, value ) )
         {
-            throw TypeError( "Can only add Store to Cascading stores" );
+            return Promise.reject(
+                TypeError( "Can only add Store to Cascading stores" )
+            );
         }
 
         return this.__super( key, value );
@@ -87,13 +90,28 @@ module.exports = Trait( 'Cascading' )
     /**
      * Clear all stores in the store
      *
-     * @return {Store} self
+     * @return {Promise} promise to clear all caches
      */
     'virtual abstract override public clear': function()
     {
-        this.reduce( function( _, store )
-        {
-            store.clear();
-        } );
+        return this.reduce(
+            function( accum, store )
+            {
+                accum.push( store.clear() );
+                return accum;
+            },
+            []
+        )
+            .then( function( promises )
+            {
+                return Promise.all( promises );
+            } )
+            .then( function( result )
+            {
+                return result.every( function( value )
+                {
+                    return value === true;
+                } );
+            } );
     },
 } );

@@ -22,9 +22,13 @@
 "use strict";
 
 var store  = require( '../../' ).store,
-    expect = require( 'chai' ).expect,
+    chai   = require( 'chai' ),
+    expect = chai.expect,
     Store  = store.MemoryStore,
     Sut    = store.Cascading;
+
+chai.use( require( 'chai-as-promised' ) );
+
 
 describe( 'store.Cascading', () =>
 {
@@ -32,15 +36,14 @@ describe( 'store.Cascading', () =>
     {
         it( 'does not allow attaching non-store objects', () =>
         {
-            expect( () =>  Store.use( Sut )().add( 'invalid', {} ) )
-                .to.throw( TypeError );
+            expect( Store.use( Sut )().add( 'invalid', {} ) )
+                .to.be.rejectedWith( TypeError );
         } );
 
 
         it( 'allows attaching Store objects', () =>
         {
-            expect( () =>  Store.use( Sut )().add( 'valid', Store() ) )
-                .to.not.throw( TypeError );
+            return Store.use( Sut )().add( 'valid', Store() );
         } );
     } );
 
@@ -56,6 +59,8 @@ describe( 'store.Cascading', () =>
                 'override clear'()
                 {
                     cleared.push( this.__inst );
+
+                    return Promise.resolve( true );
                 }
             } );
 
@@ -65,13 +70,55 @@ describe( 'store.Cascading', () =>
             stores.forEach( ( store, i ) => sut.add( i, store ) );
 
             // should trigger clear on all stores
-            sut.clear();
+            return sut.clear()
+                .then( () =>
+                {
+                    expect(
+                        stores.every( store =>
+                            cleared.some( item => item === store )
+                        )
+                    ).to.be.true;
+                } );
+        } );
 
-            expect(
-                stores.every( store =>
-                    cleared.some( item => item === store )
-                )
-            ).to.be.true;
+
+        [
+            [ [ true, true, true ], true ],
+            [ [ true, true, false ], false ],
+            [ [ false, true, true ], false ],
+            [ [ false, false, false ], false ],
+        ].forEach( testdata =>
+        {
+            let clears   = testdata[ 0 ],
+                expected = testdata[ 1 ];
+
+            it( 'fails if any store fails to clear', () =>
+            {
+                let StubStore = Store.extend(
+                {
+                    _result: false,
+
+                    __construct( result )
+                    {
+                        this._result = result;
+                    },
+
+                    'override clear'()
+                    {
+                        return Promise.resolve( this._result );
+                    },
+                } );
+
+                let sut = Store.use( Sut )();
+
+                clears.forEach( ( result, i ) =>
+                {
+                    sut.add( i, StubStore( result ) );
+                } );
+
+                return sut.clear()
+                    .then( result => expect( result ).to.equal( expected ) );
+            } );
         } );
     } );
 } );
