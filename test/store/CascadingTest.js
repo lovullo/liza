@@ -82,6 +82,20 @@ describe( 'store.Cascading', () =>
         } );
 
 
+        it( 'does not clear self', () =>
+        {
+            const sut      = Store.use( Sut )();
+            const substore = Store();
+
+            return sut.add( 'foo', substore )
+                .then( () => sut.clear() )
+                .then( () => {
+                    return expect( sut.get( 'foo' ) )
+                        .to.eventually.equal( substore )
+                } );
+        } );
+
+
         [
             [ [ true, true, true ], true ],
             [ [ true, true, false ], false ],
