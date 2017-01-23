@@ -1,7 +1,7 @@
 /**
  * Field validity monitor
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2016, 2017 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -40,22 +40,29 @@ module.exports = Class( 'ValidStateMonitor' )
     /**
      * Mark fields as updated and detect failures and fixes
      *
-     * The field data DATA should be a key-value store with an array as the
-     * value for each key.  If the data are not present, then it is assumed
-     * to have been left unchanged, and will not contribute to a
-     * fix.  Otherwise, any field in FAILURES but not in DATA will count as
-     * a fix.
+     * The field data `data` should be a key-value store with an array as
+     * the value for each key.  If the data are not present, then it is
+     * assumed to have been left unchanged, and will not contribute to a
+     * fix.  Otherwise, any field in `failures` but not in `data` will count
+     * as a fix.
      *
-     * FAILURES should follow the same structure as DATA.  Indexes should
-     * omitted from the value if they are not failures.
+     * `failures` should follow the same structure as `data`.  Indexes
+     * should omitted from the value if they are not failures.
+     *
+     * The return value is a promise that is accepted once all fix checks
+     * have been performed (after which the `fix` event is emitted if
+     * appropriate).  The `failure` event is emitted synchronously if any
+     * additional failures are detected.
      *
      * @param {Object} data     key-value field data
      * @param {Object} failures key-value field errors
      *
-     * @return {ValidStateMonitor} self
+     * @return {Promise.<ValidStateMonitor>} self after fix checks
      */
     'public update': function( data, failures )
     {
+        var _self = this;
+
         var fixed     = this.detectFixes( data, this._failures, failures ),
             count_new = this.mergeFailures( this._failures, failures );
 
@@ -64,12 +71,16 @@ module.exports = Class( 'ValidStateMonitor' )
             this.emit( 'failure', this._failures );
         }
 
-        if ( fixed !== null )
+        // failures is synchronous, fixes async
+        return fixed.then( function( fixes )
         {
-            this.emit( 'fix', fixed );
-        }
+            if ( fixes !== null )
+            {
+                _self.emit( 'fix', fixes );
+            }
 
-        return this;
+            return _self.__inst;
+        } );
     },
 
 
@@ -182,26 +193,35 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} data     validated data
      * @param {Object} failures new failures
      *
-     * @return {!Object} fixed list of fixed indexes for each fixed field
+     * @return {Promise.<!Object>} fixed list of fixed indexes for each fixed field
      */
     'virtual protected detectFixes': function( data, past, failures )
     {
-        var fixed     = {},
-            has_fixed = false;
+        var _self = this,
+            fixed = {};
 
-        for ( var name in past )
-        {
-            var past_fail = past[ name ],
-                fail      = failures[ name ];
+        return Promise.all(
+            Object.keys( past ).map( function( name )
+            {
+                var past_fail = past[ name ],
+                    fail      = failures[ name ];
 
-            has_fixed = has_fixed || this._checkFailureFix(
-                name, fail, past_fail, data, fixed
-            );
-        }
+                return _self._checkFailureFix(
+                    name, fail, past_fail, data, fixed
+                );
+            } )
+        )
+            .then( function( fixes )
+            {
+                var has_fixed = fixes.some( function( value )
+                {
+                    return value === true;
+                } );
 
-        return ( has_fixed )
-            ? fixed
-            : null;
+                return ( has_fixed )
+                    ? fixed
+                    : null;
+            } );
     },
 
 
@@ -214,7 +234,7 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} data      validated data
      * @param {Object} fixed     destination for fixed field data
      *
-     * @return {boolean} whether a field was fixed
+     * @return {Promise.<boolean>} whether a field was fixed
      */
     'private _checkFailureFix': function( name, fail, past_fail, data, fixed )
     {
@@ -261,6 +281,7 @@ module.exports = Class( 'ValidStateMonitor' )
             }
         }
 
-        return has_fixed;
+        // preparation for future use of Store, which is async
+        return Promise.resolve( has_fixed );
     }
 } );
