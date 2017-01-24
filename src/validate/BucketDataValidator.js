@@ -78,7 +78,7 @@ module.exports = Class( 'BucketDataValidator',
      *
      * @return {Object.<Array.<string>>} formatted data
      */
-    'public validate': function( data, err, inplace )
+    'virtual public validate': function( data, err, inplace )
     {
         err     = err || function() {};
         inplace = !!inplace;
@@ -125,7 +125,7 @@ module.exports = Class( 'BucketDataValidator',
      *
      * @return {Array.<string>} formatted data
      */
-    'public format': function( data, inplace )
+    'virtual public format': function( data, inplace )
     {
         inplace = !!inplace;
 
