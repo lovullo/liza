@@ -75,23 +75,17 @@ module.exports = Class( 'MemoryStore' )
     /**
      * Add item to store under `key` with value `value`
      *
-     * The promise will be fulfilled with an object containing the
-     * `key` and `value` added to the store; this is convenient for
-     * promises.
-     *
      * @param {string} key   store key
      * @param {*}      value value for key
      *
-     * @return {Promise} promise to add item to store
+     * @return {Promise.<Store>} promise to add item to store, resolving to
+     *                           self (for chaining)
      */
     'virtual public add': function( key, value )
     {
         this._store[ key ] = value;
 
-        return Promise.resolve( {
-            key:   key,
-            value: value,
-        } );
+        return Promise.resolve( this.__inst );
     },
 
 

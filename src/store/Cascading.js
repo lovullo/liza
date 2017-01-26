@@ -72,7 +72,8 @@ module.exports = Trait( 'Cascading' )
      * @param {string} key   store key
      * @param {Store}  value Store to attach
      *
-     * @return {Promise} promise to add item to store
+     * @return {Promise.<Store>} promise to add item to store, resolving to
+     *                           self (for chaining)
      */
     'virtual abstract override public add': function( key, value )
     {
