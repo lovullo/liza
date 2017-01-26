@@ -19,9 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter,
-    Failure      = require( './Failure' );
+var Class        = require( 'easejs' ).Class;
+var EventEmitter = require( 'events' ).EventEmitter;
+var Failure      = require( './Failure' );
+var Store        = require( '../store/Store' );
 
 
 /**
@@ -50,9 +51,8 @@ module.exports = Class( 'ValidStateMonitor' )
      * should omitted from the value if they are not failures.
      *
      * The return value is a promise that is accepted once all fix checks
-     * have been performed (after which the `fix` event is emitted if
-     * appropriate).  The `failure` event is emitted synchronously if any
-     * additional failures are detected.
+     * have been performed.  The `failure` event is always emitted _before_
+     * the fix event.
      *
      * @param {Object} data     key-value field data
      * @param {Object} failures key-value field errors
@@ -61,19 +61,25 @@ module.exports = Class( 'ValidStateMonitor' )
      */
     'public update': function( data, failures )
     {
-        var _self = this;
-
-        var fixed     = this.detectFixes( data, this._failures, failures ),
-            count_new = this.mergeFailures( this._failures, failures );
-
-        if ( this.hasFailures() && ( count_new > 0 ) )
+        if ( !Class.isA( Store, data ) )
         {
-            this.emit( 'failure', this._failures );
+            throw TypeError(
+                'Bucket diff data must be a Store; given ' + data
+            );
         }
 
-        // failures is synchronous, fixes async
+        var _self = this;
+        var fixed = this.detectFixes( data, this._failures, failures );
+
         return fixed.then( function( fixes )
         {
+            var count_new = _self.mergeFailures( _self._failures, failures );
+
+            if ( _self.hasFailures() && ( count_new > 0 ) )
+            {
+                _self.emit( 'failure', _self._failures );
+            }
+
             if ( fixes !== null )
             {
                 _self.emit( 'fix', fixes );
@@ -238,50 +244,98 @@ module.exports = Class( 'ValidStateMonitor' )
      */
     'private _checkFailureFix': function( name, fail, past_fail, data, fixed )
     {
-        var has_fixed = false;
+        var _self = this;
 
         // we must check each individual index because it is possible that
         // not every index was modified or fixed (we must loop through like
         // this because this is treated as a hash table, not an array)
-        for ( var i in past_fail )
+        return Promise.all( past_fail.map( function( failure, fail_i )
         {
-            var causes = past_fail[ i ] && past_fail[ i ].getCauses();
+            var causes = failure && failure.getCauses() || [];
 
-            for ( var cause_i in causes )
-            {
-                var cause       = causes[ cause_i ],
-                    cause_name  = cause.getName(),
-                    cause_index = cause.getIndex(),
-                    field       = data[ cause_name ];
-
-                // if datum is unchanged, ignore it
-                if ( field === undefined )
-                {
-                    continue;
-                }
-
-                // to be marked as fixed, there must both me no failure and
-                // there must be data for this index for the field in question
-                // (if the field wasn't touched, then of course there's no
-                // failure!)
-                if ( ( fail === undefined )
-                    || ( !( fail[ cause_index ] )
-                        && ( field[ cause_index ] !== undefined ) )
+            // to short-circuit checks, the promise will be _rejected_ once
+            // a match is found (see catch block)
+            return causes
+                .reduce(
+                    _self._checkCauseFix.bind( _self, data, fail ),
+                    Promise.resolve( true )
                 )
+                .then( function()
                 {
+                    // no fixes
+                    return false;
+                } )
+                .catch( function( result )
+                {
+                    if ( result instanceof Error )
+                    {
+                        throw result;
+                    }
+
                     // looks like it has been resolved
-                    ( fixed[ name ] = fixed[ name ] || [] )[ i ] =
-                        field[ cause_index ]
+                    ( fixed[ name ] = fixed[ name ] || [] )[ fail_i ] = result;
 
-                    has_fixed = true;
+                    delete past_fail[ fail_i ];
+                    return true;
+                } );
+        } ) ).then( function( result ) {
+            return result.some( function( val )
+            {
+                return val === true;
+            } );
+        } );
+    },
 
-                    delete past_fail[ i ];
-                    break;
-                }
-            }
-        }
 
-        // preparation for future use of Store, which is async
-        return Promise.resolve( has_fixed );
-    }
+    /**
+     * Check past failure causes
+     *
+     * Each past failure in `fail` will be checked against the data in
+     * `diff` to determine whether it should be considered a possible
+     * fix.  If so, the promise is fulfilled with the fix data.  It is the
+     * responsibility of the caller to handle removing past failures.
+     *
+     * @param {Object}  data   validated data
+     * @param {Object}  fail   failure records
+     * @param {Promise} causep cause promise to chain onto
+     * @param {Field}   cause  field that caused the error
+     *
+     * @return {Promise} whether a field should be fixed
+     */
+    'private _checkCauseFix': function( data, fail, causep, cause )
+    {
+        var cause_name  = cause.getName();
+        var cause_index = cause.getIndex();
+
+        return causep.then( function()
+        {
+            return new Promise( function( keepgoing, found )
+            {
+                data.get( cause_name ).then( function( field )
+                {
+                    // to be marked as fixed, there must both me no failure
+                    // and there must be data for this index for the field
+                    // in question (if the field wasn't touched, then of
+                    // course there's no failure!)
+                    if ( ( fail === undefined )
+                        || ( !( fail[ cause_index ] )
+                            && ( field[ cause_index ] !== undefined ) )
+                    )
+                    {
+                        found( field[ cause_index ] );
+                        return;
+                    }
+
+                    // keep searching
+                    keepgoing( true );
+                } )
+                .catch( function( e )
+                {
+                    // doesn't exist, so just keep searching (it
+                    // wasn't fixed)
+                    keepgoing( true );
+                } );
+            } );
+        } );
+    },
 } );

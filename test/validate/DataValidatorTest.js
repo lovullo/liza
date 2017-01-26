@@ -21,12 +21,13 @@
 
 "use strict";
 
-const root     = require( '../../' );
-const validate = root.validate;
-const Sut      = validate.DataValidator;
-const chai     = require( 'chai' );
-const expect   = chai.expect;
-const sinon    = require( 'sinon' );
+const root        = require( '../../' );
+const validate    = root.validate;
+const Sut         = validate.DataValidator;
+const MemoryStore = root.store.MemoryStore;
+const chai        = require( 'chai' );
+const expect      = chai.expect;
+const sinon       = require( 'sinon' );
 
 const BucketDataValidator = validate.BucketDataValidator,
       ValidStateMonitor   = validate.ValidStateMonitor;
@@ -55,6 +56,7 @@ describe( 'DataValidator', () =>
 
             const vmonitor    = ValidStateMonitor();
             const dep_factory = createMockDependencyFactory();
+            const getStore    = createStubStore();
 
             const mock_vmonitor    = sinon.mock( vmonitor );
             const mock_dep_factory = sinon.mock( dep_factory );
@@ -68,7 +70,7 @@ describe( 'DataValidator', () =>
 
             mock_vmonitor.expects( 'update' )
                 .once()
-                .withExactArgs( diff, expected_failures )
+                .withExactArgs( getStore(), expected_failures )
                 .returns( Promise.resolve( undefined ) );
 
             mock_dep_factory.expects( 'createFieldFailure' )
@@ -76,19 +78,17 @@ describe( 'DataValidator', () =>
                 .withExactArgs( 'foo', 1, expected_value )
                 .returns( expected_failure );
 
-            const retp = Sut( bvalidator, vmonitor, dep_factory )
-                .validate( diff );
+            return Sut( bvalidator, vmonitor, dep_factory, getStore )
+                .validate( diff )
+                .then( () =>
+                {
+                    mock_vmonitor.verify();
+                    mock_dep_factory.verify();
 
-            // cleared on call to err in above mock validator
-            expect( diff.foo ).to.deep.equal(
-                [ 'a', undefined, 'c' ]
-            );
-
-            mock_vmonitor.verify();
-            mock_dep_factory.verify();
-
-            // the promise
-            return retp;
+                    // cleared on call to err in above mock validator
+                    return expect( getStore().get( 'foo' ) )
+                        .to.eventually.deep.equal( [ 'a', undefined, 'c' ] );
+                } );
         } );
 
 
@@ -106,6 +106,7 @@ describe( 'DataValidator', () =>
 
             const vmonitor    = ValidStateMonitor();
             const dep_factory = createMockDependencyFactory();
+            const getStore    = createStubStore();
 
             const diff = { foo: [ 'a', 'b', 'c' ] };
             const expected_failures = {
@@ -129,14 +130,14 @@ describe( 'DataValidator', () =>
             sinon.mock( vmonitor )
                 .expects( 'update' )
                 .once()
-                .withExactArgs( diff, expected_failures )
+                .withExactArgs( getStore(), expected_failures )
                 .returns( Promise.resolve( undefined ) );
 
             sinon.mock( dep_factory )
                 .expects( 'createFieldFailure' )
                 .returns( expected_failure );
 
-            return Sut( bvalidator, vmonitor, dep_factory )
+            return Sut( bvalidator, vmonitor, dep_factory, getStore )
                 .validate( diff, validatef );
         } );
 
@@ -155,7 +156,7 @@ describe( 'DataValidator', () =>
                 .returns( Promise.reject( expected_e ) );
 
             return expect(
-                Sut( bvalidator, vmonitor, dep_factory )
+                Sut( bvalidator, vmonitor, dep_factory, createStubStore() )
                     .validate( {} )
             ).to.eventually.be.rejectedWith( expected_e );
         } );
@@ -180,4 +181,12 @@ function createMockDependencyFactory( map )
     return {
         createFieldFailure: () => {},
     };
+}
+
+
+function createStubStore()
+{
+    const store = MemoryStore();
+
+    return () => store;
 }
