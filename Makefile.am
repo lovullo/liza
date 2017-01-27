@@ -41,6 +41,9 @@ modindex: $(nsindex)
 test: check
 check:
 	@PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
-		mocha --require $(path_test)/pre.js --recursive $(TESTARGS)
+		mocha @NODE_DESTRUCTURE@ \
+		      --require $(path_test)/pre.js \
+		      --recursive \
+		      $(TESTARGS)
 
 FORCE:

@@ -29,6 +29,18 @@ AC_SUBST(MINOR, m4_argn(2, ver_split))
 AC_SUBST(REV, m4_argn(3, ver_split))
 AC_SUBST(SUFFIX, m4_argn(4, ver_split))
 
+AC_ARG_VAR([NODE], [The node.js interpreter])
+AC_CHECK_PROGS(NODE, [node nodejs])
+
+test -n "$NODE" || AC_MSG_ERROR([missing Node.js])
+
+# only needed for older versions of Node
+AC_MSG_CHECKING([node --harmony_destructuring])
+AS_IF([node --harmony_destructuring >/dev/null 2>/dev/null],
+      [AC_MSG_RESULT(available)
+       AC_SUBST([NODE_DESTRUCTURE], [--harmony-destructuring])],
+      [AC_MSG_RESULT(no)])
+
 # generate files from their *.in counterparts
 AC_CONFIG_FILES([Makefile doc/Makefile package.json src/version.js])
 AC_OUTPUT
