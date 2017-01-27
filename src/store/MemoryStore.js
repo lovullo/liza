@@ -81,7 +81,7 @@ module.exports = Class( 'MemoryStore' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public add': function( key, value )
+    'virtual public add'( key, value )
     {
         this._store[ key ] = value;
 
@@ -98,7 +98,7 @@ module.exports = Class( 'MemoryStore' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual public get': function( key )
+    'virtual public get'( key )
     {
         return ( this._store[ key ] !== undefined )
             ? Promise.resolve( this._store[ key ] )
@@ -114,7 +114,7 @@ module.exports = Class( 'MemoryStore' )
      * @return {Promise<Store>} promise to clear store, resolving to self
      *                          (for chaining)
      */
-    'virtual public clear': function()
+    'virtual public clear'()
     {
         this._store = {};
 
@@ -143,20 +143,15 @@ module.exports = Class( 'MemoryStore' )
      *
      * @return {Promise} promise of a folded value (final accumulator value)
      */
-    'public reduce': function( callback, initial )
+    'public reduce'( callback, initial )
     {
-        var store = this._store;
+        const store = this._store;
 
         return Promise.resolve(
-            Object.keys( store )
-                .map( function( key )
-                {
-                    return [ key, store[ key ] ];
-                } )
-                .reduce( function( accum, values )
-                {
-                    return callback( accum, values[ 1 ], values[ 0 ] );
-                }, initial )
+            Object.keys( store ).reduce(
+                ( accum, key ) => callback( accum, store[ key ], key ),
+                initial
+            )
         );
     }
 } );
