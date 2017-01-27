@@ -103,6 +103,16 @@ describe( 'store.MemoryStore', () =>
                 );
             } );
         } );
+
+
+        it( 'returns self with promise', () =>
+        {
+            const sut = Sut();
+
+            return expect(
+                sut.clear()
+            ).to.eventually.equal( sut );
+        } );
     } );
 
 

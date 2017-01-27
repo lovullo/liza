@@ -65,7 +65,8 @@ module.exports = Interface( 'Store',
     /**
      * Clear all items in store
      *
-     * @return {Promise} promise to clear store
+     * @return {Promise<Store>} promise to clear store, resolving to self
+     *                          (for chaining)
      */
     'public clear': [],
 

@@ -111,13 +111,14 @@ module.exports = Class( 'MemoryStore' )
     /**
      * Clear all items in store
      *
-     * @return {Promise} promise to clear store
+     * @return {Promise<Store>} promise to clear store, resolving to self
+     *                          (for chaining)
      */
     'virtual public clear': function()
     {
         this._store = {};
 
-        return Promise.resolve( true );
+        return Promise.resolve( this.__inst );
     },
 
 
