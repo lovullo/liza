@@ -19,10 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class;
-var EventEmitter = require( 'events' ).EventEmitter;
-var Failure      = require( './Failure' );
-var Store        = require( '../store/Store' );
+"use strict";
+
+const Class        = require( 'easejs' ).Class;
+const EventEmitter = require( 'events' ).EventEmitter;
+const Failure      = require( './Failure' );
+const Store        = require( '../store/Store' );
 
 
 /**
@@ -59,7 +61,7 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {Promise.<ValidStateMonitor>} self after fix checks
      */
-    'public update': function( data, failures )
+    'public update'( data, failures )
     {
         if ( !Class.isA( Store, data ) )
         {
@@ -68,24 +70,23 @@ module.exports = Class( 'ValidStateMonitor' )
             );
         }
 
-        var _self = this;
-        var fixed = this.detectFixes( data, this._failures, failures );
+        const fixed = this.detectFixes( data, this._failures, failures );
 
-        return fixed.then( function( fixes )
+        return fixed.then( fixes =>
         {
-            var count_new = _self.mergeFailures( _self._failures, failures );
+            const count_new = this.mergeFailures( this._failures, failures );
 
-            if ( _self.hasFailures() && ( count_new > 0 ) )
+            if ( this.hasFailures() && ( count_new > 0 ) )
             {
-                _self.emit( 'failure', _self._failures );
+                this.emit( 'failure', this._failures );
             }
 
             if ( fixes !== null )
             {
-                _self.emit( 'fix', fixes );
+                this.emit( 'fix', fixes );
             }
 
-            return _self.__inst;
+            return this.__inst;
         } );
     },
 
@@ -97,7 +98,7 @@ module.exports = Class( 'ValidStateMonitor' )
      *                  value is an array with each failure index and
      *                  the value that caused the failure
      */
-    'public getFailures': function()
+    'public getFailures'()
     {
         return this._failures;
     },
@@ -125,22 +126,22 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {boolean} true if errors exist, otherwise false
      */
-    'virtual public hasFailures': function()
+    'virtual public hasFailures'()
     {
-        var past = this._failures;
+        let past = this._failures;
 
-        for ( var field in past )
+        return Object.keys( past ).some( field =>
         {
-            for ( var i in past[ field ] )
+            for ( let i in past[ field ] )
             {
                 return true;
             }
 
             // clean up as we go
             delete past[ field ];
-        }
 
-        return false;
+            return false;
+        } );
     },
 
 
@@ -155,15 +156,15 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {number} number of new failures
      */
-    'virtual protected mergeFailures': function( past, failures )
+    'virtual protected mergeFailures'( past, failures )
     {
-        var count_new = 0;
+        let count_new = 0;
 
         for ( var name in failures )
         {
             past[ name ] = past[ name ] || [];
 
-            var cur_past = past[ name ];
+            const cur_past = past[ name ];
 
             // copy each failure into the past failures table
             for ( var i in failures[ name ] )
@@ -201,33 +202,26 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {Promise.<!Object>} fixed list of fixed indexes for each fixed field
      */
-    'virtual protected detectFixes': function( data, past, failures )
+    'virtual protected detectFixes'( data, past, failures )
     {
-        var _self = this,
-            fixed = {};
+        let fixed = {};
 
         return Promise.all(
-            Object.keys( past ).map( function( name )
+            Object.keys( past ).map( name =>
             {
-                var past_fail = past[ name ],
-                    fail      = failures[ name ];
+                const past_fail = past[ name ];
+                const fail      = failures[ name ];
 
-                return _self._checkFailureFix(
+                return this._checkFailureFix(
                     name, fail, past_fail, data, fixed
                 );
             } )
         )
-            .then( function( fixes )
-            {
-                var has_fixed = fixes.some( function( value )
-                {
-                    return value === true;
-                } );
-
-                return ( has_fixed )
+            .then( fixes =>
+                fixes.some( fix => fix === true )
                     ? fixed
-                    : null;
-            } );
+                    : null
+            );
     },
 
 
@@ -242,30 +236,24 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {Promise.<boolean>} whether a field was fixed
      */
-    'private _checkFailureFix': function( name, fail, past_fail, data, fixed )
+    'private _checkFailureFix'( name, fail, past_fail, data, fixed )
     {
-        var _self = this;
-
         // we must check each individual index because it is possible that
         // not every index was modified or fixed (we must loop through like
         // this because this is treated as a hash table, not an array)
-        return Promise.all( past_fail.map( function( failure, fail_i )
+        return Promise.all( past_fail.map( ( failure, fail_i ) =>
         {
-            var causes = failure && failure.getCauses() || [];
+            const causes = failure && failure.getCauses() || [];
 
             // to short-circuit checks, the promise will be _rejected_ once
             // a match is found (see catch block)
             return causes
                 .reduce(
-                    _self._checkCauseFix.bind( _self, data, fail ),
+                    this._checkCauseFix.bind( this, data, fail ),
                     Promise.resolve( true )
                 )
-                .then( function()
-                {
-                    // no fixes
-                    return false;
-                } )
-                .catch( function( result )
+                .then( () => false )
+                .catch( result =>
                 {
                     if ( result instanceof Error )
                     {
@@ -278,12 +266,7 @@ module.exports = Class( 'ValidStateMonitor' )
                     delete past_fail[ fail_i ];
                     return true;
                 } );
-        } ) ).then( function( result ) {
-            return result.some( function( val )
-            {
-                return val === true;
-            } );
-        } );
+        } ) ).then( fixes => fixes.some( fix => fix === true ) );
     },
 
 
@@ -302,16 +285,14 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {Promise} whether a field should be fixed
      */
-    'private _checkCauseFix': function( data, fail, causep, cause )
+    'private _checkCauseFix'( data, fail, causep, cause )
     {
-        var cause_name  = cause.getName();
-        var cause_index = cause.getIndex();
+        const cause_name  = cause.getName();
+        const cause_index = cause.getIndex();
 
-        return causep.then( function()
-        {
-            return new Promise( function( keepgoing, found )
-            {
-                data.get( cause_name ).then( function( field )
+        return causep.then( () =>
+            new Promise( ( keepgoing, found ) =>
+                data.get( cause_name ).then( field =>
                 {
                     // to be marked as fixed, there must both me no failure
                     // and there must be data for this index for the field
@@ -329,13 +310,8 @@ module.exports = Class( 'ValidStateMonitor' )
                     // keep searching
                     keepgoing( true );
                 } )
-                .catch( function( e )
-                {
-                    // doesn't exist, so just keep searching (it
-                    // wasn't fixed)
-                    keepgoing( true );
-                } );
-            } );
-        } );
+                .catch( e => keepgoing( true ) )
+            )
+        );
     },
 } );
