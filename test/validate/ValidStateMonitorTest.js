@@ -318,6 +318,25 @@ describe( 'ValidStateMonitor', function()
             } );
 
 
+            // if a diff is present for a previously failed key (e.g. foo),
+            // but contains no changes (e.g. [ undefined ]), and doesn't
+            // include the failure on the second call, then it should not be
+            // considered to be a fix (this is a bugfix)
+            it( 'keeps past failures on key if failure does not reoccur', () =>
+            {
+                const fail_past = mkfail( 'foo', [ 'bar', 'baz' ] );
+
+                return mkstore( { foo: [ undefined, undefined ] } )
+                    .then( data =>
+                        Sut()
+                            .update( data, { foo: fail_past } )
+                            // no failure or fix (foo has no updates)
+                            .then( sut => sut.update( data, {} ) )
+                            .then( sut => expect( sut.hasFailures() ).to.be.true )
+                    );
+            } );
+
+
             it( 'does not trigger failure event for existing', function()
             {
                 var called = 0;

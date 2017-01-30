@@ -298,9 +298,8 @@ module.exports = Class( 'ValidStateMonitor' )
                     // and there must be data for this index for the field
                     // in question (if the field wasn't touched, then of
                     // course there's no failure!)
-                    if ( ( fail === undefined )
-                        || ( !( fail[ cause_index ] )
-                            && ( field[ cause_index ] !== undefined ) )
+                    if ( ( ( fail === undefined ) || !( fail[ cause_index ] ) )
+                        && ( field[ cause_index ] !== undefined )
                     )
                     {
                         found( field[ cause_index ] );
