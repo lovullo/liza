@@ -21,7 +21,7 @@
 
 "use strict";
 
-const MemoryStore = require( '../store' ).MemoryStore;
+const store = require( '../store' );
 
 
 /**
@@ -34,6 +34,34 @@ const MemoryStore = require( '../store' ).MemoryStore;
  */
 module.exports = {
     data: {
-        diffStore: () => MemoryStore(),
+        /**
+         * Create a store suitable for comparing diffs
+         *
+         * This relies very much on assumptions about how the rest of the
+         * system works:
+         *   - bstore expects the diff format to be provided directly to it;
+         *   - cstore expects a full classification result set with which
+         *     _it_ will compute the diff; and
+         *   - the outer store proxies to cstore for 'c:*'.
+         */
+        diffStore: () => {
+            const cstore = store.DiffStore();
+            const bstore = store.MemoryStore();
+
+            const proxy = store.MemoryStore.use(
+                store.PatternProxy( [
+                    [ /^c:(.*)$/, cstore ],
+                    [ /./,        bstore ],
+                ] )
+            )();
+
+            // TODO: breaking encapsulation should not be necessary in the
+            // future
+            return {
+                store:  proxy,
+                cstore: cstore,
+                bstore: bstore,
+            };
+        },
     },
 };
