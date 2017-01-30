@@ -56,7 +56,11 @@ describe( 'DataValidator', () =>
 
             const vmonitor    = ValidStateMonitor();
             const dep_factory = createMockDependencyFactory();
-            const getStore    = createStubStore();
+
+            const getStore   = createStubStore();
+            const { bstore } = getStore();
+
+            const mock_bstore = sinon.mock( bstore );
 
             const mock_vmonitor    = sinon.mock( vmonitor );
             const mock_dep_factory = sinon.mock( dep_factory );
@@ -68,15 +72,21 @@ describe( 'DataValidator', () =>
                 foo: { 1: expected_failure }
             };
 
+            // call to actual validator
             mock_vmonitor.expects( 'update' )
                 .once()
-                .withExactArgs( getStore(), expected_failures )
+                .withExactArgs( getStore().store, expected_failures )
                 .returns( Promise.resolve( undefined ) );
 
             mock_dep_factory.expects( 'createFieldFailure' )
                 .once()
                 .withExactArgs( 'foo', 1, expected_value )
                 .returns( expected_failure );
+
+            // clears previous diffs
+            mock_bstore.expects( 'clear' )
+                .once()
+                .returns( Promise.resolve( bstore ) );
 
             return Sut( bvalidator, vmonitor, dep_factory, getStore )
                 .validate( diff )
@@ -86,8 +96,50 @@ describe( 'DataValidator', () =>
                     mock_dep_factory.verify();
 
                     // cleared on call to err in above mock validator
-                    return expect( getStore().get( 'foo' ) )
+                    return expect( getStore().bstore.get( 'foo' ) )
                         .to.eventually.deep.equal( [ 'a', undefined, 'c' ] );
+                } );
+        } );
+
+
+        it( 'merges classification changes with diff', () =>
+        {
+            // SUT will only care about the indexes
+            const classes = {
+                first:  { indexes: [], is: false },
+                second: { indexes: [ 0, 1 ], is: true },
+            };
+
+            const bvalidator  = createMockBucketValidator();
+            const vmonitor    = ValidStateMonitor();
+            const dep_factory = createMockDependencyFactory();
+
+            const getStore   = createStubStore();
+            const { cstore } = getStore();
+
+            const mock_cstore = sinon.mock( cstore );
+
+            // clears previous diffs
+            mock_cstore.expects( 'clear' )
+                .once()
+                .returns( Promise.resolve( cstore ) );
+
+            return Sut( bvalidator, vmonitor, dep_factory, getStore )
+                .validate( {}, classes )
+                .then( () =>
+                {
+                    // clear should have been called
+                    mock_cstore.verify();
+
+                    // keep in mind that we are using MemoryStore for this
+                    // test (whereas a real implementation would probably be
+                    // using a DiffStore)
+                    return Promise.all(
+                        Object.keys( classes ).map( key =>
+                            expect( cstore.get( key ) )
+                                .to.eventually.deep.equal( classes[ key ].indexes )
+                        )
+                    );
                 } );
         } );
 
@@ -130,7 +182,7 @@ describe( 'DataValidator', () =>
             sinon.mock( vmonitor )
                 .expects( 'update' )
                 .once()
-                .withExactArgs( getStore(), expected_failures )
+                .withExactArgs( getStore().store, expected_failures )
                 .returns( Promise.resolve( undefined ) );
 
             sinon.mock( dep_factory )
@@ -138,13 +190,13 @@ describe( 'DataValidator', () =>
                 .returns( expected_failure );
 
             return Sut( bvalidator, vmonitor, dep_factory, getStore )
-                .validate( diff, validatef );
+                .validate( diff, {}, validatef );
         } );
 
 
         it( 'rejects if field monitor update rejects', () =>
         {
-            const bvalidator  = createMockBucketValidator( ( x, y, z ) => {} );
+            const bvalidator  = createMockBucketValidator();
             const vmonitor    = ValidStateMonitor();
             const dep_factory = createMockDependencyFactory();
 
@@ -166,6 +218,8 @@ describe( 'DataValidator', () =>
 
 function createMockBucketValidator( validatef )
 {
+    validatef = validatef || ( ( x, y, z ) => {} );
+
     return BucketDataValidator.extend(
     {
         'override public validate': validatef,
@@ -186,7 +240,11 @@ function createMockDependencyFactory( map )
 
 function createStubStore()
 {
-    const store = MemoryStore();
+    const stores = {
+        store:  MemoryStore(),
+        bstore: MemoryStore(),
+        cstore: MemoryStore(),
+    };
 
-    return () => store;
+    return () => stores;
 }

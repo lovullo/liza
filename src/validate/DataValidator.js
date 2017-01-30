@@ -56,10 +56,10 @@ module.exports = Class( 'DataValidator',
     'private _factory': null,
 
     /**
-     * Bucket diff store
-     * @type {Store}
+     * Various layers of the diff store
+     * @type {Object}
      */
-    'private _store_factory': null,
+    'private _stores': {},
 
 
     /**
@@ -96,7 +96,7 @@ module.exports = Class( 'DataValidator',
      */
     'private _createStores': function( store_factory )
     {
-        this._bucket_store = store_factory();
+        this._stores = store_factory();
     },
 
 
@@ -112,24 +112,28 @@ module.exports = Class( 'DataValidator',
      * @return {Promise} accepts with unspecified value once field monitor
      *                   has completed its update
      */
-    'public validate'( diff, validatef )
+    'public validate'( diff, classes, validatef )
     {
         const _self = this;
 
         let failures = {};
 
-        _self._bucket_validator.validate( diff, ( name, value, i ) =>
+        if ( diff !== undefined )
         {
-            diff[ name ][ i ] = undefined;
+            _self._bucket_validator.validate( diff, ( name, value, i ) =>
+            {
+                diff[ name ][ i ] = undefined;
 
-            ( failures[ name ] = failures[ name ] || {} )[ i ] =
-                _self._factory.createFieldFailure( name, i, value );
-        }, true );
+                ( failures[ name ] = failures[ name ] || {} )[ i ] =
+                    _self._factory.createFieldFailure( name, i, value );
+            }, true );
 
-        validatef && validatef( diff, failures );
+            validatef && validatef( diff, failures );
+        }
 
         // XXX: this assumes that the above is synchronous
-        return this.updateFailures( diff, failures );
+        return this._populateStore( classes, this._stores.cstore, 'indexes' )
+            .then( () => this.updateFailures( diff, failures ) );
     },
 
 
@@ -146,36 +150,39 @@ module.exports = Class( 'DataValidator',
      */
     'public updateFailures'( diff, failures )
     {
-        const _self = this;
-
-        return this._populateStore( diff ).then( () =>
-        {
-            return _self._field_monitor.update(
-                _self._bucket_store, failures
-            );
-        } );
+        return this._populateStore( diff, this._stores.bstore ).then( () =>
+            this._field_monitor.update(
+                this._stores.store, failures
+            )
+        );
     },
 
 
     /**
-     * Populate store with diff
+     * Populate store with data
      *
      * This effectively converts a basic array into a `Store`.  This is
      * surprisingly performant on v8.  If the stores mix in traits, there
      * may be a slight performance hit for trait-overridden methods.
      *
-     * @param {Object} diff bucket diff
+     * @param {Object} data data to map onto store
      *
      * @return {Promise} when all items have been added to the store
      */
-    'private _populateStore'( diff )
+    'private _populateStore'( data, store, subkey )
     {
-        var bstore = this._bucket_store;
+        if ( data === undefined )
+        {
+            return Promise.resolve( [] );
+        }
 
-        return Promise.all(
-            Object.keys( diff ).map(
-                key => bstore.add( key, diff[ key ] )
-            )
-        );
+        const mapf = ( subkey !== undefined )
+            ? key => store.add( key, data[ key ][ subkey ] )
+            : key => store.add( key, data[ key ] );
+
+        return store.clear()
+            .then( () => Promise.all(
+                Object.keys( data ).map( mapf )
+            ) );
     },
 } );
