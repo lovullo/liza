@@ -1,7 +1,7 @@
 /**
  * Test field validity monitor
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2016, 2017 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -19,14 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var root    = require( '../../' ),
-    Sut     = root.validate.ValidStateMonitor,
-    expect  = require( 'chai' ).expect,
-    Failure = root.validate.Failure,
-    Field   = root.field.BucketField;
+"use strict";
+
+const root        = require( '../../' );
+const Sut         = root.validate.ValidStateMonitor;
+const chai        = require( 'chai' );
+const expect      = chai.expect;
+const Failure     = root.validate.Failure;
+const Field       = root.field.BucketField;
+const MemoryStore = root.store.MemoryStore;
+
+chai.use( require( 'chai-as-promised' ) );
 
 
-var nocall = function( type )
+const nocall = function( type )
 {
     return function()
     {
@@ -34,7 +40,7 @@ var nocall = function( type )
     };
 };
 
-var mkfail = function( name, arr )
+const mkfail = function( name, arr )
 {
     return arr.map( function( value, i )
     {
@@ -51,19 +57,25 @@ describe( 'ValidStateMonitor', function()
     {
         it( 'does nothing with no data or failures', function()
         {
-            Sut()
-                .on( 'failure', nocall( 'failure' ) )
-                .on( 'fix', nocall( 'fix' ) )
-                .update( {}, {} );
+            return mkstore( {} ).then( empty =>
+            {
+                return Sut()
+                    .on( 'failure', nocall( 'failure' ) )
+                    .on( 'fix', nocall( 'fix' ) )
+                    .update( empty, {} );
+            } );
         } );
 
 
         it( 'does nothing with data but no failures', function()
         {
-            Sut()
-                .on( 'failure', nocall( 'failure' ) )
-                .on( 'fix', nocall( 'fix' ) )
-                .update( { foo: mkfail( 'foo', [ 'bar' ] ) }, {} );
+            return mkstore( { foo: mkfail( 'foo', [ 'bar' ] ) } ).then( store =>
+            {
+                return Sut()
+                    .on( 'failure', nocall( 'failure' ) )
+                    .on( 'fix', nocall( 'fix' ) )
+                    .update( store, {} );
+            } );
         } );
 
 
@@ -71,85 +83,118 @@ describe( 'ValidStateMonitor', function()
         // need the data
         describe( 'given failures', function()
         {
-            it( 'marks failures even when given no data', function( done )
+            it( 'marks failures even when given no data', function()
             {
                 var fail = mkfail( 'foo', [ 'bar', 'baz' ] );
 
-                Sut()
-                    .on( 'failure', function( failures )
+                return mkstore( {} ).then( empty =>
+                {
+                    return new Promise( accept =>
                     {
-                        expect( failures )
-                            .to.deep.equal( { foo: [ fail[ 0 ], fail[ 1 ] ] } );
-                        done();
-                    } )
-                    .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: fail } );
+                        return Sut()
+                            .on( 'failure', function( failures )
+                            {
+                                expect( failures )
+                                    .to.deep.equal(
+                                        { foo: [ fail[ 0 ], fail[ 1 ] ] }
+                                    );
+                                accept();
+                            } )
+                            .on( 'fix', nocall( 'fix' ) )
+                            .update( empty, { foo: fail } );
+                    } );
+                } );
             } );
 
 
-            it( 'marks failures with index gaps', function( done )
+            it( 'marks failures with index gaps', function()
             {
                 var fail = mkfail( 'foo', [ undefined, 'baz' ] );
 
-                Sut()
-                    .on( 'failure', function( failures )
+                return mkstore( {} ).then( empty =>
+                {
+                    return new Promise( accept =>
                     {
-                        expect( failures )
-                            .to.deep.equal( { foo: [ undefined, fail[ 1 ] ] } );
-                        done();
-                    } )
-                    .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: fail } );
+                        Sut()
+                            .on( 'failure', function( failures )
+                            {
+                                expect( failures )
+                                    .to.deep.equal(
+                                        { foo: [ undefined, fail[ 1 ] ] }
+                                    );
+                                accept();
+                            } )
+                            .on( 'fix', nocall( 'fix' ) )
+                            .update( empty, { foo: fail } );
+                    } );
+                } );
             } );
 
 
-            it( 'retains past failures when setting new', function( done )
+            it( 'retains past failures when setting new', function()
             {
                 var sut  = Sut(),
                     fail = mkfail( 'foo', [ 'bar', 'baz' ] );
 
-                var test_first = function( failures )
+                return new Promise( ( accept, reject ) =>
                 {
-                    expect( failures )
-                        .to.deep.equal( { foo: [ undefined, fail[ 1 ] ] } );
+                    var test_first = function( failures )
+                    {
+                        expect( failures )
+                            .to.deep.equal( { foo: [ undefined, fail[ 1 ] ] } );
 
-                    sut.once( 'failure', test_second );
-                };
+                        sut.once( 'failure', test_second );
+                    };
 
-                var test_second = function( failures )
-                {
-                    expect( failures )
-                        .to.deep.equal( { foo: [ fail[ 0 ], fail[ 1 ] ] } );
+                    var test_second = function( failures )
+                    {
+                        expect( failures )
+                            .to.deep.equal( { foo: [ fail[ 0 ], fail[ 1 ] ] } );
 
-                    done();
-                };
+                        accept();
+                    };
 
-                sut
-                    .once( 'failure', test_first )
-                    .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: [ undefined, fail[ 1 ] ] } )
-                    .update( {}, { foo: [ fail[ 0 ] ] } );
+                    mkstore( {} ).then( empty =>
+                    {
+                        return sut
+                            .once( 'failure', test_first )
+                            .on( 'fix', nocall( 'fix' ) )
+                            .update( empty, { foo: [ undefined, fail[ 1 ] ] } )
+                            .then( () =>
+                            {
+                                return sut.update( empty, { foo: [ fail[ 0 ] ] } );
+                            } );
+                    } ).catch( e => reject( e ) );
+                } );
             } );
 
 
             // deprecated
-            it( 'accepts failures as string for BC', function( done )
+            it( 'accepts failures as string for BC', function()
             {
                 var fail = [ 'foo', 'bar' ];
 
-                Sut()
-                    .on( 'failure', function( failures )
+                return new Promise( ( accept, reject ) =>
+                {
+                    return mkstore( {} ).then( empty =>
                     {
-                        expect( failures )
-                            .to.deep.equal( { foo: fail } );
-                        done();
+                        return Sut()
+                            .on( 'failure', function( failures )
+                            {
+                                expect( failures )
+                                    .to.deep.equal( { foo: fail } );
+
+                                accept();
+                            } )
+                            .on( 'fix', nocall( 'fix' ) )
+                            .update( empty, { foo: fail } );
                     } )
-                    .on( 'fix', nocall( 'fix' ) )
-                    .update( {}, { foo: fail } );
+                        .catch( e => reject( e ) );
+                } );
             } );
 
 
-            it( 'does not discard existing failures', function( done )
+            it( 'does not discard existing failures', function()
             {
                 var sut = Sut();
 
@@ -170,67 +215,125 @@ describe( 'ValidStateMonitor', function()
                 // the second failure has fewer causes than the first;
                 // we need to make sure that it doesn't overwrite,
                 // leading to fewer caues
-                sut
-                    .update( {}, { foo: [ fail1 ] } )
-                    .update( {}, { foo: [ fail2 ] } );
-
-                // if cause1 wasn't removed, then this will fix it
-                sut
-                    .once( 'fix', function( fixed )
+                return new Promise( ( accept, reject ) =>
+                {
+                    return mkstore( {} ).then( empty =>
                     {
-                        expect( fixed )
-                            .to.deep.equal( { foo: [ 'causefix1' ] } );
+                        return sut
+                            .update( empty, { foo: [ fail1 ] } )
+                            .then( () =>
+                            {
+                                return sut.update( empty, { foo: [ fail2 ] } );
+                            } )
+                            .then( () =>
+                            {
+                                const update = {
+                                    foo:    [ 'moo' ],
+                                    cause1: [ 'causefix1' ]
+                                };
 
-                        // and then we should have no failures
-                        expect( sut.hasFailures() ).to.be.false;
+                                return mkstore( update ).then( store =>
+                                {
+                                    return sut
+                                        .once( 'fix', function( fixed )
+                                        {
+                                            expect( fixed ).to.deep.equal(
+                                                { foo: [ 'causefix1' ] }
+                                            );
 
-                        done();
+                                            // and then we should have no failures
+                                            expect( sut.hasFailures() )
+                                                .to.be.false;
+
+                                            accept( true );
+                                        } )
+                                        .update( store, {} );
+                                } );
+                            } );
                     } )
-                    .update(
-                        { foo: [ 'moo' ], cause1: [ 'causefix1' ] },
-                        {}
-                    );
+                        .catch( e => reject( e ) );
+                } );
             } );
         } );
 
 
         describe( 'given data with absence of failure', function()
         {
-            it( 'removes non-failures if field is present', function( done )
+            it( 'removes non-failures if field is present', function()
             {
-                var data = { foo: [ 'bardata', 'baz' ] },
-                    fail = mkfail( 'foo', [ 'bar', 'baz' ] );
+                const fail = mkfail( 'foo', [ 'bar', 'baz' ] );
+                const sut  = Sut();
 
-                Sut()
-                    .on( 'fix', function( fixed )
+                return new Promise( ( accept, reject ) =>
+                {
+                    return mkstore( { foo: [ 'bardata', 'baz' ] } ).then( data =>
                     {
-                        expect( fixed )
-                            .to.deep.equal( { foo: [ 'bardata' ] } );
-                        done();
+                        return sut
+                            .on( 'fix', function( fixed )
+                            {
+                                expect( fixed )
+                                    .to.deep.equal( { foo: [ 'bardata' ] } );
+                                accept();
+                            } )
+                            .update( data, { foo: [ fail[ 0 ], fail[ 1 ] ] } )
+                            .then( () =>
+                            {
+                                return sut.update( data, {
+                                    foo: [ undefined, fail[ 1 ] ]
+                                } );
+                            } );
                     } )
-                    .update( data, { foo: [ fail[ 0 ], fail[ 1 ] ] } )
-                    .update( data, { foo: [ undefined, fail[ 1 ] ] } );
+                        .catch( e => reject( e ) );
+                } );
             } );
 
 
-            it( 'keeps failures if field is missing', function( done )
+            it( 'keeps failures if field is missing', function()
             {
-                var data     = { bar: [ 'baz', 'quux' ] },
-                    fail_foo = mkfail( 'foo', [ 'bar', 'baz' ] ),
-                    fail_bar = mkfail( 'bar', [ 'moo', 'cow' ] );
+                const fail_foo = mkfail( 'foo', [ 'bar', 'baz' ] );
+                const fail_bar = mkfail( 'bar', [ 'moo', 'cow' ] );
 
-                Sut()
-                    .on( 'fix', function( fixed )
+                return new Promise( ( accept, reject ) =>
+                {
+                    return mkstore( { bar: [ 'baz', 'quux' ] } ).then( data =>
                     {
-                        expect( fixed )
-                            .to.deep.equal( { bar: [ 'baz', 'quux' ] } );
-                        done();
+                        return Sut()
+                            .on( 'fix', function( fixed )
+                            {
+                                expect( fixed )
+                                    .to.deep.equal( { bar: [ 'baz', 'quux' ] } );
+                                accept();
+                            } )
+                            .update( data, {
+                                foo: fail_foo,  // does not exist in data
+                                bar: fail_bar,
+                            } )
+                            .then( sut =>
+                            {
+                                return sut.update( data, {} );
+                            } );
                     } )
-                    .update( data, {
-                        foo: fail_foo,  // does not exist in data
-                        bar: fail_bar,
-                    } )
-                    .update( data, {} );
+                        .catch( e => reject( e ) );
+                } );
+            } );
+
+
+            // if a diff is present for a previously failed key (e.g. foo),
+            // but contains no changes (e.g. [ undefined ]), and doesn't
+            // include the failure on the second call, then it should not be
+            // considered to be a fix (this is a bugfix)
+            it( 'keeps past failures on key if failure does not reoccur', () =>
+            {
+                const fail_past = mkfail( 'foo', [ 'bar', 'baz' ] );
+
+                return mkstore( { foo: [ undefined, undefined ] } )
+                    .then( data =>
+                        Sut()
+                            .update( data, { foo: fail_past } )
+                            // no failure or fix (foo has no updates)
+                            .then( sut => sut.update( data, {} ) )
+                            .then( sut => expect( sut.hasFailures() ).to.be.true )
+                    );
             } );
 
 
@@ -238,136 +341,199 @@ describe( 'ValidStateMonitor', function()
             {
                 var called = 0;
 
-                Sut()
-                    .on( 'failure', function()
-                    {
-                        called++;
-                    } )
-                    .update( {}, { foo: mkfail( 'foo', [ 'bar' ] ) } )
-                    .update( {}, {} );  // do not trigger failure event
-
-                expect( called ).to.equal( 1 );
+                return mkstore( {} ).then( empty =>
+                {
+                    return Sut()
+                        .on( 'failure', function()
+                        {
+                            called++;
+                        } )
+                        .update( empty, { foo: mkfail( 'foo', [ 'bar' ] ) } )
+                        .then( sut =>
+                        {
+                            return sut.update( empty, {} );  // do not trigger failure event
+                        } )
+                        .then( sut =>
+                        {
+                            expect( called ).to.equal( 1 );
+                        } );
+                } );
             } );
 
 
             describe( 'given a cause', function()
             {
-                it( 'considers when recognizing fix', function( done )
+                it( 'considers when recognizing fix', function()
                 {
                     // same index
-                    var data  = { cause: [ 'bar' ] },
-                        field = Field( 'foo', 0 ),
-                        cause = Field( 'cause', 0 ),
-                        fail  = Failure( field, 'reason', [ cause ] );
+                    const field = Field( 'foo', 0 );
+                    const cause = Field( 'cause', 0 );
+                    const fail  = Failure( field, 'reason', [ cause ] );
 
-                    Sut()
-                        .on( 'fix', function( fixed )
+                    return new Promise( ( accept, reject ) =>
+                    {
+                        return mkstore( { cause: [ 'bar' ] } ).then( data =>
                         {
-                            expect( fixed )
-                                .to.deep.equal( { foo: [ 'bar' ] } );
+                            return Sut()
+                                .on( 'fix', function( fixed )
+                                {
+                                    expect( fixed )
+                                        .to.deep.equal( { foo: [ 'bar' ] } );
 
-                            done();
+                                    accept();
+                                } )
+                                .update( data, { foo: [ fail ] } )
+                                .then( sut =>
+                                {
+                                    return sut.update( data, {} );
+                                } );
                         } )
-                        .update( data, { foo: [ fail ] } )
-                        .update( data, {} );
+                            .catch( e => reject( e ) );
+                    } );
                 } );
 
 
-                it( 'considers different cause index', function( done )
+                it( 'considers different cause index', function()
                 {
                     // different index
-                    var data  = { cause: [ undefined, 'bar' ] },
-                        field = Field( 'foo', 0 ),
-                        cause = Field( 'cause', 1 ),
-                        fail  = Failure( field, 'reason', [ cause ] );
+                    const update_data = { cause: [ undefined, 'bar' ] };
+                    const field       = Field( 'foo', 0 );
+                    const cause       = Field( 'cause', 1 );
+                    const fail        = Failure( field, 'reason', [ cause ] );
 
-                    Sut()
-                        .on( 'fix', function( fixed )
+                    return new Promise( ( accept, reject ) =>
+                    {
+                        return mkstore( update_data ).then( data =>
                         {
-                            expect( fixed )
-                                .to.deep.equal( { foo: [ 'bar' ] } );
+                            return Sut()
+                                .on( 'fix', function( fixed )
+                                {
+                                    expect( fixed )
+                                        .to.deep.equal( { foo: [ 'bar' ] } );
 
-                            done();
+                                    accept();
+                                } )
+                                .update( data, { foo: [ fail ] } )
+                                .then( sut =>
+                                {
+                                    return sut.update( data, {} );
+                                } );
                         } )
-                        .update( data, { foo: [ fail ] } )
-                        .update( data, {} );
+                            .catch( e => reject( e ) );
+                    } );
                 } );
 
 
-                it( 'considers any number of causes', function( done )
+                it( 'considers any number of causes', function()
                 {
                     // different index
-                    var data   = { cause_fix: [ undefined, 'bar' ] },
-                        field  = Field( 'foo', 0 ),
-                        cause1 = Field( 'cause_no', 1 ),
-                        cause2 = Field( 'cause_fix', 1 ),
-                        fail   = Failure(
-                            field,
-                            'reason',
-                            [ cause1, cause2 ]
-                        );
+                    const update_data = { cause_fix: [ undefined, 'bar' ] };
+                    const field       = Field( 'foo', 0 );
+                    const cause1      = Field( 'cause_no', 1 );
+                    const cause2      = Field( 'cause_fix', 1 );
 
-                    Sut()
-                        .on( 'fix', function( fixed )
+                    const fail = Failure(
+                        field,
+                        'reason',
+                        [ cause1, cause2 ]
+                    );
+
+                    return new Promise( ( accept, reject ) =>
+                    {
+                        return mkstore( update_data ).then( data =>
                         {
-                            expect( fixed )
-                                .to.deep.equal( { foo: [ 'bar' ] } );
+                            return Sut()
+                                .on( 'fix', function( fixed )
+                                {
+                                    expect( fixed )
+                                        .to.deep.equal( { foo: [ 'bar' ] } );
 
-                            done();
+                                    accept();
+                                } )
+                                .update( data, { foo: [ fail ] } )
+                                .then( sut =>
+                                {
+                                    return sut.update( data, {} );
+                                } );
                         } )
-                        .update( data, { foo: [ fail ] } )
-                        .update( data, {} );
+                            .catch( e => reject( e ) );
+                    } );
                 } );
 
 
                 it( 'recognizes non-fix', function()
                 {
                     // no cause data
-                    var data   = { noncause: [ undefined, 'bar' ] },
-                        field  = Field( 'foo', 0 ),
-                        cause1 = Field( 'cause', 1 ),
-                        cause2 = Field( 'cause', 2 ),
-                        fail   = Failure(
-                            field,
-                            'reason',
-                            [ cause1, cause2 ]
-                        );
+                    const update_data = mkstore( { noncause: [ undefined, 'bar' ] } );
+                    const field       = Field( 'foo', 0 );
+                    const cause1      = Field( 'cause', 1 );
+                    const cause2      = Field( 'cause', 2 );
 
-                    Sut()
-                        .on( 'fix', nocall )
-                        .update( data, { foo: [ fail ] } )
-                        .update( data, {} );
+                    const fail = Failure(
+                        field,
+                        'reason',
+                        [ cause1, cause2 ]
+                    );
+
+                    return mkstore( update_data ).then( data =>
+                    {
+                        return Sut()
+                            .on( 'fix', nocall )
+                            .update( data, { foo: [ fail ] } )
+                            .then( sut =>
+                            {
+                                return sut.update( data, {} );
+                            } );
+                    } );
                 } );
             } );
         } );
 
 
-        it( 'can emit both failure and fix', function( done )
+        it( 'can emit both failure and fix', function()
         {
-            var data     = { bar: [ 'baz', 'quux' ] },
-                fail_foo = mkfail( 'foo', [ 'bar' ] );
+            var fail_foo = mkfail( 'foo', [ 'bar' ] );
 
-            Sut()
-                .update( data, {
-                    bar: mkfail( 'bar', [ 'moo', 'cow' ] )  // fail
-                } )
-                .on( 'failure', function( failed )
-                {
-                    expect( failed )
-                        .to.deep.equal( {
-                            foo: fail_foo,
+            return mkstore( { bar: [ 'baz', 'quux' ] } ).then( data =>
+            {
+                return Sut()
+                    .update( data, {
+                        bar: mkfail( 'bar', [ 'moo', 'cow' ] )  // fail
+                    } )
+                    .then( sut =>
+                    {
+                        return new Promise( ( accept, reject ) =>
+                        {
+                            sut.on( 'failure', function( failed )
+                            {
+                                expect( failed )
+                                    .to.deep.equal( {
+                                        foo: fail_foo,
+                                    } );
+                            } )
+                            .on( 'fix', function( fixed )
+                            {
+                                expect( fixed )
+                                    .to.deep.equal(
+                                        { bar: [ 'baz', 'quux' ] }
+                                    );
+
+                                // note that the documentation for #update
+                                // states that failure will always be
+                                // emitted before fix
+                                accept( true );
+                            } )
+                            .update( data, {
+                                foo: fail_foo,  // fail
+                                // fixes bar
+                            } )
+                            .catch( e =>
+                            {
+                                reject( e );
+                            } );
                         } );
-                } )
-                .on( 'fix', function( fixed )
-                {
-                    expect( fixed )
-                        .to.deep.equal( { bar: [ 'baz', 'quux' ] } );
-                    done();
-                } )
-                .update( data, {
-                    foo: fail_foo,  // fail
-                    // fixes bar
-                } );
+                    } );
+            } );
         } );
     } );
 
@@ -387,11 +553,17 @@ describe( 'ValidStateMonitor', function()
         {
             var fail = mkfail( 'foo', [ 'fail' ] );
 
-            expect(
-                Sut()
-                    .update( {}, { foo: fail } )
-                    .getFailures()
-            ).to.deep.equal( { foo: fail } );
+            return mkstore( {} ).then( empty =>
+            {
+                return expect(
+                    Sut()
+                        .update( empty, { foo: fail } )
+                        .then( sut =>
+                        {
+                            return sut.getFailures()
+                        } )
+                ).to.eventually.deep.equal( { foo: fail } );
+            } );
         } );
     } );
 
@@ -407,11 +579,27 @@ describe( 'ValidStateMonitor', function()
 
         it( 'is true when failures exist', function()
         {
-            expect(
-                Sut()
-                    .update( {}, { foo: mkfail( 'foo', [ 'bar' ] ) } )
-                    .hasFailures()
-            ).to.be.true;
+            return mkstore( {} ).then( empty =>
+            {
+                return expect(
+                    Sut()
+                        .update( empty, { foo: mkfail( 'foo', [ 'bar' ] ) } )
+                        .then( sut =>
+                        {
+                            return sut.hasFailures();
+                        } )
+                ).to.eventually.be.true;
+            } );
         } );
     } );
 } );
+
+
+function mkstore( data )
+{
+    let store = MemoryStore();
+
+    return Promise.all(
+        Object.keys( data ).map( key => store.add( key, data[ key ] ) )
+    ).then( () => store );
+}

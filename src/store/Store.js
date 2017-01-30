@@ -44,7 +44,8 @@ module.exports = Interface( 'Store',
      * @param {string} key   store key
      * @param {*}      value value for key
      *
-     * @return {Promise} promise to add item to store
+     * @return {Promise.<Store>} promise to add item to store, resolving to
+     *                           self (for chaining)
      */
     'public add': [ 'key', 'value' ],
 
@@ -64,7 +65,8 @@ module.exports = Interface( 'Store',
     /**
      * Clear all items in store
      *
-     * @return {Promise} promise to clear store
+     * @return {Promise<Store>} promise to clear store, resolving to self
+     *                          (for chaining)
      */
     'public clear': [],
 

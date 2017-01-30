@@ -1,7 +1,7 @@
 /**
  * Field validity monitor
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2016, 2017 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -19,9 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter,
-    Failure      = require( './Failure' );
+"use strict";
+
+const Class        = require( 'easejs' ).Class;
+const EventEmitter = require( 'events' ).EventEmitter;
+const Failure      = require( './Failure' );
+const Store        = require( '../store/Store' );
 
 
 /**
@@ -40,36 +43,51 @@ module.exports = Class( 'ValidStateMonitor' )
     /**
      * Mark fields as updated and detect failures and fixes
      *
-     * The field data DATA should be a key-value store with an array as the
-     * value for each key.  If the data are not present, then it is assumed
-     * to have been left unchanged, and will not contribute to a
-     * fix.  Otherwise, any field in FAILURES but not in DATA will count as
-     * a fix.
+     * The field data `data` should be a key-value store with an array as
+     * the value for each key.  If the data are not present, then it is
+     * assumed to have been left unchanged, and will not contribute to a
+     * fix.  Otherwise, any field in `failures` but not in `data` will count
+     * as a fix.
      *
-     * FAILURES should follow the same structure as DATA.  Indexes should
-     * omitted from the value if they are not failures.
+     * `failures` should follow the same structure as `data`.  Indexes
+     * should omitted from the value if they are not failures.
+     *
+     * The return value is a promise that is accepted once all fix checks
+     * have been performed.  The `failure` event is always emitted _before_
+     * the fix event.
      *
      * @param {Object} data     key-value field data
      * @param {Object} failures key-value field errors
      *
-     * @return {ValidStateMonitor} self
+     * @return {Promise.<ValidStateMonitor>} self after fix checks
      */
-    'public update': function( data, failures )
+    'public update'( data, failures )
     {
-        var fixed     = this.detectFixes( data, this._failures, failures ),
-            count_new = this.mergeFailures( this._failures, failures );
-
-        if ( this.hasFailures() && ( count_new > 0 ) )
+        if ( !Class.isA( Store, data ) )
         {
-            this.emit( 'failure', this._failures );
+            throw TypeError(
+                'Bucket diff data must be a Store; given ' + data
+            );
         }
 
-        if ( fixed !== null )
-        {
-            this.emit( 'fix', fixed );
-        }
+        const fixed = this.detectFixes( data, this._failures, failures );
 
-        return this;
+        return fixed.then( fixes =>
+        {
+            const count_new = this.mergeFailures( this._failures, failures );
+
+            if ( this.hasFailures() && ( count_new > 0 ) )
+            {
+                this.emit( 'failure', this._failures );
+            }
+
+            if ( fixes !== null )
+            {
+                this.emit( 'fix', fixes );
+            }
+
+            return this.__inst;
+        } );
     },
 
 
@@ -80,7 +98,7 @@ module.exports = Class( 'ValidStateMonitor' )
      *                  value is an array with each failure index and
      *                  the value that caused the failure
      */
-    'public getFailures': function()
+    'public getFailures'()
     {
         return this._failures;
     },
@@ -108,22 +126,22 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {boolean} true if errors exist, otherwise false
      */
-    'virtual public hasFailures': function()
+    'virtual public hasFailures'()
     {
-        var past = this._failures;
+        let past = this._failures;
 
-        for ( var field in past )
+        return Object.keys( past ).some( field =>
         {
-            for ( var i in past[ field ] )
+            for ( let i in past[ field ] )
             {
                 return true;
             }
 
             // clean up as we go
             delete past[ field ];
-        }
 
-        return false;
+            return false;
+        } );
     },
 
 
@@ -138,15 +156,15 @@ module.exports = Class( 'ValidStateMonitor' )
      *
      * @return {number} number of new failures
      */
-    'virtual protected mergeFailures': function( past, failures )
+    'virtual protected mergeFailures'( past, failures )
     {
-        var count_new = 0;
+        let count_new = 0;
 
         for ( var name in failures )
         {
             past[ name ] = past[ name ] || [];
 
-            var cur_past = past[ name ];
+            const cur_past = past[ name ];
 
             // copy each failure into the past failures table
             for ( var i in failures[ name ] )
@@ -182,26 +200,28 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} data     validated data
      * @param {Object} failures new failures
      *
-     * @return {!Object} fixed list of fixed indexes for each fixed field
+     * @return {Promise.<!Object>} fixed list of fixed indexes for each fixed field
      */
-    'virtual protected detectFixes': function( data, past, failures )
+    'virtual protected detectFixes'( data, past, failures )
     {
-        var fixed     = {},
-            has_fixed = false;
+        let fixed = {};
 
-        for ( var name in past )
-        {
-            var past_fail = past[ name ],
-                fail      = failures[ name ];
+        return Promise.all(
+            Object.keys( past ).map( name =>
+            {
+                const past_fail = past[ name ];
+                const fail      = failures[ name ];
 
-            has_fixed = has_fixed || this._checkFailureFix(
-                name, fail, past_fail, data, fixed
+                return this._checkFailureFix(
+                    name, fail, past_fail, data, fixed
+                );
+            } )
+        )
+            .then( fixes =>
+                fixes.some( fix => fix === true )
+                    ? fixed
+                    : null
             );
-        }
-
-        return ( has_fixed )
-            ? fixed
-            : null;
     },
 
 
@@ -214,53 +234,83 @@ module.exports = Class( 'ValidStateMonitor' )
      * @param {Object} data      validated data
      * @param {Object} fixed     destination for fixed field data
      *
-     * @return {boolean} whether a field was fixed
+     * @return {Promise.<boolean>} whether a field was fixed
      */
-    'private _checkFailureFix': function( name, fail, past_fail, data, fixed )
+    'private _checkFailureFix'( name, fail, past_fail, data, fixed )
     {
-        var has_fixed = false;
-
         // we must check each individual index because it is possible that
         // not every index was modified or fixed (we must loop through like
         // this because this is treated as a hash table, not an array)
-        for ( var i in past_fail )
+        return Promise.all( past_fail.map( ( failure, fail_i ) =>
         {
-            var causes = past_fail[ i ] && past_fail[ i ].getCauses();
+            const causes = failure && failure.getCauses() || [];
 
-            for ( var cause_i in causes )
-            {
-                var cause       = causes[ cause_i ],
-                    cause_name  = cause.getName(),
-                    cause_index = cause.getIndex(),
-                    field       = data[ cause_name ];
-
-                // if datum is unchanged, ignore it
-                if ( field === undefined )
-                {
-                    continue;
-                }
-
-                // to be marked as fixed, there must both me no failure and
-                // there must be data for this index for the field in question
-                // (if the field wasn't touched, then of course there's no
-                // failure!)
-                if ( ( fail === undefined )
-                    || ( !( fail[ cause_index ] )
-                        && ( field[ cause_index ] !== undefined ) )
+            // to short-circuit checks, the promise will be _rejected_ once
+            // a match is found (see catch block)
+            return causes
+                .reduce(
+                    this._checkCauseFix.bind( this, data, fail ),
+                    Promise.resolve( true )
                 )
+                .then( () => false )
+                .catch( result =>
                 {
+                    if ( result instanceof Error )
+                    {
+                        throw result;
+                    }
+
                     // looks like it has been resolved
-                    ( fixed[ name ] = fixed[ name ] || [] )[ i ] =
-                        field[ cause_index ]
+                    ( fixed[ name ] = fixed[ name ] || [] )[ fail_i ] = result;
 
-                    has_fixed = true;
+                    delete past_fail[ fail_i ];
+                    return true;
+                } );
+        } ) ).then( fixes => fixes.some( fix => fix === true ) );
+    },
 
-                    delete past_fail[ i ];
-                    break;
-                }
-            }
-        }
 
-        return has_fixed;
-    }
+    /**
+     * Check past failure causes
+     *
+     * Each past failure in `fail` will be checked against the data in
+     * `diff` to determine whether it should be considered a possible
+     * fix.  If so, the promise is fulfilled with the fix data.  It is the
+     * responsibility of the caller to handle removing past failures.
+     *
+     * @param {Object}  data   validated data
+     * @param {Object}  fail   failure records
+     * @param {Promise} causep cause promise to chain onto
+     * @param {Field}   cause  field that caused the error
+     *
+     * @return {Promise} whether a field should be fixed
+     */
+    'private _checkCauseFix'( data, fail, causep, cause )
+    {
+        const cause_name  = cause.getName();
+        const cause_index = cause.getIndex();
+
+        return causep.then( () =>
+            new Promise( ( keepgoing, found ) =>
+                data.get( cause_name ).then( field =>
+                {
+                    // to be marked as fixed, there must both me no failure
+                    // and there must be data for this index for the field
+                    // in question (if the field wasn't touched, then of
+                    // course there's no failure!)
+                    if ( ( ( fail === undefined ) || !( fail[ cause_index ] ) )
+                        && ( field[ cause_index ] !== undefined )
+                    )
+                    {
+                        found( field[ cause_index ] );
+                        return;
+                    }
+
+                    // keep searching
+                    keepgoing( true );
+                } )
+                .catch( e => keepgoing( true ) )
+            )
+        );
+    },
 } );

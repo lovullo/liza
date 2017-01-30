@@ -60,14 +60,13 @@ describe( 'store.MemoryStore', () =>
         } );
 
 
-        it( 'provides the key and value of the added item', () =>
+        it( 'returns self with promise', () =>
         {
-            const key   = 'key';
-            const value = 'val';
+            const sut = Sut();
 
             return expect(
-                Sut().add( key, value )
-            ).to.eventually.deep.equal( { key: key, value: value } );
+                sut.add( 'foo', 'bar' )
+            ).to.eventually.equal( sut );
         } );
     } );
 
@@ -103,6 +102,16 @@ describe( 'store.MemoryStore', () =>
                     } )
                 );
             } );
+        } );
+
+
+        it( 'returns self with promise', () =>
+        {
+            const sut = Sut();
+
+            return expect(
+                sut.clear()
+            ).to.eventually.equal( sut );
         } );
     } );
 
