@@ -261,7 +261,7 @@ module.exports = Class( 'ValidStateMonitor' )
                     }
 
                     // looks like it has been resolved
-                    ( fixed[ name ] = fixed[ name ] || [] )[ fail_i ] = result;
+                    this._fixFailure( fixed, name, fail_i, result );
 
                     delete past_fail[ fail_i ];
                     return true;
@@ -312,5 +312,67 @@ module.exports = Class( 'ValidStateMonitor' )
                 .catch( e => keepgoing( true ) )
             )
         );
+    },
+
+
+    /**
+     * Mark a failure as fixed
+     *
+     * @param {Object} fixed destination object
+     * @param {string} name  fixed field name
+     * @param {number} index fixed field index
+     * @param {*}      value value that caused the fix
+     *
+     * @return {Object} `fixed` argument
+     */
+    'private _fixFailure'( fixed, name, index, value )
+    {
+        ( fixed[ name ] = fixed[ name ] || [] )[ index ] = value;
+        return fixed;
+    },
+
+
+    /**
+     * Clear all recorded failures
+     *
+     * For each recorded failure, a `fix` even is emitted.  All failure
+     * records are then cleared.
+     *
+     * Normally the resulting fix object contains the values that triggered
+     * the fix.  Instead, each fixed index will contain `undefined`.
+     *
+     * This process is synchronous, and only a single `fix` event is emitted
+     * after all failures have been cleared.
+     *
+     * @return {ValidStateMonitor} self
+     */
+    'public clearFailures'()
+    {
+        let fixed = {};
+
+        for ( let name in this._failures )
+        {
+            const failure = this._failures[ name ];
+
+            for ( let cause_i in  failure )
+            {
+                const cause = failure[ cause_i ];
+
+                for ( let cause_i in cause )
+                {
+                    let fail_i = cause.getField().getIndex();
+
+                    this._fixFailure( fixed, name, fail_i, undefined );
+                }
+            }
+        }
+
+        // clear _before_ emitting the fixes (listeners might trigger
+        // additional failures, for example, or call `#hasFailures`)
+        this._failures = {};
+
+        this.emit( 'fix', fixed );
+
+        return this;
     },
 } );

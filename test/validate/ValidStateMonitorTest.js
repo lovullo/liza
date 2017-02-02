@@ -592,6 +592,35 @@ describe( 'ValidStateMonitor', function()
             } );
         } );
     } );
+
+
+    describe( '#clearFailures', () =>
+    {
+        it( 'clears all failures', () =>
+        {
+            return new Promise( ( accept, reject ) =>
+            {
+                mkstore( {} ).then( empty =>
+                {
+                    const sut = Sut();
+
+                    return sut
+                        .on( 'fix', fixed =>
+                        {
+                            expect( fixed )
+                                .to.deep.equal( { foo: [ undefined ] } );
+
+                            expect( sut.hasFailures() ).to.be.false;
+
+                            accept( true );
+                        } )
+                        .update( empty, { foo: mkfail( 'foo', [ 'bar' ] ) } )
+                        .then( sut => sut.clearFailures() );
+                } )
+                    .catch( e => reject( e ) );
+            } );
+        } );
+    } );
 } );
 
 
