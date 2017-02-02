@@ -213,6 +213,30 @@ describe( 'DataValidator', () =>
             ).to.eventually.be.rejectedWith( expected_e );
         } );
     } );
+
+
+    describe( '#clearFailures', () =>
+    {
+        it( 'marks all failures as fixed', () =>
+        {
+            const bvalidator  = createMockBucketValidator();
+            const vmonitor    = ValidStateMonitor();
+            const dep_factory = createMockDependencyFactory();
+
+            const mock_vmonitor = sinon.mock( vmonitor );
+
+            const sut = Sut(
+                bvalidator, vmonitor, dep_factory, createStubStore()
+            );
+
+            mock_vmonitor.expects( 'clearFailures' ).once();
+
+            expect( sut.clearFailures() )
+                .to.equal( sut );
+
+            mock_vmonitor.verify();
+        } );
+    } );
 } );
 
 

@@ -159,6 +159,18 @@ module.exports = Class( 'DataValidator',
 
 
     /**
+     * Clear all recorded failures
+     *
+     * @return {DataValidator} self
+     */
+    'public clearFailures'()
+    {
+        this._field_monitor.clearFailures();
+        return this;
+    },
+
+
+    /**
      * Populate store with data
      *
      * This effectively converts a basic array into a `Store`.  This is
