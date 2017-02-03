@@ -38,7 +38,7 @@ test -n "$NODE" || AC_MSG_ERROR([missing Node.js])
 AC_MSG_CHECKING([node --harmony_destructuring])
 AS_IF([node --harmony_destructuring >/dev/null 2>/dev/null],
       [AC_MSG_RESULT(available)
-       AC_SUBST([NODE_DESTRUCTURE], [--harmony-destructuring])],
+       AC_SUBST([NODE_DESTRUCTURE], [--harmony_destructuring])],
       [AC_MSG_RESULT(no)])
 
 # generate files from their *.in counterparts
