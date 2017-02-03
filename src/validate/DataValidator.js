@@ -159,13 +159,21 @@ module.exports = Class( 'DataValidator',
 
 
     /**
-     * Clear all recorded failures
+     * Clear specified failures, or otherwise all recorded failures
+     *
+     * `fields` must be a key-value map with the field name as the key and
+     * an array of indexes as the value.  Any field in `fields` that has no
+     * failure is ignored.
+     *
+     * See `ValidStateMonitor#clearFailures` for more information.
+     *
+     * @param {Object} fields key-value names of fields/indexes to clear
      *
      * @return {DataValidator} self
      */
-    'public clearFailures'()
+    'public clearFailures'( failures )
     {
-        this._field_monitor.clearFailures();
+        this._field_monitor.clearFailures( failures );
         return this;
     },
 

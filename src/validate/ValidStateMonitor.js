@@ -263,7 +263,6 @@ module.exports = Class( 'ValidStateMonitor' )
                     // looks like it has been resolved
                     this._fixFailure( fixed, name, fail_i, result );
 
-                    delete past_fail[ fail_i ];
                     return true;
                 } );
         } ) ).then( fixes => fixes.some( fix => fix === true ) );
@@ -328,48 +327,58 @@ module.exports = Class( 'ValidStateMonitor' )
     'private _fixFailure'( fixed, name, index, value )
     {
         ( fixed[ name ] = fixed[ name ] || [] )[ index ] = value;
+
+        // caller is expected to have ensured that this exists
+        delete this._failures[ name ][ index ];
+
         return fixed;
     },
 
 
     /**
-     * Clear all recorded failures
+     * Clear specified failures, or otherwise all recorded failures
      *
-     * For each recorded failure, a `fix` even is emitted.  All failure
-     * records are then cleared.
+     * `fields` must be a key-value map with the field name as the key and
+     * an array of indexes as the value.  Any field in `fields` that has no
+     * failure is ignored.
+     *
+     * For each specified failure, a `fix` event is emitted.  If no failures
+     * are specified by `fields`, all recorded failures are marked as
+     * fixed.  If a field in `fields` is not known, it is ignored.
      *
      * Normally the resulting fix object contains the values that triggered
-     * the fix.  Instead, each fixed index will contain `undefined`.
+     * the fix.  Instead, each fixed index will contain `null`.
      *
      * This process is synchronous, and only a single `fix` event is emitted
      * after all failures have been cleared.
      *
+     * @param {Object} fields key-value names of fields/indexes to clear
+     *
      * @return {ValidStateMonitor} self
      */
-    'public clearFailures'()
+    'public clearFailures'( fields )
     {
+        const failures = this._failures;
+
         let fixed = {};
 
-        for ( let name in this._failures )
-        {
-            const failure = this._failures[ name ];
+        const isRequestedIndex = ( fields )
+            ? field => ( fields[ field.getName() ] || [] ).indexOf(
+                field.getIndex()
+            ) !== -1
+            : () => true;
 
-            for ( let cause_i in  failure )
-            {
-                const cause = failure[ cause_i ];
-
-                for ( let cause_i in cause )
-                {
-                    let fail_i = cause.getField().getIndex();
-
-                    this._fixFailure( fixed, name, fail_i, undefined );
-                }
-            }
-        }
-
-        // clear _before_ emitting the fixes (listeners might trigger
-        // additional failures, for example, or call `#hasFailures`)
-        this._failures = {};
+        Object.keys( failures )
+            .reduce(
+                ( all_fields, name ) => all_fields.concat(
+                    failures[ name ].map( cause => cause.getField() )
+                ),
+                []
+            )
+            .filter( isRequestedIndex )
+            .forEach( field => this._fixFailure(
+                fixed, field.getName(), field.getIndex(), null
+            ) );
 
         this.emit( 'fix', fixed );
 

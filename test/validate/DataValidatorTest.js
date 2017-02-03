@@ -217,7 +217,7 @@ describe( 'DataValidator', () =>
 
     describe( '#clearFailures', () =>
     {
-        it( 'marks all failures as fixed', () =>
+        it( 'proxies to validator', () =>
         {
             const bvalidator  = createMockBucketValidator();
             const vmonitor    = ValidStateMonitor();
@@ -229,9 +229,14 @@ describe( 'DataValidator', () =>
                 bvalidator, vmonitor, dep_factory, createStubStore()
             );
 
-            mock_vmonitor.expects( 'clearFailures' ).once();
+            const failures = [ 'foo', 'bar' ];
 
-            expect( sut.clearFailures() )
+            mock_vmonitor
+                .expects( 'clearFailures' )
+                .once()
+                .withExactArgs( failures );
+
+            expect( sut.clearFailures( failures ) )
                 .to.equal( sut );
 
             mock_vmonitor.verify();
