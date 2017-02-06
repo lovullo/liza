@@ -19,19 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module.exports = function UnknownEventError( msg )
+const Class = require( 'easejs' ).Class;
+
+
+module.exports = Class( 'UnknownEventHandler' )
+    .extend( TypeError,
 {
-    // 'new' keyword optional
-    if ( !( this instanceof module.exports ) )
-    {
-        return new module.exports( msg );
-    }
-
-    Error.prototype.constructor.apply( this, arguments );
-};
-
-// extends TypeError
-module.exports.constructor    = module.exports;
-module.exports.prototype      = TypeError();
-module.exports.prototype.name = 'UnknownEventError';
+} );
 
