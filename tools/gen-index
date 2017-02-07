@@ -40,7 +40,7 @@ for module in "$destpath"/!(index).js; do
     echo ,
   fi
 
-  echo -n "    '$modname': require( './$modname' )"
+  echo -n "    get '$modname'() { return require( './$modname' ); }"
 done
 
 # include index.js for any sub-directories (namespace)
@@ -52,7 +52,7 @@ for dir in $( find "$destpath" -maxdepth 1 -mindepth 1 -type d ); do
     echo ,
   fi
 
-  echo -n "    '$ns': require( './$ns' )"
+  echo -n "    get '$ns'() { return require('./$ns'); }"
 done
 
 echo -e "\n};"
