@@ -596,7 +596,7 @@ describe( 'ValidStateMonitor', function()
 
     describe( '#clearFailures', () =>
     {
-        it( 'clears all failures', () =>
+        it( 'clears all failures when provided no arguments', () =>
         {
             return new Promise( ( accept, reject ) =>
             {
@@ -608,7 +608,7 @@ describe( 'ValidStateMonitor', function()
                         .on( 'fix', fixed =>
                         {
                             expect( fixed )
-                                .to.deep.equal( { foo: [ undefined ] } );
+                                .to.deep.equal( { foo: [ null ] } );
 
                             expect( sut.hasFailures() ).to.be.false;
 
@@ -619,6 +619,52 @@ describe( 'ValidStateMonitor', function()
                 } )
                     .catch( e => reject( e ) );
             } );
+        } );
+
+
+        it( 'clears only provided failures when provided array argument', () =>
+        {
+            return new Promise( ( accept, reject ) =>
+            {
+                mkstore( {} ).then( empty =>
+                {
+                    const sut = Sut();
+
+                    return sut
+                        .on( 'fix', fixed =>
+                        {
+                            debugger;
+                            // `bar' not cleared
+                            expect( fixed )
+                                .to.deep.equal( {
+                                    foo: [ null ],
+                                    baz: [ , null ],
+                                } );
+
+                            // still has `bar'
+                            expect( sut.hasFailures() ).to.be.true;
+
+                            accept( true );
+                        } )
+                        .update( empty, {
+                            foo: mkfail( 'foo', [ 'bar1', 'bar2' ] ),
+                            bar: mkfail( 'bar', [ 'baz' ] ),
+                            baz: mkfail( 'baz', [ 'quux', 'quuux' ] ),
+                        } )
+                        .then( sut => sut.clearFailures( {
+                            foo: [ 0 ],
+                            baz: [ 1 ],
+                        } ) );
+                } )
+                    .catch( e => reject( e ) );
+            } );
+        } );
+
+
+        it( 'does not error on non-existent failure', () =>
+        {
+            expect( () => Sut().clearFailures( [ 'foo', 'baz' ] ) )
+                .to.not.throw( Error );
         } );
     } );
 } );

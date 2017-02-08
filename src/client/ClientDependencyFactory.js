@@ -103,12 +103,12 @@ var Step          = require( '../step/Step' ),
     Class = require( 'easejs' ).Class;
 
 
-var event = require( '../event' );
+var liza_event = require( '../event' );
 
 
 function requireh( name )
 {
-    return event[ name ];
+    return liza_event[ name ];
 }
 
 
@@ -347,8 +347,15 @@ module.exports = Class( 'ClientDependencyFactory',
     createFieldClassMatcher: FieldClassMatcher,
 
 
-    createClientEventHandler: function( client, styler, data_proxy, jquery )
+    createClientEventHandler: function(
+        client, data_validator, styler, data_proxy, jquery
+    )
     {
+        const field_vis_handler = requireh( 'FieldVisibilityEventHandler' )(
+            client.getUi(),
+            data_validator
+        );
+
         return DelegateEventHandler( {
             'indvRate': requireh( 'IndvRateEventHandler' )(
                 client, data_proxy
@@ -357,6 +364,9 @@ module.exports = Class( 'ClientDependencyFactory',
             'rate':     requireh( 'RateEventHandler' )( client, data_proxy ),
             'kickBack': requireh( 'KickbackEventHandler' )( client ),
             'status':   requireh( 'StatusEventHandler' )( styler ),
+
+            'show': field_vis_handler,
+            'hide': field_vis_handler,
 
             'action$cvv2Dialog':   requireh( 'Cvv2DialogEventHandler' )( jquery )
         } );
