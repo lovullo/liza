@@ -326,10 +326,6 @@ module.exports = Class( 'Client' )
         // used to communicate with the server
         this.dataProxy = this._createDataProxy( jQuery );
 
-        this._eventHandler = this._factory.createClientEventHandler(
-            this, this.elementStyler, this.dataProxy, jQuery
-        );
-
         this.uiDialog  = this._factory.createUiDialog();
         this.programId = this._getProgramId();
         this.program   = this._createProgram();
@@ -346,6 +342,10 @@ module.exports = Class( 'Client' )
         );
 
         this.ui = this._createUi( this.nav );
+
+        this._eventHandler = this._factory.createClientEventHandler(
+            this, this._dataValidator, this.elementStyler, this.dataProxy, jQuery
+        );
 
         this._classMatcher = this._factory.createFieldClassMatcher(
             this.program.whens
@@ -699,7 +699,7 @@ module.exports = Class( 'Client' )
                 .getExclusiveFieldNames();
 
 
-        var showq = [], hideq = [];
+        var visq = [];
         for ( var field in cmatch )
         {
             // ignore fields that are not on the current step
@@ -761,13 +761,14 @@ module.exports = Class( 'Client' )
 
             if ( show.length )
             {
-                showq[ field ] = show;
-                _self._mergeCmatchHidden( field, show, false );
+                visq[ field ] = { event_id: 'show', name: field, indexes: show };
+                this._mergeCmatchHidden( field, show, false );
             }
+
             if ( hide.length )
             {
-                hideq[ field ] = hide;
-                _self._mergeCmatchHidden( field, hide, true );
+                visq[ field ] = { event_id: 'hide', name: field, indexes: hide };
+                this._mergeCmatchHidden( field, hide, true );
             }
         }
 
@@ -780,10 +781,19 @@ module.exports = Class( 'Client' )
         // manipulations on it (TODO: this is a workaround for group
         // show/hide issues; we need a better solution to guarantee
         // order
-        setTimeout( function()
+        setTimeout( () =>
         {
-            _self._hideFields( showq, 'show' );
-            _self._hideFields( hideq, 'hide' );
+            Object.keys( visq ).forEach( field =>
+            {
+                const { event_id, name, indexes } = visq[ field ];
+
+                this.handleEvent( event_id, {
+                    elementName: name,
+                    indexes:     indexes,
+                } );
+
+                this._dapiTrigger( name );
+            } );
         }, 25 );
     },
 
@@ -2598,16 +2608,6 @@ module.exports = Class( 'Client' )
         // perform event (XXX: replace me; see above)
         switch ( event_name )
         {
-            case 'enable':
-            case 'disable':
-            case 'hide':
-            case 'show':
-                var fdata = {};
-                fdata[ data.elementName ] = data.indexes;
-
-                this._hideFields( fdata, event_name );
-                break;
-
             case 'set':
                 var setdata = {};
                 setdata[ data.elementName ] = [];
@@ -2641,73 +2641,6 @@ module.exports = Class( 'Client' )
         }
 
         return this;
-    },
-
-
-    'private _hideFields': function( fields, event_name )
-    {
-        var stepui = this.ui.getCurrentStep();
-
-        if ( !stepui )
-        {
-            return;
-        }
-
-        for ( var field in fields )
-        {
-            var indexes     = fields[ field ],
-                indexes_len = indexes.length;
-
-            for ( var i = 0; i < indexes_len; i++ )
-            {
-                var index = indexes[ i ];
-
-                if ( index === undefined )
-                {
-                    continue;
-                }
-
-                var group = stepui.getElementGroup( field );
-                if ( group === null )
-                {
-                    window.console && console.warn && console.warn(
-                        'No group found for %s event: %s[%s]',
-                        event_name,
-                        field,
-                        index
-                    );
-
-                    continue;
-                }
-
-                this._dapiTrigger( field );
-
-                if ( event_name === 'show' )
-                {
-                    group.showField( field, index );
-                }
-                else if ( event_name === 'hide' )
-                {
-                    group.hideField( field, index );
-                }
-                else
-                {
-                    // locate the element within the group
-                    var $element = group.getElementByName(
-                        field, index
-                    );
-
-                    if ( event_name === 'enable' )
-                    {
-                        $element.attr( 'readonly', false );
-                    }
-                    else if ( event_name === 'disable' )
-                    {
-                        $element.attr( 'readonly', true );
-                    }
-                }
-            }
-        }
     },
 
 
