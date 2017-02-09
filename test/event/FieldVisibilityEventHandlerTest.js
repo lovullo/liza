@@ -96,11 +96,12 @@ describe( 'FieldVisibilityEventHandler', () =>
 
     it( 'clears failures on hidden fields', done =>
     {
-        const name = 'foo_bar';
+        const name         = 'foo_bar';
+        const fail_indexes = [ 0, 3 ];
 
         const hide_data = {
             elementName: name,
-            indexes:     [ 0 ],
+            indexes:     fail_indexes,
         };
 
         Sut(
@@ -108,7 +109,7 @@ describe( 'FieldVisibilityEventHandler', () =>
             createStubDataProvider( failures =>
             {
                 expect( failures )
-                    .to.deep.equal( [ name ] )
+                    .to.deep.equal( { [name]: fail_indexes } );
 
                 // we don't care about the rest of the processing at this
                 // point
