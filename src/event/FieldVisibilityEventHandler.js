@@ -103,7 +103,7 @@ module.exports = Class( 'FieldVisibilityEventHandler' )
             }
         } )();
 
-        this._data_validator.clearFailures( [ field_name ] );
+        this._data_validator.clearFailures( { [field_name]: indexes } );
         indexes.forEach( field_i => action( field_name, field_i ) );
 
         callback();
