@@ -61,6 +61,12 @@ module.exports = Class( 'DataValidator',
      */
     'private _stores': {},
 
+    /**
+     * Pending validation
+     * @type {Promise}
+     */
+    'private _pending': null,
+
 
     /**
      * Initialize validator
@@ -103,6 +109,10 @@ module.exports = Class( 'DataValidator',
     /**
      * Validate diff and update field monitor
      *
+     * If a validation is pending completion, all further `#validate`
+     * requests will be queued to prevent unexpected/inconsistent system
+     * states and race conditions.
+     *
      * The external validator `validatef` is a kluge while the system
      * undergoes refactoring.
      *
@@ -115,6 +125,16 @@ module.exports = Class( 'DataValidator',
     'public validate'( diff, classes, validatef )
     {
         const _self = this;
+
+        // queue requests if we're already processing
+        if ( this._pending )
+        {
+            this._pending.then(
+                () => this.validate( diff, classes, validatef )
+            );
+
+            return this._pending;
+        }
 
         let failures = {};
 
@@ -132,8 +152,12 @@ module.exports = Class( 'DataValidator',
         }
 
         // XXX: this assumes that the above is synchronous
-        return this._populateStore( classes, this._stores.cstore, 'indexes' )
-            .then( () => this.updateFailures( diff, failures ) );
+        return this._pending =
+            this._populateStore(
+                classes, this._stores.cstore, 'indexes'
+            )
+            .then( () => this.updateFailures( diff, failures ) )
+            .then( () => this._pending = null );
     },
 
 

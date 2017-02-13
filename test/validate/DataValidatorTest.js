@@ -251,6 +251,71 @@ describe( 'DataValidator', () =>
                     expect( cleared.b && cleared.c ).to.be.true
                 );
         } ) );
+
+
+        // otherwise system might get into an unexpected state
+        it( 'queues concurrent validations', () =>
+        {
+            const expected_failure = {};
+
+            let vcalled = 0;
+
+            const bvalidator = createMockBucketValidator( function( _, __, ___ )
+            {
+                vcalled++;
+            } );
+
+            const vmonitor    = sinon.createStubInstance( ValidStateMonitor );
+            const dep_factory = createMockDependencyFactory();
+            const getStore    = createStubStore();
+
+            const diff_a = { foo: [ 'a', 'b', 'c' ] };
+            const diff_b = { foo: [ 'd' ] };
+
+            const validatef = ( diff, failures ) =>
+            {
+                // not a real failure; just used to transfer state to stub
+                // (see below)
+                failures.failedon = diff;
+            };
+
+            return new Promise( ( accept, reject ) =>
+            {
+                // by the time it gets to this the second time, store could
+                // be in any sort of state depending on what callbacks were
+                // invoked first (implementation details)
+                vmonitor.update = ( _, failures ) =>
+                {
+                    const orig_diff = failures.failedon;
+
+                    // if the external validator was called twice, then they
+                    // didn't wait for us to finish
+                    if ( ( orig_diff === diff_a ) && ( vcalled !== 1 ) )
+                    {
+                        reject( Error( "Request not queued" ) );
+                    }
+
+                    // if this key doesn't exist, then the store has been
+                    // cleared (which happens before it's re-populated with
+                    // the new diff)
+                    return expect( getStore().bstore.get( 'foo' ) )
+                        .to.eventually.deep.equal( orig_diff.foo )
+                        .then( () => {
+                            // the second test, after which we're done
+                            if ( orig_diff === diff_b )
+                            {
+                                accept();
+                            }
+                        } )
+                        .catch( e => reject( e ) );
+                };
+
+                const sut = Sut( bvalidator, vmonitor, dep_factory, getStore );
+
+                sut.validate( diff_a, {}, validatef );
+                sut.validate( diff_b, {}, validatef );
+            } );
+        } );
     } );
 
 
