@@ -193,7 +193,8 @@ module.exports = Class( 'DataValidator',
     {
         if ( data === undefined )
         {
-            return Promise.resolve( [] );
+            // it's important that we don't re-use previous state
+            return store.clear().then( [] );
         }
 
         const mapf = ( subkey !== undefined )

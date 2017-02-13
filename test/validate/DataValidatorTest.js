@@ -212,6 +212,45 @@ describe( 'DataValidator', () =>
                     .validate( {} )
             ).to.eventually.be.rejectedWith( expected_e );
         } );
+
+
+        [
+            [],
+            [ {} ],
+            [ undefined ],
+            [ undefined, {} ],
+            [ undefined, undefined ],
+            [ {}, undefined ],
+        ].forEach( args => it( 'does not re-use previous store state', () =>
+        {
+            const bvalidator  = createMockBucketValidator();
+            const vmonitor    = ValidStateMonitor();
+            const dep_factory = createMockDependencyFactory();
+
+            const stores = {
+                store: MemoryStore(),
+                bstore: sinon.createStubInstance( MemoryStore ),
+                cstore: sinon.createStubInstance( MemoryStore ),
+            };
+
+            const { bstore, cstore } = stores;
+
+            const cleared = which =>
+            {
+                cleared[ which ] = true;
+                return Promise.resolve();
+            };
+
+            bstore.clear = () => cleared( 'b' );
+            cstore.clear = () => cleared( 'c' );
+
+            const sut = Sut( bvalidator, vmonitor, dep_factory, () => stores );
+
+            return sut.validate.apply( sut, args )
+                .then( () =>
+                    expect( cleared.b && cleared.c ).to.be.true
+                );
+        } ) );
     } );
 
 
