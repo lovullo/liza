@@ -1,0 +1,10 @@
+Liza Testing Library
+====================
+
+This namespace contains a library to aid in the testing of code that _makes
+use of_ Liza.  Especially due to legacy reasons, there are some parts of the
+system that are quite difficult to mock and work with.
+
+For test cases of Liza itself, see `/test' in the project root (sibling of
+`/src').
+
