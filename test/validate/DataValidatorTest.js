@@ -316,6 +316,42 @@ describe( 'DataValidator', () =>
                     );
                 } );
         } );
+
+
+        it( 'queues concurrent requests', () =>
+        {
+            const { sut, vmonitor, getStore } = createStubs( {
+                vmonitor: sinon.createStubInstance( ValidStateMonitor ),
+            } );
+            const { bstore } = getStore();
+
+            const faila = {};
+            const failb = {};
+
+            let running_first = true;
+
+            vmonitor.update = ( _, fail ) =>
+            {
+                if ( fail === failb )
+                {
+                    if ( running_first === true )
+                    {
+                        return Promise.reject( Error(
+                            "Request not queued"
+                        ) );
+                    }
+                }
+
+                return Promise.resolve( true );
+            };
+
+            return Promise.all( [
+                sut.updateFailures( {}, faila )
+                    .then( () => running_first = false ),
+
+                sut.updateFailures( {}, failb ),
+            ] );
+        } );
     } );
 
 

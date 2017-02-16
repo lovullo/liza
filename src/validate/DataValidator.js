@@ -109,8 +109,8 @@ module.exports = Class( 'DataValidator',
     /**
      * Validate diff and update field monitor
      *
-     * If a validation is pending completion, all further `#validate`
-     * requests will be queued to prevent unexpected/inconsistent system
+     * If an operation is pending completion, all further requests to this
+     * object will be queued to prevent unexpected/inconsistent system
      * states and race conditions.
      *
      * The external validator `validatef` is a kluge while the system
@@ -126,43 +126,39 @@ module.exports = Class( 'DataValidator',
     {
         const _self = this;
 
-        // queue requests if we're already processing
-        if ( this._pending )
+        return this._onceReady( () =>
         {
-            this._pending.then(
-                () => this.validate( diff, classes, validatef )
-            );
+            let failures = {};
 
-            return this._pending;
-        }
-
-        let failures = {};
-
-        if ( diff !== undefined )
-        {
-            _self._bucket_validator.validate( diff, ( name, value, i ) =>
+            if ( diff !== undefined )
             {
-                diff[ name ][ i ] = undefined;
+                _self._bucket_validator.validate( diff, ( name, value, i ) =>
+                {
+                    diff[ name ][ i ] = undefined;
 
-                ( failures[ name ] = failures[ name ] || {} )[ i ] =
-                    _self._factory.createFieldFailure( name, i, value );
-            }, true );
+                    ( failures[ name ] = failures[ name ] || {} )[ i ] =
+                        _self._factory.createFieldFailure( name, i, value );
+                }, true );
 
-            validatef && validatef( diff, failures );
-        }
+                validatef && validatef( diff, failures );
+            }
 
-        // XXX: this assumes that the above is synchronous
-        return this._pending =
-            this._populateStore(
-                classes, this._stores.cstore, 'indexes'
-            )
-            .then( () => this.updateFailures( diff, failures ) )
-            .then( () => this._pending = null );
+            // XXX: this assumes that the above is synchronous
+            return this._pending =
+                this._populateStore(
+                    classes, this._stores.cstore, 'indexes'
+                )
+                .then( () => this._doUpdateFailures( diff, failures ) );
+        } );
     },
 
 
     /**
      * Update failures from external validation
+     *
+     * If an operation is pending completion, all further requests to this
+     * object will be queued to prevent unexpected/inconsistent system
+     * states and race conditions.
      *
      * TODO: This is a transitional API---we should handle all validations,
      * not allow external systems to meddle in our affairs.
@@ -173,6 +169,23 @@ module.exports = Class( 'DataValidator',
      * @return {Promise} promise to populate internal store
      */
     'public updateFailures'( diff, failures )
+    {
+        return this._onceReady( () =>
+        {
+            return this._doUpdateFailures( diff, failures );
+        } );
+    },
+
+
+    /**
+     * Update failures from external validation
+     *
+     * @param {Object} diff     bucket diff
+     * @param {Object} failures failures per field name and index
+     *
+     * @return {Promise} promise to populate internal store
+     */
+    'private _doUpdateFailures': function( diff, failures )
     {
         return this._populateStore( diff, this._stores.bstore ).then( () =>
             this._field_monitor.update(
@@ -198,7 +211,28 @@ module.exports = Class( 'DataValidator',
     'public clearFailures'( failures )
     {
         this._field_monitor.clearFailures( failures );
+
         return this;
+    },
+
+
+    /**
+     * Wait until all requests are complete and then trigger callback
+     *
+     * @param {Function} callback callback to trigger when ready
+     *
+     * @return {Promise}
+     */
+    'private _onceReady': function( callback )
+    {
+        if ( this._pending )
+        {
+            this._pending.then( callback );
+            return this._pending;
+        }
+
+        return this._pending = callback()
+            .then( () => this._pending = null );
     },
 
 
