@@ -205,43 +205,6 @@ describe( 'DataValidator', () =>
         } );
 
 
-        [
-            [],
-            [ {} ],
-            [ undefined ],
-            [ undefined, {} ],
-            [ undefined, undefined ],
-            [ {}, undefined ],
-        ].forEach( args => it( 'does not re-use previous store state', () =>
-        {
-            const stores = {
-                store: MemoryStore(),
-                bstore: sinon.createStubInstance( MemoryStore ),
-                cstore: sinon.createStubInstance( MemoryStore ),
-            };
-
-            const { sut, getStore } = createStubs( {
-                getStore: () => stores,
-            } );
-
-            const { bstore, cstore } = stores;
-
-            const cleared = which =>
-            {
-                cleared[ which ] = true;
-                return Promise.resolve();
-            };
-
-            bstore.clear = () => cleared( 'b' );
-            cstore.clear = () => cleared( 'c' );
-
-            return sut.validate.apply( sut, args )
-                .then( () =>
-                    expect( cleared.b && cleared.c ).to.be.true
-                );
-        } ) );
-
-
         // otherwise system might get into an unexpected state
         it( 'queues concurrent validations', () =>
         {
