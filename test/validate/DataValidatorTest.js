@@ -54,14 +54,13 @@ describe( 'DataValidator', () =>
                 }
             );
 
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
+            const { sut, vmonitor, dep_factory, getStore } = createStubs( {
+                bvalidator: bvalidator,
+            } );
 
-            const getStore   = createStubStore();
             const { bstore } = getStore();
 
-            const mock_bstore = sinon.mock( bstore );
-
+            const mock_bstore      = sinon.mock( bstore );
             const mock_vmonitor    = sinon.mock( vmonitor );
             const mock_dep_factory = sinon.mock( dep_factory );
 
@@ -110,11 +109,7 @@ describe( 'DataValidator', () =>
                 second: { indexes: [ 0, 1 ], is: true },
             };
 
-            const bvalidator  = createMockBucketValidator();
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
-
-            const getStore   = createStubStore();
+            const { sut, getStore } = createStubs( {} );
             const { cstore } = getStore();
 
             const mock_cstore = sinon.mock( cstore );
@@ -124,7 +119,7 @@ describe( 'DataValidator', () =>
                 .once()
                 .returns( Promise.resolve( cstore ) );
 
-            return Sut( bvalidator, vmonitor, dep_factory, getStore )
+            return sut
                 .validate( {}, classes )
                 .then( () =>
                 {
@@ -156,9 +151,9 @@ describe( 'DataValidator', () =>
                 }
             );
 
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
-            const getStore    = createStubStore();
+            const { sut, vmonitor, dep_factory, getStore } = createStubs( {
+                bvalidator: bvalidator,
+            } );
 
             const diff = { foo: [ 'a', 'b', 'c' ] };
             const expected_failures = {
@@ -196,9 +191,7 @@ describe( 'DataValidator', () =>
 
         it( 'rejects if field monitor update rejects', () =>
         {
-            const bvalidator  = createMockBucketValidator();
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
+            const { sut, vmonitor } = createStubs( {} );
 
             const expected_e = Error();
 
@@ -207,10 +200,8 @@ describe( 'DataValidator', () =>
                 .once()
                 .returns( Promise.reject( expected_e ) );
 
-            return expect(
-                Sut( bvalidator, vmonitor, dep_factory, createStubStore() )
-                    .validate( {} )
-            ).to.eventually.be.rejectedWith( expected_e );
+            return expect( sut.validate( {} ) ).
+                to.eventually.be.rejectedWith( expected_e );
         } );
 
 
@@ -223,15 +214,15 @@ describe( 'DataValidator', () =>
             [ {}, undefined ],
         ].forEach( args => it( 'does not re-use previous store state', () =>
         {
-            const bvalidator  = createMockBucketValidator();
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
-
             const stores = {
                 store: MemoryStore(),
                 bstore: sinon.createStubInstance( MemoryStore ),
                 cstore: sinon.createStubInstance( MemoryStore ),
             };
+
+            const { sut, getStore } = createStubs( {
+                getStore: () => stores,
+            } );
 
             const { bstore, cstore } = stores;
 
@@ -243,8 +234,6 @@ describe( 'DataValidator', () =>
 
             bstore.clear = () => cleared( 'b' );
             cstore.clear = () => cleared( 'c' );
-
-            const sut = Sut( bvalidator, vmonitor, dep_factory, () => stores );
 
             return sut.validate.apply( sut, args )
                 .then( () =>
@@ -260,14 +249,16 @@ describe( 'DataValidator', () =>
 
             let vcalled = 0;
 
-            const bvalidator = createMockBucketValidator( function( _, __, ___ )
-            {
-                vcalled++;
-            } );
+            const bvalidator = createMockBucketValidator(
+                ( _, __, ___ ) => vcalled++
+            );
 
-            const vmonitor    = sinon.createStubInstance( ValidStateMonitor );
-            const dep_factory = createMockDependencyFactory();
-            const getStore    = createStubStore();
+            const vmonitor = sinon.createStubInstance( ValidStateMonitor );
+
+            const { sut, getStore } = createStubs( {
+                bvalidator: bvalidator,
+                vmonitor:   vmonitor,
+            } );
 
             const diff_a = { foo: [ 'a', 'b', 'c' ] };
             const diff_b = { foo: [ 'd' ] };
@@ -310,8 +301,6 @@ describe( 'DataValidator', () =>
                         .catch( e => reject( e ) );
                 };
 
-                const sut = Sut( bvalidator, vmonitor, dep_factory, getStore );
-
                 sut.validate( diff_a, {}, validatef );
                 sut.validate( diff_b, {}, validatef );
             } );
@@ -323,11 +312,7 @@ describe( 'DataValidator', () =>
     {
         it( 'directly updates failures', () =>
         {
-            const bvalidator  = createMockBucketValidator();
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
-
-            const getStore   = createStubStore();
+            const { sut, vmonitor, getStore } = createStubs( {} );
             const { bstore } = getStore();
 
             const diff = {
@@ -350,7 +335,7 @@ describe( 'DataValidator', () =>
                 .once()
                 .withExactArgs( getStore().store, failures );
 
-            return Sut( bvalidator, vmonitor, dep_factory, getStore )
+            return sut
                 .updateFailures( diff, failures )
                 .then( () =>
                 {
@@ -375,15 +360,8 @@ describe( 'DataValidator', () =>
     {
         it( 'proxies to validator', () =>
         {
-            const bvalidator  = createMockBucketValidator();
-            const vmonitor    = ValidStateMonitor();
-            const dep_factory = createMockDependencyFactory();
-
-            const mock_vmonitor = sinon.mock( vmonitor );
-
-            const sut = Sut(
-                bvalidator, vmonitor, dep_factory, createStubStore()
-            );
+            const { sut, vmonitor } = createStubs( {} );
+            const mock_vmonitor     = sinon.mock( vmonitor );
 
             const failures = [ 'foo', 'bar' ];
 
@@ -432,4 +410,21 @@ function createStubStore()
     };
 
     return () => stores;
+}
+
+
+function createStubs( {
+    bvalidator  = createMockBucketValidator(),
+    vmonitor    = ValidStateMonitor(),
+    dep_factory = createMockDependencyFactory(),
+    getStore    = createStubStore(),
+} )
+{
+    return {
+        bvalidator:  bvalidator,
+        vmonitor:    vmonitor,
+        dep_factory: dep_factory,
+        getStore:    getStore,
+        sut:         Sut( bvalidator, vmonitor, dep_factory, getStore ),
+    };
 }
