@@ -319,6 +319,58 @@ describe( 'DataValidator', () =>
     } );
 
 
+    describe( '#updateFailures', () =>
+    {
+        it( 'directly updates failures', () =>
+        {
+            const bvalidator  = createMockBucketValidator();
+            const vmonitor    = ValidStateMonitor();
+            const dep_factory = createMockDependencyFactory();
+
+            const getStore   = createStubStore();
+            const { bstore } = getStore();
+
+            const diff = {
+                foo: [ 'bar' ],
+                bar: [ 'baz' ],
+            };
+
+            const failures = {};
+
+            const mock_vmonitor = sinon.mock( vmonitor );
+            const mock_bstore   = sinon.mock( bstore );
+
+            // clears previous diffs
+            mock_bstore.expects( 'clear' )
+                .once()
+                .returns( Promise.resolve( bstore) );
+
+            mock_vmonitor
+                .expects( 'update' )
+                .once()
+                .withExactArgs( getStore().store, failures );
+
+            return Sut( bvalidator, vmonitor, dep_factory, getStore )
+                .updateFailures( diff, failures )
+                .then( () =>
+                {
+                    mock_vmonitor.verify();
+                    mock_bstore.verify();
+
+                    // keep in mind that we are using MemoryStore for this
+                    // test (whereas a real implementation would probably be
+                    // using a DiffStore)
+                    return Promise.all(
+                        Object.keys( diff ).map( key =>
+                            expect( bstore.get( key ) )
+                                .to.eventually.deep.equal( diff[ key ] )
+                        )
+                    );
+                } );
+        } );
+    } );
+
+
     describe( '#clearFailures', () =>
     {
         it( 'proxies to validator', () =>
