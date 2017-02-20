@@ -19,9 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    Bucket       = require( './Bucket' ),
-    EventEmitter = require( 'events' ).EventEmitter;
+'use strict';
+
+
+const { Class }    = require( 'easejs' );
+const Bucket       = require( './Bucket' );
+const EventEmitter = require( 'events' ).EventEmitter;
 
 
 /**
@@ -89,14 +92,14 @@ module.exports = Class( 'StagingBucket' )
     {
         this._bucket = bucket;
 
-        var _self  = this,
-            _event = this.__self.$('EVENT_UPDATE');
+        const _self  = this;
+        const _event = this.__self.$('EVENT_UPDATE');
 
         // forward events
         bucket.on( _event, function( data )
         {
             _self.emit( _event, data );
-        });
+        } );
 
         this._initState();
     },
@@ -104,8 +107,8 @@ module.exports = Class( 'StagingBucket' )
 
     'private _initState': function()
     {
-        var data    = this._bucket.getData(),
-            retdata = function() {};
+        const data    = this._bucket.getData();
+        const retdata = function() {};
 
         // ensure that we don't modify the original data
         retdata.prototype = data;
@@ -119,10 +122,11 @@ module.exports = Class( 'StagingBucket' )
     {
         nonull = !!nonull;
 
-        var len = src.length;
-        for ( var i = 0; i < len; i++ )
+        const len = src.length;
+
+        for ( let i = 0; i < len; i++ )
         {
-            var data = src[ i ];
+            let data = src[ i ];
 
             // don't merge if it's undefined or if null and nulls were not
             // permitted
@@ -175,17 +179,17 @@ module.exports = Class( 'StagingBucket' )
      */
     'private _hasChanged': function( data, merge_index )
     {
-        for ( var name in data )
+        for ( let name in data )
         {
-            var values = data[ name ];
-            var cur    = this._curdata[ name ] || [];
+            let values = data[ name ];
+            let cur    = this._curdata[ name ] || [];
 
             if ( !merge_index && ( values.length !== cur.length ) )
             {
                 return true;
             }
 
-            for ( var index in values )
+            for ( let index in values )
             {
                 if ( merge_index && ( values[ index ] === undefined ) )
                 {
@@ -223,9 +227,9 @@ module.exports = Class( 'StagingBucket' )
 
         this.emit( this.__self.$('EVENT_STAGING_PRE_UPDATE'), data );
 
-        for ( name in data )
+        for ( let name in data )
         {
-            var item = Array.prototype.slice.call( data[ name ], 0 );
+            let item = Array.prototype.slice.call( data[ name ], 0 );
 
             // initialize as array if necessary
             if ( this._staged[ name ] === undefined )
@@ -283,9 +287,9 @@ module.exports = Class( 'StagingBucket' )
      */
     'public overwriteValues': function( data )
     {
-        var new_data = {};
+        const new_data = {};
 
-        for ( name in data )
+        for ( let name in data )
         {
             new_data[ name ] = Array.prototype.slice.call( data[ name ], 0 );
 
@@ -321,10 +325,10 @@ module.exports = Class( 'StagingBucket' )
      */
     'virtual public getFilledDiff': function()
     {
-        var ret = {};
+        const ret = {};
 
         // return each staged field
-        for ( var field in this._staged )
+        for ( let field in this._staged )
         {
             // retrieve the current value for this field
             ret[ field ] = Array.prototype.slice.call(
@@ -349,16 +353,16 @@ module.exports = Class( 'StagingBucket' )
     {
         evented = ( evented === undefined ) ? true : !!evented;
 
-        var data = {};
+        const data = {};
 
         // generate data for this revert (so that hooks may properly handle it)
-        for ( var name in this._staged )
+        for ( let name in this._staged )
         {
-            var curstaged = this._staged[ name ],
-                orig      = this._bucket.getDataByName( name );
+            let curstaged = this._staged[ name ];
+            let orig      = this._bucket.getDataByName( name );
 
             data[ name ] = [];
-            for ( var i in curstaged )
+            for ( let i in curstaged )
             {
                 // if the original value is undefined, then we want to remove
                 // the value entirely, *not* set it to undefiend (which would
@@ -411,7 +415,7 @@ module.exports = Class( 'StagingBucket' )
      */
     'public commit': function( store )
     {
-        var old = this._staged;
+        const old = this._staged;
 
         this.emit( this.__self.$('EVENT_PRE_COMMIT') );
 
@@ -453,7 +457,7 @@ module.exports = Class( 'StagingBucket' )
      */
     'virtual public each': function( callback )
     {
-        for ( var name in this._curdata )
+        for ( let name in this._curdata )
         {
             callback( this._curdata[ name ], name );
         }
