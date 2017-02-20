@@ -162,6 +162,48 @@ module.exports = Class( 'StagingBucket' )
 
 
     /**
+     * Determine whether values have changed
+     *
+     * If all values are identical to the current bucket values (relative to
+     * `merge_index`), returns `false`.  Otherwise, this stops at the first
+     * recognized change and returns `true`.
+     *
+     * @param {Object.<string,Array>} data        key/value data or diff
+     * @param {boolean}               merge_index compare indexes individually
+     *
+     * @return {boolean} whether a change was recognized
+     */
+    'private _hasChanged': function( data, merge_index )
+    {
+        for ( var name in data )
+        {
+            var values = data[ name ];
+            var cur    = this._curdata[ name ] || [];
+
+            if ( !merge_index && ( values.length !== cur.length ) )
+            {
+                return true;
+            }
+
+            for ( var index in values )
+            {
+                if ( merge_index && ( values[ index ] === undefined ) )
+                {
+                    continue;
+                }
+
+                if ( values[ index ] !== cur[ index ] )
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    },
+
+
+    /**
      * Explicitly sets the contents of the bucket
      *
      * @param {Object.<string,Array>} data associative array of the data
@@ -174,6 +216,11 @@ module.exports = Class( 'StagingBucket' )
      */
     'virtual public setValues': function( data, merge_index, merge_null )
     {
+        if ( !this._hasChanged( data, merge_index ) )
+        {
+            return;
+        }
+
         this.emit( this.__self.$('EVENT_STAGING_PRE_UPDATE'), data );
 
         for ( name in data )
