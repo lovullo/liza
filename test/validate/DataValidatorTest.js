@@ -325,32 +325,34 @@ describe( 'DataValidator', () =>
             } );
             const { bstore } = getStore();
 
-            const faila = {};
-            const failb = {};
+            // linked list (to previous)
+            const fails = [ {}, {}, {} ];
+            fails.forEach( ( fail, i ) => fail.prev = fails[ i - 1 ] );
 
-            let running_first = true;
+            const failcalls = [];
 
             vmonitor.update = ( _, fail ) =>
             {
-                if ( fail === failb )
-                {
-                    if ( running_first === true )
-                    {
-                        return Promise.reject( Error(
-                            "Request not queued"
-                        ) );
-                    }
-                }
-
+                failcalls.push( fail );
                 return Promise.resolve( true );
             };
 
             return Promise.all( [
-                sut.updateFailures( {}, faila )
-                    .then( () => running_first = false ),
+                sut.updateFailures( {}, fails[ 0 ] )
+                    .then( () => expect( failcalls[ 0 ] ).to.equal( fails[ 0 ] ) ),
 
-                sut.updateFailures( {}, failb ),
-            ] );
+                sut.updateFailures( {}, fails[ 1 ] )
+                    .then( () => expect( failcalls[ 1 ] ).to.equal( fails[ 1 ] ) ),
+
+                sut.updateFailures( {}, fails[ 2 ] )
+                    .then( () => expect( failcalls[ 2 ] ).to.equal( fails[ 2 ] ) ),
+            ] )
+                .then( () => {
+                    // sanity check to make sure the above stuff was
+                    // actually called
+                    expect( failcalls.length )
+                        .to.equal( fails.length )
+                } );
         } );
     } );
 
