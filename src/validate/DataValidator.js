@@ -227,8 +227,10 @@ module.exports = Class( 'DataValidator',
     {
         if ( this._pending )
         {
-            this._pending.then( callback );
-            return this._pending;
+            // we become the end of the chain
+            return this._pending = this._pending.then( () =>
+                this._onceReady( callback )
+            );
         }
 
         return this._pending = callback()
