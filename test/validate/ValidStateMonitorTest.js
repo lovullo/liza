@@ -633,7 +633,6 @@ describe( 'ValidStateMonitor', function()
                     return sut
                         .on( 'fix', fixed =>
                         {
-                            debugger;
                             // `bar' not cleared
                             expect( fixed )
                                 .to.deep.equal( {

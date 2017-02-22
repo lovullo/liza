@@ -1147,6 +1147,12 @@ module.exports = Class( 'Client' )
                 _self.getUi().getCurrentStep().getElementGroup( name )
                     .clearOptions( name, index );
             } )
+            .on( 'fieldLoaded', ( name, index ) =>
+            {
+                _self._dataValidator.clearFailures( {
+                    [name]: [ index ],
+                } );
+            } )
             .on( 'error', function( e )
             {
                 _self._handleError( e );

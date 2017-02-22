@@ -126,6 +126,9 @@ module.exports = Class( 'DataApiManager' )
      *
      * The optional request id permits cancelling requests if necessary.
      *
+     * Once a field has finished loading, a `fieldLoaded` event will be
+     * emitted with `name` and `index`.
+     *
      * TODO: refactor argument list; it's just been built upon too much and
      * needs reordering
      *
@@ -197,6 +200,7 @@ module.exports = Class( 'DataApiManager' )
 
                         // clear the pending flag
                         _self._pendingApiCall[ id ] = undefined;
+                        _self.emit( 'fieldLoaded', name, +index );
                     }
                 } );
             }
