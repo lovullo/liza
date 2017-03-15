@@ -18,6 +18,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+MAKEINFOHTML = $(MAKEINFO) --html --css-include liza.css
+
 info_TEXINFOS = liza.texi
 liza_TEXINFOS = design.texi macros.texi
 
