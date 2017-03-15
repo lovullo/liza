@@ -52,13 +52,21 @@ Free Documentation License''.
 @top Main
 @end ifnottex
 
-@c This is where @menu will go
+@menu
+* Design and Architecture:Design.  Design and structure of framework
+* Concept Index::
+@end menu
 
 @ifnottex
 
 @insertcopying
 @end ifnottex
 
-@c This is where the includes will go.
+@include macros.texi
+@include design.texi
+
+@node Concept Index
+@unnumbered Concept Index
+@printindex cp
 
 @bye

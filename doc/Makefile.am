@@ -19,3 +19,5 @@
 ##
 
 info_TEXINFOS = liza.texi
+liza_TEXINFOS = design.texi macros.texi
+
