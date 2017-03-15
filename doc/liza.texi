@@ -14,6 +14,8 @@
 
 @setfilename liza.info
 @settitle Liza Data Collection Framework v@value{VERSION}
+
+@documentencoding UTF-8
 @c %**end of header
 
 @copying
