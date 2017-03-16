@@ -20,3 +20,10 @@
 —
 @end macro
 @end ifnottex
+
+
+@c indicate that help is needed to produce docs
+@macro helpwanted{}
+@cindex TODO, Missing Docs
+@emph{There's nothing here yet.  Maybe you can help?}
+@end macro
