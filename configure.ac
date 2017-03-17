@@ -18,7 +18,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-AC_INIT([liza], [0.11.3], [dev@lovullo.com])
+AC_INIT([liza], [0.11.4], [dev@lovullo.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 
