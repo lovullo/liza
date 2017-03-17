@@ -277,6 +277,9 @@ module.exports = Class( 'ValidStateMonitor' )
      * fix.  If so, the promise is fulfilled with the fix data.  It is the
      * responsibility of the caller to handle removing past failures.
      *
+     * If the diff contains a scalar instead of an array diff, it is
+     * considered to affect every index.
+     *
      * @param {Object}  data   validated data
      * @param {Object}  fail   failure records
      * @param {Promise} causep cause promise to chain onto
@@ -293,15 +296,21 @@ module.exports = Class( 'ValidStateMonitor' )
             new Promise( ( keepgoing, found ) =>
                 data.get( cause_name ).then( field =>
                 {
+                    // we want everything to be an array, but we need a sane
+                    // fallback if we _are_ provided with scalars
+                    const index_data = ( Array.isArray( field ) )
+                        ? field[ cause_index ]
+                        : field;
+
                     // to be marked as fixed, there must both me no failure
                     // and there must be data for this index for the field
                     // in question (if the field wasn't touched, then of
                     // course there's no failure!)
                     if ( ( ( fail === undefined ) || !( fail[ cause_index ] ) )
-                        && ( field[ cause_index ] !== undefined )
+                        && ( index_data !== undefined )
                     )
                     {
-                        found( field[ cause_index ] );
+                        found( index_data );
                         return;
                     }
 
