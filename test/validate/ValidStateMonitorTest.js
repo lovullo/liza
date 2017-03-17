@@ -424,6 +424,49 @@ describe( 'ValidStateMonitor', function()
                 } );
 
 
+                // if the field diff is a scalar (normally it should be an
+                // array), it must recognize it as a fix for all indexes
+                it( 'recognizes scalar diff as fix to any index', function()
+                {
+                    // scalar
+                    const update_data = { cause: 1 };
+
+                    return new Promise( ( accept, reject ) =>
+                    {
+                        return mkstore( update_data ).then( data =>
+                        {
+                            return Sut()
+                                .on( 'fix', function( fixed )
+                                {
+                                    expect( fixed )
+                                        .to.deep.equal( { foo: [ 1, 1 ] } );
+
+                                    accept();
+                                } )
+                                .update( data, {
+                                    foo: [
+                                        Failure(
+                                            Field( 'foo', 0 ),
+                                            '',
+                                            [ Field( 'cause', 0 ) ]
+                                        ),
+                                        Failure(
+                                            Field( 'foo', 1 ),
+                                            '',
+                                            [ Field( 'cause', 1 ) ]
+                                        ),
+                                    ],
+                                } )
+                                .then( sut =>
+                                {
+                                    return sut.update( data, {} );
+                                } );
+                        } )
+                            .catch( e => reject( e ) );
+                    } );
+                } );
+
+
                 it( 'considers any number of causes', function()
                 {
                     // different index

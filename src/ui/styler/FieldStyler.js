@@ -1,7 +1,7 @@
 /**
  * Style fields using CSS
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2016, 2017 LoVullo Associates, Inc.
  *
  *  This file is part of liza.
  *
@@ -140,10 +140,11 @@ module.exports = AbstractClass( 'FieldStyler',
         }
         else if ( typeof element.className === 'string' )
         {
-            // note that we use a space instead of a boundary for the character
-            // preceding the match due to the implementation of addClass()
+            // note that the implementation of #addClass adds a space,
+            // but we also need to cater to classes that might have been
+            // added outside of this system
             element.className = element.className.replace(
-                new RegExp( ( ' ' + cls + '\\b' ), 'g' ), ''
+                new RegExp( ( '( +|\\b)' + cls + '\\b' ), 'g' ), ''
             );
         }
 
