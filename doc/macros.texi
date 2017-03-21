@@ -97,3 +97,11 @@
   </div>
   @end html
 @end macro
+
+
+@c simple textual example
+@macro exnotice{text}
+@noticestart{ex}
+@strong{Example:} \text\
+@noticeend
+@end macro

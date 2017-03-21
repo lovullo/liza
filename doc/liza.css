@@ -151,3 +151,9 @@ but don't sacrifice space on small screens.
     content: '\01F6A7';
     margin-right: 0.5em;
 }
+
+/* "Example:" */
+.doc-notice.ex strong:first-child
+{
+    color: #657b83;
+}
