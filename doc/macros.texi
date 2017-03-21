@@ -36,11 +36,13 @@
 
 @c inline documentation notice for some sort of quality
 @c improvement or warning
-@macro rawnotice{type,text}
+@macro noticestart{type}
 @html
 <div class="doc-notice \type\">
 @end html
-@emph{\text\}
+@end macro
+
+@macro noticeend{}
 @html
 </div>
 @end html
@@ -49,16 +51,18 @@
 
 @c vanilla notice
 @macro notice{text}
-@rawnotice{{},\text\}
+@noticestart{}
+@emph{\text\}
+@noticeend
 @end macro
 
 
 @c notice for developers of liza
 @macro devnotice{text}
 @ifset DEVNOTES
-@html
-@end html
-@rawnotice{dev,\text\}
+  @noticestart{dev}
+  @emph{\text\}
+  @noticeend
 @end ifset
 @end macro
 
