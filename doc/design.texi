@@ -22,30 +22,33 @@ The main components of the system are:
 
 @table @strong
   @cindex Assertions
-  @item @ref{Assertions}
+  @item Assertions
   Basic validations against bucket data,
     producing errors and manipulating control flow.
   Invokes triggers to manipulate the UI and document.
   Assertions are compiled from Program sources.
+  @xref{Assertions}.
 
   @cindex Bucket
-  @item @ref{Bucket}
+  @item Bucket
   The key/value store into which all document data are stored.
   Supports staging and rollback of data,
     processing deltas,
     and provides hooks that drive the rest of the system.
+  @xref{Bucket}.
 
   @cindex Calculated Value
   @item Calculated Values
   A small sub-system for calculating bucket values from other values.
 
   @cindex Client
-  @item @ref{Client}
+  @item Client
   Basic logic for navigating between steps,
     prompting for user actions,
     display help text and basic document data,
     communicate with server,
     etc.
+  @xref{Client}.
 
   @cindex Developer Dialog
   @item Developer Dialog
@@ -62,23 +65,26 @@ The main components of the system are:
     and more.
 
   @cindex Program
-  @item @ref{Program}
+  @item Program
   Internal representation of the Program with delegation of events to
     the assertion system.
   Contains compiled representation of all steps, groups, questions,
     assertions, metadata, and others.
+  @xref{Program}.
 
   @cindex Program, User Interface
   @cindex User Interface, Program
-  @item @ref{Program UI}
+  @item Program UI
   Rendering of elements specific to Programs,
     such as steps, groups, and questions.
   This is the equivalent of an HTML form.
   Directly monitors the bucket to perform UI updates.
+  @xref{Program UI}.
 
   @cindex Program, XML
-  @item @ref{Program XML}
+  @item Program XML
   The source code for a Program, in XML format.
+  @xref{Program XML}.
 
   @cindex Server
   @item Server
@@ -90,11 +96,12 @@ The main components of the system are:
 
   @cindex Type Validation
   @cindex Validation, Type
-  @item @ref{Validation,,Type Validation}
+  @item Type Validation
   Validates and formats bucket values for specific field (question)
     types.
   For example, a date field must be in a recognized date format,
     and will be normalized for display.
+  @xref{Validation}.
 @end table
 
 More information about each can be found in their respective section.
@@ -153,11 +160,12 @@ There are three layers of error checking:@footnote{
 @enumerate
   @item Required field checking@mdash{
     }whether all required questions have been answered.
-  @item @ref{Validation,,Type Validation}@mdash{
+  @item Type Validation@mdash{
     }verify that questions contain valid data according to their
-    declared type.
-  @item @ref{Assertions}@mdash{
+    declared type. @ref{Validation}.
+  @item Assertions@mdash{
     }arbitrary checks on data.
+    @ref{Assertions}.
 @end enumerate
 
 Required fields fail serially@mdash{
