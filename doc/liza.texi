@@ -58,6 +58,15 @@ Free Documentation License''.
       to @command{configure}.}
   For an index of notes@comma{} see @ref{Developer Notes Index}.}
 
+@ifclear SRCURI
+@devnotice{
+  Location of Liza source code is unknown.
+  Source cross-references have been disabled.@footnote{
+      To enable source code cross-references, provide the URI to the
+        root (as you want it to be seen in the manual) via
+        @option{--with-srcuri=<uri>} to @command{configure}.}}
+@end ifclear
+
 @contents
 
 @ifnottex

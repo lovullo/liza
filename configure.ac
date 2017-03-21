@@ -50,6 +50,16 @@ AC_ARG_ENABLE(
 
 AC_SUBST([SET_DEVNOTES], [$set_devnotes])
 
+set_srcuri='@c @set SRCURI <source code uri>'
+AC_ARG_WITH(
+  [srcuri],
+  [AS_HELP_STRING([--with-srcuri],
+                  [root URI for Liza source code cross-references
+                   (disabled by default)])],
+  [test "x$withval" = x || set_srcuri="@set SRCURI $withval"])
+
+AC_SUBST([SET_SRCURI], [$set_srcuri])
+
 # generate files from their *.in counterparts
 AC_CONFIG_FILES([Makefile package.json
                  doc/Makefile doc/config.texi

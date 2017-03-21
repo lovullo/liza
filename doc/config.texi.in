@@ -2,3 +2,6 @@
 
 @c whether to include notes for Liza developers
 @SET_DEVNOTES@
+
+@c URI to root of source tree for manual cross-references
+@SET_SRCURI@
