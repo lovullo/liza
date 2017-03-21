@@ -122,6 +122,20 @@ More information about each can be found in their respective section.
 
 @node Assertions
 @section Assertions
+@maintenance{
+  Assertions are compiled from the Program XML (@pxref{Program XML}).
+  Rather than using a library,
+    it compiles a mess of largely duplicate code inline.
+  This system needs to be @emph{replaced},
+    not modified.
+
+  A replacement can either be in the form of a library (removing most
+    if not all code generation from the Program XML compiler),
+      or possibly compile into classifications and use the classification
+      system.
+  @emph{The latter option is preferred,
+          and would be more powerful with less maintenance.}}
+
 @helpwanted
 
 
