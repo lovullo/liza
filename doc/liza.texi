@@ -10,7 +10,12 @@
 @c    Free Documentation License''.
 
 @c %**start of header
+@include config.texi
 @include version.texi
+@include macros.texi
+
+@c Developer Notes index (used only if DEVNOTES)
+@defindex dn
 
 @setfilename liza.info
 @settitle Liza Data Collection Framework v@value{VERSION}
@@ -47,6 +52,12 @@ Free Documentation License''.
 @insertcopying
 @end titlepage
 
+@devnotice{
+  This manual contains inline notes for developers of Liza.@footnote{
+    To disable for user documentation, pass @option{--disable-devnotes}
+      to @command{configure}.}
+  For an index of notes@comma{} see @ref{Developer Notes Index}.}
+
 @contents
 
 @ifnottex
@@ -57,6 +68,9 @@ Free Documentation License''.
 @menu
 * Design and Architecture:Design.  Design and structure of framework
 * Concept Index::
+@ifset DEVNOTES
+* Developer Notes Index::  Index of pertenant notes for developers of Liza.
+@end ifset
 @end menu
 
 @ifnottex
@@ -64,11 +78,17 @@ Free Documentation License''.
 @insertcopying
 @end ifnottex
 
-@include macros.texi
 @include design.texi
 
 @node Concept Index
 @unnumbered Concept Index
 @printindex cp
+
+@ifset DEVNOTES
+  @node Developer Notes Index
+  @unnumbered Developer Notes Index
+  @printindex dn
+@end ifset
+
 
 @bye

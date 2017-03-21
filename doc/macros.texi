@@ -8,22 +8,88 @@
 @c    Texts.  A copy of the license is included in the section entitled ``GNU
 @c    Free Documentation License''.
 
-@c insert appropriate em dash for mode
-@iftex
-@macro mdash{}
----
-@end macro
-@end iftex
 
+@c unicode CONSTRUCTION SIGN
+@macro constructionsign
+🚧
+@end macro
+
+
+@c insert appropriate em dash for mode
 @ifnottex
-@macro mdash{}
-—
+@macro mdash
+@inlinefmtifelse{html, @inlineraw{html,&mdash;}, —}
 @end macro
 @end ifnottex
+
+@c the macro for TeX for some reason always seems to be followed
+@c by a space when applied; #1 consumes it and re-adds if it's
+@c not empty
+@tex
+\gdef\mdash#1{%
+  ---%
+  \def\next{#1}%
+  \ifx\next\empty\relax\else#1\fi%
+}
+@end tex
+
+
+@c inline documentation notice for some sort of quality
+@c improvement or warning
+@macro rawnotice{type,text}
+@html
+<div class="doc-notice \type\">
+@end html
+@emph{\text\}
+@html
+</div>
+@end html
+@end macro
+
+
+@c vanilla notice
+@macro notice{text}
+@rawnotice{{},\text\}
+@end macro
+
+
+@c notice for developers of liza
+@macro devnotice{text}
+@ifset DEVNOTES
+@html
+@end html
+@rawnotice{dev,\text\}
+@end ifset
+@end macro
 
 
 @c indicate that help is needed to produce docs
 @macro helpwanted{}
 @cindex TODO, Missing Docs
-@emph{There's nothing here yet.  Maybe you can help?}
+@dnindex Missing Docs
+@notice{There's nothing here yet.  Maybe you can help?}
+@end macro
+
+
+@c maintenance note for developers
+@macro maintenance{desc}
+@dnindex Maintenance Concern
+@devnotice{This system has maintenance concerns.@footnote{
+  @maintfoot{\desc\}
+}}
+@end macro
+
+@c encapsulated to avoid bad TeX generation (fails compilation
+@c when inlined at call site)
+@macro maintfoot{desc}
+  @html
+  <div class="footnote-notice dev">
+  @end html
+  \desc\
+
+  @emph{Developers should evaluate whether extra time should be
+          allocated for tasks involving this system.}
+  @html
+  </div>
+  @end html
 @end macro

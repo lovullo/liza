@@ -1,5 +1,6 @@
 /*
 Copyright (C) 2016-2017 Oliver Heimlich
+Copyright (C) 2017 LoVullo Associates, Inc.
 
 This file is part of Octave.
 
@@ -109,4 +110,37 @@ but don't sacrifice space on small screens.
   {
     body { margin-left: 7.5em; }
   }
+}
+
+/** added by LoVullo Associates **/
+.doc-notice
+{
+    border-left: 5px solid #657b83;
+    margin:  0px;
+    padding: 0em 0em 0em 0.25em;
+    padding-block-start: 0.25em;
+    padding-block-end: 0.25em;
+}
+
+.doc-notice p
+{
+    margin: 0px;
+}
+
+.doc-notice.dev
+{
+    border-color: #d33682;
+}
+
+.doc-notice.dev p::before
+{
+    color: #d33682;
+    content: '\01F6A7';
+    margin-right: 0.5em;
+}
+
+.footnote-notice.dev p:first-child::before
+{
+    content: '\01F6A7';
+    margin-right: 0.5em;
 }
