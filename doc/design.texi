@@ -153,6 +153,14 @@ More information about each can be found in their respective section.
 @node Error Handling
 @subsection Error Handling
 
+@maintenance{
+  The complexity of this system and integration into legacy
+    layers has caused maintenance trouble in the past.
+  Each of the error checking layers need to be integrated
+    to reduce complexity.}
+
+@cindex Error
+@cindex Failure
 There are three layers of error checking:@footnote{
   Primarily for legacy reasons.
   They are being consolodated as the system is touched.}
@@ -168,9 +176,48 @@ There are three layers of error checking:@footnote{
     @ref{Assertions}.
 @end enumerate
 
+@cindex Required Field
+@cindex Field, Required
+@cindex Field, Fixed
+@cindex Error, Fixed
+@cindex Error, Required
+@cindex Fixed, Error
 Required fields fail serially@mdash{
   }the system will notify the user of the required field,
     and direct him/her to it (usually through scrolling).
+A field is marked as @dfn{fixed} according to the rules
+  in @ref{Managing Error State}.
+
+
+@menu
+* Managing Error State::  Determining when failures should be marked as ``fixed''
+@end menu
+
+
+@node Managing Error State
+@subsubsection Managing Error State
+
+@cindex Failure Stack
+@cindex Error Stack
+Each failure caused by assertions is associated with a
+  @dfn{failure stack}.
+The stack represents the trail of assertions that have run,
+  containing the ids of all values asserted against.
+When any field or classification changes that is represented on the
+  failure stack,
+    the failure for the failed field associated with that failure stack
+    is cleared.
+
+@exnotice{
+  If an assertion for some question @var{foo} first checked the value
+    of bucket field @var{bar},
+    and within its failure checked the value @var{c:predicate},
+    the failure stack would contain both of those ids.
+  If either @var{bar} or the @var{predicate} classification changed,
+   the question @var{foo} would have its error cleared.}
+
+Error state is managed by
+  @srcref{src/validate/ValidStateMonitor.js, ValidStateMonitor}.
 
 
 @node Program
