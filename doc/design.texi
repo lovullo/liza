@@ -158,6 +158,13 @@ More information about each can be found in their respective section.
 
 @node Client
 @section Client
+@maintenance{
+  The client is largely managed by a single class,
+    @srcref{src/client/Client.js, Client},
+    which has grown out of control.
+  @code{Client} mediates essentially the entire system.
+  Code is to be extracted out of this class as it is touched.}
+
 @helpwanted
 
 @menu
