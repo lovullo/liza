@@ -11,8 +11,9 @@
 @node Design
 @chapter Design & Architecture
 
-@emph{N.B. This document may reference features that are not yet
-  present in Liza; they will be moved into this repository in time.}
+@notice{
+  N.B. This document may reference features that are not yet
+    present in Liza; they will be moved into this repository in time.}
 
 Liza is fundamentally a data collection framework@mdash{
   }a fancy form for collecting, validating, and lightly processing
