@@ -105,3 +105,18 @@
 @strong{Example:} \text\
 @noticeend
 @end macro
+
+
+@c link to source file if URI is known, otherwise display
+@c the path to the file
+@ifset SRCURI
+@macro srcref{path, display}
+@url{@value{SRCURI}/\path\, @code{\display\}}
+@end macro
+@end ifset
+
+@ifclear SRCURI
+@macro srcref{path, display}
+@file{\path\}
+@end macro
+@end ifclear
