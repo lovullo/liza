@@ -163,7 +163,9 @@ More information about each can be found in their respective section.
     @srcref{src/client/Client.js, Client},
     which has grown out of control.
   @code{Client} mediates essentially the entire system.
-  Code is to be extracted out of this class as it is touched.}
+  Code is to be extracted out of this class as it is touched.
+
+  The other system mammoth is @code{Ui} (@pxref{Program UI}).}
 
 @helpwanted
 
@@ -277,6 +279,19 @@ Programs are ideally compiled from a @ref{Program XML,,Program@tie{}XML}
 
 @node Program UI
 @section Program UI
+@maintenance{
+  The @code{Ui} class,
+    in addition to @srcref{src/client/Client,Client} (@pxref{Client}),
+    represent the two monoliths of the system.
+  This mediates all UI-related tasks,
+    and still has far too many concerns with far too many
+      dependencies.
+  Code is to be extracted out of this class as it is touched.
+}
+
+@mvnotice{
+  All @file{program/ui/} contents still need to be moved into Liza.}
+
 
 @cindex Program, User Interface
 @cindex User Interface, Program
@@ -328,6 +343,11 @@ It also displays question help text (also configured through the XML)
 
 @node Group Styles
 @subsection Group Styles
+@refactor{
+  Some group styles still use jQuery;
+    they should be modified to use modern formatters and Liza DOM
+    abstractions (see @srcrefraw{src/ui/field}
+      and @srcrefraw{src/ui/styler}).}
 
 @cindex Group, Styling
 Groups support a number of @dfn{group styles} that determine how
