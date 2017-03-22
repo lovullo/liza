@@ -110,7 +110,7 @@
 @c needs to be moved into liza
 @macro mvnotice{text}
 @noticestart{mv}
-All or part of this system needs to be moved into Liza.@footnote{
+@emph{All or part of this system needs to be moved into Liza.}@footnote{
   \text\}
 @noticeend
 @end macro

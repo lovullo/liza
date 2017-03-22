@@ -244,6 +244,21 @@ Error state is managed by
 
 @node Program
 @section Program
+@maintenance{
+  The @code{Program} class was one of the first prototypes created,
+    and has evolved poorly with the rest of the system.
+  It is the base class for all compiled programs,
+    and it glues together too many other systems with a terrible
+    API and little to no encapsulation.
+
+  With that said, it is one of the least touched classes (thus its
+    state); developers rarely have the need to touch @code{Program}.}
+
+@mvnotice{
+  The core @code{Program} class that causes maintenance concerns needs
+    to be added to Liza.
+  It is currently mocked as necessary in test cases.}
+
 
 @cindex Program
 The @dfn{Program} is a declarative representation of an entire system.
