@@ -122,10 +122,18 @@
 @macro srcref{path, display}
 @url{@value{SRCURI}/\path\, @code{\display\}}
 @end macro
+
+@macro srcrefraw{path}
+@url{@value{SRCURI}/\path\, @code{\path\}}
+@end macro
 @end ifset
 
 @ifclear SRCURI
 @macro srcref{path, display}
+@srcrefraw{\path\}
+@end macro
+
+@macro srcrefraw{path}
 @file{\path\}
 @end macro
 @end ifclear
