@@ -124,6 +124,13 @@
 @end macro
 
 
+@macro tip{text}
+@noticestart{tip}
+\text\
+@noticeend
+@end macro
+
+
 @c link to source file if URI is known, otherwise display
 @c the path to the file
 @ifset SRCURI

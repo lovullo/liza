@@ -132,16 +132,27 @@ but don't sacrifice space on small screens.
     border-color: #d33682;
 }
 
-.doc-notice.dev p::before
+.doc-notice.dev p::before,
+.doc-notice.tip p::before
 {
     display: block;
     float: left;
-    color: #d33682;
-    content: '\01F6A7';
     margin-left: -1.5em;
 }
 
-.doc-notice.dev p
+.doc-notice.dev p::before
+{
+    color: #d33682;
+    content: '\01F6A7';
+}
+
+.doc-notice.tip p::before
+{
+    content: '\261E';
+}
+
+.doc-notice.dev p,
+.doc-notice.tip p
 {
     padding-left: 1.75em;
 }
