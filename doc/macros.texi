@@ -99,6 +99,14 @@
 @end macro
 
 
+@c non-critical maintenance notes
+@macro refactor{desc}
+@dnindex Refactor
+@devnotice{Portions of this system need refactoring.@footnote{
+  \desc\}}
+@end macro
+
+
 @c simple textual example
 @macro exnotice{text}
 @noticestart{ex}
