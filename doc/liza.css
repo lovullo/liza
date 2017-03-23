@@ -68,9 +68,17 @@ pre.example
   /* base3 ~ background color in light solarized theme */
   background-color: #fdf6e3;
   padding: 0.5em;
+  font-size: 0.9em;
 }
 a { color: #268bd2; /* blue */ }
 a:visited { color: #d33682; /* magenta */ }
+
+/** added by LoVullo Associates **/
+.float
+{
+    margin-block-start: 2em;
+    margin-block-end: 2em;
+}
 
 /* Center floating tables and images */
 .float table, .float img, .float object { margin-left: auto; margin-right: auto; }
