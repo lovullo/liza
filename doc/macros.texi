@@ -176,3 +176,9 @@ This system has maintenance concerns.
 @macro xmlattr{name}
 @samp{@@\name\}
 @end macro
+
+
+@c text to avoid repeated e.g. ties and other formatting
+@macro progxml
+Program@tie{}XML
+@end macro
