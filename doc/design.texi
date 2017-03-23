@@ -122,7 +122,8 @@ More information about each can be found in their respective section.
 
 @node Assertions
 @section Assertions
-@maintenance{
+@maintstart
+@footnote{
   Assertions are compiled from the Program XML (@pxref{Program XML}).
   Rather than using a library,
     it compiles a mess of largely duplicate code inline.
@@ -135,6 +136,7 @@ More information about each can be found in their respective section.
       system.
   @emph{The latter option is preferred,
           and would be more powerful with less maintenance.}}
+@maintend
 
 @helpwanted
 
@@ -158,7 +160,8 @@ More information about each can be found in their respective section.
 
 @node Client
 @section Client
-@maintenance{
+@maintstart
+@footnote{
   The client is largely managed by a single class,
     @srcref{src/client/Client.js, Client},
     which has grown out of control.
@@ -166,6 +169,7 @@ More information about each can be found in their respective section.
   Code is to be extracted out of this class as it is touched.
 
   The other system mammoth is @code{Ui} (@pxref{Program UI}).}
+@maintend
 
 @helpwanted
 
@@ -246,7 +250,8 @@ Error state is managed by
 
 @node Program
 @section Program
-@maintenance{
+@maintstart
+@footnote{
   The @code{Program} class was one of the first prototypes created,
     and has evolved poorly with the rest of the system.
   It is the base class for all compiled programs,
@@ -255,6 +260,7 @@ Error state is managed by
 
   With that said, it is one of the least touched classes (thus its
     state); developers rarely have the need to touch @code{Program}.}
+@maintend
 
 @mvnotice{
   The core @code{Program} class that causes maintenance concerns needs

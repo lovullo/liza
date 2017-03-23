@@ -76,12 +76,26 @@
 
 
 @c maintenance note for developers
-@macro maintenance{desc}
+@c
+@c N.B. use @maintstart and @maintend manually if using multiple
+@c paragraphs otherwise PDF output (TeX) breaks; we'll figure out
+@c a better solution in the future
+@macro maintstart{}
 @dnindex Maintenance Concern
-@devnotice{This system has maintenance concerns.@footnote{
-  @maintfoot{\desc\}
-}}
+@noticestart{dev}
+This system has maintenance concerns.
 @end macro
+
+@macro maintend
+@noticeend
+@end macro
+
+@macro maintenance{desc}
+@maintstart
+@footnote{\desc\}
+@maintend
+@end macro
+
 
 @c encapsulated to avoid bad TeX generation (fails compilation
 @c when inlined at call site)
