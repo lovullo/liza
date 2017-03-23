@@ -24,7 +24,7 @@ pages:
     stage: deploy
     script:
         - mkdir -p public/doc
-        - mv doc/liza.html/* doc/liza.pdf doc/liza.info public/doc/
+        - mv doc/liza.html/* doc/liza.pdf doc/liza.info public/
     artifacts:
         paths:
             - public/
