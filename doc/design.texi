@@ -430,7 +430,9 @@ Groups support a number of @dfn{group styles} that determine how
   they are delimited from other groups;
   how the elements they contain are rendered and laid out;
   and how multiple indexes are displayed, added, and removed.
+A list of available styles is detailed in @ref{t:group-styles}.
 
+@float Table, t:group-styles
 @multitable @columnfractions 0.15 0.65 0.10 0.10
   @headitem Name @tab Description @tab Multi-Index? @tab Add/Remove Index?
 
@@ -483,6 +485,8 @@ Groups support a number of @dfn{group styles} that determine how
   @tab@center Y
   @tab@center Y
 @end multitable
+@caption{Group styles and index support}
+@end float
 
 
 
