@@ -1,0 +1,33 @@
+image: node:4
+
+stages:
+    - build
+    - deploy
+
+before_script:
+    - apt-get update
+    - apt-get -y install --no-install-recommends texinfo texlive-latex-base
+
+build:
+    stage: build
+    script:
+        - autoreconf -fvi
+        - ./configure
+        - npm install
+        - make all check info pdf html
+    artifacts:
+        paths:
+            - doc/
+        expire_in: 30 min
+
+pages:
+    stage: deploy
+    script:
+        - mkdir -p public/doc
+        - mv doc/liza.html/* doc/liza.pdf doc/liza.info public/doc/
+    artifacts:
+        paths:
+            - public/
+        expire_in: 30 min
+    only:
+        - master
