@@ -64,6 +64,7 @@ The main components of the system are:
   These data are used to determine what assertions are performed,
     what questions and groups display,
     and more.
+  @xref{Predicate System}.
 
   @cindex Program
   @item Program
@@ -112,6 +113,7 @@ More information about each can be found in their respective section.
 * Assertions::
 * Bucket::
 * Client::
+* Predicate System::
 * Program::
 * Program UI::
 * Program XML::
@@ -246,6 +248,74 @@ When any field or classification changes that is represented on the
 
 Error state is managed by
   @srcref{src/validate/ValidStateMonitor.js, ValidStateMonitor}.
+
+
+
+@node Predicate System
+@section Predicate System
+@maintstart
+@footnote{
+  New programs (using the old incarnation of TAME) use the classifier
+    embedded into the rater by TAME.
+  Old ones, however, still use the @dfn{Global Classifier}.
+  This system isn't as well tested as TAME's@mdash{
+    }which needs to work properly for the sake of calculating premium@mdash{
+    }and has suffered from a number of bugs in the past.
+
+  The solution is to migrate all programs to TAME and remove that old
+    code.}
+@maintend
+
+@tip{
+  For a practical application of these concepts, see its use in the
+    Program@tie{}XML (@pxref{Specifying Predicates}).}
+
+@cindex Predicate
+@cindex Classifier
+@cindex Applicability
+@cindex Domain of discourse, Predicate
+The @dfn{predicate system} determines the @dfn{applicability} of
+  certain objects (like questions and assertions) by associating them
+  with predicates.
+The domain of discourse (variables which may be quantified) is listed
+  in @ref{t:predicate-dod}.
+
+What it means for some object to be applicable depends on the context.
+
+@float Table, t:predicate-dod
+@multitable @columnfractions 0.25 0.10 0.65
+  @headitem Type @tab Prefix @tab Description
+
+  @item Classifications
+    @tab @emph{None}
+    @tab Results of applying an external @dfn{classifier} to the bucket
+      (@pxref{Bucket}).
+
+  @item Bucket Truth Predicate
+    @tab @code{q:}
+    @tab
+      Whether the given name in the bucket (@pxref{Bucket}) is
+        non-empty and non-zero.
+      The prefix @samp{q:} refers to its most common use
+        case---questions (@pxref{Program UI,,Program@tie{}UI}).
+@end multitable
+@caption{Predicate system domain of discourse}
+@end float
+
+This system is limited to universal quantification over the domain of
+  discourse.
+For other quantifiers and higher-order logic,
+  defer to one of the systems that contributes to the domain of
+  discourse,
+    like the classifier.@footnote{
+      This is usually TAME.
+      The Program XML also supports inline classifications
+        with TAME's syntax (@pxref{Specifying Predicates}).}
+
+Predicates are usually specified in the Program XML
+  (@pxref{Specifying Predicates}) and compiled into the program
+  (@pxref{Program}).
+
 
 
 @node Program
@@ -419,6 +489,48 @@ Groups support a number of @dfn{group styles} that determine how
 @node Program XML
 @section Program XML
 @helpwanted
+
+@menu
+* Specifying Predicates::
+@end menu
+
+
+@node Specifying Predicates
+@subsection Specifying Predicates
+
+Object predicates (@pxref{Predicate System}) are specified using the
+  @xmlattr{when} attribute of certain nodes.
+It must contain a string of references understood by the system
+  (see domain of discourse, @ref{Predicate System}),
+    all of which much match for the predicate to be true.
+
+@float Figure, f:pred-when
+@example
+  <question id="describe" type="noyes"
+            label="Any special notes for this location?" />
+
+  <question id="vacant_desc" type="textarea"
+            when="q:describe vacant property"
+            label="Show only when a vacant property with the
+                   question 'describe' non-empty and non-zero" />
+@end example
+@caption{Using the @xmlattr{when} attribute}
+@end float
+
+In @ref{f:pred-when} above,
+  question @samp{vacant_desc} will be applicable when @emph{all} of
+  the values of @samp{vacant}, @samp{property},
+  and@tie{}@samp{q:describe} are true.@footnote{
+    @xref{Predicate System} for what ``true'' means for a particular
+      variable in the domain of discourse.}
+Within the context of the @progxml,
+  this concretely means that the classifications
+  @samp{vacant} and@tie{}@samp{property} are true,
+    and that the question @samp{describe} is answered ``yes''.
+It reads as a sentence:
+  ``@samp{vacant_desc}'' is applicable when we should @tie{}``describe
+  a vacant property''.
+
 
 
 @node Validation
