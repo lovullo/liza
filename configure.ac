@@ -41,6 +41,27 @@ AS_IF([node --harmony_destructuring >/dev/null 2>/dev/null],
        AC_SUBST([NODE_DESTRUCTURE], [--harmony_destructuring])],
       [AC_MSG_RESULT(no)])
 
+set_devnotes='@set DEVNOTES'
+AC_ARG_ENABLE(
+  [devnotes],
+  [AS_HELP_STRING([--enable-devnotes],
+                  [include note for liza developers (enabled by default)])],
+  [test "x$enableval" != xno || set_devnotes="@c $set_devnotes"])
+
+AC_SUBST([SET_DEVNOTES], [$set_devnotes])
+
+set_srcuri='@c @set SRCURI <source code uri>'
+AC_ARG_WITH(
+  [srcuri],
+  [AS_HELP_STRING([--with-srcuri],
+                  [root URI for Liza source code cross-references
+                   (disabled by default)])],
+  [test "x$withval" = x || set_srcuri="@set SRCURI $withval"])
+
+AC_SUBST([SET_SRCURI], [$set_srcuri])
+
 # generate files from their *.in counterparts
-AC_CONFIG_FILES([Makefile doc/Makefile package.json src/version.js])
+AC_CONFIG_FILES([Makefile package.json
+                 doc/Makefile doc/config.texi
+                 src/version.js])
 AC_OUTPUT

@@ -1,6 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c  This document is part of the Liza Data Collection Framework manual.
 @c  Copyright (C) 2014 LoVullo Associates, Inc.
+@c
 @c    Permission is granted to copy, distribute and/or modify this document
 @c    under the terms of the GNU Free Documentation License, Version 1.3
 @c    or any later version published by the Free Software Foundation;
@@ -9,17 +10,24 @@
 @c    Free Documentation License''.
 
 @c %**start of header
+@include config.texi
+@include version.texi
+@include macros.texi
+
+@c Developer Notes index (used only if DEVNOTES)
+@defindex dn
+
 @setfilename liza.info
 @settitle Liza Data Collection Framework v@value{VERSION}
-@c %**end of header
 
-@include version.texi
+@documentencoding UTF-8
+@c %**end of header
 
 @copying
 This manual is for the Liza Data Collection Framework, version
 @value{VERSION}.
 
-Copyright @copyright{} 2014 LoVullo Associates, Inc.
+Copyright @copyright{} 2014, 2017 LoVullo Associates, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -44,6 +52,21 @@ Free Documentation License''.
 @insertcopying
 @end titlepage
 
+@devnotice{
+  This manual contains inline notes for developers of Liza.@footnote{
+    To disable for user documentation, pass @option{--disable-devnotes}
+      to @command{configure}.}
+  For an index of notes@comma{} see @ref{Developer Notes Index}.}
+
+@ifclear SRCURI
+@devnotice{
+  Location of Liza source code is unknown.
+  Source cross-references have been disabled.@footnote{
+      To enable source code cross-references, provide the URI to the
+        root (as you want it to be seen in the manual) via
+        @option{--with-srcuri=<uri>} to @command{configure}.}}
+@end ifclear
+
 @contents
 
 @ifnottex
@@ -51,13 +74,30 @@ Free Documentation License''.
 @top Main
 @end ifnottex
 
-@c This is where @menu will go
+@menu
+* Design and Architecture:Design.  Design and structure of framework
+* Concept Index::
+@ifset DEVNOTES
+* Developer Notes Index::  Index of pertenant notes for developers of Liza.
+@end ifset
+@end menu
 
 @ifnottex
 
 @insertcopying
 @end ifnottex
 
-@c This is where the includes will go.
+@include design.texi
+
+@node Concept Index
+@unnumbered Concept Index
+@printindex cp
+
+@ifset DEVNOTES
+  @node Developer Notes Index
+  @unnumbered Developer Notes Index
+  @printindex dn
+@end ifset
+
 
 @bye

@@ -12,7 +12,7 @@ build:
     stage: build
     script:
         - autoreconf -fvi
-        - ./configure
+        - ./configure --with-srcuri="$SRCURI"
         - npm install
         - make all check info pdf html
     artifacts:

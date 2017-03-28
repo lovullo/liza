@@ -19,3 +19,4 @@ Makefile
 Makefile.in
 stamp-vti
 version.texi
+config.texi

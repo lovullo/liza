@@ -1,0 +1,554 @@
+@c  This document is part of the Liza Data Collection Framework manual.
+@c  Copyright (C) 2017 LoVullo Associates, Inc.
+@c
+@c    Permission is granted to copy, distribute and/or modify this document
+@c    under the terms of the GNU Free Documentation License, Version 1.3
+@c    or any later version published by the Free Software Foundation;
+@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@c    Free Documentation License''.
+
+@node Design
+@chapter Design & Architecture
+
+@notice{
+  N.B. This document may reference features that are not yet
+    present in Liza; they will be moved into this repository in time.}
+
+Liza is fundamentally a data collection framework@mdash{
+  }a fancy form for collecting, validating, and lightly processing
+  user data.
+
+The main components of the system are:
+
+@table @strong
+  @cindex Assertions
+  @item Assertions
+  Basic validations against bucket data,
+    producing errors and manipulating control flow.
+  Invokes triggers to manipulate the UI and document.
+  Assertions are compiled from Program sources.
+  @xref{Assertions}.
+
+  @cindex Bucket
+  @item Bucket
+  The key/value store into which all document data are stored.
+  Supports staging and rollback of data,
+    processing deltas,
+    and provides hooks that drive the rest of the system.
+  @xref{Bucket}.
+
+  @cindex Calculated Value
+  @item Calculated Values
+  A small sub-system for calculating bucket values from other values.
+
+  @cindex Client
+  @item Client
+  Basic logic for navigating between steps,
+    prompting for user actions,
+    display help text and basic document data,
+    communicate with server,
+    etc.
+  @xref{Client}.
+
+  @cindex Developer Dialog
+  @item Developer Dialog
+  Renders information about the system for debugging the client.
+  Can monitor the bucket, assertions, classification results, and
+    provides other useful features.
+
+  @cindex Predicate
+  @item Predicate System
+  Processes classification data from external classifiers to determine
+    applicability of specific questions.
+  These data are used to determine what assertions are performed,
+    what questions and groups display,
+    and more.
+  @xref{Predicate System}.
+
+  @cindex Program
+  @item Program
+  Internal representation of the Program with delegation of events to
+    the assertion system.
+  Contains compiled representation of all steps, groups, questions,
+    assertions, metadata, and others.
+  @xref{Program}.
+
+  @cindex Program, User Interface
+  @cindex User Interface, Program
+  @item Program UI
+  Rendering of elements specific to Programs,
+    such as steps, groups, and questions.
+  This is the equivalent of an HTML form.
+  Directly monitors the bucket to perform UI updates.
+  @xref{Program UI}.
+
+  @cindex Program, XML
+  @item Program XML
+  The source code for a Program, in XML format.
+  @xref{Program XML}.
+
+  @cindex Server
+  @item Server
+  Provides REST API for serving Programs; saving data;
+    revalidating, filtering, and recalculating data;
+    and other types of processing.
+  Code is shared with the client,
+    ensuring identical behavior for appropriate behaviors.
+
+  @cindex Type Validation
+  @cindex Validation, Type
+  @item Type Validation
+  Validates and formats bucket values for specific field (question)
+    types.
+  For example, a date field must be in a recognized date format,
+    and will be normalized for display.
+  @xref{Validation}.
+@end table
+
+More information about each can be found in their respective section.
+
+
+@menu
+* Assertions::
+* Bucket::
+* Client::
+* Predicate System::
+* Program::
+* Program UI::
+* Program XML::
+* Validation::
+@end menu
+
+
+
+@node Assertions
+@section Assertions
+@maintstart
+@footnote{
+  Assertions are compiled from the Program XML (@pxref{Program XML}).
+  Rather than using a library,
+    it compiles a mess of largely duplicate code inline.
+  This system needs to be @emph{replaced},
+    not modified.
+
+  A replacement can either be in the form of a library (removing most
+    if not all code generation from the Program XML compiler),
+      or possibly compile into classifications and use the classification
+      system.
+  @emph{The latter option is preferred,
+          and would be more powerful with less maintenance.}}
+@maintend
+
+@helpwanted
+
+
+
+@node Bucket
+@section Bucket
+@helpwanted
+
+@menu
+* Value Assignment:Bucket Assignment.  Writing data to the Bucket.
+@end menu
+
+
+@c TODO
+@node Bucket Assignment
+@subsection Bucket Value Assignment
+@helpwanted
+
+
+
+@node Client
+@section Client
+@maintstart
+@footnote{
+  The client is largely managed by a single class,
+    @srcref{src/client/Client.js, Client},
+    which has grown out of control.
+  @code{Client} mediates essentially the entire system.
+  Code is to be extracted out of this class as it is touched.
+
+  The other system mammoth is @code{Ui} (@pxref{Program UI}).}
+@maintend
+
+@helpwanted
+
+@menu
+* Error Handling::
+@end menu
+
+
+@node Error Handling
+@subsection Error Handling
+
+@maintenance{
+  The complexity of this system and integration into legacy
+    layers has caused maintenance trouble in the past.
+  Each of the error checking layers need to be integrated
+    to reduce complexity.}
+
+@cindex Error
+@cindex Failure
+There are three layers of error checking:@footnote{
+  Primarily for legacy reasons.
+  They are being consolodated as the system is touched.}
+
+@enumerate
+  @item Required field checking@mdash{
+    }whether all required questions have been answered.
+  @item Type Validation@mdash{
+    }verify that questions contain valid data according to their
+    declared type. @ref{Validation}.
+  @item Assertions@mdash{
+    }arbitrary checks on data.
+    @ref{Assertions}.
+@end enumerate
+
+@cindex Required Field
+@cindex Field, Required
+@cindex Field, Fixed
+@cindex Error, Fixed
+@cindex Error, Required
+@cindex Fixed, Error
+Required fields fail serially@mdash{
+  }the system will notify the user of the required field,
+    and direct him/her to it (usually through scrolling).
+A field is marked as @dfn{fixed} according to the rules
+  in @ref{Managing Error State}.
+
+
+@menu
+* Managing Error State::  Determining when failures should be marked as ``fixed''
+@end menu
+
+
+@node Managing Error State
+@subsubsection Managing Error State
+
+@cindex Failure Stack
+@cindex Error Stack
+Each failure caused by assertions is associated with a
+  @dfn{failure stack}.
+The stack represents the trail of assertions that have run,
+  containing the ids of all values asserted against.
+When any field or classification changes that is represented on the
+  failure stack,
+    the failure for the failed field associated with that failure stack
+    is cleared.
+
+@exnotice{
+  If an assertion for some question @var{foo} first checked the value
+    of bucket field @var{bar},
+    and within its failure checked the value @var{c:predicate},
+    the failure stack would contain both of those ids.
+  If either @var{bar} or the @var{predicate} classification changed,
+   the question @var{foo} would have its error cleared.}
+
+Error state is managed by
+  @srcref{src/validate/ValidStateMonitor.js, ValidStateMonitor}.
+
+
+
+@node Predicate System
+@section Predicate System
+@maintstart
+@footnote{
+  New programs (using the old incarnation of TAME) use the classifier
+    embedded into the rater by TAME.
+  Old ones, however, still use the @dfn{Global Classifier}.
+  This system isn't as well tested as TAME's@mdash{
+    }which needs to work properly for the sake of calculating premium@mdash{
+    }and has suffered from a number of bugs in the past.
+
+  The solution is to migrate all programs to TAME and remove that old
+    code.}
+@maintend
+
+@tip{
+  For a practical application of these concepts, see its use in the
+    Program@tie{}XML (@pxref{Specifying Predicates}).}
+
+@cindex Predicate
+@cindex Classifier
+@cindex Applicability
+@cindex Domain of discourse, Predicate
+The @dfn{predicate system} determines the @dfn{applicability} of
+  certain objects (like questions and assertions) by associating them
+  with predicates.
+The domain of discourse (variables which may be quantified) is listed
+  in @ref{t:predicate-dod}.
+
+What it means for some object to be applicable depends on the context.
+
+@float Table, t:predicate-dod
+@multitable @columnfractions 0.25 0.10 0.65
+  @headitem Type @tab Prefix @tab Description
+
+  @item Classifications
+    @tab @emph{None}
+    @tab Results of applying an external @dfn{classifier} to the bucket
+      (@pxref{Bucket}).
+
+  @item Bucket Truth Predicate
+    @tab @code{q:}
+    @tab
+      Whether the given name in the bucket (@pxref{Bucket}) is
+        non-empty and non-zero.
+      The prefix @samp{q:} refers to its most common use
+        case---questions (@pxref{Program UI,,Program@tie{}UI}).
+@end multitable
+@caption{Predicate system domain of discourse}
+@end float
+
+This system is limited to universal quantification over the domain of
+  discourse.
+For other quantifiers and higher-order logic,
+  defer to one of the systems that contributes to the domain of
+  discourse,
+    like the classifier.@footnote{
+      This is usually TAME.
+      The Program XML also supports inline classifications
+        with TAME's syntax (@pxref{Specifying Predicates}).}
+
+Predicates are usually specified in the Program XML
+  (@pxref{Specifying Predicates}) and compiled into the program
+  (@pxref{Program}).
+
+
+
+@node Program
+@section Program
+@maintstart
+@footnote{
+  The @code{Program} class was one of the first prototypes created,
+    and has evolved poorly with the rest of the system.
+  It is the base class for all compiled programs,
+    and it glues together too many other systems with a terrible
+    API and little to no encapsulation.
+
+  With that said, it is one of the least touched classes (thus its
+    state); developers rarely have the need to touch @code{Program}.}
+@maintend
+
+@mvnotice{
+  The core @code{Program} class that causes maintenance concerns needs
+    to be added to Liza.
+  It is currently mocked as necessary in test cases.}
+
+
+@cindex Program
+The @dfn{Program} is a declarative representation of an entire system.
+It is the highest level of abstraction from a data perspective.
+The user observes and interacts with a Program using the
+  @ref{Program UI,,Program@tie{}UI}.
+
+@cindex Program, XML
+Programs contain a lot of metadata that is not in a convenience
+  human-readable (or modifiable) format,
+    some of which are redundant.
+Programs are ideally compiled from a @ref{Program XML,,Program@tie{}XML}
+  document.
+
+
+
+@node Program UI
+@section Program UI
+@maintenance{
+  The @code{Ui} class,
+    in addition to @srcref{src/client/Client,Client} (@pxref{Client}),
+    represent the two monoliths of the system.
+  This mediates all UI-related tasks,
+    and still has far too many concerns with far too many
+      dependencies.
+  Code is to be extracted out of this class as it is touched.
+}
+
+@mvnotice{
+  All @file{program/ui/} contents still need to be moved into Liza.}
+
+
+@cindex Program, User Interface
+@cindex User Interface, Program
+The @dfn{Program UI} renders a @ref{Program} as a form.
+
+@cindex Step
+@cindex Group
+At the highest level,
+  steps are rendered in a tab-like manner,
+  above the main form content.
+A step contains groups,
+  which in turn contain elements such as questions.
+Groups are delimited in some manner defined by their style
+  (@pxref{Group Styles}).
+
+@cindex Question
+@cindex Question, Value Formatting
+@cindex Bucket, Updating
+Questions are rendered as form fields.
+Any time the respective @ref{Bucket} field is changed,
+  the form field is updated to reflect those changes,
+    after having first been formatted with the appropriate validator
+    (@pxref{Formatting Values}).
+When a question is changed by the user,
+  the value is expected to be propagated to the Bucket
+  (@pxref{Bucket Assignment}).
+
+@cindex Navigation Bar
+@cindex User Interface, Navigation Bar
+@cindex User Interface, Button Navigation
+Navigation between steps can be done via the
+  @dfn{Navigation Bar} above the step@tie{}content,
+  or using ``Go@tie{}Back'' and ``Continue'' buttons at the foot of the
+  step@tie{}content.
+
+@cindex Sidebar
+A @dfn{Sidebar} is rendered adjacent to the step content.
+It displays the name of the Program,
+  as well as configurable metadata (usually through the @samp{sidebar}
+  node of the @ref{Program XML,,Program@tie{}XML}).
+It also displays question help text (also configured through the XML)
+  and any error messages (@pxref{Error Handling}).
+
+@menu
+* Group Styles:: Different ways of displaying groups of questions to
+                 the user.
+@end menu
+
+
+@node Group Styles
+@subsection Group Styles
+@refactor{
+  Some group styles still use jQuery;
+    they should be modified to use modern formatters and Liza DOM
+    abstractions (see @srcrefraw{src/ui/field}
+      and @srcrefraw{src/ui/styler}).}
+
+@cindex Group, Styling
+Groups support a number of @dfn{group styles} that determine how
+  they are delimited from other groups;
+  how the elements they contain are rendered and laid out;
+  and how multiple indexes are displayed, added, and removed.
+A list of available styles is detailed in @ref{t:group-styles}.
+
+@float Table, t:group-styles
+@multitable @columnfractions 0.15 0.65 0.10 0.10
+  @headitem Name @tab Description @tab Multi-Index? @tab Add/Remove Index?
+
+  @item @samp{default}
+  @tab
+  Groups are unstyled by default@mdash{
+    }they render elements as flat fields like a traditional form.
+  Only the first index of elements is rendered.
+  @tab@center N
+  @tab@center N
+
+  @item @samp{collapsetable}
+  @tab
+  Renders element label in the leftmost column like @samp{sidetable}.
+  Indexes are groups of rows delimited by headings,
+    which collapse the respective group of rows when clicked.
+  @tab@center Y
+  @tab@center Add
+
+  @item @samp{sidetable}
+  @tab
+  Renders elements as rows with label in the leftmost column rather
+    than the top row.
+  Each index is rendered as a column.
+  @tab@center Y
+  @tab@center Add
+
+  @item @samp{tabbedblock}
+  @tab
+  Each group is rendered as a block,
+    with each index rendered as a tab to the right of it.
+  Clicking a tab toggles the body content to the associated index.
+  Elements are rendered within the box.
+  @tab@center Y
+  @tab@center N
+
+  @item @samp{tabbed}
+  @tab
+  Like @samp{default},
+    but each index has a tab at the top of the group.
+  Clicking a tab toggles the body content to the associated index.
+  @tab@center Y
+  @tab@center Y
+
+  @item @samp{table}
+  @tab
+  A vanilla table with elements as columns,
+    their labels across the top row.
+  Each index is rendered in its own row.
+  @tab@center Y
+  @tab@center Y
+@end multitable
+@caption{Group styles and index support}
+@end float
+
+
+
+@node Program XML
+@section Program XML
+@helpwanted
+
+@menu
+* Specifying Predicates::
+@end menu
+
+
+@node Specifying Predicates
+@subsection Specifying Predicates
+
+Object predicates (@pxref{Predicate System}) are specified using the
+  @xmlattr{when} attribute of certain nodes.
+It must contain a string of references understood by the system
+  (see domain of discourse, @ref{Predicate System}),
+    all of which much match for the predicate to be true.
+
+@float Figure, f:pred-when
+@example
+  <question id="describe" type="noyes"
+            label="Any special notes for this location?" />
+
+  <question id="vacant_desc" type="textarea"
+            when="q:describe vacant property"
+            label="Show only when a vacant property with the
+                   question 'describe' non-empty and non-zero" />
+@end example
+@caption{Using the @xmlattr{when} attribute}
+@end float
+
+In @ref{f:pred-when} above,
+  question @samp{vacant_desc} will be applicable when @emph{all} of
+  the values of @samp{vacant}, @samp{property},
+  and@tie{}@samp{q:describe} are true.@footnote{
+    @xref{Predicate System} for what ``true'' means for a particular
+      variable in the domain of discourse.}
+Within the context of the @progxml,
+  this concretely means that the classifications
+  @samp{vacant} and@tie{}@samp{property} are true,
+    and that the question @samp{describe} is answered ``yes''.
+It reads as a sentence:
+  ``@samp{vacant_desc}'' is applicable when we should @tie{}``describe
+  a vacant property''.
+
+
+
+@node Validation
+@section Validation
+@helpwanted
+
+@menu
+* Formatting Values::
+@end menu
+
+
+@node Formatting Values
+@subsection Formatting Values
+
+@cindex Question
+@cindex Question, Value Formatting
+@helpwanted
