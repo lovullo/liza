@@ -1,8 +1,0 @@
-language: node_js
-node_js:
-  - "0.11"
-  - "0.10"
-  - "0.8"
-  - "0.6"
-install: sudo apt-get install texinfo texlive-latex-base
-script: autoreconf -fvi && ./configure && make all info pdf html
