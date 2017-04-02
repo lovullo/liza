@@ -1,0 +1,7 @@
+Validator/Formatters
+====================
+
+A number of these formatters are written in an old style using
+PatternFormatter.  Where it makes sense, they should be converted into
+traits or concrete mixins.
+

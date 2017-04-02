@@ -1,10 +1,9 @@
 /**
- * @license
- * Currency formatter
+ * Contains PersonalIdValidator
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 LoVullo Associates, Inc.
  *
- *  This file is part of liza.
+ *  This file is part of the Liza Data Collection Framework.
  *
  *  liza is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,17 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 /**
- * Currency of the form `$%2.f`
- *
- * @example
- *   Currency().parse( '$123' );      // => 123.00
- *   Currency().retrieve( '123.4' );  // => $123.40
- *
- * @class Currency
- * @mixes module:validate/formatter.Number
- * @mixes module:validate/formatter.StringFormat
+ * Validates SSN and FEIN formats
  */
-module.exports = require( './EchoFormatter' )
-    .use( require( './Number' )( 2 ) )
-    .use( require( './StringFormat' )( '$%s' ) );
+module.exports = require( './PatternFormatter' )(
+    [
+        /^[0-9- ]+$/, function( match )
+        {
+            var result = match.replace( /[ -]/g, '' );
+
+            // easier to perform the length check in here than the regex, once
+            // we strip everything out
+            if ( result.length !== 9 )
+            {
+                throw Error( 'Invalid length' );
+            }
+
+            return result;
+        }
+    ]
+);
+

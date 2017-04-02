@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const event  = require( '../../' ).event;
+const event  = require( '../../' ).client.event;
 const expect = require( 'chai' ).expect;
 const Class  = require( 'easejs' ).Class;
 

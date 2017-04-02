@@ -1,0 +1,7 @@
+Quote => Document
+=================
+
+The original terminology for a document containing data is ``quote'', which
+represents what Liza was designed for.  To generalize this, it should be
+changed to ``document'', as in a database document.
+

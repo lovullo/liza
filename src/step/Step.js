@@ -95,7 +95,7 @@ module.exports = Class( 'Step' )
      * Initializes step
      *
      * @param {number}      id    step identifier
-     * @param {QuoteClient} quote quote to contain step data
+     * @param {ClientQuote} quote quote to contain step data
      *
      * @return {undefined}
      */

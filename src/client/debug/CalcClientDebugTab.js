@@ -19,12 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
+var Class          = require( 'easejs' ).Class,
     ClientDebugTab = require( './ClientDebugTab' ),
-
-    calc = require( 'program/Calc' )
-;
+    calc           = require( '../../calc/Calc' );
 
 
 /**

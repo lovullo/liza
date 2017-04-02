@@ -22,7 +22,7 @@
 const Class                 = require( 'easejs' ).Class;
 const EventEmitter          = require( 'events' ).EventEmitter;
 const DomFieldNotFoundError = require( '../ui/field/DomFieldNotFoundError' );
-const UnknownEventError     = require( '../event/UnknownEventError' );
+const UnknownEventError     = require( './event/UnknownEventError' );
 
 
 /**
@@ -117,7 +117,7 @@ module.exports = Class( 'Client' )
 
     /**
      * Current quote
-     * @type {QuoteClient}
+     * @type {ClientQuote}
      */
     'private _quote': null,
 
@@ -2708,7 +2708,7 @@ module.exports = Class( 'Client' )
     /**
      * Returns the current quote
      *
-     * @return {QuoteClient}
+     * @return {ClientQuote}
      */
     getQuote: function()
     {

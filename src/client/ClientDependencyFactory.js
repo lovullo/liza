@@ -46,46 +46,44 @@ var Step          = require( '../step/Step' ),
     // TODO: delete me
     AccordionGroupUi = require( 'program/ui/AccordionGroupUi' ),
 
-    Ui           = require( 'program/ui/Ui' ),
-    UiStyler     = require( 'program/ui/UiStyler' ),
-    UiNotifyBar  = require( 'program/ui/UiNotifyBar' ),
-    UiNavBar     = require( 'program/ui/UiNavBar' ),
-    UiDialog     = require( 'program/ui/dialog/UiDialog' ),
-    JqueryDialog = require( 'program/ui/dialog/JqueryDialog' ),
+    Ui           = require( '../ui/Ui' ),
+    UiStyler     = require( '../ui/UiStyler' ),
+    UiNotifyBar  = require( '../ui/UiNotifyBar' ),
+    UiNavBar     = require( '../ui/nav/UiNavBar' ),
+    UiDialog     = require( '../ui/dialog/UiDialog' ),
+    JqueryDialog = require( '../ui/dialog/JqueryDialog' ),
 
-    BaseQuote                = require( 'program/quote/BaseQuote' ),
-    QuoteClient              = require( 'program/QuoteClient' ),
+    BaseQuote                = require( '../quote/BaseQuote' ),
+    ClientQuote              = require( './quote/ClientQuote' ),
     QuoteDataBucket          = require( '../bucket/QuoteDataBucket' ),
     StagingBucket            = require( '../bucket/StagingBucket' ),
     StagingBucketAutoDiscard = require( '../bucket/StagingBucketAutoDiscard' ),
     DelayedStagingBucket     = require( '../bucket/DelayedStagingBucket' ),
 
+    standardValidator = require( '../validate/standardBucketValidator' ),
     DataValidator     = require( '../validate/DataValidator' ),
     ValidStateMonitor = require( '../validate/ValidStateMonitor' ),
-    standardValidator = require( 'program/standardBucketValidator' ),
     Failure           = require( '../validate/Failure' ),
     Field             = require( '../field/BucketField' ),
 
-    XhttpQuoteTransport = require( 'program/transport/XhttpQuoteTransport' ),
-    JqueryHttpDataProxy = require( 'program/proxy/JqueryHttpDataProxy' ),
+    XhttpQuoteTransport = require( './transport/XhttpQuoteTransport' ),
+    JqueryHttpDataProxy = require( './proxy/JqueryHttpDataProxy' ),
 
     XhttpQuoteStagingTransport =
-        require( 'program/transport/XhttpQuoteStagingTransport' ),
+        require( './transport/XhttpQuoteStagingTransport' ),
 
-    Nav     = require( 'program/Nav' ),
-    HashNav = require( 'program/ui/HashNav' ),
+    Nav     = require( './nav//Nav' ),
+    HashNav = require( '../ui/nav/HashNav' ),
 
-    ClientDataProxy = require( 'program/ClientDataProxy' ),
+    ClientDataProxy = require( './ClientDataProxy' ),
     ElementStyler   = require( '../ui/ElementStyler' ),
-    FormErrorBox    = require( 'program/ui/FormErrorBox' ),
-    NavStyler       = require( 'program/ui/NavStyler' ),
-    Sidebar         = require( 'program/ui/Sidebar' ),
+    FormErrorBox    = require( '../ui/sidebar/FormErrorBox' ),
+    NavStyler       = require( '../ui/nav/NavStyler' ),
+    Sidebar         = require( '../ui/sidebar/Sidebar' ),
 
-    FieldClassMatcher = require( 'program/FieldClassMatcher' ),
-    DataApiFactory    = require( 'program/api/DataApiFactory' ),
+    FieldClassMatcher = require( '../field/FieldClassMatcher' ),
+    DataApiFactory    = require( '../dapi/DataApiFactory' ),
     DataApiManager    = require( '../dapi/DataApiManager' ),
-
-    RatingWorksheet = require( 'program/ui/RatingWorksheet' ),
 
     RootDomContext     = require( '../ui/context/RootDomContext' ),
     DomFieldFactory    = require( '../ui/field/DomFieldFactory' ),
@@ -96,14 +94,14 @@ var Step          = require( '../step/Step' ),
     NaFieldStyler          = require( '../ui/styler/NaFieldStyler' ),
     NaFieldStylerAnimation = require( '../ui/styler/NaFieldStylerAnimation' ),
 
-    DelegateEventHandler = require( '../event/DelegateEventHandler' ),
+    DelegateEventHandler = require( './event/DelegateEventHandler' ),
 
     diffStore = require( 'liza/system/client' ).data.diffStore,
 
     Class = require( 'easejs' ).Class;
 
 
-var liza_event = require( '../event' );
+var liza_event = require( './event' );
 
 
 function requireh( name )
@@ -187,7 +185,7 @@ module.exports = Class( 'ClientDependencyFactory',
     {
         var _self = this;
 
-        return QuoteClient(
+        return ClientQuote(
             BaseQuote( quote_id, this.createDataBucket() ),
             data,
             function( bucket )
