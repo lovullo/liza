@@ -34,6 +34,11 @@ AC_CHECK_PROGS(NODE, [node nodejs])
 
 test -n "$NODE" || AC_MSG_ERROR([missing Node.js])
 
+# graphviz
+AC_ARG_VAR([TWOPI], [Graphviz twopi layout])
+AC_CHECK_PROGS(TWOPI, [twopi])
+AM_CONDITIONAL(HAS_TWOPI, [test "$TWOPI"])
+
 # only needed for older versions of Node
 AC_MSG_CHECKING([node --harmony_destructuring])
 AS_IF([node --harmony_destructuring >/dev/null 2>/dev/null],

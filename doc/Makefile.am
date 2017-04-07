@@ -21,4 +21,14 @@
 MAKEINFOHTML = $(MAKEINFO) --html --css-include liza.css
 
 info_TEXINFOS = liza.texi
-liza_TEXINFOS = design.texi macros.texi config.texi liza.css
+liza_TEXINFOS = design.texi macros.texi config.texi liza.css \
+                diagram/event-graph.svg
+
+diagram/%.svg: diagram/%.dot
+if HAS_TWOPI
+	$(TWOPI) -Tsvg "$<" > "$@"
+else
+	@echo "cannot build $<;" >&2
+	@echo "install graphviz package and re-configure" >&2
+endif
+
