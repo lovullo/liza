@@ -1,0 +1,181 @@
+// Graph of `on' event hooks between classes.
+//
+//  This document is part of the Liza Data Collection Framework manual.
+//  Copyright (C) 2017 LoVullo Associates, Inc.
+//
+//    Permission is granted to copy, distribute and/or modify this document
+//    under the terms of the GNU Free Documentation License, Version 1.3
+//    or any later version published by the Free Software Foundation;
+//    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+//    Texts.  A copy of the license is included in the section entitled ``GNU
+//    Free Documentation License''.
+//
+// This does not take into consideration (with maybe some exceptions)
+// callbacks that do not use EventEmitter, and so isn't comprehensive, but
+// does show some pain points to be addressed.
+//
+// This file may or may not be up to date---be sure to review commits since
+// this graph was created.
+//
+digraph "Liza Event Graph (Non-Comprehensive)" {
+  graph [rankdir="LR", ranksep="5" mindist="1", overlap="scale", root="Client"];
+
+  "AccessLog"[shape=component];
+  "AssertionClientDebugTab"[shape=component];
+  "BucketClientDebugTab"[shape=component];
+  "Bucket"[shape=component];
+  "ClassifyClientDebugTab"[shape=component];
+  "ClientDataProxy"[shape=component];
+  "ClientDebugDialog"[shape=component];
+  "ClientDebug"[shape=component];
+  "ClientQuote"[shape=component,color="#007777",fontcolor="#005555",fontsize="22"];
+  "Client"[shape=component,color="#dd0000",fontcolor="#770000",fontsize="30"];
+  "controller"[shape=component];
+  "Daemon"[shape=component];
+  "DataApiManager"[shape=component];
+  "DataApi"[shape=component];
+  "DomContext"[shape=component];
+  "DomField"[shape=component];
+  "ErrorStyler"[shape=component];
+  "GeneralStepUi"[shape=component];
+  "GroupUi"[shape=component];
+  "HashNav"[shape=component];
+  "http_server"[shape=component];
+  "MongoServerDao"[shape=component];
+  "NavStyler"[shape=component];
+  "Program"[shape=component];
+  "QuoteDataBucketCipher"[shape=component];
+  "Quote"[shape=component];
+  "ResilientMemcache"[shape=component];
+  "RootDomContext"[shape=component];
+  "Server"[shape=component];
+  "Sidebar"[shape=component];
+  "SimpleBucketListener"[shape=component];
+  "StagingBucketAutoDiscard"[shape=component];
+  "StagingBucket"[shape=component,color="#0000dd",fontsize="22"];
+  "Step"[shape=component];
+  "StepUiBuilder"[shape=component];
+  "UiNavBar"[shape=component];
+  "Ui"[shape=component];
+  "UiStyler"[shape=component];
+  "UserRequest"[shape=component];
+  "UserSession"[shape=component];
+  "ValidStateMonitor"[shape=component];
+
+
+  "SimpleBucketListener" -> "Client" [label="quoteChange"];
+  "SimpleBucketListener" -> "ClientQuote" [label="dataUpdate",color="#007777",fontcolor="#005555"];
+  "SimpleBucketListener" -> "ClientQuote" [label="stepChange",color="#007777",fontcolor="#005555"];
+
+  "ClassifyClientDebugTab" -> "ClientQuote" [label="classify",color="#007777",fontcolor="#005555"];
+
+  "BucketClientDebugTab" -> "StagingBucket" [label="preStagingUpdate",color="#0000dd",fontcolor="#000077"];
+  "BucketClientDebugTab" -> "StagingBucket" [label="stagingUpdate",color="#0000dd",fontcolor="#000077"];
+  "BucketClientDebugTab" -> "StagingBucket" [label="preCommit",color="#0000dd",fontcolor="#000077"];
+
+  "ClientDebug" -> "BucketClientDebugTab" [label="fieldOverlayToggle"];
+  "ClientDebug" -> "ClassifyClientDebugTab" [label="classifyNoHideToggle"];
+  "ClientDebug" -> "ClientDebugDialog" [label="autoloadToggle"];
+  "ClientDebug" -> "ClientDebugDialog" [label="errDebugToggle"];
+
+  "AssertionClientDebugTab" -> "Program" [label="assert"]
+  "AssertionClientDebugTab" -> "Client" [label="trigger"]
+
+  "ClientQuote" -> "Quote" [label="stepChange"];
+  "ClientQuote" -> "StagingBucket" [label="update",color="#0000dd",fontcolor="#000077"];
+  "ClientQuote" -> "StagingBucket" [label="preStagingUpdate",color="#0000dd",fontcolor="#000077"];
+  "ClientQuote" -> "StagingBucket" [label="stagingUpdate",color="#0000dd",fontcolor="#000077"];
+
+  "Client" -> "Nav" [label="quoteIdChange",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Nav" [label="stepChange",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Nav" [label="preStepChange",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Nav" [label="unload",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "ClientQuote" [label="classify",color="#dd0000:#007777",fontcolor="#770000:#005555"];
+  "Client" -> "ClientQuote" [label="preDataUpdate",color="#dd0000:#007777",fontcolor="#770000:#005555"];
+  "Client" -> "Program" [label="error",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "DataApiManager" [label="fieldLoading",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "DataApiManager" [label="updateFieldData",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "DataApiManager" [label="clearFieldData",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "DataApiManager" [label="fieldLoaded",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "DataApiManager" [label="error",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "ClientDataProxy" [label="received",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "RootDomContext" [label="error",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Ui" [label="stepChange",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Ui" [label="action",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Ui" [label="error",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Ui" [label="renderStep",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Ui" [label="preRenderStep",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Sidebar" [label="uwmanage",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Sidebar" [label="quoteIdClick",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "Sidebar" [label="agentIdClick",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "GeneralStepUi" [label="dataChange",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "GeneralStepUi" [label="indexAdd",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "GeneralStepUi" [label="indexRemove",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "GeneralStepUi" [label="indexReset",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "ValidStateMonitor" [label="failure",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "ValidStateMonitor" [label="fix",color="#dd0000",fontcolor="#770000"];
+  "Client" -> "ValidStateMonitor" [label="error",color="#dd0000",fontcolor="#770000"];
+
+  "StagingBucket" -> "Bucket" [label="update"];
+
+  "StagingBucketAutoDiscard" -> "StagingBucket" [label="preStagingUpdate",color="#0000dd",fontcolor="#000077"];
+
+  "DataApiManager" -> "DataApi" [label="error"];
+
+  "DomContext" ->  "DomField" [label="error"];
+
+  "HashNav" -> "Nav" [label="quoteIdChange"];
+  "HashNav" -> "Nav" [label="stepChange"];
+
+  "NavStyler" -> "Nav" [label="stepChange"];
+
+  "Ui" -> "UiStyler" [label="questionHover"];
+  "Ui" -> "UiStyler" [label="questionFocus"];
+  "Ui" -> "UiNavBar" [label="click"];
+  "Ui" -> "StepUi" [label="error"];
+  "Ui" -> "StepUi" [label="action"];
+  "Ui" -> "StepUi" [label="displayChanged"]
+
+  "ErrorStyler" -> "UiStyler" [label="fieldError"];
+  "ErrorStyler" -> "UiStyler" [label="fieldFixed"];
+
+  "Sidebar" -> "ClientQuote" [label="dataCommit",color="#007777",fontcolor="#005555"];
+
+  "StepUiBuilder" -> "GroupUi" [label="indexAdd"];
+  "StepUiBuilder" -> "GroupUi" [label="indexRemove"];
+  "StepUiBuilder" -> "GroupUi" [label="action"];
+  "StepUiBuilder" -> "GroupUi" [label="postAddRow"];
+  "StepUiBuilder" -> "GroupUi" [label="invalidate"];
+
+  "GeneralStepUi" -> "Step" [label="updateQuote"];
+  "GeneralStepUi" -> "StagingBucket" [label="stagingUpdate",color="#0000dd",fontcolor="#000077"];
+
+  "GroupUi" -> "ClientQuote" [label="preDataUpdate",color="#007777",fontcolor="#005555"];
+  "GroupUi" -> "ClientQuote" [label="dataCommit",color="#007777",fontcolor="#005555"];
+
+  "Server" -> "MongoServerDao" [label="connectError"];
+  "Server" -> "MongoServerDao" [label="saveQuoteError"];
+  "Server" -> "MongoServerDao" [label="seqError"];
+  "Server" -> "MongoServerDao" [label="seqInit"];
+  "Server" -> "MongoServerDao" [label="ready"];
+  "Server" -> "Quote" [label="stepChange"];
+  "Server" -> "QuoteDataBucketCipher" [label="encrecover"];
+
+  "UserRequest" -> "UserSession" [label="ready"];
+
+  "Daemon" -> "ResilientMemcache" [label="preConnect"];
+  "Daemon" -> "ResilientMemcache" [label="connect"];
+  "Daemon" -> "ResilientMemcache" [label="connectError"];
+  "Daemon" -> "ResilientMemcache" [label="queuePurged"];
+  "Daemon" -> "ResilientMemcache" [label="error"];
+
+  "http_server" -> "UserRequest" [label="ready"];
+  "http_server" -> "Server" [label="connection"];
+  "http_server" -> "Server" [label="close"];
+  "http_server" -> "Server" [label="clientError"];
+
+  "controller" -> "Server" [label="quotePverUpdate"];
+
+  "AccessLog" -> "UserRequest" [label="end"];
+}
+
