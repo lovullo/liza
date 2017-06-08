@@ -19,7 +19,7 @@
     "easejs": "0.2.x"
   },
   "devDependencies": {
-    "chai":             ">=1.9.1",
+    "chai":             ">=1.9.1 < 4",
     "chai-as-promised": ">=6.0.0",
     "mocha":            ">=1.18.2",
     "sinon":            ">=1.17.4",
