@@ -1,7 +1,7 @@
 /**
  * Route controller
  *
- *  Copyright (C) 2017 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -282,7 +282,7 @@ function doRoute( program, request, data, resolve, reject )
     if ( program === null )
     {
         server.sendError( request,
-            'Internal error. Please contact LoVullo Associates for ' +
+            'Internal error. Please contact RT Specialty / LoVullo for ' +
                 'support.' +
             '<br /><br />Your information has <em>not</em> been saved!'
         );
@@ -531,7 +531,7 @@ function doRoute( program, request, data, resolve, reject )
                 // an error occurred; quote invalid
                 server.sendError( request,
                     'There was a problem loading this quote; please contact ' +
-                    'LoVullo Associates for support.'
+                    'RT Specialty / LoVullo for support.'
                 );
 
                 return;

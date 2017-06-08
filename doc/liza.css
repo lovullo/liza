@@ -1,6 +1,6 @@
 /*
 Copyright (C) 2016-2017 Oliver Heimlich
-Copyright (C) 2017 LoVullo Associates, Inc.
+Copyright (C) 2017 R-T Specialty, LLC.
 
 This file is part of Octave.
 
@@ -19,7 +19,7 @@ along with Octave; see the file COPYING.  If not, see
 <http://www.gnu.org/licenses/>.
 */
 
-/** modified by LoVullo Associates **/
+/** modified by RT Specialty / LoVullo **/
 /** TODO: loading fonts from Google is a privacy issue; download as part
     of build and self-host **/
 @import url('https://fonts.googleapis.com/css?family=Noto+Sans');
@@ -51,7 +51,7 @@ pre.example
 a { color: #268bd2; /* blue */ }
 a:visited { color: #d33682; /* magenta */ }
 
-/** added by LoVullo Associates **/
+/** added by RT Specialty / LoVullo **/
 .float
 {
     margin-block-start: 2em;
@@ -98,7 +98,7 @@ but don't sacrifice space on small screens.
   }
 }
 
-/** added by LoVullo Associates **/
+/** added by RT Specialty / LoVullo **/
 .doc-notice
 {
     border-left: 5px solid #657b83;

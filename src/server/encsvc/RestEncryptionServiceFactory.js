@@ -1,7 +1,7 @@
 /**
  * Contains RestEncryptionServiceFactory
  *
- *  Copyright (C) 2017 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *

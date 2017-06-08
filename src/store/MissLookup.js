@@ -1,7 +1,7 @@
 /**
  * Auto-lookup for store misses
  *
- *  Copyright (C) 2016 LoVullo Associates, Inc.
+ *  Copyright (C) 2016 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *

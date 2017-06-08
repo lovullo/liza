@@ -1,7 +1,7 @@
 /**
  * Test case for JSON formatting of API result
  *
- *  Copyright (C) 2014, 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2014, 2015 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *

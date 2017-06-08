@@ -1,7 +1,7 @@
 /**
  * Rating service
  *
- *  Copyright (C) 2017 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -319,7 +319,7 @@ module.exports = Class( 'RatingService',
 
         this._server.sendError( request,
             'There was a problem during the rating process. Unable to ' +
-            'continue. Please contact LoVullo Associates for assistance.' +
+            'continue. Please contact RT Specialty / LoVullo for assistance.' +
 
             // show details for internal users
             ( ( request.getSession().isInternal() )

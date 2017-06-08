@@ -1,7 +1,7 @@
 /**
  * Contains ClientDataProxy class
  *
- *  Copyright (C) 2017 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -105,7 +105,7 @@ module.exports = Class( 'ClientDataProxy' )
             hasError: true,
             content:  'There was a problem communicating with the quote ' +
                 'server. If you continue to receive this message, please ' +
-                'contact LoVullo Associates for assistance.'
+                'contact RT Specialty / LoVullo for assistance.'
         };
 
         return data;

@@ -1,6 +1,6 @@
 # Liza Data Collection Framework
 <!--
-  Copyright (C) 2015 LoVullo Associates, Inc.
+  Copyright (C) 2015 R-T Specialty, LLC.
 
   This file is part of liza.
 
@@ -20,7 +20,7 @@ it available.**
 ## About
 The Liza Data Collection Framework&mdash;"Liza" for short&mdash;is an effort
 to clean up, formalize, and expand upon a framework that was developed at
-LoVullo Associates for collecting, validating, and processing large amounts
+RT Specialty / LoVullo for collecting, validating, and processing large amounts
 of user input for insurance quoting.  As existing code is refactored or its
 design improved upon, it will begin its life as part of Liza; please be
 patient as the entire core framework makes its way into this repository and

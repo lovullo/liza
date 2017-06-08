@@ -1,7 +1,7 @@
 /**
  * General UI logic for steps
  *
- *  Copyright (C) 2015 LoVullo Associates, Inc.
+ *  Copyright (C) 2015 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *

@@ -1,7 +1,7 @@
 /**
  * Liza client
  *
- *  Copyright (C) 2017 LoVullo Associates, Inc.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -3003,7 +3003,7 @@ module.exports = Class( 'Client' )
         // let the user know that something is amiss.
         this.uiDialog.showErrorDialog(
             'An unexpected error has occurred. If you continue to receive ' +
-            'this message, please contact LoVullo Associates for support.' +
+            'this message, please contact RT Specialty / LoVullo for support.' +
 
             // if internal, show the actual error
             ( ( this.isInternal() )

@@ -1,7 +1,7 @@
 /**
  * HTTP protocol implementation
  *
- *  Copyright (C) 2014 LoVullo Associates, Inc.
+ *  Copyright (C) 2014 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *

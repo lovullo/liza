@@ -1,6 +1,6 @@
 ## liza documentation Makefile.am for automake
 #
-#  Copyright (C) 2014 LoVullo Associates, Inc.
+#  Copyright (C) 2014 R-T Specialty, LLC.
 #
 #  This file is part of liza.
 #
