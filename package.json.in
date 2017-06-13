@@ -16,7 +16,8 @@
   },
 
   "dependencies": {
-    "easejs": "0.2.x"
+    "easejs": "0.2.x",
+    "mongodb": "1.2.8"
   },
   "devDependencies": {
     "chai":             ">=1.9.1 < 4",
