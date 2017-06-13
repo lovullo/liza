@@ -19,14 +19,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
-    HttpDataApi           = require( './http/HttpDataApi' ),
-    XhrHttpImpl           = require( './http/XhrHttpImpl' ),
-    JsonResponse          = require( './format/JsonResponse' ),
-    RestrictedDataApi     = require( './RestrictedDataApi' ),
-    StaticAdditionDataApi = require( './StaticAdditionDataApi' ),
-    BucketDataApi         = require( './BucketDataApi' );
+const Class                 = require( 'easejs' ).Class;
+const HttpDataApi           = require( './http/HttpDataApi' );
+const XhrHttpImpl           = require( './http/XhrHttpImpl' );
+const NodeHttpImpl          = require( './http/NodeHttpImpl' );
+const JsonResponse          = require( './format/JsonResponse' );
+const RestrictedDataApi     = require( './RestrictedDataApi' );
+const StaticAdditionDataApi = require( './StaticAdditionDataApi' );
+const BucketDataApi         = require( './BucketDataApi' );
 
 
 /**
@@ -58,10 +58,20 @@ module.exports = Class( 'DataApiFactory',
         switch ( type )
         {
             case 'rest':
+            const impl = ( typeof XMLHttpRequest !== 'undefined' )
+                ? XhrHttpImpl( XMLHttpRequest )
+                : NodeHttpImpl(
+                    {
+                        http: require( 'http' ),
+                        https: require( 'https' ),
+                    },
+                    require( 'url' )
+                );
+
                 api = HttpDataApi.use( JsonResponse )(
                     source,
                     method.toUpperCase(),
-                    XhrHttpImpl( XMLHttpRequest )
+                    impl
                 );
                 break;
 
