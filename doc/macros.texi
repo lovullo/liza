@@ -129,15 +129,6 @@ This system has maintenance concerns.
 @end macro
 
 
-@c needs to be moved into liza
-@macro mvnotice{text}
-@noticestart{mv}
-@emph{All or part of this system needs to be moved into Liza.}@footnote{
-  \text\}
-@noticeend
-@end macro
-
-
 @macro tip{text}
 @noticestart{tip}
 \text\

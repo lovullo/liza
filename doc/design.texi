@@ -11,10 +11,6 @@
 @node Design
 @chapter Design & Architecture
 
-@notice{
-  N.B. This document may reference features that are not yet
-    present in Liza; they will be moved into this repository in time.}
-
 Liza is fundamentally a data collection framework@mdash{
   }a fancy form for collecting, validating, and lightly processing
   user data.
@@ -332,11 +328,6 @@ Predicates are usually specified in the Program XML
     state); developers rarely have the need to touch @code{Program}.}
 @maintend
 
-@mvnotice{
-  The core @code{Program} class that causes maintenance concerns needs
-    to be added to Liza.
-  It is currently mocked as necessary in test cases.}
-
 
 @cindex Program
 The @dfn{Program} is a declarative representation of an entire system.
@@ -364,9 +355,6 @@ Programs are ideally compiled from a @ref{Program XML,,Program@tie{}XML}
       dependencies.
   Code is to be extracted out of this class as it is touched.
 }
-
-@mvnotice{
-  All @file{program/ui/} contents still need to be moved into Liza.}
 
 
 @cindex Program, User Interface
