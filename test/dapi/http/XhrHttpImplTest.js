@@ -19,19 +19,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var dapi     = require( '../../../' ).dapi,
-    expect   = require( 'chai' ).expect,
-    Class    = require( 'easejs' ).Class,
-    HttpImpl = dapi.http.HttpImpl,
-    Sut      = dapi.http.XhrHttpImpl,
+'use strict';
 
-    DummyXhr = function()
+const { expect } = require( 'chai' );
+const { Class }  = require( 'easejs' );
+
+const {
+    HttpImpl,
+    XhrHttpImpl: Sut,
+    HttpError,
+} = require( '../../../' ).dapi.http;
+
+const DummyXhr = function()
+{
+    this.open = function()
     {
-        this.open = function()
-        {
-            DummyXhr.args = arguments;
-        };
+        DummyXhr.args = arguments;
     };
+};
 
 
 describe( 'XhrHttpImpl', function()
@@ -260,7 +265,7 @@ describe( 'XhrHttpImpl', function()
                 Sut( StubXhr )
                     .requestData( 'http://foo', 'GET', '', function( err, _ )
                     {
-                        expect( err ).to.be.instanceOf( Error );
+                        expect( err ).to.be.instanceOf( HttpError );
 
                         expect( err.message ).to.contain(
                             StubXhr.prototype.status

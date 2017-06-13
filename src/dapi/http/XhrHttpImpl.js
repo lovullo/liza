@@ -19,8 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class    = require( 'easejs' ).Class,
-    HttpImpl = require( './HttpImpl' );
+'use strict';
+
+const Class     = require( 'easejs' ).Class;
+const HttpImpl  = require( './HttpImpl' );
+const HttpError = require( './HttpError' );
 
 
 /**
@@ -272,7 +275,7 @@ module.exports = Class( 'XhrHttpImpl' )
      */
     'virtual protected serveError': function( req, callback )
     {
-        var e = Error( req.status + " error from server" );
+        var e = HttpError( req.status + " error from server" );
         e.status = req.status;
 
         callback( e, req.responseText );
