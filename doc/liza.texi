@@ -76,6 +76,7 @@ Free Documentation License''.
 
 @menu
 * Design and Architecture:Design.  Design and structure of framework
+* License::                        Document License
 * Concept Index::
 @ifset DEVNOTES
 * Developer Notes Index::  Index of pertenant notes for developers of Liza.
@@ -88,6 +89,7 @@ Free Documentation License''.
 @end ifnottex
 
 @include design.texi
+@include license.texi
 
 @node Concept Index
 @unnumbered Concept Index
