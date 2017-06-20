@@ -1,0 +1,74 @@
+@c  This document is part of the Liza Data Collection Framework manual.
+@c  Copyright (C) 2017 R-T Specialty, LLC.
+@c
+@c    Permission is granted to copy, distribute and/or modify this document
+@c    under the terms of the GNU Free Documentation License, Version 1.3
+@c    or any later version published by the Free Software Foundation;
+@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@c    Free Documentation License''.
+
+@node Predicate System
+@chapter Predicate System
+@maintstart
+@footnote{
+  New programs (using the old incarnation of TAME) use the classifier
+    embedded into the rater by TAME.
+  Old ones, however, still use the @dfn{Global Classifier}.
+  This system isn't as well tested as TAME's@mdash{
+    }which needs to work properly for the sake of calculating premium@mdash{
+    }and has suffered from a number of bugs in the past.
+
+  The solution is to migrate all programs to TAME and remove that old
+    code.}
+@maintend
+
+@tip{
+  For a practical application of these concepts, see its use in the
+    Program@tie{}XML (@pxref{Specifying Predicates}).}
+
+@cindex Predicate
+@cindex Classifier
+@cindex Applicability
+@cindex Domain of discourse, Predicate
+The @dfn{predicate system} determines the @dfn{applicability} of
+  certain objects (like questions and assertions) by associating them
+  with predicates.
+The domain of discourse (variables which may be quantified) is listed
+  in @ref{t:predicate-dod}.
+
+What it means for some object to be applicable depends on the context.
+
+@float Table, t:predicate-dod
+@multitable @columnfractions 0.25 0.10 0.65
+  @headitem Type @tab Prefix @tab Description
+
+  @item Classifications
+    @tab @emph{None}
+    @tab Results of applying an external @dfn{classifier} to the bucket
+      (@pxref{Bucket}).
+
+  @item Bucket Truth Predicate
+    @tab @code{q:}
+    @tab
+      Whether the given name in the bucket (@pxref{Bucket}) is
+        non-empty and non-zero.
+      The prefix @samp{q:} refers to its most common use
+        case---questions (@pxref{Program UI,,Program@tie{}UI}).
+@end multitable
+@caption{Predicate system domain of discourse}
+@end float
+
+This system is limited to universal quantification over the domain of
+  discourse.
+For other quantifiers and higher-order logic,
+  defer to one of the systems that contributes to the domain of
+  discourse,
+    like the classifier.@footnote{
+      This is usually TAME.
+      The Program XML also supports inline classifications
+        with TAME's syntax (@pxref{Specifying Predicates}).}
+
+Predicates are usually specified in the Program XML
+  (@pxref{Specifying Predicates}) and compiled into the program
+  (@pxref{Program}).
