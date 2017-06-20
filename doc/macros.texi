@@ -71,7 +71,7 @@
 @macro helpwanted{}
 @cindex TODO, Missing Docs
 @dnindex Missing Docs
-@notice{There's nothing here yet.  Maybe you can help?}
+@notice{There isn't much here yet.  Maybe you can help?}
 @end macro
 
 
