@@ -183,3 +183,24 @@ This system has maintenance concerns.
 @macro progxml
 Program@tie{}XML
 @end macro
+
+@macro progxmlref
+@ref{Program XML,,Program@tie{}XML}
+@end macro
+
+@macro dapi
+Data@tie{}API
+@end macro
+
+@c todo: link to reference directly
+@macro proguicref{ref}
+`\ref\' @proguicrefsuffix
+@end macro
+
+@macro proguicxref{ref}
+See `\ref\' @proguicrefsuffix
+@end macro
+
+@macro proguicrefsuffix{}
+in the Liza Program@tie{}UI Compiler manual
+@end macro
