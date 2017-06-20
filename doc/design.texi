@@ -47,6 +47,12 @@ The main components of the system are:
     etc.
   @xref{Client}.
 
+  @cindex Data API
+  @item Data API
+  Declarative abstraction for accessing and processing remote data
+    (e.g. a RESTful service).
+  @xref{Data API}.
+
   @cindex Developer Dialog
   @item Developer Dialog
   Renders information about the system for debugging the client.

@@ -79,6 +79,7 @@ Free Documentation License''.
 * Assertions::
 * Bucket::
 * Client::
+* Data API::
 * Predicate System::
 * Program::
 * Validation::
@@ -98,6 +99,7 @@ Free Documentation License''.
 @include assert.texi
 @include bucket.texi
 @include client.texi
+@include dapi.texi
 @include pred.texi
 @include program.texi
 @include validation.texi
