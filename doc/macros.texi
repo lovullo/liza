@@ -184,6 +184,12 @@ This system has maintenance concerns.
 @end macro
 
 
+@c JS formatting
+@macro jsmethod{name}
+@code{#\name\}
+@end macro
+
+
 @c text to avoid repeated e.g. ties and other formatting
 @macro progxml
 Program@tie{}XML
