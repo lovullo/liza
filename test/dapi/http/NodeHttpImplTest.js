@@ -90,6 +90,53 @@ describe( "NodeHttpImpl", () =>
     } );
 
 
+    describe( "given an origin", () =>
+    {
+        it( "prepends to URL if URL begins with a slash", done =>
+        {
+            const origin = 'https://foo.com';
+            const path   = '/quux/quuux';
+
+            const url = _createMockUrl( given_url =>
+            {
+                expect( given_url ).to.equal( origin + path );
+                done();
+            } );
+
+            const http = _createMockHttp( ( _, callback ) =>
+            {
+                callback( res );
+                res.trigger( 'end' );
+            } );
+
+            Sut( { http: http }, url, origin )
+                .requestData( path, 'GET', {}, () => {} );
+        } );
+
+
+        it( "does not prepend to URL that does not begin with a slash", done =>
+        {
+            const origin = 'https://bar.com';
+            const path   = 'http://foo.com/quux/quuux';
+
+            const url = _createMockUrl( given_url =>
+            {
+                expect( given_url ).to.equal( path );
+                done();
+            } );
+
+            const http = _createMockHttp( ( _, callback ) =>
+            {
+                callback( res );
+                res.trigger( 'end' );
+            } );
+
+            Sut( { http: http }, url, origin )
+                .requestData( path, 'GET', {}, () => {} );
+        } );
+    } );
+
+
     it( "returns response when no error", done =>
     {
         const res    = _createMockResp();

@@ -45,6 +45,12 @@ module.exports = Class( 'NodeHttpImpl' )
      */
     'private _urlParser': '',
 
+    /**
+     * Request origin
+     * @type {string}
+     */
+    'private _origin': '',
+
 
     /**
      * Initialize with protocol handlers and URL parser
@@ -53,13 +59,17 @@ module.exports = Class( 'NodeHttpImpl' )
      * to a handler object conforming to Node's http(s) APIs---that is, it
      * should provide a `#request` method.
      *
+     * `origin` is prepended to all request URLs.
+     *
      * @param {Object} proto_handlers protocol handler key-value map
      * @param {Object} url_parser     URL parser
+     * @param {string} origin         request origin
      */
-    constructor( proto_handlers, url_parser )
+    constructor( proto_handlers, url_parser, origin )
     {
         this._protoHandlers = proto_handlers;
         this._urlParser     = url_parser;
+        this._origin        = ( origin !== undefined ) ? ''+origin : '';
     },
 
 
@@ -79,7 +89,7 @@ module.exports = Class( 'NodeHttpImpl' )
      */
     'public requestData'( url, method, data, callback )
     {
-        const options  = this._urlParser.parse( url );
+        const options  = this._parseUrl( url );
         const protocol = options.protocol.replace( /:$/, '' );
         const handler  = this._protoHandlers[ protocol ];
 
@@ -117,6 +127,25 @@ module.exports = Class( 'NodeHttpImpl' )
         }
 
         req.end();
+    },
+
+
+    /**
+     * Parse given URL
+     *
+     * If the URL begins with a slash, the origin is prepended.
+     *
+     * @param {string} url URL
+     *
+     * @return {Object} parsed URL
+     */
+    'private _parseUrl'( url )
+    {
+        const origin = ( url[ 0 ] === '/' )
+              ? this._origin
+              : '';
+
+        return this._urlParser.parse( origin + url );
     },
 
 
