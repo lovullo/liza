@@ -66,6 +66,11 @@
 @end ifset
 @end macro
 
+@c documentation TODO
+@macro todo{text}
+@devnotice{TODO: \text\}
+@end macro
+
 
 @c indicate that help is needed to produce docs
 @macro helpwanted{}
