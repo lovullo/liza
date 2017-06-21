@@ -1176,7 +1176,7 @@ module.exports = Class( 'Server' )
         }
 
         // return the filtered data
-        bucket_filter.filter( data, types, ignore, permit_null );
+        return bucket_filter.filter( data, types, ignore, permit_null );
     },
 
 
