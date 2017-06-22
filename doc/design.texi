@@ -34,10 +34,6 @@ The main components of the system are:
     and provides hooks that drive the rest of the system.
   @xref{Bucket}.
 
-  @cindex Calculated Value
-  @item Calculated Values
-  A small sub-system for calculating bucket values from other values.
-
   @cindex Client
   @item Client
   Basic logic for navigating between steps,
@@ -97,6 +93,7 @@ The main components of the system are:
     and other types of processing.
   Code is shared with the client,
     ensuring identical behavior for appropriate behaviors.
+  @xref{Server}.
 
   @cindex Type Validation
   @cindex Validation, Type

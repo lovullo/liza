@@ -82,6 +82,7 @@ Free Documentation License''.
 * Data API::
 * Predicate System::
 * Program::
+* Server::
 * Validation::
 * License::                        Document License
 * Concept Index::
@@ -102,6 +103,7 @@ Free Documentation License''.
 @include dapi.texi
 @include pred.texi
 @include program.texi
+@include server.texi
 @include validation.texi
 @include license.texi
 

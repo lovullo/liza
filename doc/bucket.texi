@@ -14,10 +14,23 @@
 
 @menu
 * Value Assignment:Bucket Assignment.  Writing data to the Bucket.
+* Bucket Diff::                        Representing bucket changes.
+* Calculated Values::                  Dynamic data derived from other values.
 @end menu
 
 
 @c TODO
 @node Bucket Assignment
 @section Bucket Value Assignment
+@helpwanted
+
+
+@node Bucket Diff
+@section Bucket Diff
+@cindex Bucket diff
+@helpwanted
+
+
+@node Calculated Values
+@section Calculated Values
 @helpwanted

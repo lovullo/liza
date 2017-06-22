@@ -1,0 +1,231 @@
+@c  This document is part of the Liza Data Collection Framework manual.
+@c  Copyright (C) 2017 R-T Specialty, LLC.
+@c
+@c    Permission is granted to copy, distribute and/or modify this document
+@c    under the terms of the GNU Free Documentation License, Version 1.3
+@c    or any later version published by the Free Software Foundation;
+@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@c    Free Documentation License''.
+
+@node Server
+@chapter Liza Server
+@maintenance{The @srcrefjs{server/daemon,Daemon} monolith and
+               @srcrefjs{server,Server},
+                 among other things,
+                 need refactoring.}
+
+@helpwanted{}
+
+@cindex Server
+The @dfn{server}@footnote{
+    @cindex Quote Server
+    Which may also be referenced as ``quote server'' in certain legacy
+      contexts,
+        referring to Liza's origin as an insurance rating system.}
+  is a RESTful service that serves as the HTTP server.
+It is designed to run under Node.js,
+  motivated by the benefits of sharing code with the@tie{}Client
+  (@pxref{Client}).
+The daemon is handled by the abstract @srcrefjs{server/daemon,Daemon}
+  monolith,
+    which requires that a concrete @code{#getEncryptionService}
+    method be defined by a subtype or trait.
+An example script to start the server is shown in @ref{f:server-start}.
+
+@cindex Encryption Service
+@tip{For local development,
+       or to avoid use of any encryption service,
+       use @srcrefjs{server/daemon,DevDaemon},
+       which uses a dummy encryption service.}
+
+@float Figure, f:server-start
+@example
+  const @{ Daemon @}   = require( 'liza' ).server.daemon;
+  const port         = 8080;
+  const log_priority = 10;
+
+  Daemon( port, log_priority ).start();
+@end example
+@caption{Starting the server daemon}
+@end float
+
+@cindex HTTP Server
+The HTTP server is managed by
+  @srcrefjs{server/daemon,http_server}.
+
+
+@menu
+* Requests::            Handling HTTP requests
+* Posting Data::        Handling step saves and other posts.
+* Encryption Service::  Managing sensitive data.
+@end menu
+
+
+
+@node Requests
+@section HTTP Requests
+@helpwanted{}
+
+@cindex Session
+@cindex PHPSESSID
+@cindex Memcache
+Each HTTP request produces a @srcrefjs{server/request,UserRequest}
+  associated with a @srcrefjs{server/request,UserSession}.
+Sessions are tightly coupled with PHP@footnote{
+    They don't have to be@mdash{}refactoring is needed.};
+  an existing PHP session is expected,
+    as identified by the @samp{PHPSESSID} cookie.
+Sessions are shared via Memcache
+  (see @srcrefjs{server/cache,ResilientMemcache}).@footnote{
+    Via a @url{https://secure.php.net/manual/en/memcached.sessions.php,memcache session handler}.}
+ If a session is not found (or is invalid),
+   an HTTP@tie{}@code{500} status code is returned and the
+   HTTP@tie{}request is aborted.
+
+@cindex Timeout
+@cindex Request timeout
+Requests are subject to a 120@tie{}second timeout,
+  after which the request will be served an HTTP@tie{}@code{408}
+  status code.
+Note that this @emph{does not stop background processing}@mdash{
+  }this timeout exists to prevent the user from hanging indefinitely.
+
+@cindex Long-running requests
+@tip{If a process intends to perform background processing for any length
+       of time (longer than a few seconds),
+         it should complete the request as quickly as possible and
+         use some other mechanism to report back progress
+         (e.g. polling).}
+
+The @srcrefjs{server/request,UserRequest} exposes raw request data with
+  minor processing.
+
+@table @strong
+  @item Path (@jsmethod{getUri})
+  The path component of the URI.  The method name is unfortunate.
+
+  @item Query data (@jsmethod{getGetData})
+  Query string processed into a key/value object.
+  Despite the name,
+    this is also populated if non-GET requests contain query strings.
+
+  @item POST data (@jsmethod{getPostData})
+  POST data processed into an object as if it were a query string
+    (just as @jsmethod{getGetData}).
+  Since this requires data that is streamed asynchronously,
+    this method takes a callback that waits for all data to become
+    available;
+      if the data are already available,
+        it is immediately invoked with the processed POST data.
+
+  @item Cookies (@jsmethod{getCookies})
+  Cookies parsed into a key/value object.
+
+  @item Remote address (@jsmethod{getRemoteAddr})
+  IP address of the origin of the request.
+  If the server is behind a proxy that sets the
+    @samp{X-Forwarded-For} header,
+      it is used instead.
+
+  @item Host address (@jsmethod{getHostAddr})
+  Hostname of the server.
+  If the server is behind a proxy that sets the
+    @samp{X-Forwarded-Host} header,
+      it is used instead.
+
+  @item Origin (@jsmethod{getOrigin})
+  Origin of request.
+  Only available if at lease one of the @samp{Origin} or
+    @samp{Referer} headers are set.
+  This is useful mainly for determining the protocol and host while
+    behind a proxy.
+
+  @item User agent (@jsmethod{getUserAgent})
+  The user agent string of the request.
+
+  @item Session ID (@jsmethod{getSessionId})
+  The user's unique session id (@samp{PHPSESSID}).
+
+  @item Session ID name (@jsmethod{getSessionIdName})
+  The name of the cookie from which the session ID originated
+    (hard-coded to @samp{PHPSESSID}).
+@end table
+
+@todo{Document return format and writing response data.}
+
+
+
+@node Posting Data
+@section Posting Data
+@cindex Post
+@cindex Bucket diff
+@cindex Step save
+A diff of the bucket data (@pxref{Bucket Diff}) is posted to the
+  server on step@tie{}save.
+This operation is performed asynchronously@mdash{
+  }the client need not wait for the step to save before the next can
+  be requested.
+
+Since validations are shared between the server and the client
+  (@pxref{Validation}),
+    saving should only fail in exception situations.
+Should a failure occur,
+  the server will instruct the client to kick the user back to the
+  previous step (@dfn{kickback}).
+
+A step cannot be saved if it is locked;
+  such attempts will result in an error.
+
+To prevent a user from skipping steps,
+  the client may post only one step past the last step that has
+  successfully saved;
+    otherwise, the user is kicked back to the last step that was saved.
+
+Once those basic checks have passed,
+  the document is updated:
+
+@enumerate
+  @item
+  @cindex Data sanitization
+  The diff is first @dfn{sanitized} to strip out unknown fields,
+    internal fields posted by non-internal users,
+    and to filter fields on permitted characters;
+
+  @item
+  The sanitized diff is then applied to the existing bucket on the
+    document;
+
+  @item
+  @cindex Calculated values, server-side
+  Calculated values marked for storage (@pxref{Calculated Values}) are
+    re-calculated on the server (the values posted by the client have
+    already been discarded by the first step in this list);
+
+  @item
+  @cindex Premium calculation date
+  The last premium calculation date is cleared (indicating that
+    premiums are no longer valid);@footnote{
+      This concept is tightly coupled with insurance;
+        it should be factored out at some point.}
+
+  @item
+  @cindex Encryption
+  Data marked as sensitive is encrypted and the ciphertext written to
+    the bucket in place of the plaintext (@pxref{Encryption Service});
+
+  @item
+  @cindex Top visited step
+  The current step is incremented and the @dfn{top visited
+    step}@tie{} is set to the larger of the incremented step or the
+    existing top visited step id; and then
+
+  @item
+  The new document state and bucket data are written to the database.
+@end enumerate
+
+
+
+@node Encryption Service
+@section Encryption Service
+@helpwanted
