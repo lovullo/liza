@@ -126,7 +126,7 @@ module.exports = Class( 'RestrictedDataApi' )
             // fail on unknown params
             if ( !( this._params[ name ] ) )
             {
-                throw Error( 'Unkown param: ' + name );
+                throw Error( 'Unknown param: ' + name );
             }
         }
 
