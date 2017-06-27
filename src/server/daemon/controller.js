@@ -42,8 +42,13 @@ const {
         QuoteDataBucket,
     },
 
+    dapi: {
+        DataApiFactory,
+        DataApiManager,
+    },
+
     server: {
-        Server,
+        DocumentServer,
 
         db: {
             MongoServerDao,
@@ -70,7 +75,6 @@ const {
 
         request: {
             CapturedUserResponse,
-            JsonServerResponse,
             SessionSpoofHttpClient,
             UserResponse,
         },
@@ -106,12 +110,7 @@ exports.init = function( logger, enc_service )
 
     var dao = MongoServerDao( db );
 
-    server = Server(
-        new JsonServerResponse.create(),
-        dao,
-        logger,
-        enc_service
-    );
+    server = DocumentServer().create( dao, logger, enc_service );
 
     server_cache = _createCache( server );
     server.init( server_cache, exports.rater );
