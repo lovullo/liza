@@ -279,5 +279,11 @@ module.exports = Class( 'XhrHttpImpl' )
         e.status = req.status;
 
         callback( e, req.responseText );
+    },
+
+
+    'public setOptions'()
+    {
+        // TOOD: remove (see HttpImpl)
     }
 } );

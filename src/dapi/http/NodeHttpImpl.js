@@ -98,7 +98,7 @@ module.exports = Class( 'NodeHttpImpl' )
             throw Error( `No handler for ${protocol}` );
         }
 
-        this._setOptions( options, method, data );
+        this.setOptions( options, method, data );
 
         let forbid_end = false;
 
@@ -152,13 +152,16 @@ module.exports = Class( 'NodeHttpImpl' )
     /**
      * Set request options
      *
+     * TODO: public to work around a class extension trait bug; make
+     * protected once fixed
+     *
      * @param {Object} options request options
      * @param {string} method  HTTP method
      * @param {string} data    request data
      *
      * @return {Object} request headers
      */
-    'private _setOptions'( options, method, data )
+    'virtual public setOptions'( options, method, data )
     {
         const { headers = {} } = options;
 
