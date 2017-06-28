@@ -203,6 +203,10 @@ Program@tie{}XML
 Data@tie{}API
 @end macro
 
+@macro dapiref
+@dapi (@pxref{Data API,,Data@tie{}API})
+@end macro
+
 @c todo: link to reference directly
 @macro proguicref{ref}
 `\ref\' @proguicrefsuffix

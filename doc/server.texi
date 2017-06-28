@@ -56,9 +56,10 @@ The HTTP server is managed by
 
 
 @menu
-* Requests::            Handling HTTP requests
-* Posting Data::        Handling step saves and other posts.
-* Encryption Service::  Managing sensitive data.
+* Requests::                    Handling HTTP requests.
+* Posting Data::                Handling step saves and other posts.
+* Server-Side Data API Calls::  Accessing external resources on the server.
+* Encryption Service::          Managing sensitive data.
 @end menu
 
 
@@ -203,6 +204,11 @@ Once those basic checks have passed,
     already been discarded by the first step in this list);
 
   @item
+  Server-side @dapi{} calls (@pxref{Data API}) are triggered using the
+    diff as input data and an empty bucket for response storage
+    (@pxref{Server-Side Data API Calls});
+
+  @item
   @cindex Premium calculation date
   The last premium calculation date is cleared (indicating that
     premiums are no longer valid);@footnote{
@@ -223,6 +229,37 @@ Once those basic checks have passed,
   @item
   The new document state and bucket data are written to the database.
 @end enumerate
+
+
+
+@node Server-Side Data API Calls
+@section Server-Side Data API Calls
+@maintenance{This makes use of @srcrefjs{server/meta,DapiMetaSource}
+               to encapsulate the horrible API of @srcrefjs{dapi,DataApiManager};
+                 the latter needs cleanup to remove the former.}
+
+@cindex Data API
+@cindex Document metadata
+Server-side @dapi{} calls (@pxref{Data API}) are triggered on
+  step save (@pxref{Posting Data}) and are handled much like they are
+  on the client.
+Such calls are made automatically only for document metadata.
+Results of sever-side calls are @emph{not} written to the bucket
+  and are therefore useful for data that the client should not be
+  permitted to modify;
+    it also allows data to be kept secret from the client.@footnote{
+      All bucket data is served to the client,
+        with the exception of internal fields if the user is non-internal.}
+
+@dapi{} results on the client can be mapped back to multiple bucket values;
+  the server, however, has serious concerns with how data are
+  propagated for data integrity and security reasons.
+Further,
+  document metadata can be structured,
+  unlike the Bucket which has a rigid matrix format (@pxref{Bucket}).
+Therefore,
+  the entire response is mapped into the parent field;
+    defined return values are used only for filtering.
 
 
 

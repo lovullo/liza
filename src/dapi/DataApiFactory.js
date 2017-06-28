@@ -22,7 +22,6 @@
 const Class                 = require( 'easejs' ).Class;
 const HttpDataApi           = require( './http/HttpDataApi' );
 const XhrHttpImpl           = require( './http/XhrHttpImpl' );
-const NodeHttpImpl          = require( './http/NodeHttpImpl' );
 const JsonResponse          = require( './format/JsonResponse' );
 const RestrictedDataApi     = require( './RestrictedDataApi' );
 const StaticAdditionDataApi = require( './StaticAdditionDataApi' );
@@ -30,7 +29,7 @@ const BucketDataApi         = require( './BucketDataApi' );
 
 
 /**
- * Instantiates the appropriate DataApi object for the givne service type
+ * Instantiates the appropriate DataApi object for the given service type
  */
 module.exports = Class( 'DataApiFactory',
 {
@@ -58,15 +57,7 @@ module.exports = Class( 'DataApiFactory',
         switch ( type )
         {
             case 'rest':
-            const impl = ( typeof XMLHttpRequest !== 'undefined' )
-                ? XhrHttpImpl( XMLHttpRequest )
-                : NodeHttpImpl(
-                    {
-                        http: require( 'http' ),
-                        https: require( 'https' ),
-                    },
-                    require( 'url' )
-                );
+                const impl = this.createHttpImpl();
 
                 api = HttpDataApi.use( JsonResponse )(
                     source,
@@ -93,6 +84,12 @@ module.exports = Class( 'DataApiFactory',
             StaticAdditionDataApi( api, nonempty, multiple, static_data ),
             desc
         );
-    }
+    },
+
+
+    'virtual protected createHttpImpl'()
+    {
+        return XhrHttpImpl( XMLHttpRequest );
+    },
 } );
 

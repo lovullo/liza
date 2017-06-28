@@ -24,19 +24,24 @@ const { Class } = require( 'easejs' );
 const {
     bucket: {
         bucket_filter,
+        QuoteDataBucket,
     },
 
     dapi: {
-        DataApiFactory,
         DataApiManager,
     },
 
     server: {
         Server,
 
+        meta: {
+            DapiMetaSource,
+        },
+
         request: {
             DataProcessor,
             JsonServerResponse,
+            ServerDataApiFactory,
         },
     },
 } = require( '../..' );
@@ -51,6 +56,18 @@ module.exports = Class( 'DocumentServer',
         new JsonServerResponse.create(),
         dao,
         logger,
-        enc_service
+        enc_service,
+
+        DataProcessor(
+            bucket_filter,
+            ( apis, request ) => DataApiManager(
+                ServerDataApiFactory(
+                    origin_url || request.getOrigin(),
+                    request
+                ),
+                apis
+            ),
+            DapiMetaSource( QuoteDataBucket )
+        )
     ),
 } );

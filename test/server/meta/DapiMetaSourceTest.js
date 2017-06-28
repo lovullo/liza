@@ -110,14 +110,27 @@ describe( "DapiMetaSource", () =>
             failc( e );
         };
 
-        return Sut( () => getStubBucket() )
-            .getFieldData( 'name', 0, dapim, {}, {} )
-            .catch( given_e =>
-            {
-                expect( given_e ).to.equal( e );
+        return expect(
+            Sut( () => getStubBucket() )
+                .getFieldData( 'name', 0, dapim, {}, {} )
+        ).to.eventually.be.rejectedWith( e );
+    } );
 
-                return true;
-            } );
+
+    it( "rejects if more than one result is returned from dapi", () =>
+    {
+        const dapim = createStubDapiManager();
+
+        dapim.getApiData = ( _, __, callback ) =>
+        {
+            // more than one result
+            callback( null, [ {}, {} ] );
+        };
+
+        return expect(
+            Sut( () => getStubBucket() )
+                .getFieldData( 'name', 0, dapim, {}, {} )
+        ).to.eventually.be.rejectedWith( Error );
     } );
 } );
 

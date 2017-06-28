@@ -551,6 +551,22 @@ module.exports = Class.extend( require( 'events' ).EventEmitter,
     },
 
 
+    'public getHostAddr': function()
+    {
+        return this.request.headers['x-forwarded-host']
+            || this.request.headers.host;
+    },
+
+
+    'public getOrigin': function()
+    {
+        const referrer = this.request.headers.referrer || "";
+
+        return this.request.headers.origin
+            || ( referrer.match( '^[a-z]+://[^/]+' ) || [] )[ 0 ];
+    },
+
+
     'public getUserAgent': function()
     {
         return this.request.headers['user-agent'];

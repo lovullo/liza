@@ -40,7 +40,10 @@ Programs are ideally compiled from a @ref{Program XML,,Program@tie{}XML}
 @menu
 * Program UI::
 * Program XML::
+* Document Metadata::  Document-level data that cannot be modified by
+                       the client.
 @end menu
+
 
 @node Program UI
 @section Program UI
@@ -220,3 +223,60 @@ Within the context of the @progxml,
 It reads as a sentence:
   ``@samp{vacant_desc}'' is applicable when we should @tie{}``describe
   a vacant property''.
+
+
+
+@node Document Metadata
+@section Document Metadata
+@dfn{Document metadata} are metadata that describe certain aspects of the document;
+  they are stored adjacent to the bucket in @samp{meta}@tie{}on the
+  document root.@footnote{
+    Terminology note: ``document'' and ``quote'' are the same thing;
+      the latter is transitioning to the former for generality.}
+They should be used in place of a bucket field any time
+  the client has no business knowing about the data.
+The @samp{meta} record is called the @dfn{Metabucket}.
+
+@c don't use a dapi xref here; don't want to confuse the reader by
+@c directing them away from this section before they continue reading
+@tip{Metadata in the Metabucket should@tie{}@emph{not} be
+  directly populated by external systems@mdash{
+    }@dapi integration should be used instead (see below).}
+
+Metadata can be populated using any@tie{}@dapiref@mdash{
+  }return data populate the Metabucket in the same way that they
+  populate the Bucket.
+Definitions are stored in @code{meta.fields},
+  as shown in @ref{f:meta-fields}.
+
+@float Figure, f:meta-fields
+@example
+"fields":@{
+  ["string(name)": @{
+    "desc": "string",
+    "dapi": @{
+      "name": "string",
+      "map": @{
+        "string(dest field)": "string(source field)"
+      @}
+    @}
+  @}
+@}
+@end example
+@caption{Format of @code{meta.fields}.}
+@end float
+
+Further, a key-value mapping of all bucket fields that@mdash{
+  }when modified,
+    need to result in a metadata API@tie{}call@mdash{
+  }are stored in the @code{mapis}@tie{}object;
+    this is shown in @ref{f:mapis}.
+
+@float Figure, f:mapis
+@example
+"mapis":@{
+  ["string(field name)"]: [ "string(dapi name)", ... ]
+@}
+@end example
+@caption{Format of @code{mapis}.}
+@end float

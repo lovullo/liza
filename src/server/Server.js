@@ -48,6 +48,9 @@ const {
     },
 
     server: {
+        request: {
+            DataProcessor,
+        },
         encsvc: {
             QuoteDataBucketCipher,
         },
@@ -109,13 +112,27 @@ module.exports = Class( 'Server' )
      */
     'private _cache': null,
 
+    /**
+     * Client-provided data processor
+     * @type {DataProcessor}
+     */
+    'private _dataProcessor': null,
 
-    'public __construct': function( response, dao, logger, encsvc )
+
+    'public __construct': function(
+        response, dao, logger, encsvc, data_processor
+    )
     {
-        this.response    = response;
-        this.dao         = dao;
-        this.logger      = logger;
-        this._encService = encsvc;
+        if ( !Class.isA( DataProcessor, data_processor ) )
+        {
+            throw TypeError( "Expected DataProcessor" );
+        }
+
+        this.response       = response;
+        this.dao            = dao;
+        this.logger         = logger;
+        this._encService    = encsvc;
+        this._dataProcessor = data_processor;
     },
 
 
@@ -1115,14 +1132,19 @@ module.exports = Class( 'Server' )
             {
                 try
                 {
-                    var filtered = server._sanitizeBucketData(
-                        post_data.data, request, program
+                    var parsed_data = JSON.parse( post_data.data );
+                    var bucket      = quote.getBucket();
+
+                    const { filtered, dapis } = server._dataProcessor.processDiff(
+                        parsed_data, request, program, bucket
                     );
 
                     quote.setData( filtered );
 
+                    server._monitorMetadataPromise( quote, dapis );
+
                     // calculated values (store only)
-                    program.initQuote( quote.getBucket(), true );
+                    program.initQuote( bucket, true );
                }
                 catch ( err )
                 {
@@ -1150,33 +1172,27 @@ module.exports = Class( 'Server' )
     },
 
 
-    /**
-     * Sanitize the given bucket data
-     *
-     * Ensures that we are storing only "correct" data within our database. This
-     * also strips any unknown bucket values, preventing users from using us as
-     * their own personal database.
-     */
-    'private _sanitizeBucketData': function(
-        bucket_data, request, program, permit_null
-    )
+    'private _monitorMetadataPromise'( quote, dapis )
     {
-        var data   = JSON.parse( bucket_data ),
-            types  = program.meta.qtypes,
-            ignore = {};
-
-        // if we're not internal, filter out the internal questions
-        // (so they can't post to them)
-        if ( request.getSession().isInternal() === false )
-        {
-            for ( id in program.internal )
-            {
-                ignore[ id ] = true;
-            }
-        }
-
-        // return the filtered data
-        return bucket_filter.filter( data, types, ignore, permit_null );
+        dapis.map( promise => promise
+            .then( ( { field, index, data } ) =>
+                this.dao.saveQuoteMeta(
+                    quote,
+                    data,
+                    null,
+                    e => { throw e; }
+                )
+            )
+            .catch( e =>
+                server.logger.log(
+                    server.logger.PRIORITY_ERROR,
+                    "Failed to save field %s[%s] metadata: %s",
+                    field,
+                    index,
+                    e.message
+                )
+            )
+        );
     },
 
 
@@ -1619,8 +1635,10 @@ module.exports = Class( 'Server' )
             // sanitize, permitting nulls (since the diff will have them)
             try
             {
-                var filtered = _self._sanitizeBucketData(
-                    post_data.data, request, program, true
+                var data = JSON.parse( post_data.data );
+
+                var filtered = _self._dataProcessor.sanitizeDiff(
+                    data, request, program, true
                 );
             }
             catch ( e )

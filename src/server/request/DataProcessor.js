@@ -1,0 +1,260 @@
+/**
+ * Manages DataAPI requests and return data
+ *
+ *  Copyright (C) 2017 R-T Specialty, LLC.
+ *
+ *  This file is part of the Liza Data Collection Framework.
+ *
+ *  liza is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+const { Class }   = require( 'easejs' );
+
+const { QuoteDataBucket } = require( '../../' ).bucket;
+
+
+/**
+ * Process data provided by the client
+ *
+ * TOOD: This contains Data API and bucket merging logic that is better done
+ * elsewhere.
+ */
+module.exports = Class( 'DataProcessor',
+{
+    /**
+     * Bucket filter
+     * @type {Object}
+     */
+    'private _filter': null,
+
+    /**
+     * Construct Data API manager
+     * @type {function()}
+     */
+    'private _dapif': null,
+
+    /**
+     * Metadata source
+     * @type {DapiMetaSource}
+     */
+    'private _metaSource': null,
+
+
+    /**
+     * Initialize processor
+     *
+     * @type {Object}         filter      bucket filter
+     * @type {function()}     dapif       data API constructor
+     * @type {DapiMetaSource} meta_source metadata source
+     */
+    constructor( filter, dapif, meta_source )
+    {
+        this._filter      = filter;
+        this._dapif = dapif;
+        this._metaSource  = meta_source;
+    },
+
+
+    /**
+     * Process client-provided data diff
+     *
+     * This performs sanitization to ensure that we are storing only
+     * "correct" data within our database. This also strips any unknown
+     * bucket values, preventing users from using us as their own personal
+     * database.
+     *
+     * @param {Object}      data    bucket diff data
+     * @param {UserRequest} request submitting request
+     * @param {Program}     program active program
+     *
+     * @return {Object} processed diff
+     */
+    'public processDiff'( data, request, program, bucket )
+    {
+        const filtered     = this.sanitizeDiff( data, request, program, false );
+        const dapi_manager = this._dapif( program.apis, request );
+
+        // array of promises for any dapi requests
+        const dapis = this._triggerDapis(
+            dapi_manager, program, data, bucket
+        );
+
+        return {
+            filtered: filtered,
+            dapis:    dapis,
+        };
+    },
+
+
+    /**
+     * Sanitize client-provided data
+     *
+     * Internal fields will be stripped if the session is not
+     * internal.  Following that, the filter provided via the ctor will be
+     * applied.
+     *
+     * `permit_null` should be used only in the case of bucket diffs, which
+     * contain nulls as terminators.
+     *
+     * @param {Object}      data        client-provided data
+     * @param {UserRequest} request     client request
+     * @param {Program}     program     active program
+     * @param {boolean}     permit_null whether null values should be retained
+     *
+     * @return {Object} filtered data
+     */
+    'public sanitizeDiff'( data, request, program, permit_null )
+    {
+        permit_null = ( permit_null === undefined ) ? false : permit_null;
+
+        if ( !request.getSession().isInternal() )
+        {
+            this._cleanInternals( data, program );
+        }
+
+        const types = program.meta.qtypes;
+        return this._filter.filter( data, types, {}, permit_null );
+    },
+
+
+    /**
+     * Strip internal fields from diff `data`
+     *
+     * Internal fields are defined by the program `program`.
+     *
+     * @param {Object}  data    bucket diff data
+     * @param {Program} program active program
+     *
+     * @return {undefined}
+     */
+    'private _cleanInternals'( data, program )
+    {
+        for ( let id in program.internal )
+        {
+            delete data[ id ];
+        }
+    },
+
+
+    /**
+     * Trigger metadata Data API requests
+     *
+     * @param {DataApiManager} dapi_manager dapi manager
+     * @param {Program}        program      active program
+     * @param {Object}         data         client-provided data
+     * @param {Bucket}         bucket       active bucket
+     *
+     * @return {undefined}
+     */
+    'private _triggerDapis'( dapi_manager, program, data, bucket )
+    {
+        const {
+            mapis = {},
+            meta: {
+                fields = {},
+            },
+        } = program;
+
+        const dapi_fields = this._determineDapiFields( mapis, data );
+
+        return Object.keys( dapi_fields ).map( field =>
+        {
+            const { dapi } = fields[ field ];
+            const indexes  = dapi_fields[ field ];
+
+            return indexes.map( i =>
+                this._metaSource.getFieldData(
+                    field,
+                    i,
+                    dapi_manager,
+                    dapi,
+                    this._mapDapiData( dapi, bucket, i, data )
+                )
+            );
+        } ).reduce( ( result, x ) => result.concat( x ), [] );
+    },
+
+
+    /**
+     * Determine which fields require a Data API to be triggered
+     *
+     * @param {Object} mapis metadata dapi descriptors
+     * @param {Object} data  client-provided data
+     *
+     * @return {Object} fields with indexes in need of dapi calls
+     */
+    'private _determineDapiFields'( mapis, data )
+    {
+        return Object.keys( mapis ).reduce(
+            ( result, src_field ) =>
+            {
+                if ( data[ src_field ] === undefined )
+                {
+                    return result;
+                }
+
+                const fields = mapis[ src_field ];
+
+                // get each index that changed
+                fields.forEach( field =>
+                {
+                    result[ field ] = result[ field ] || [];
+
+                    Object.keys( data[ src_field ] ).forEach( i =>
+                    {
+                        if ( data[ src_field ][ i ] !== undefined )
+                        {
+                            result[ field ][ i ] = i;
+                        }
+                    } );
+                } );
+
+                return result;
+            },
+            {}
+        );
+    },
+
+
+    /**
+     * Map data from bucket to dapi inputs
+     *
+     * @param {Object} dapi      Data API descriptor
+     * @param {Bucket} bucket    active (source) bucket
+     * @param {number} index     field index
+     * @param {Object} diff_data client-provided data
+     *
+     * @return {Object} key/value dapi input data
+     */
+    'private _mapDapiData'( dapi, bucket, index, diff_data )
+    {
+        const { mapsrc } = dapi;
+
+        return Object.keys( mapsrc ).reduce(
+            ( result, srcid ) =>
+            {
+                const bucketid = mapsrc[ srcid ];
+
+                const bdata = ( diff_data[ bucketid ] || [] )[ index ] ||
+                      ( bucket.getDataByName( bucketid ) || [] )[ index ];
+
+                result[ srcid ] = bdata || [];
+                return result;
+            },
+            {}
+        );
+    },
+} );

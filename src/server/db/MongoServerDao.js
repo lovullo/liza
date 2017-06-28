@@ -522,6 +522,38 @@ module.exports = Class( 'MongoServerDao' )
 
 
     /**
+     * Save document metadata (meta field on document)
+     *
+     * Only the provided indexes will be modified (that is---data will be
+     * merged with what is already in the database).
+     *
+     * @param {Quote}    quote    destination quote
+     * @param {Object}   new_meta bucket-formatted data to write
+     * @param {Function} success  callback on success
+     * @param {Function} failure  callback on error
+     *
+     * @return {undefined}
+     */
+    'public saveQuoteMeta'( quote, new_meta, success, failure )
+    {
+        const update = {};
+
+        for ( var key in new_meta )
+        {
+            var meta = new_meta[ key ];
+
+            for ( var i in meta )
+            {
+                update[ 'meta.' + key + '.' + i ] =
+                    new_meta[ key ][ i ];
+            }
+        }
+
+        this.mergeData( quote, update, success, failure );
+    },
+
+
+    /**
      * Saves the quote lock state to the database
      *
      * @param Quote    quote            the quote to save
