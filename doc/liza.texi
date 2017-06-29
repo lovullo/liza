@@ -76,6 +76,14 @@ Free Documentation License''.
 
 @menu
 * Design and Architecture:Design.  Design and structure of framework
+* Assertions::
+* Bucket::
+* Client::
+* Data API::
+* Predicate System::
+* Program::
+* Server::
+* Validation::
 * License::                        Document License
 * Concept Index::
 @ifset DEVNOTES
@@ -89,6 +97,14 @@ Free Documentation License''.
 @end ifnottex
 
 @include design.texi
+@include assert.texi
+@include bucket.texi
+@include client.texi
+@include dapi.texi
+@include pred.texi
+@include program.texi
+@include server.texi
+@include validation.texi
 @include license.texi
 
 @node Concept Index

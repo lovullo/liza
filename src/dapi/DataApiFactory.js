@@ -19,18 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
-    HttpDataApi           = require( './http/HttpDataApi' ),
-    XhrHttpImpl           = require( './http/XhrHttpImpl' ),
-    JsonResponse          = require( './format/JsonResponse' ),
-    RestrictedDataApi     = require( './RestrictedDataApi' ),
-    StaticAdditionDataApi = require( './StaticAdditionDataApi' ),
-    BucketDataApi         = require( './BucketDataApi' );
+const Class                 = require( 'easejs' ).Class;
+const HttpDataApi           = require( './http/HttpDataApi' );
+const XhrHttpImpl           = require( './http/XhrHttpImpl' );
+const JsonResponse          = require( './format/JsonResponse' );
+const RestrictedDataApi     = require( './RestrictedDataApi' );
+const StaticAdditionDataApi = require( './StaticAdditionDataApi' );
+const BucketDataApi         = require( './BucketDataApi' );
 
 
 /**
- * Instantiates the appropriate DataApi object for the givne service type
+ * Instantiates the appropriate DataApi object for the given service type
  */
 module.exports = Class( 'DataApiFactory',
 {
@@ -58,10 +57,12 @@ module.exports = Class( 'DataApiFactory',
         switch ( type )
         {
             case 'rest':
+                const impl = this.createHttpImpl();
+
                 api = HttpDataApi.use( JsonResponse )(
                     source,
                     method.toUpperCase(),
-                    XhrHttpImpl( XMLHttpRequest )
+                    impl
                 );
                 break;
 
@@ -83,6 +84,12 @@ module.exports = Class( 'DataApiFactory',
             StaticAdditionDataApi( api, nonempty, multiple, static_data ),
             desc
         );
-    }
+    },
+
+
+    'virtual protected createHttpImpl'()
+    {
+        return XhrHttpImpl( XMLHttpRequest );
+    },
 } );
 

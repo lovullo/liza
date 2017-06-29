@@ -47,5 +47,9 @@ module.exports = Interface( 'HttpImpl',
      *
      * @return {HttpImpl} self
      */
-    'public requestData': [ 'url', 'method', 'data', 'callback' ]
+    'public requestData': [ 'url', 'method', 'data', 'callback' ],
+
+    // TODO: temporary to work around class extension bug; see
+    // SpoofedNodeHttpImpl
+    'public setOptions': [],
 } );

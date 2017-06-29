@@ -42,8 +42,13 @@ const {
         QuoteDataBucket,
     },
 
+    dapi: {
+        DataApiFactory,
+        DataApiManager,
+    },
+
     server: {
-        Server,
+        DocumentServer,
 
         db: {
             MongoServerDao,
@@ -70,7 +75,6 @@ const {
 
         request: {
             CapturedUserResponse,
-            JsonServerResponse,
             SessionSpoofHttpClient,
             UserResponse,
         },
@@ -104,14 +108,8 @@ exports.init = function( logger, enc_service )
         { native_parser: false, safe: false }
     );
 
-    var dao = MongoServerDao( db );
-
-    server = Server(
-        new JsonServerResponse.create(),
-        dao,
-        logger,
-        enc_service
-    );
+    const dao = MongoServerDao( db );
+    server    = _createDocumentServer( dao, logger, enc_service );
 
     server_cache = _createCache( server );
     server.init( server_cache, exports.rater );
@@ -147,6 +145,25 @@ exports.init = function( logger, enc_service )
             c();
         } );
     } );
+}
+
+
+function _createDocumentServer( dao, logger, enc_service )
+{
+    const origin_url = process.env.HTTP_ORIGIN_URL || '';
+
+    if ( !origin_url )
+    {
+        // this allows the system to work without configuration (e.g. for
+        // local development), but is really bad
+        logger.log( logger.PRIORITY_IMPORTANT,
+            "*** HTTP_ORIGIN_URL environment variable not set; " +
+            "system will fall back to using the origin of HTTP requests, " +
+            "meaning an attacker can control where server-side requests go! ***"
+        );
+    }
+
+    return DocumentServer().create( dao, logger, enc_service, origin_url );
 }
 
 

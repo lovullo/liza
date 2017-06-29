@@ -1,0 +1,29 @@
+@c  This document is part of the Liza Data Collection Framework manual.
+@c  Copyright (C) 2017 R-T Specialty, LLC.
+@c
+@c    Permission is granted to copy, distribute and/or modify this document
+@c    under the terms of the GNU Free Documentation License, Version 1.3
+@c    or any later version published by the Free Software Foundation;
+@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@c    Free Documentation License''.
+
+@node Assertions
+@chapter Assertions
+@maintstart
+@footnote{
+  Assertions are compiled from the Program XML (@pxref{Program XML}).
+  Rather than using a library,
+    it compiles a mess of largely duplicate code inline.
+  This system needs to be @emph{replaced},
+    not modified.
+
+  A replacement can either be in the form of a library (removing most
+    if not all code generation from the Program XML compiler),
+      or possibly compile into classifications and use the classification
+      system.
+  @emph{The latter option is preferred,
+          and would be more powerful with less maintenance.}}
+@maintend
+
+@helpwanted

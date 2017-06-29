@@ -98,9 +98,10 @@ module.exports = Class( 'DataApiManager' )
     'private _apis': {},
 
 
-    __construct: function( api_factory )
+    __construct: function( api_factory, apis )
     {
         this._dataApiFactory = api_factory;
+        this.setApis( apis || {} );
     },
 
 

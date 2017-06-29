@@ -66,12 +66,17 @@
 @end ifset
 @end macro
 
+@c documentation TODO
+@macro todo{text}
+@devnotice{TODO: \text\}
+@end macro
+
 
 @c indicate that help is needed to produce docs
 @macro helpwanted{}
 @cindex TODO, Missing Docs
 @dnindex Missing Docs
-@notice{There's nothing here yet.  Maybe you can help?}
+@notice{There isn't much here yet.  Maybe you can help?}
 @end macro
 
 
@@ -140,11 +145,15 @@ This system has maintenance concerns.
 @c the path to the file
 @ifset SRCURI
 @macro srcref{path, display}
-@url{@value{SRCURI}/\path\, @code{\display\}}
+@url{@value{SRCURI}/\path\, @file{\display\}}
 @end macro
 
 @macro srcrefraw{path}
-@url{@value{SRCURI}/\path\, @code{\path\}}
+@url{@value{SRCURI}/\path\, @file{\path\}}
+@end macro
+
+@macro srcrefjs{base,module}
+@srcref{src/\base\/\module\.js, \module\}
 @end macro
 @end ifset
 
@@ -155,6 +164,12 @@ This system has maintenance concerns.
 
 @macro srcrefraw{path}
 @file{\path\}
+@end macro
+
+@c intended to display a name without JS,
+@c so just do that rather than the actual path
+@macro srcrefjs{base,path}
+@srcrefraw{\base\/\path\}
 @end macro
 @end ifclear
 
@@ -169,7 +184,38 @@ This system has maintenance concerns.
 @end macro
 
 
+@c JS formatting
+@macro jsmethod{name}
+@code{#\name\}
+@end macro
+
+
 @c text to avoid repeated e.g. ties and other formatting
 @macro progxml
 Program@tie{}XML
+@end macro
+
+@macro progxmlref
+@ref{Program XML,,Program@tie{}XML}
+@end macro
+
+@macro dapi
+Data@tie{}API
+@end macro
+
+@macro dapiref
+@dapi (@pxref{Data API,,Data@tie{}API})
+@end macro
+
+@c todo: link to reference directly
+@macro proguicref{ref}
+`\ref\' @proguicrefsuffix
+@end macro
+
+@macro proguicxref{ref}
+See `\ref\' @proguicrefsuffix
+@end macro
+
+@macro proguicrefsuffix{}
+in the Liza Program@tie{}UI Compiler manual
 @end macro

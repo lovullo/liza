@@ -21,7 +21,10 @@
 MAKEINFOHTML = $(MAKEINFO) --html --css-include liza.css
 
 info_TEXINFOS = liza.texi
-liza_TEXINFOS = design.texi macros.texi config.texi liza.css \
+liza_TEXINFOS = macros.texi config.texi liza.css \
+                design.texi assert.texi bucket.texi client.texi \
+                dapi.texi pred.texi program.texi server.texi \
+                validation.texi \
                 diagram/event-graph.svg
 
 diagram/%.svg: diagram/%.dot
