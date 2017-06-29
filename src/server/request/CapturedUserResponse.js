@@ -19,11 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait        = require( 'easejs' ).Trait,
-    UserResponse = require( './UserResponse' );
+const Trait             = require( 'easejs' ).Trait;
+const UserResponse      = require( './UserResponse' );
+const IProtUserResponse = require( './IProtUserResponse' );
+
+/** XXX: IProtUserResponse is temporary until an easejs release
+    addresses a bug with recognizing named traits extending
+    classes as parameterized **/
 
 module.exports = Trait( 'CapturedUserResponse' )
-    .extend( UserResponse,
+    .implement( IProtUserResponse )
+    .extend(
 {
     'private _callback': null,
 
@@ -47,4 +53,3 @@ module.exports = Trait( 'CapturedUserResponse' )
         this._callback( code, error, data );
     }
 } );
-
