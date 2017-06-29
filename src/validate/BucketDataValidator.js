@@ -257,7 +257,8 @@ module.exports = Class( 'BucketDataValidator',
             // format return values for display
             try
             {
-                ret[ i ] = fmt[ method ].call( fmt, value );
+                // validators expect strings
+                ret[ i ] = fmt[ method ].call( fmt, ''+value );
             }
             catch ( e )
             {
