@@ -2763,8 +2763,7 @@ module.exports = Class( 'Client' )
                     $( '<div class="text">' ).html(
                         lock_str +
                         " If you wish to modify " +
-                        "it please click <strong>Unlock Quote</strong> " +
-                        "to the right."
+                        "it please click <strong>Unlock Quote</strong>."
                     )
                 ).append( $( '<button>' )
                     .text( 'Unlock Quote' )
