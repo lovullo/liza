@@ -119,7 +119,6 @@ exports.route = function( request, log )
 
         // check to see if the file exists within the path
         var filename = ( cur_path + suffix );
-        console.log( filename );
         fs.exists( filename, function( exists )
         {
             if ( !exists )
