@@ -62,9 +62,9 @@ module.exports = Class( 'DataProcessor',
      */
     constructor( filter, dapif, meta_source )
     {
-        this._filter      = filter;
-        this._dapif = dapif;
-        this._metaSource  = meta_source;
+        this._filter     = filter;
+        this._dapif      = dapif;
+        this._metaSource = meta_source;
     },
 
 
