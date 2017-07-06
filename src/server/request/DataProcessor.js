@@ -56,9 +56,9 @@ module.exports = Class( 'DataProcessor',
     /**
      * Initialize processor
      *
-     * @type {Object}         filter      bucket filter
-     * @type {function()}     dapif       data API constructor
-     * @type {DapiMetaSource} meta_source metadata source
+     * @param {Object}         filter      bucket filter
+     * @param {function()}     dapif       data API constructor
+     * @param {DapiMetaSource} meta_source metadata source
      */
     constructor( filter, dapif, meta_source )
     {
