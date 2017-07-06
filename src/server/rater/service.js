@@ -72,7 +72,7 @@ exports.init = function( logc, errc )
     }
 
     child = child_process.fork(
-        __dirname + '/thread.js',
+        __dirname + '/process.js',
         [],
 
         // pass all our arguments to the child, incrementing the debug
@@ -116,7 +116,7 @@ exports.init = function( logc, errc )
                 break;
 
             default:
-                errc( "Unknown message from rater thread: " + msg.cmd );
+                errc( "Unknown message from rater process: " + msg.cmd );
         }
     } );
 
@@ -133,23 +133,23 @@ exports.init = function( logc, errc )
         if ( excode !== 0 )
         {
             errc(
-                "Rater thread exited with error code " + excode +
+                "Rater process exited with error code " + excode +
                 ( ( sig ) ? " (" + sig + ")" : '' )
             );
 
-            purgeRateRequests( "Rater thread died unexpectedly" );
+            purgeRateRequests( "Rater process died unexpectedly" );
         }
         else
         {
-            logc( "Rater thread exited gracefully." );
+            logc( "Rater process exited gracefully." );
         }
 
         // purge anything remaining in the queue (hopefully nothing; this is
         // purely a catch-all in case a request somehow snuck in due to a bug)
-        purgeRateRequests( "Rater thread is being restarted." );
+        purgeRateRequests( "Rater process is being restarted." );
 
-        // start a new thread
-        logc( "Restarting rater thread..." );
+        // start a new process
+        logc( "Restarting rater process..." );
         exports.init( logc, errc );
     } );
 };

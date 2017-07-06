@@ -1,5 +1,5 @@
 /**
- * Rating thread
+ * Rating process
  *
  *  Copyright (C) 2017 R-T Specialty, LLC.
  *
@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * This thread permits both asynchronous rating (in the case of JS raters) as
+ * This process permits both asynchronous rating (in the case of JS raters) as
  * well as hassle-free runtime reloading of raters withour risk of memory leaks
  * that may be caused by deleting entries from node's module cache.
  */
@@ -57,7 +57,7 @@ try
 catch ( e )
 {
     sendLog(
-        "WARNING: OS does not support signal handlers; thread will always " +
+        "WARNING: OS does not support signal handlers; process will always " +
         "appear to exit in error if reload is requested"
     );
 }
