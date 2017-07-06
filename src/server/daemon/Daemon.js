@@ -100,7 +100,7 @@ module.exports = AbstractClass( 'Daemon',
     {
         this._httpPort = http_port;
 
-        this._rater      = liza.server.rater.service;
+        this._rater      = liza.server.rater.ProcessManager();
         this._httpServer = this.getHttpServer();
         this._accessLog  = this._createAccessLog();
         this._debugLog   = this._createDebugLog( log_priority );
