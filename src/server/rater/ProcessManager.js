@@ -211,7 +211,7 @@ module.exports = Class( 'ProcessManager',
                     id:        quote.getId(),
                     agentId:   quote.getAgentId(),
                     agentName: quote.getAgentName(),
-                    data:      quote.getBucket().getData(),
+                    data:      this._genData( quote ),
 
                     creditScoreRef: quote.getCreditScoreRef(),
                 },
@@ -220,6 +220,31 @@ module.exports = Class( 'ProcessManager',
                 internal: session.isInternal(),
             } );
         } };
+    },
+
+
+    /**
+     * Generate data to provide to rater
+     *
+     * Bucket data is used as-is.  Metadata are merged with a "meta:" prefix.
+     *
+     * @param {ServerSideQuote} quote source quote
+     *
+     * @return {Object} merged data
+     */
+    'private _genData'( quote )
+    {
+        const dest = {};
+        const metadata = quote.getMetabucket().getData();
+
+        Object.assign( dest, quote.getBucket().getData() );
+
+        for ( let key in metadata )
+        {
+            dest[ 'meta:' + key ] = metadata[ key ];
+        }
+
+        return dest;
     },
 
 

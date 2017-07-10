@@ -311,6 +311,7 @@ module.exports = Class( 'Server' )
                     .setData(
                         server._getDefaultBucket( quote_program, quote_data )
                     )
+                    .setMetadata( quote_data.meta || {} )
                     .setQuickSaveData( quote_data.quicksave || {} )
                     .setAgentId( quote_data.agentId || agent_id )
                     .setAgentName( quote_data.agentName || agent_name )
