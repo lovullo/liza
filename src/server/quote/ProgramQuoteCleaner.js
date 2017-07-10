@@ -19,7 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
+'use strict';
+
+const { Class }   = require( 'easejs' );
 
 
 module.exports = Class( 'ProgramQuoteCleaner',
@@ -51,10 +53,16 @@ module.exports = Class( 'ProgramQuoteCleaner',
         }
 
         // fix any problems with linked groups
-        this._fixLinkedGroups( quote, function( err )
+        this._fixLinkedGroups( quote, err =>
         {
-            // done
-            callback( err );
+            if ( err )
+            {
+                callback( err );
+                return;
+            }
+
+            this._fixMeta( quote );
+            callback( null );
         } );
     },
 
@@ -149,6 +157,34 @@ module.exports = Class( 'ProgramQuoteCleaner',
         }
 
         return len;
-    }
+    },
+
+
+    /**
+     * Initialize missing metadata
+     *
+     * This is similar to bucket initialization, except there are no leaders
+     * or default values---just empty arrays.  That may change in the future.
+     *
+     * @param {ServerSideQuote} quote quote containing metabucket
+     *
+     * @return {undefined}
+     */
+    'private _fixMeta'( quote )
+    {
+        const { fields } = this._program.meta;
+        const metabucket = quote.getMetabucket();
+        const metadata   = metabucket.getData();
+
+        Object.keys( fields ).forEach( field_name =>
+        {
+            if ( Array.isArray( metadata[ field_name ] ) )
+            {
+                return;
+            }
+
+            metabucket.setValues( { [field_name]: [] } );
+        } );
+    },
 } );
 
