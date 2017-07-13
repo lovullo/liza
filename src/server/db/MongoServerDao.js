@@ -271,6 +271,11 @@ module.exports = Class( 'MongoServerDao' )
     /**
      * Saves a quote to the database
      *
+     * A full save will include all metadata.  This should not cause any
+     * problems with race conditions for pending Data API calls on meta
+     * fields because those results write to individual indexes and do not
+     * rely on existing data.
+     *
      * @param Quote    quote            the quote to save
      * @param Function success_callback function to call on success
      * @param Function failure_callback function to call if save fails
@@ -302,6 +307,9 @@ module.exports = Class( 'MongoServerDao' )
             save_data = {
                 data: quote.getBucket().getData(),
             };
+
+            // full save will include all metadata
+            save_data.meta = quote.getMetabucket().getData();
         }
         else if ( save_data.data !== undefined )
         {

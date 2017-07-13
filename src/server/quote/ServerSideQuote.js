@@ -52,6 +52,12 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'private _rated_date': 0,
 
+    /**
+     * Metabucket
+     * @type {Bucket}
+     */
+    'private _metabucket': null,
+
 
     'public setProgramVersion': function( version )
     {
@@ -131,6 +137,47 @@ module.exports = Class( 'ServerSideQuote' )
     'public getRatedDate': function()
     {
         return this._rated_date;
-    }
+    },
+
+
+    /**
+     * Metadata bucket
+     *
+     * @return {Bucket}
+     */
+    'public getMetabucket': function()
+    {
+        return this._metabucket;
+    },
+
+
+    /**
+     * Set metadata bucket
+     *
+     * @return {ServerSideQuote} self
+     */
+    'public setMetabucket': function( metabucket )
+    {
+        this._metabucket = metabucket;
+    },
+
+
+    /**
+     * Set metabucket data
+     *
+     * @param {Object} data key/value data
+     *
+     * @return {ServerSideQuote} self
+     */
+    'public setMetadata': function( data )
+    {
+        if ( !this._metabucket )
+        {
+            throw Error( "No metabucket available for #setMetadata" );
+        }
+
+        this._metabucket.setValues( data );
+        return this;
+    },
 } );
 
