@@ -42,6 +42,12 @@ describe( 'ProgramQuoteCleaner', () =>
                 fields:   { foo: {}, bar: {} },
                 expected: { foo: [ 1 ], bar: [], baz: [ 2 ] },
             },
+            {
+                label:    "does nothing with no fields",
+                existing: { foo: [ 1 ], baz: [ 2 ] },
+                fields:   {},
+                expected: { foo: [ 1 ], baz: [ 2 ] },
+            },
         ].forEach( ( { label, existing, fields, expected } ) =>
             it( label, done =>
             {
