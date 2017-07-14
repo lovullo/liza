@@ -172,7 +172,7 @@ module.exports = Class( 'ProgramQuoteCleaner',
      */
     'private _fixMeta'( quote )
     {
-        const { fields } = this._program.meta;
+        const { fields = {} } = this._program.meta;
         const metabucket = quote.getMetabucket();
         const metadata   = metabucket.getData();
 
