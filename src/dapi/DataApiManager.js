@@ -679,7 +679,10 @@ module.exports = Class( 'DataApiManager' )
             var param = map[ field ],
                 fdata = [];
 
-            fdata[ index ] = ( data[ param ] || '' );
+            fdata[ index ] = ( data[ param ] !== undefined )
+                ? data[ param ]
+                : '';
+
             update[ field ] = fdata;
         }
 
