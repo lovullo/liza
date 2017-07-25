@@ -181,7 +181,7 @@ module.exports = Class( 'ProcessManager',
 
             // start a new process
             logc( "Restarting rater process..." );
-            exports.init( logc, errc );
+            this.init( logc, errc );
         } );
     },
 
