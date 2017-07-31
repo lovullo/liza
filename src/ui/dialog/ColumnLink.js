@@ -19,15 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait       = require( 'easejs' ).Trait,
-    TableDialog = require( './TableDialog' );
+var Trait = require( 'easejs' ).Trait,
+
+    // TODO: this is only required temporarily until GNU ease.js 0.2.9,
+    // which hasn't yet been released because I'm still waiting for
+    // the copyright disclaimer from my (new, after purchase) employer!
+    ITableDialog = require( './ITableDialog' );
 
 
 /**
  * Styles table columns with image links
  */
 module.exports = Trait( 'ColumnLink' )
-    .extend( TableDialog,
+    .implement( ITableDialog )
+    .extend(
 {
     /**
      * Column id as key, image path as value
