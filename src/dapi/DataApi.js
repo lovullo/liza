@@ -1,7 +1,7 @@
 /**
  * Generic interface for data transmission
  *
- *  Copyright (C) 2014 R-T Specialty, LLC.
+ *  Copyright (C) 2014, 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -42,7 +42,7 @@ module.exports = Interface( 'DataApi',
      * The first parameter of the callback shall contain an Error in the event
      * of a failure; otherwise, it shall be null.
      *
-     * @param {string}             data     binary data to transmit
+     * @param {Object=}            data     request params
      * @param {function(?Error,*)} callback continuation upon reply
      *
      * @return {DataApi} self
