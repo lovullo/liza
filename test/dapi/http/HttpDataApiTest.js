@@ -105,7 +105,7 @@ describe( 'HttpDataApi', function()
          */
         it( 'delegates to provided HTTP implementation', function()
         {
-            var method = 'POST',
+            var method = 'GET',
                 data   = "ribbit",
                 c      = function() {};
 
@@ -127,7 +127,7 @@ describe( 'HttpDataApi', function()
         {
             it( 'converts data into encoded string', function()
             {
-                var method = 'POST',
+                var method = 'GET',
                     data   = { foo: "bar=baz", '&bar': "moo%cow" },
                     c      = function() {};
 
@@ -143,13 +143,27 @@ describe( 'HttpDataApi', function()
 
             it( 'with no keys, results in empty string', function()
             {
-                var method = 'POST',
+                var method = 'GET',
                     data   = {},
                     c      = function() {};
 
                 Sut( dummy_url, method, impl ).request( data, c );
 
                 expect( impl.provided[ 2 ] ).to.equal( "" );
+            } );
+
+
+            it( 'encodes JSON on POST', () =>
+            {
+                var method = 'POST',
+                    data   = { foo: 'bar' },
+                    c      = () => {};
+
+                Sut( dummy_url, method, impl ).request( data, c );
+
+                expect( impl.provided[ 2 ] ).to.equal(
+                    JSON.stringify( data )
+                );
             } );
         } );
 

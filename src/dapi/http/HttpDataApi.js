@@ -206,6 +206,11 @@ module.exports = Class( 'HttpDataApi' )
     {
         var uri = '';
 
+        if ( this._method === 'POST' )
+        {
+            return JSON.stringify( obj );
+        }
+
         // ES3 support
         for ( var key in obj )
         {
