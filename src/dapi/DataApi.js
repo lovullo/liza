@@ -19,7 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+'use strict';
+
+const { Interface } = require( 'easejs' );
 
 
 /**
@@ -42,8 +44,8 @@ module.exports = Interface( 'DataApi',
      * The first parameter of the callback shall contain an Error in the event
      * of a failure; otherwise, it shall be null.
      *
-     * @param {Object=}            data     request params
-     * @param {function(?Error,*)} callback continuation upon reply
+     * @param {?Object<string,string>|string} data     params or post data
+     * @param {function(?Error,*):string}     callback continuation upon reply
      *
      * @return {DataApi} self
      */
