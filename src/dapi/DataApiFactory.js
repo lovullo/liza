@@ -19,13 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+'use strict';
+
 const Class                 = require( 'easejs' ).Class;
 const HttpDataApi           = require( './http/HttpDataApi' );
 const XhrHttpImpl           = require( './http/XhrHttpImpl' );
 const JsonResponse          = require( './format/JsonResponse' );
+const ResponseApply         = require( './format/ResponseApply' );
 const RestrictedDataApi     = require( './RestrictedDataApi' );
 const StaticAdditionDataApi = require( './StaticAdditionDataApi' );
 const BucketDataApi         = require( './BucketDataApi' );
+const QuoteDataApi          = require( './QuoteDataApi' );
 
 
 /**
@@ -36,8 +40,8 @@ module.exports = Class( 'DataApiFactory',
     /**
      * Return a DataApi instance for the requested service type
      *
-     * The source and method have type-specific meaning; that is, "source" may
-     * be a URL and "method" may be get/post for a RESTful service.
+     * The source and method have type-specific meaning; that is, "source"
+     * may be a URL and "method" may be get/post for a RESTful service.
      *
      * @param {string} type service type (e.g. "rest")
      * @param {Object} desc API description
@@ -46,39 +50,11 @@ module.exports = Class( 'DataApiFactory',
      */
     'public fromType': function( type, desc, bucket )
     {
-        var api    = null,
-            source = ( desc.source || '' ),
-            method = ( desc.method || '' ),
+        const static_data = ( desc['static'] || [] );
+        const nonempty    = !!desc.static_nonempty;
+        const multiple    = !!desc.static_multiple;
 
-            static_data = ( desc['static'] || [] ),
-            nonempty    = !!desc.static_nonempty,
-            multiple    = !!desc.static_multiple;
-
-        switch ( type )
-        {
-            case 'rest':
-                const impl = this.createHttpImpl();
-
-                api = HttpDataApi.use( JsonResponse )(
-                    source,
-                    method.toUpperCase(),
-                    impl
-                );
-                break;
-
-            case 'local':
-                // currently, only local bucket data sources are supported
-                if ( source !== 'bucket' )
-                {
-                    throw Error( "Unknown local data API source: " + source );
-                }
-
-                api = BucketDataApi( bucket, desc.retvals );
-                break;
-
-            default:
-                throw Error( 'Unknown data API type: ' + type );
-        };
+        const api = this._createDataApi( type, desc, bucket );
 
         return RestrictedDataApi(
             StaticAdditionDataApi( api, nonempty, multiple, static_data ),
@@ -87,6 +63,90 @@ module.exports = Class( 'DataApiFactory',
     },
 
 
+    /**
+     * Create DataApi instance
+     *
+     * @param {string} type   API type
+     * @param {Object} desc   API descriptor
+     * @param {Bucket} bucket data bucket
+     *
+     * @return {DataApi}
+     */
+    'private _createDataApi'( type, desc, bucket )
+    {
+        const source  = ( desc.source || '' );
+        const method  = ( desc.method || '' );
+        const enctype = ( desc.enctype || '' );
+
+        switch ( type )
+        {
+            case 'rest':
+                return this._createHttp(
+                    HttpDataApi.use( JsonResponse ),
+                    source,
+                    method,
+                    enctype
+                );
+
+            case 'local':
+                // currently, only local bucket data sources are supported
+                if ( source !== 'bucket' )
+                {
+                    throw Error( "Unknown local data API source: " + source );
+                }
+
+                return BucketDataApi( bucket, desc.retvals );
+
+            case 'quote':
+                return QuoteDataApi(
+                    this._createHttp(
+                        HttpDataApi
+                            .use( JsonResponse )
+                            .use( ResponseApply( data => [ data ] ) ),
+                        source,
+                        method,
+                        enctype
+                    )
+                );
+
+            default:
+                throw Error( 'Unknown data API type: ' + type );
+        };
+    },
+
+
+    /**
+     * Create HttpDataApi instance
+     *
+     * The `Base` is intended to allow for the caller to mix traits in.
+     *
+     * @param {HttpDataApi} Base    HttpDataApi type
+     * @param {string}      source  URL
+     * @param {string}      method  HTTP method
+     * @param {string}      enctype MIME media type (for POST)
+     *
+     * @return {HttpDataApi}
+     */
+    'private _createHttp'( Base, source, method, enctype )
+    {
+        const impl = this.createHttpImpl();
+
+        return Base(
+            source,
+            method.toUpperCase(),
+            impl,
+            enctype
+        );
+    },
+
+
+    /**
+     * Create HttpImpl
+     *
+     * This is simply intended to allow subtypes to override the type.
+     *
+     * @return {XhrHttpImpl}
+     */
     'virtual protected createHttpImpl'()
     {
         return XhrHttpImpl( XMLHttpRequest );

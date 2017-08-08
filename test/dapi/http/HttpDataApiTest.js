@@ -119,51 +119,58 @@ describe( 'HttpDataApi', function()
         } );
 
 
-        /**
-         * It's nice to do this for the HttpImpl so that they don't have to
-         * worry about the proper way to handle it, or duplicate the logic.
-         */
-        describe( 'given key-value data', function()
+        [
+            // default is urlencoded
+            {
+                enctype:  '',
+                method:   'POST',
+                data:     { foo: "bar=baz", '&bar': "moo%cow" },
+                expected: 'foo=' + encodeURIComponent( 'bar=baz' ) +
+                    '&' + encodeURIComponent( '&bar' ) + '=' +
+                    encodeURIComponent( 'moo%cow' )
+            },
+
+            // same as above
+            {
+                enctype:  'application/x-www-form-urlencoded',
+                method:   'POST',
+                data:     { foo: "bar=baz", '&bar': "moo%cow" },
+                expected: 'foo=' + encodeURIComponent( 'bar=baz' ) +
+                    '&' + encodeURIComponent( '&bar' ) + '=' +
+                    encodeURIComponent( 'moo%cow' )
+            },
+
+            // empty string
+            {
+                enctype:  'application/x-www-form-urlencoded',
+                method:   'POST',
+                data:     {},
+                expected: "",
+            },
+
+            // json
+            {
+                enctype:  'application/json',
+                method:   'POST',
+                data:     { foo: 'bar' },
+                expected: '{"foo":"bar"}',
+            },
+
+            // ignored if GET
+            {
+                enctype:  'application/json',
+                method:   'GET',
+                data:     { foo: "bar" },
+                expected: "foo=bar",
+            },
+        ].forEach( ( { enctype, method, data, expected }, i ) =>
         {
-            it( 'converts data into encoded string', function()
+            it( `${method} encodes (${i})`, () =>
             {
-                var method = 'GET',
-                    data   = { foo: "bar=baz", '&bar': "moo%cow" },
-                    c      = function() {};
+                Sut( dummy_url, method, impl, enctype )
+                    .request( data, _ => {} );
 
-                Sut( dummy_url, method, impl ).request( data, c );
-
-                expect( impl.provided[ 2 ] ).to.equal(
-                    'foo=' + encodeURIComponent( data.foo ) +
-                        '&' + encodeURIComponent( '&bar' ) + '=' +
-                        encodeURIComponent( data[ '&bar' ] )
-                );
-            } );
-
-
-            it( 'with no keys, results in empty string', function()
-            {
-                var method = 'GET',
-                    data   = {},
-                    c      = function() {};
-
-                Sut( dummy_url, method, impl ).request( data, c );
-
-                expect( impl.provided[ 2 ] ).to.equal( "" );
-            } );
-
-
-            it( 'encodes JSON on POST', () =>
-            {
-                var method = 'POST',
-                    data   = { foo: 'bar' },
-                    c      = () => {};
-
-                Sut( dummy_url, method, impl ).request( data, c );
-
-                expect( impl.provided[ 2 ] ).to.equal(
-                    JSON.stringify( data )
-                );
+                expect( impl.provided[ 2 ] ).to.equal( expected );
             } );
         } );
 
