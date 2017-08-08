@@ -1185,11 +1185,10 @@ module.exports = Class( 'Server' )
                 )
             )
             .catch( e =>
-                server.logger.log(
-                    server.logger.PRIORITY_ERROR,
-                    "Failed to save field %s[%s] metadata: %s",
-                    field,
-                    index,
+                this.logger.log(
+                    this.logger.PRIORITY_ERROR,
+                    "Failed to save metadata (quote id %d): %s",
+                    quote.getId(),
                     e.message
                 )
             )
