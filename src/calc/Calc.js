@@ -230,8 +230,8 @@ exports.date = function()
     // formatted as
     return [
         now.getFullYear() + '-'
-        + ( now.getMonth() + 1 ) + '-'
-        + now.getDate()
+            + ( '0' + ( now.getMonth() + 1 ) ).substr( -2 ) + '-'
+            + ( '0' + now.getDate() ).substr( -2 )
     ];
 };
 
@@ -293,8 +293,8 @@ exports.relativeDate = function( data, value )
         // return in the YYYY-MM-DD format, since that's what our fields are
         // formatted as
         return date_new.getFullYear() + '-'
-            + ( date_new.getMonth() + 1 ) + '-'
-            + date_new.getDate();
+            + ( '0' + ( date_new.getMonth() + 1 ) ).substr( -2 ) + '-'
+            + ( '0' + date_new.getDate() ).substr( -2 );
     } );
 };
 
