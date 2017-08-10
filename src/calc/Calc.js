@@ -27,7 +27,14 @@ function _each( data, value, callback )
 
     for ( var i = 0; i < data_len; i++ )
     {
+        // index removals are null
+        if ( data[ i ] === null )
+        {
+            continue;
+        }
+
         cur_val = ( value[ i ] !== undefined ) ? value[ i ] : cur_val;
+
         result.push( callback( data[ i ], cur_val, i ) );
     }
 
@@ -51,6 +58,11 @@ exports.join = function( data, value )
 {
     return _each( data, value, function( arr, delimiter )
     {
+        if ( !Array.isArray( arr ) )
+        {
+            arr = [];
+        }
+
         return arr.join( delimiter );
     });
 };
@@ -121,7 +133,11 @@ exports.length = function( data )
             break;
         }
 
-        result.push( item.length );
+        var len = ( item[ item.length - 1 ] === null )
+            ? item.length - 1
+            : item.length;
+
+        result.push( len );
     }
 
     return result;
