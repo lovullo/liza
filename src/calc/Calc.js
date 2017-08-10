@@ -663,6 +663,32 @@ exports.value = function( data, indexes )
 };
 
 
+exports.repeat = function( data, value )
+{
+    var times  = value[ 0 ] || 0;
+    var result = [];
+
+    while ( times-- > 0 )
+    {
+        result.push( data );
+    }
+
+    return result;
+};
+
+
+exports.repeatConcat = function( data, value )
+{
+    var times  = value[ 0 ] || 0;
+    var result = [];
+
+    while ( times-- > 0 )
+    {
+        result = result.concat( data );
+    }
+
+    return result;
+};
 exports[ 'void' ] = function()
 {
     return [];
