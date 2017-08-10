@@ -689,8 +689,17 @@ exports.repeatConcat = function( data, value )
 
     return result;
 };
+
+
+exports.index = function( data, value )
+{
+    var index  = value[ 0 ] || 0;
+
+    return data[ index ] || [];
+};
+
+
 exports[ 'void' ] = function()
 {
     return [];
 };
-
