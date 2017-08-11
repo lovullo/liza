@@ -114,6 +114,30 @@ describe( 'StagingBucket', () =>
             },
             {
                 initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', null ] },
+                merge_index: true,
+                is_change:   false,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', null ] },
+                merge_index: false,
+                is_change:   false,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', 'quux' ] },
+                merge_index: true,
+                is_change:   true,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', 'quux' ] },
+                merge_index: false,
+                is_change:   true,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
                 update:      { foo: [] },
                 merge_index: true,
                 is_change:   false,
