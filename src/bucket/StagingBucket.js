@@ -80,6 +80,12 @@ module.exports = Class( 'StagingBucket' )
      */
     'private _dirty': false,
 
+    /**
+     * Prevent setCommittedValues from bypassing staging
+     * @type {boolean}
+     */
+    'private _noStagingBypass': false,
+
 
     /**
      * Initializes staging bucket with the provided data bucket
@@ -155,12 +161,31 @@ module.exports = Class( 'StagingBucket' )
      */
     'public setCommittedValues': function( data /*, ...*/ )
     {
+        if ( this._noStagingBypass )
+        {
+            return this.setValues.apply( this, arguments );
+        }
+
         this._bucket.setValues.apply( this._bucket, arguments );
 
         // no use in triggering a pre-update, since these values are
         // already committed
         this.emit( this.__self.$('EVENT_STAGING_UPDATE'), data );
 
+        return this;
+    },
+
+
+    /**
+     * Prevent #setCommittedValues from bypassing staging
+     *
+     * When set, #setCommittedValues will act as an alias of #setValues.
+     *
+     * @return {StagingBucket} self
+     */
+    'public forbidBypass'()
+    {
+        this._noStagingBypass = true;
         return this;
     },
 
