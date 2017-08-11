@@ -90,7 +90,7 @@ describe( 'DataProcessor', () =>
             }
         };
 
-        Sut( filter, () => {}, meta_source )
+        Sut( filter, () => {}, meta_source, createStubStagingBucket )
             .processDiff( data, request, program );
 
         expect( data.filtered ).to.equal( true );
@@ -109,7 +109,7 @@ describe( 'DataProcessor', () =>
             done();
         }
 
-        Sut( filter, dapi_factory )
+        Sut( filter, dapi_factory, null, createStubStagingBucket )
             .processDiff( {}, request, program );
     } );
 
@@ -136,7 +136,12 @@ describe( 'DataProcessor', () =>
             meta_source,
         } = createStubs( false, {}, getFieldData );
 
-        const sut = Sut( filter, () => dapi_manager, meta_source );
+        const sut = Sut(
+            filter,
+            () => dapi_manager,
+            meta_source,
+            createStubStagingBucket
+        );
 
         program.meta.fields = {
             foo: {
@@ -249,7 +254,13 @@ function createSutFromStubs( /* see createStubs */ )
         program:      program,
         filter:       filter,
         meta_source:  meta_source,
-        sut:          Sut( filter, () => {}, meta_source ),
+
+        sut: Sut(
+            filter,
+            () => {},
+            meta_source,
+            createStubStagingBucket
+        ),
     };
 }
 
@@ -281,6 +292,8 @@ function createStubProgram( internals )
         internal: internals,
         meta:     { qtypes: {}, fields: {} },
         apis:     {},
+
+        initQuote() {},
     };
 }
 
@@ -303,5 +316,30 @@ function createStubBucket( data )
         {
             return data[ name ];
         },
+    };
+}
+
+
+function createStubStagingBucket( bucket )
+{
+    let data = {};
+
+    return {
+        getDataByName( name )
+        {
+            return bucket.getDataByName( name );
+        },
+
+        setValues( values )
+        {
+            data = values;
+        },
+
+        forbidBypass() {},
+        getDiff()
+        {
+            return data;
+        },
+        commit() {},
     };
 }

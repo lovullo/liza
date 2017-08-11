@@ -23,7 +23,7 @@
 
 const { Class }   = require( 'easejs' );
 
-const { QuoteDataBucket } = require( '../../' ).bucket;
+const { QuoteDataBucket, StagingBucket } = require( '../../' ).bucket;
 
 
 /**
@@ -56,15 +56,20 @@ module.exports = Class( 'DataProcessor',
     /**
      * Initialize processor
      *
-     * @param {Object}         filter      bucket filter
-     * @param {function()}     dapif       data API constructor
-     * @param {DapiMetaSource} meta_source metadata source
+     * The staging bucket constructor will be used to wrap the bucket for
+     * diff-related operations.
+     *
+     * @param {Object}           filter       bucket filter
+     * @param {function()}       dapif        data API constructor
+     * @param {DapiMetaSource}   meta_source  metadata source
+     * @param {function(Bucket)} staging_ctor staging bucket constructor
      */
-    constructor( filter, dapif, meta_source )
+    constructor( filter, dapif, meta_source, staging_ctor )
     {
-        this._filter     = filter;
-        this._dapif      = dapif;
-        this._metaSource = meta_source;
+        this._filter      = filter;
+        this._dapif       = dapif;
+        this._metaSource  = meta_source;
+        this._stagingCtor = staging_ctor;
     },
 
 
@@ -86,11 +91,20 @@ module.exports = Class( 'DataProcessor',
     {
         const filtered     = this.sanitizeDiff( data, request, program, false );
         const dapi_manager = this._dapif( program.apis, request );
+        const staging      = this._stagingCtor( bucket );
+
+        // forbidBypass will force diff generation on initQuote
+        staging.setValues( filtered, true );
+        staging.forbidBypass();
+
+        program.initQuote( staging, true );
 
         // array of promises for any dapi requests
         const dapis = this._triggerDapis(
-            dapi_manager, program, data, bucket
+            dapi_manager, program, staging.getDiff(), staging
         );
+
+        staging.commit();
 
         return {
             filtered: filtered,

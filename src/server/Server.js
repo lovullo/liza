@@ -1140,12 +1140,7 @@ module.exports = Class( 'Server' )
                         parsed_data, request, program, bucket
                     );
 
-                    quote.setData( filtered );
-
                     server._monitorMetadataPromise( quote, dapis );
-
-                    // calculated values (store only)
-                    program.initQuote( bucket, true );
                }
                 catch ( err )
                 {
