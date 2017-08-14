@@ -1140,12 +1140,7 @@ module.exports = Class( 'Server' )
                         parsed_data, request, program, bucket
                     );
 
-                    quote.setData( filtered );
-
                     server._monitorMetadataPromise( quote, dapis );
-
-                    // calculated values (store only)
-                    program.initQuote( bucket, true );
                }
                 catch ( err )
                 {
@@ -1185,11 +1180,10 @@ module.exports = Class( 'Server' )
                 )
             )
             .catch( e =>
-                server.logger.log(
-                    server.logger.PRIORITY_ERROR,
-                    "Failed to save field %s[%s] metadata: %s",
-                    field,
-                    index,
+                this.logger.log(
+                    this.logger.PRIORITY_ERROR,
+                    "Failed to save metadata (quote id %d): %s",
+                    quote.getId(),
                     e.message
                 )
             )

@@ -85,7 +85,7 @@ module.exports = Class( 'RestrictedDataApi' )
      *
      * @return {DataApi} self
      */
-    'public request': function( data, callback )
+    'virtual public request': function( data, callback )
     {
         data     = data     || {};
         callback = callback || function() {};

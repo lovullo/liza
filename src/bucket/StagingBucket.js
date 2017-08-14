@@ -80,6 +80,12 @@ module.exports = Class( 'StagingBucket' )
      */
     'private _dirty': false,
 
+    /**
+     * Prevent setCommittedValues from bypassing staging
+     * @type {boolean}
+     */
+    'private _noStagingBypass': false,
+
 
     /**
      * Initializes staging bucket with the provided data bucket
@@ -155,12 +161,31 @@ module.exports = Class( 'StagingBucket' )
      */
     'public setCommittedValues': function( data /*, ...*/ )
     {
+        if ( this._noStagingBypass )
+        {
+            return this.setValues.apply( this, arguments );
+        }
+
         this._bucket.setValues.apply( this._bucket, arguments );
 
         // no use in triggering a pre-update, since these values are
         // already committed
         this.emit( this.__self.$('EVENT_STAGING_UPDATE'), data );
 
+        return this;
+    },
+
+
+    /**
+     * Prevent #setCommittedValues from bypassing staging
+     *
+     * When set, #setCommittedValues will act as an alias of #setValues.
+     *
+     * @return {StagingBucket} self
+     */
+    'public forbidBypass'()
+    {
+        this._noStagingBypass = true;
         return this;
     },
 
@@ -179,31 +204,108 @@ module.exports = Class( 'StagingBucket' )
      */
     'private _hasChanged': function( data, merge_index )
     {
+        let changed = false;
+
         for ( let name in data )
         {
-            let values = data[ name ];
-            let cur    = this._curdata[ name ] || [];
+            let values   = data[ name ];
+            let cur      = this._curdata[ name ] || [];
+            let len      = this._length( values );
+            let has_null = ( len !== values.length );
 
-            if ( !merge_index && ( values.length !== cur.length ) )
+            let merge_len_change = (
+                merge_index && has_null && ( len < cur.length )
+            );
+
+            let replace_len_change = (
+                !merge_index && ( len !== cur.length )
+            );
+
+            // quick change check (index removal if merge_index, or index
+            // count change if not merge_index)
+            if ( merge_len_change || replace_len_change )
             {
-                return true;
+                changed = true;
+                continue;
             }
 
-            for ( let index in values )
+            for ( let index = 0; index < len; index++ )
             {
                 if ( merge_index && ( values[ index ] === undefined ) )
                 {
                     continue;
                 }
 
-                if ( values[ index ] !== cur[ index ] )
+                if ( !this._deepEqual( values[ index ], cur[ index ] ) )
                 {
-                    return true;
+                    changed = true;
+                    continue;
                 }
+
+                // unchanged
+                values[ index ] = undefined;
+            }
+
+            // if nothing is left, remove entirely
+            if ( !values.some( x => x !== undefined ) )
+            {
+                delete data[ name ];
             }
         }
 
-        return false;
+        return changed;
+    },
+
+
+    /**
+     * Get actual length of vector
+     *
+     * This considers when the last element of the vector is a null value,
+     * which is a truncation indicator.
+     *
+     * @param {Array} values value vector
+     *
+     * @return {number} length of vector considering truncation
+     */
+    'private _length'( values )
+    {
+        if ( values[ values.length - 1 ] === null )
+        {
+            return values.length - 1;
+        }
+
+        return values.length;
+    },
+
+
+    /**
+     * Recursively check for equality of two vavlues
+     *
+     * This only recognizes nested arrays (vectors).  They are not
+     * traditionally encountered in the bucket, but may exist.
+     *
+     * The final comparison is by string equality, since bucket values are
+     * traditionally strings.
+     *
+     * @param {*} a first vector or scalar
+     * @param {*} b second vector or scalar
+     *
+     * @return {boolean} whether `a` and `b` are equal
+     */
+    'private _deepEqual'( a, b )
+    {
+        if ( Array.isArray( a ) )
+        {
+            if ( !Array.isArray( b ) || ( a.length !== b.length ) )
+            {
+                return false;
+            }
+
+            return a.map( ( item, i ) => this._deepEqual( item, b[ i ] ) )
+                .every( res => res === true );
+        }
+
+        return ''+a === ''+b;
     },
 
 

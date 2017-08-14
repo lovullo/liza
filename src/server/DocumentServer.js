@@ -25,6 +25,7 @@ const {
     bucket: {
         bucket_filter,
         QuoteDataBucket,
+        StagingBucket,
     },
 
     dapi: {
@@ -67,7 +68,8 @@ module.exports = Class( 'DocumentServer',
                 ),
                 apis
             ),
-            DapiMetaSource( QuoteDataBucket )
+            DapiMetaSource( QuoteDataBucket ),
+            StagingBucket
         )
     ),
 } );

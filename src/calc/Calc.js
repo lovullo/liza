@@ -27,7 +27,14 @@ function _each( data, value, callback )
 
     for ( var i = 0; i < data_len; i++ )
     {
+        // index removals are null
+        if ( data[ i ] === null )
+        {
+            continue;
+        }
+
         cur_val = ( value[ i ] !== undefined ) ? value[ i ] : cur_val;
+
         result.push( callback( data[ i ], cur_val, i ) );
     }
 
@@ -51,6 +58,11 @@ exports.join = function( data, value )
 {
     return _each( data, value, function( arr, delimiter )
     {
+        if ( !Array.isArray( arr ) )
+        {
+            arr = [];
+        }
+
         return arr.join( delimiter );
     });
 };
@@ -121,7 +133,11 @@ exports.length = function( data )
             break;
         }
 
-        result.push( item.length );
+        var len = ( item[ item.length - 1 ] === null )
+            ? item.length - 1
+            : item.length;
+
+        result.push( len );
     }
 
     return result;
@@ -214,8 +230,8 @@ exports.date = function()
     // formatted as
     return [
         now.getFullYear() + '-'
-        + ( now.getMonth() + 1 ) + '-'
-        + now.getDate()
+            + ( '0' + ( now.getMonth() + 1 ) ).substr( -2 ) + '-'
+            + ( '0' + now.getDate() ).substr( -2 )
     ];
 };
 
@@ -277,8 +293,8 @@ exports.relativeDate = function( data, value )
         // return in the YYYY-MM-DD format, since that's what our fields are
         // formatted as
         return date_new.getFullYear() + '-'
-            + ( date_new.getMonth() + 1 ) + '-'
-            + date_new.getDate();
+            + ( '0' + ( date_new.getMonth() + 1 ) ).substr( -2 ) + '-'
+            + ( '0' + date_new.getDate() ).substr( -2 );
     } );
 };
 
@@ -647,8 +663,43 @@ exports.value = function( data, indexes )
 };
 
 
+exports.repeat = function( data, value )
+{
+    var times  = value[ 0 ] || 0;
+    var result = [];
+
+    while ( times-- > 0 )
+    {
+        result.push( data );
+    }
+
+    return result;
+};
+
+
+exports.repeatConcat = function( data, value )
+{
+    var times  = value[ 0 ] || 0;
+    var result = [];
+
+    while ( times-- > 0 )
+    {
+        result = result.concat( data );
+    }
+
+    return result;
+};
+
+
+exports.index = function( data, value )
+{
+    var index  = value[ 0 ] || 0;
+
+    return data[ index ] || [];
+};
+
+
 exports[ 'void' ] = function()
 {
     return [];
 };
-

@@ -19,20 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class    = require( 'easejs' ).Class,
-    DataApi  = require( '../DataApi' ),
-    HttpImpl = require( './HttpImpl' ),
+'use strict';
 
-    // RFC 2616 methods
-    rfcmethods = {
-        DELETE:  true,
-        GET:     true,
-        HEAD:    true,
-        OPTIONS: true,
-        POST:    true,
-        PUT:     true,
-        TRACE:   true
-    };
+const { Class } = require( 'easejs' );
+const DataApi   = require( '../DataApi' );
+const HttpImpl  = require( './HttpImpl' );
+
+// RFC 2616 methods
+const rfcmethods = {
+    DELETE:  true,
+    GET:     true,
+    HEAD:    true,
+    OPTIONS: true,
+    POST:    true,
+    PUT:     true,
+    TRACE:   true
+};
 
 
 /**
@@ -61,6 +63,12 @@ module.exports = Class( 'HttpDataApi' )
      */
     'private _impl': null,
 
+    /**
+     * MIME media type
+     * @type {string}
+     */
+    'private _enctype': '',
+
 
     /**
      * Initialize Data API with destination and HTTP implementation
@@ -69,15 +77,18 @@ module.exports = Class( 'HttpDataApi' )
      * requests, which permits the user to use whatever implementation works
      * well with their existing system.
      *
+     * Default `enctype` is `application/x-www-form-urlencoded`.
+     *
      * TODO: Accept URI encoder.
      *
-     * @param {string}   url    destination URL
-     * @param {string}   method RFC-2616-compliant HTTP method
-     * @param {HttpImpl} impl   HTTP implementation
+     * @param {string}    url     destination URL
+     * @param {string}    method  RFC-2616-compliant HTTP method
+     * @param {HttpImpl}  impl    HTTP implementation
+     * @param {string=}   enctype MIME media type
      *
      * @throws {TypeError} when non-HttpImpl is provided
      */
-    __construct: function( url, method, impl )
+    __construct: function( url, method, impl, enctype )
     {
         if ( !( Class.isA( HttpImpl, impl ) ) )
         {
@@ -87,6 +98,10 @@ module.exports = Class( 'HttpDataApi' )
         this._url    = ''+url;
         this._method = this._validateMethod( method );
         this._impl   = impl;
+
+        this._enctype = ( enctype )
+            ? ''+enctype
+            : 'application/x-www-form-urlencoded';
     },
 
 
@@ -127,7 +142,7 @@ module.exports = Class( 'HttpDataApi' )
         this._impl.requestData(
             this._url,
             this._method,
-            this._encodeData( data ),
+            this.encodeData( data ),
             callback
         );
 
@@ -164,7 +179,7 @@ module.exports = Class( 'HttpDataApi' )
      */
     'private _validateDataType': function( data )
     {
-        var type = typeof data;
+        const type = typeof data;
 
         if( !( ( type === 'string' ) || ( type === 'object' ) ) )
         {
@@ -177,51 +192,57 @@ module.exports = Class( 'HttpDataApi' )
 
 
     /**
-     * If the data are an object, it's converted to an encoded key-value
-     * URI; otherwise, the original string datum is returned.
+     * Generate params for URI from key-value `data`
      *
-     * @param {?Object<string,string>|string=} data raw data or key-value
+     * Conversion depends on the MIME type (enctype) with which this instance
+     * was initialized.  For example, `application/x-www-form-urlencoded`
+     * will result in a urlencoded string, whereas `application/json` will
+     * simply be serialized.
      *
-     * @return {string} encoded data
+     * If `data` is not an object, it will be returned as a string datum.
+     *
+     * @param {Object<string,string>|string} data key-value request params
+     *
+     * @return {string} generated URI, or empty if no keys
      */
-    'private _encodeData': function( data )
+    'protected encodeData': function( data )
     {
         if ( typeof data !== 'object' )
         {
             return ''+data;
         }
 
-        return this._encodeKeys( data );
+        if ( this._method !== 'POST' )
+        {
+            return this._urlEncode( data );
+        }
+
+        switch ( this._enctype )
+        {
+            case 'application/x-www-form-urlencoded':
+                return this._urlEncode( data );
+
+            case 'application/json':
+                return JSON.stringify( data );
+
+            default:
+                throw Error( 'Unknown enctype for POST: ' + this._enctype );
+        }
     },
 
 
     /**
-     * Generate params for URI from key-value DATA
+     * urlencode each key of provided object
      *
-     * @param {Object<string,string>} data key-value request params
+     * @param {Object} obj key/value
      *
-     * @return {string} generated URI, or empty if no keys
+     * @return {string} urlencoded string, joined with '&'
      */
-    'private _encodeKeys': function( obj )
+    'private _urlEncode'( obj )
     {
-        var uri = '';
-
-        // ES3 support
-        for ( var key in obj )
-        {
-            if ( !Object.prototype.hasOwnProperty.call( obj, key ) )
-            {
-                continue;
-            }
-
-            uri += ( uri )
-                ? '&'
-                : '';
-
-            uri += encodeURIComponent( key ) + '=' +
-                encodeURIComponent( obj[ key ] );
-        }
-
-        return uri;
-    }
+        return Object.keys( obj ).map( key =>
+            encodeURIComponent( key ) + '=' +
+                encodeURIComponent( obj[ key ] )
+        ).join( '&' );
+    },
 } );

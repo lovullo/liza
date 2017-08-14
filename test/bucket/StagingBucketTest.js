@@ -26,6 +26,7 @@
 const { Class } = require( 'easejs' );
 const root      = require( '../../' );
 const expect    = require( 'chai' ).expect;
+const sinon     = require( 'sinon' );
 
 const {
     Bucket,
@@ -113,6 +114,30 @@ describe( 'StagingBucket', () =>
             },
             {
                 initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', null ] },
+                merge_index: true,
+                is_change:   false,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', null ] },
+                merge_index: false,
+                is_change:   false,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', 'quux' ] },
+                merge_index: true,
+                is_change:   true,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
+                update:      { foo: [ 'bar', 'baz', 'quux' ] },
+                merge_index: false,
+                is_change:   true,
+            },
+            {
+                initial:     { foo: [ 'bar', 'baz' ] },
                 update:      { foo: [] },
                 merge_index: true,
                 is_change:   false,
@@ -159,6 +184,48 @@ describe( 'StagingBucket', () =>
 
                 expect( called ).to.equal( is_change );
             } );
+        } );
+    } );
+
+
+    describe( "#setCommittedValues", () =>
+    {
+        it( "bypasses staging bucket without no bypass flag", () =>
+        {
+            const b     = createStubBucket();
+            const bmock = sinon.mock( b );
+            const data  = { foo: [ "bar" ] };
+            const sut   = Sut( b );
+
+            bmock.expects( 'setValues' )
+                .once()
+                .withExactArgs( data );
+
+            sut.setCommittedValues( data );
+
+            // no diff if bypassed
+            expect( sut.getDiff() ).to.deep.equal( {} );
+
+            bmock.verify();
+        } );
+
+
+        it( "does not bypasses staging bucket with no bypass flag", () =>
+        {
+            const b     = createStubBucket();
+            const bmock = sinon.mock( b );
+            const data  = { foo: [ "bar" ] };
+            const sut   = Sut( b );
+
+            bmock.expects( 'setValues' ).never();
+
+            sut.forbidBypass();
+            sut.setCommittedValues( data );
+
+            // should have been staged
+            expect( sut.getDiff() ).to.deep.equal( data );
+
+            bmock.verify();
         } );
     } );
 } );
