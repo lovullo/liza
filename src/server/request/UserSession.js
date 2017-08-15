@@ -221,7 +221,7 @@ module.exports = Class.extend( require( 'events' ).EventEmitter,
 
         this._memcache.get( this._id, function( orig )
         {
-            if ( orig === null )
+            if ( !orig )
             {
                 // well we gave it a good shot! (right now we don't indicate
                 // error, because there's not much we can do about that...maybe
