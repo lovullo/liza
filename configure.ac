@@ -18,7 +18,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-AC_INIT([liza], [1.3.0], [dev@lovullo.com])
+m4_define([ver], m4_esyscmd(build-aux/vergen))
+m4_if(ver, [], [m4_exit(1)])
+
+AC_INIT([liza], [ver], [dev@lovullo.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign])
 
