@@ -100,15 +100,16 @@ module.exports = Class( 'DataProcessor',
         program.initQuote( staging, true );
 
         // array of promises for any dapi requests
-        const dapis = this._triggerDapis(
+        const [ dapis, meta_clear ] = this._triggerDapis(
             dapi_manager, program, staging.getDiff(), staging
         );
 
         staging.commit();
 
         return {
-            filtered: filtered,
-            dapis:    dapis,
+            filtered:   filtered,
+            dapis:      dapis,
+            meta_clear: meta_clear,
         };
     },
 
@@ -183,8 +184,9 @@ module.exports = Class( 'DataProcessor',
         } = program;
 
         const dapi_fields = this._determineDapiFields( mapis, data );
+        const clear       = this._genClearMetaValues( dapi_fields );
 
-        return Object.keys( dapi_fields ).map( field =>
+        const dapis = Object.keys( dapi_fields ).map( field =>
         {
             const { dapi } = fields[ field ];
             const indexes  = dapi_fields[ field ];
@@ -199,7 +201,36 @@ module.exports = Class( 'DataProcessor',
                 )
             );
         } ).reduce( ( result, x ) => result.concat( x ), [] );
+
+        return [ dapis, clear ];
     },
+
+
+    /**
+     * Generate update to clear metadata fields with pending dapi calls
+     *
+     * This ensures that stale data won't be accessible to systems while a
+     * request hasn't yet completed.  For example, if performing a rate
+     * lookup, it wouldn't be desirable to use an old rate even though data
+     * used to retrieve it has since changed.
+     *
+     * @param {Object.<string,Array>} fields field names and array of indexes
+     *
+     * @return {undefined}
+     */
+    'private _genClearMetaValues'( fields )
+    {
+        return Object.keys( fields ).reduce( ( result, field ) =>
+        {
+            result[ field ] = fields[ field ].reduce( ( values, i ) =>
+            {
+                values[ i ] = "";
+                return values;
+            }, [] );
+
+            return result;
+        }, {} );
+},
 
 
     /**

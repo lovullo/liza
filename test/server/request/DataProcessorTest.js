@@ -181,7 +181,9 @@ describe( 'DataProcessor', () =>
             src1: [ 'bsrc10', 'bsrc11' ],
         } );
 
-        const { dapis } = sut.processDiff( data, request, program, bucket );
+        const { dapis, meta_clear } = sut.processDiff(
+            data, request, program, bucket
+        );
 
         const expected = {
             dapi_foo: [
@@ -211,6 +213,11 @@ describe( 'DataProcessor', () =>
             ],
         };
 
+        const expected_clear = {
+            foo: [ "", "" ],
+            bar: [ "", "" ],
+        };
+
         for ( let dapi_name in expected )
         {
             let expected_call = expected[ dapi_name ];
@@ -238,6 +245,8 @@ describe( 'DataProcessor', () =>
         }
 
         expect( triggered.dapi_no_call ).to.equal( undefined );
+
+        expect( meta_clear ).to.deep.equal( expected_clear );
 
         return Promise.all( dapis );
     } );

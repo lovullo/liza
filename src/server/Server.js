@@ -1136,11 +1136,12 @@ module.exports = Class( 'Server' )
                     var parsed_data = JSON.parse( post_data.data );
                     var bucket      = quote.getBucket();
 
-                    const { filtered, dapis } = server._dataProcessor.processDiff(
-                        parsed_data, request, program, bucket
-                    );
+                    const { filtered, dapis, meta_clear } =
+                        server._dataProcessor.processDiff(
+                            parsed_data, request, program, bucket
+                        );
 
-                    server._monitorMetadataPromise( quote, dapis );
+                    server._monitorMetadataPromise( quote, dapis, meta_clear );
                }
                 catch ( err )
                 {
@@ -1168,8 +1169,12 @@ module.exports = Class( 'Server' )
     },
 
 
-    'private _monitorMetadataPromise'( quote, dapis )
+    'private _monitorMetadataPromise'( quote, dapis, meta_clear )
     {
+        // save metadata clear to database to prevent stale data from being
+        // used while requests are pending
+        this.dao.saveQuoteMeta( quote, meta_clear, null, e => { throw e; } );
+
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
                 this.dao.saveQuoteMeta(
