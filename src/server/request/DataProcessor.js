@@ -230,7 +230,7 @@ module.exports = Class( 'DataProcessor',
 
             return result;
         }, {} );
-},
+    },
 
 
     /**
