@@ -33,6 +33,13 @@ repository; you may generate the script by issuing the following command:
 You may then see `./configure --help` for more information.
 
 
+## Documentation
+Compiled documentation is available [via our GitLab
+mirror](https://lovullo.gitlab.io/liza/), which uses the same build pipeline
+as we do on our internal GitLab instance.  It contains the current state of
+master (with some delay), not just the most recent tag.
+
+
 ## License
 Liza is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
