@@ -103,7 +103,7 @@ exports.init = function( logger, enc_service )
         new MongoServer(
             process.env.MONGODB_HOST || '127.0.0.1',
                 +process.env.MONGODB_PORT || MongoConnection.DEFAULT_PORT,
-            {}
+            { auto_reconnect: true }
         ),
         { native_parser: false, safe: false }
     );
