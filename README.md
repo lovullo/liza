@@ -34,9 +34,13 @@ You may then see `./configure --help` for more information.
 
 
 ## Documentation
-Compiled documentation for the latest release is available [via our GitLab
-mirror](https://lovullo.gitlab.io/liza/), which uses the same build pipeline
-as we do on our internal GitLab instance.
+Compiled documentation for the latest release is available via our GitLab
+mirror, which uses the same build pipeline as we do on our internal GitLab
+instance.  Available formats are:
+
+- [Multi-page HTML][doc-html]
+- [PDF][doc-pdf]
+- [Info][doc-info]
 
 
 ## License
@@ -56,4 +60,8 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 more details.
 
 The full licenses are available in `COPYING` and `COPYING.AGPL`.
+
+[doc-html]: https://lovullo.gitlab.io/liza/
+[doc-pdf]: https://lovullo.gitlab.io/liza/liza.pdf
+[doc-info]: https://lovullo.gitlab.io/liza/liza.info
 
