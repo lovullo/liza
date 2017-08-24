@@ -118,9 +118,15 @@ module.exports = Class( 'Server' )
      */
     'private _dataProcessor': null,
 
+    /**
+     * Initializes program
+     * @type {ProgramInit}
+     */
+    'private _progInit': null,
+
 
     'public __construct': function(
-        response, dao, logger, encsvc, data_processor
+        response, dao, logger, encsvc, data_processor, init
     )
     {
         if ( !Class.isA( DataProcessor, data_processor ) )
@@ -133,6 +139,7 @@ module.exports = Class( 'Server' )
         this.logger         = logger;
         this._encService    = encsvc;
         this._dataProcessor = data_processor;
+        this._progInit      = init;
     },
 
 
@@ -287,7 +294,10 @@ module.exports = Class( 'Server' )
                         }
 
                         // we're good
-                        init_finish( program );
+                        server._getDefaultBucket( program, quote_data )
+                            .then( default_bucket =>
+                                init_finish( program, default_bucket )
+                            );
                     });
                 });
             }
@@ -297,20 +307,21 @@ module.exports = Class( 'Server' )
                 server.getProgram( quote_data.programId )
                     .then( function( quote_program )
                     {
-                        init_finish( quote_program );
+                        server._getDefaultBucket( quote_program, quote_data )
+                            .then( default_bucket =>
+                                init_finish( quote_program, default_bucket )
+                            );
                     } );
             }
 
-            function init_finish( quote_program )
+            function init_finish( quote_program, default_bucket )
             {
                 // fill in the quote data (with reasonable defaults if the quote
                 // does not yet exist); IMPORTANT: do not set pver to the
                 // current version here; the quote will be repaired if it is not
                 // set
                 quote
-                    .setData(
-                        server._getDefaultBucket( quote_program, quote_data )
-                    )
+                    .setData( default_bucket )
                     .setMetadata( quote_data.meta || {} )
                     .setQuickSaveData( quote_data.quicksave || {} )
                     .setAgentId( quote_data.agentId || agent_id )
@@ -523,41 +534,7 @@ module.exports = Class( 'Server' )
      */
     'private _getDefaultBucket': function( program, quote_data )
     {
-        var defaults = program.defaults,
-            bucket   = quote_data.data || {},
-            pre      = this._defaultBuckets[ program.getId() ];
-
-        // we only want to merge in the defaults if this is the first visit to
-        // the quote
-        if ( quote_data.currentStepId > 0 )
-        {
-            // todo: uncomment later; for now we want older quotes to still work
-            //return bucket;
-        }
-
-        // if we already generated the default bucket data and have no
-        // quote-specific data, return it
-        if ( pre && ( quote_data.data === undefined ) )
-        {
-            return pre;
-        }
-
-        // generate
-        for ( item in program.defaults )
-        {
-            if ( bucket[ item ] === undefined )
-            {
-                bucket[ item ] = [ defaults[ item ] ];
-            }
-        }
-
-        // set as default bucket only if we didn't merge
-        if ( quote_data.data === undefined )
-        {
-            this._defaultBuckets[ program.getId() ] = bucket;
-        }
-
-        return bucket;
+        return this._progInit.init( program, quote_data.data );
     },
 
 
