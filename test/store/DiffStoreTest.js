@@ -232,4 +232,39 @@ describe( 'store.DiffStore', () =>
             } );
         } );
     } );
+
+
+    describe( '#populate', () =>
+    {
+        it( "#add's each element of object to store", () =>
+        {
+            const obj = { foo: {}, bar: {} };
+            const sut = Sut();
+
+            return sut.populate( obj )
+                .then( ps =>
+                {
+                    // by reference
+                    expect( sut.get( 'foo' ) )
+                        .to.eventually.equal( obj.foo );
+                    expect( sut.get( 'bar' ) )
+                        .to.eventually.equal( obj.bar );
+
+                    expect( ps.length )
+                       .to.equal( Object.keys( obj ).length );
+                } );
+        } );
+
+        it( "fails if any add fails", () =>
+        {
+            const e = Error( 'ok' );
+
+            const sut = Sut.extend( {
+                'override add': ( k, v ) => Promise.reject( e )
+            } )();
+
+            return expect( sut.populate( { a: 1 } ) )
+                .to.eventually.be.rejectedWith( e );
+        } );
+    } );
 } );

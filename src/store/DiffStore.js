@@ -133,6 +133,31 @@ module.exports = Class( 'DiffStore' )
 
 
     /**
+     * Populate store with each element in object `obj`
+     *
+     * This is simply a convenient way to call `#add` for each element in an
+     * object.  This does directly call `#add`, so overriding that method
+     * will also affect this one.
+     *
+     * If the intent is to change the behavior of what happens when an item
+     * is added to the store, override the `#add` method instead of this one
+     * so that it affects _all_ adds, not just calls to this method.
+     *
+     * @param {Object} obj object with which to populate store
+     *
+     * @return {Array.<Promise.<Store>>} array of #add promises
+     */
+    'virtual public populate'( obj )
+    {
+        return Promise.all(
+            Object.keys( obj ).map(
+                key => this.add( key, obj[ key ] )
+            )
+        );
+    },
+
+
+    /**
      * Retrieve diff of `key`
      *
      * This performs a lazy diff of the data `D` behind `key`.  For each
