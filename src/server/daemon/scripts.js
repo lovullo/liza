@@ -51,10 +51,12 @@ var script_paths = [
     ( process.env.LV_ROOT_PATH || '.' ) + '/src/www/scripts/program/',
 ];
 
+const legacy_path = process.env.LV_LEGACY_PATH + '/';
+
 var script_prefix = {
     liza:    __dirname + '/../../',
     assert:  __dirname + '/../../assert/',
-    program: ( process.env.LV_LEGACY_PATH + '/' ) || '',
+    program: ( legacy_path + 'program/' ) || '',
 };
 
 /**
@@ -103,7 +105,7 @@ exports.route = function( request, log )
         suffix = parts[ 2 ];
 
     var chk_paths = script_paths.slice();
-    chk_paths.unshift( script_prefix[ prefix ] || './' );
+    chk_paths.unshift( script_prefix[ prefix ] || legacy_path );
 
     // check each of the paths for the script that was requested
     ( function check_path( paths )
@@ -119,6 +121,7 @@ exports.route = function( request, log )
 
         // check to see if the file exists within the path
         var filename = ( cur_path + suffix );
+
         fs.exists( filename, function( exists )
         {
             if ( !exists )

@@ -34,10 +34,10 @@ var AbstractClass = require( 'easejs' ).AbstractClass,
 module.exports = AbstractClass( 'Daemon',
 {
     /**
-     * Quote server port
-     * @type {number}
+     * System configuration
+     * @type {Store}
      */
-    'private _httpPort': 0,
+    'private _conf': null,
 
     /**
      * Server to accept HTTP requests
@@ -96,17 +96,9 @@ module.exports = AbstractClass( 'Daemon',
     'private _rater': null,
 
 
-    'public __construct': function( http_port, log_priority )
+    'public __construct': function( conf )
     {
-        this._httpPort = http_port;
-
-        this._rater      = liza.server.rater.ProcessManager();
-        this._httpServer = this.getHttpServer();
-        this._accessLog  = this._createAccessLog();
-        this._debugLog   = this._createDebugLog( log_priority );
-        this._encService = this.getEncryptionService();
-        this._memcache   = this.getMemcacheClient();
-        this._routers    = this.getRouters();
+        this._conf = conf;
     },
 
 
@@ -115,10 +107,28 @@ module.exports = AbstractClass( 'Daemon',
      *
      * @return {undefined}
      */
-    'public start': function()
+    'public start'()
     {
-        var _self = this;
+        return Promise.all( [
+            this._createDebugLog(),
+            this._createAccessLog(),
+        ] ).then( ([ debug_log, access_log ]) =>
+        {
+            this._debugLog   = debug_log;
+            this._accessLog  = access_log;
 
+            this._httpServer = this.getHttpServer();
+            this._rater      = liza.server.rater.ProcessManager();
+            this._encService = this.getEncryptionService();
+            this._memcache   = this.getMemcacheClient();
+            this._routers    = this.getRouters();
+        } )
+            .then( () => this._startDaemon() );
+    },
+
+
+    'private _startDaemon'()
+    {
         this._debugLog.log( this._debugLog.PRIORITY_IMPORTANT,
             "Access log path: %s", this._accessLogPath
         );
@@ -128,18 +138,18 @@ module.exports = AbstractClass( 'Daemon',
         );
 
         this._initSignalHandlers();
-        this._testEncryptionService( function()
+        this._testEncryptionService( () =>
         {
-            _self._memcacheConnect();
-            _self._initMemoryLogger();
+            this._memcacheConnect();
+            this._initMemoryLogger();
 
-            _self._initRouters();
-            _self._initHttpServer( function()
+            this._initRouters();
+            this._initHttpServer( () =>
             {
-                _self._initUncaughtExceptionHandler();
+                this._initUncaughtExceptionHandler();
 
                 // ready to roll
-                _self._debugLog.log( _self._debugLog.PRIORITY_INFO,
+                this._debugLog.log( this._debugLog.PRIORITY_INFO,
                     "Daemon initialization complete."
                 );
             } );
@@ -299,22 +309,30 @@ module.exports = AbstractClass( 'Daemon',
 
     'private _createAccessLog': function()
     {
-        this._accessLogPath =
-            ( process.env.LOG_PATH_ACCESS || '/var/log/node/access.log' );
-
-        return this.getAccessLog()( this._accessLogPath );
+        return this._conf.get( 'log.access.path' )
+            .then( log_path =>
+            {
+                this._accessLogPath = log_path;
+                return this.getAccessLog()( this._accessLogPath );
+            } );
     },
 
 
-    'private _createDebugLog': function( log_priority )
+    'private _createDebugLog': function()
     {
-        this._debugLogPath =
-            ( process.env.LOG_PATH_DEBUG || '/var/log/node/debug.log' );
+        return Promise.all( [
+            this._conf.get( 'log.priority' ),
+            this._conf.get( 'log.debug.path' ),
+        ] )
+            .then( ([ priority, debug_log_path ]) =>
+            {
+                this._debugLogPath = debug_log_path;
 
-        return this.getPriorityLog()(
-            this._debugLogPath,
-            ( process.env.LOG_PRIORITY || log_priority )
-        );
+                return this.getPriorityLog()(
+                    debug_log_path,
+                    priority
+                )
+            } );
     },
 
 
@@ -514,25 +532,33 @@ module.exports = AbstractClass( 'Daemon',
                 this._debugLog
             );
 
-            this._httpServer.listen( this._httpPort, function()
-            {
-                _self._debugLog.log(
-                    1, "Server running on port %d", _self._httpPort
-                );
+            this._conf.get( 'http.port' )
+                .then( port => this._httpServer.listen( port, () =>
+                {
+                    this._debugLog.log(
+                        1, "Server running on port %d", _self._httpPort
+                    );
 
-                callback();
-            } );
+                    callback();
+                } ) )
+                .catch( e => this._httpError( e ) );
         }
-        catch( err )
+        catch( e )
         {
-            this._debugLog.log( this._debugLog.PRIORITY_ERROR,
-                "Unable to start HTTP server: %s",
-                err
-            );
-
-            // exit with an error
-            process.exit( 1 );
+            this._httpError( e );
         }
+    },
+
+
+    'private _httpError'( e )
+    {
+        this._debugLog.log( this._debugLog.PRIORITY_ERROR,
+            "Unable to start HTTP server: %s",
+            err
+        );
+
+        // TODO: use daemon-level promise and reject it
+        process.exit( 1 );
     },
 } );
 
