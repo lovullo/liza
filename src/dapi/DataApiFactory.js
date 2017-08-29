@@ -43,23 +43,44 @@ module.exports = Class( 'DataApiFactory',
      * The source and method have type-specific meaning; that is, "source"
      * may be a URL and "method" may be get/post for a RESTful service.
      *
-     * @param {string} type service type (e.g. "rest")
-     * @param {Object} desc API description
+     * @param {string} type     service type (e.g. "rest")
+     * @param {Object} desc     API description
+     * @param {Bucket} bucket   active bucket
+     * @param {string} api_name dapi name
      *
      * @return {DataApi} appropriate DataApi instance
      */
-    'public fromType': function( type, desc, bucket )
+    'public fromType': function( type, desc, bucket, api_name )
     {
-        const static_data = ( desc['static'] || [] );
-        const nonempty    = !!desc.static_nonempty;
-        const multiple    = !!desc.static_multiple;
+        return this.descLookup( api_name, desc ).then( descl =>
+        {
+            const static_data = ( descl['static'] || [] );
+            const nonempty    = !!descl.static_nonempty;
+            const multiple    = !!descl.static_multiple;
 
-        const api = this._createDataApi( type, desc, bucket );
+            const api = this._createDataApi( type, descl, bucket );
 
-        return RestrictedDataApi(
-            StaticAdditionDataApi( api, nonempty, multiple, static_data ),
-            desc
-        );
+            return RestrictedDataApi(
+                StaticAdditionDataApi( api, nonempty, multiple, static_data ),
+                descl
+            );
+        } );
+    },
+
+
+    /**
+     * Look up dapi descriptor from configuration
+     *
+     * The default implementation just echoes back the given descriptor.
+     *
+     * @param {string} api_name dapi identifier
+     * @param {Object} desc     given descriptor
+     *
+     * @return {Object} looked up descriptor
+     */
+    'virtual protected descLookup'( api_name, desc )
+    {
+        return Promise.resolve( desc );
     },
 
 

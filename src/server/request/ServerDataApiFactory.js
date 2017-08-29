@@ -21,12 +21,17 @@
 
 const { Class } = require( 'easejs' );
 const {
-    DataApiFactory,
-    http: {
-        NodeHttpImpl,
-        SpoofedNodeHttpImpl,
+    dapi: {
+        DataApiFactory,
+        http: {
+            NodeHttpImpl,
+            SpoofedNodeHttpImpl,
+        },
     },
-} = require( '../..' ).dapi;
+    store: {
+        StoreMissError,
+    },
+} = require( '../..' );
 
 
 /**
@@ -47,11 +52,50 @@ module.exports = Class( 'ServerDataApiFactory' )
      */
     'private _session': null,
 
+    /**
+     * Dapi configuration
+     * @type {Store}
+     */
+    'private _conf': null,
 
-    constructor( origin, session )
+
+    constructor( origin, session, conf )
     {
         this._origin  = ''+origin;
         this._session = session;
+        this._conf    = conf;
+    },
+
+
+    /**
+     * Look up dapi descriptor from configuration
+     *
+     * If no configuration is found for `api_name`, the original `desc` will
+     * be returned.  Otherwise, they will be merged, with the lookup taking
+     * precedence.
+     *
+     * @param {string} api_name dapi identifier
+     * @param {Object} desc     given descriptor
+     *
+     * @return {Object} looked up descriptor
+     */
+    'override protected descLookup'( api_name, desc )
+    {
+        return this._conf.get( 'aliases' )
+            .then( aliases => aliases.get( api_name ) )
+            .then( desc_lookup => desc_lookup.reduce(
+                ( ret, value, key ) =>
+                {
+                    // merges the two, with lookup taking precedence
+                    ret[ key ] = value;
+                    return ret;
+                },
+                Object.create( desc )
+            ) )
+            .catch( e => ( Class.isA( StoreMissError, e ) )
+                ? desc
+                : Promise.reject( e )
+            );
     },
 
 
