@@ -53,23 +53,27 @@ const {
  */
 module.exports = Class( 'DocumentServer',
 {
-    'public create': ( dao, logger, enc_service, origin_url ) => Server(
-        new JsonServerResponse.create(),
-        dao,
-        logger,
-        enc_service,
+    'public create': ( dao, logger, enc_service, origin_url, conf ) =>
+        Promise.all( [
+            conf.get( 'dapi' ),
+        ] ).then( ([ dapi_conf ]) => Server(
+            new JsonServerResponse.create(),
+            dao,
+            logger,
+            enc_service,
 
-        DataProcessor(
-            bucket_filter,
-            ( apis, request ) => DataApiManager(
-                ServerDataApiFactory(
-                    origin_url || request.getOrigin(),
-                    request
+            DataProcessor(
+                bucket_filter,
+                ( apis, request ) => DataApiManager(
+                    ServerDataApiFactory(
+                        origin_url || request.getOrigin(),
+                        request,
+                        dapi_conf
+                    ),
+                    apis
                 ),
-                apis
-            ),
-            DapiMetaSource( QuoteDataBucket ),
-            StagingBucket
-        )
-    ),
+                DapiMetaSource( QuoteDataBucket ),
+                StagingBucket
+            )
+        ) )
 } );

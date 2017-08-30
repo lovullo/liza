@@ -71,6 +71,41 @@ describe( 'store.MemoryStore', () =>
     } );
 
 
+    describe( '#populate', () =>
+    {
+        it( "#add's each element of object to store", () =>
+        {
+            const obj = { foo: {}, bar: {} };
+            const sut = Sut();
+
+            return sut.populate( obj )
+                .then( ps =>
+                {
+                    // by reference
+                    expect( sut.get( 'foo' ) )
+                        .to.eventually.equal( obj.foo );
+                    expect( sut.get( 'bar' ) )
+                        .to.eventually.equal( obj.bar );
+
+                    expect( ps.length )
+                       .to.equal( Object.keys( obj ).length );
+                } );
+        } );
+
+        it( "fails if any add fails", () =>
+        {
+            const e = Error( 'ok' );
+
+            const sut = Sut.extend( {
+                'override add': ( k, v ) => Promise.reject( e )
+            } )();
+
+            return expect( sut.populate( { a: 1 } ) )
+                .to.eventually.be.rejectedWith( e );
+        } );
+    } );
+
+
     // most things implicitly tested above
     describe( '#get', () =>
     {
@@ -118,7 +153,7 @@ describe( 'store.MemoryStore', () =>
 
     describe( 'with mixin', () =>
     {
-        it( 'allows overriding add', done =>
+        it( 'allows overriding #add', done =>
         {
             const expected_key   = 'foo';
             const expected_value = {};
@@ -137,7 +172,28 @@ describe( 'store.MemoryStore', () =>
         } );
 
 
-        it( 'allows overriding get', done =>
+        it( "allows overriding #populate", () =>
+        {
+            const obj  = {};
+            let called = false;
+
+            return Sut.use(
+                Trait.extend( Sut,
+                {
+                    'override populate'( given )
+                    {
+                        expect( given ).to.equal( obj );
+                        called = true;
+
+                        return Promise.resolve( true );
+                    }
+                } )
+            )().populate( obj )
+                .then( () => expect( called ).to.equal( true ) );
+        } );
+
+
+        it( 'allows overriding #get', done =>
         {
             const expected_key = 'bar';
 
@@ -154,7 +210,7 @@ describe( 'store.MemoryStore', () =>
         } );
 
 
-        it( 'allows overriding clear', done =>
+        it( 'allows overriding #clear', done =>
         {
             Sut.use(
                 Trait.extend( Sut,

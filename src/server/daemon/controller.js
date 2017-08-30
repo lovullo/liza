@@ -96,7 +96,7 @@ var sflag = {};
 exports.rater = {};
 
 
-exports.init = function( logger, enc_service )
+exports.init = function( logger, enc_service, conf )
 {
     var db = new MongoDb(
         'program',
@@ -109,46 +109,50 @@ exports.init = function( logger, enc_service )
     );
 
     const dao = MongoServerDao( db );
-    server    = _createDocumentServer( dao, logger, enc_service );
 
-    server_cache = _createCache( server );
-    server.init( server_cache, exports.rater );
-
-    rating_service = RatingService( logger, dao, server, exports.rater );
-
-    // TODO: exports.init needs to support callbacks; this will work, but
-    // only because it's unlikely that we'll get a request within
-    // milliseconds of coming online
-    _initExportService( db, function( service )
+    _createDocumentServer( dao, logger, enc_service, conf ).then( srv =>
     {
-        c1_export_service = service;
-    } );
+        server = srv;
 
-    server.on( 'quotePverUpdate', function( quote, program, event )
-    {
-        // let them know that we're going to be a moment
-        var c = event.wait();
+        server_cache = _createCache( server );
+        server.init( server_cache, exports.rater );
 
-        getCleaner( program ).clean( quote, function( err )
+        rating_service = RatingService( logger, dao, server, exports.rater );
+
+        // TODO: exports.init needs to support callbacks; this will work, but
+        // only because it's unlikely that we'll get a request within
+        // milliseconds of coming online
+        _initExportService( db, function( service )
         {
-            // report on our success/failure
-            if ( err )
-            {
-                event.bad( err );
-            }
-            else
-            {
-                event.good();
-            }
+            c1_export_service = service;
+        } );
 
-            // we're done
-            c();
+        server.on( 'quotePverUpdate', function( quote, program, event )
+        {
+            // let them know that we're going to be a moment
+            var c = event.wait();
+
+            getCleaner( program ).clean( quote, function( err )
+            {
+                // report on our success/failure
+                if ( err )
+                {
+                    event.bad( err );
+                }
+                else
+                {
+                    event.good();
+                }
+
+                // we're done
+                c();
+            } );
         } );
     } );
 }
 
 
-function _createDocumentServer( dao, logger, enc_service )
+function _createDocumentServer( dao, logger, enc_service, conf )
 {
     const origin_url = process.env.HTTP_ORIGIN_URL || '';
 
@@ -163,7 +167,8 @@ function _createDocumentServer( dao, logger, enc_service )
         );
     }
 
-    return DocumentServer().create( dao, logger, enc_service, origin_url );
+    return DocumentServer()
+        .create( dao, logger, enc_service, origin_url, conf );
 }
 
 

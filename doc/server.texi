@@ -39,16 +39,30 @@ An example script to start the server is shown in @ref{f:server-start}.
        use @srcrefjs{server/daemon,DevDaemon},
        which uses a dummy encryption service.}
 
+To start the server,
+  invoke @srcref{bin/server}.
+You may also invoke @srcref{bin/server.js} directly using Node.js,
+  but the use of @srcref{bin/server} is recommended,
+    as it uses the Node.js executable determined at configure-time,
+    along with any command-line options required for Liza@tie{}Server
+      to function correctly.
+Additional options can be provided to Node.js using the
+  @var{NODE_FLAGS} environment variable,
+    which will be @emph{appended} to the configure-time flags.
+This environment variable is @emph{not} escaped or quoted,
+  so be mindful of word expansion.
+
 @float Figure, f:server-start
 @example
-  const @{ Daemon @}   = require( 'liza' ).server.daemon;
-  const port         = 8080;
-  const log_priority = 10;
+  $ bin/server -c path/to/config.json
 
-  Daemon( port, log_priority ).start();
+  # providing additional options to node
+  $ NODE_FLAGS=--debug bin/server -c path/to/config.json
 @end example
-@caption{Starting the server daemon}
+@caption{Starting the Liza Server}
 @end float
+
+
 
 @cindex HTTP Server
 The HTTP server is managed by
@@ -56,12 +70,30 @@ The HTTP server is managed by
 
 
 @menu
-* Requests::                    Handling HTTP requests.
-* Posting Data::                Handling step saves and other posts.
-* Server-Side Data API Calls::  Accessing external resources on the server.
-* Encryption Service::          Managing sensitive data.
+* Configuration:Server Configuration. Server configuration.
+* Requests::                          Handling HTTP requests.
+* Posting Data::                      Handling step saves and other posts.
+* Server-Side Data API Calls::        Accessing external resources on the server.
+* Encryption Service::                Managing sensitive data.
 @end menu
 
+
+
+@node Server Configuration
+@section Configuration
+@helpwanted{}
+
+@cindex Configuration
+Liza is migrating to actual configuration file in place of environment
+  variables.
+If no configuration is explicitly specified,
+  it uses @srcrefraw{conf/vanilla-server.json}.
+
+Configuration loading is handled by @srcrefjs{conf,ConfLoader}.
+The configuration store @srcrefjs{conf,ConfStore} is asyncrhonous,
+  so loading configuration from any external system is supported.@footnote{
+    Provided that you write the code to load from that system,
+      that is.}
 
 
 @node Requests

@@ -116,7 +116,7 @@ function createStubDapiFactory( dapis )
     return {
         fromType( type )
         {
-            return dapis[ type ];
+            return Promise.resolve( dapis[ type ] );
         },
     };
 }

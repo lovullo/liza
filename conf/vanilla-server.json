@@ -1,0 +1,55 @@
+{
+  "name":   "Liza Server",
+  "daemon": "DevDaemon",
+
+  "http": {
+    "port": 8822
+  },
+
+  "log": {
+    "priority": 10,
+    "access": {
+      "path": "/var/log/node/access.log"
+    },
+    "debug": {
+      "path": "/var/log/node/debug.log"
+    }
+  },
+
+  "user": {
+    "session": {
+      "handler": {
+        "type":   "php",
+        "cookie": "PHPSESSID"
+      },
+      "store": {
+        "type": "memcache",
+        "host":  "localhost",
+        "port":  11211
+      }
+    }
+  },
+
+  "documentStore": {
+    "store": "mongodb",
+    "host":  "localhost",
+    "port":  27017
+  },
+
+  "services": {
+    "rating": {
+      "process": {
+        "port": 5859,
+        "argv": "inherit"
+      },
+      "remote": {
+        "host":   "localhost",
+        "domain": ""
+      }
+    },
+    "c1export": {
+      "host":   "localhost",
+      "domain": ""
+    }
+  }
+}

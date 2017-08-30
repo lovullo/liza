@@ -38,7 +38,7 @@ module.exports = Class( 'DataApiManager' )
     'private _dataApiFactory': null,
 
     /**
-     * DataApi instances, indexed by API id
+     * DataApi instance promises, indexed by API id
      * @type {Object}
      */
     'private _dataApis': {},
@@ -157,18 +157,18 @@ module.exports = Class( 'DataApiManager' )
         }
 
         // create the API if necessary (lazy-load); otherwise, use the existing
-        // instance
-        var api = this._dataApis[ api ] || ( function()
+        // instance (well, a promise for one)
+        var apip = this._dataApis[ api ] || ( function()
         {
             var apidesc = _self._apis[ api ];
 
             // create a new instance of the API
             return _self._dataApis[ api ] = _self._dataApiFactory.fromType(
-                apidesc.type, apidesc, bucket
-            ).on( 'error', function( e )
-            {
-                _self.emit( 'error', e );
-            } );
+                apidesc.type, apidesc, bucket, api
+            )
+                .then( api =>
+                    api.on( 'error', e => _self.emit( 'error', e ) )
+                );
         } )();
 
         // this has the effect of wiping out previous requests of the same id,
@@ -187,28 +187,22 @@ module.exports = Class( 'DataApiManager' )
             };
 
             // process the request; we'll let them know when it comes back
-            try
+            apip.then( api => api.request( data, function()
             {
-                api.request( data, function()
+                // we only wish to populate the field if the request should
+                // still be considered pending
+                var curuid = ( _self._pendingApiCall[ id ] || {} ).uid;
+                if ( curuid === uid )
                 {
-                    // we only wish to populate the field if the request should
-                    // still be considered pending
-                    var curuid = ( _self._pendingApiCall[ id ] || {} ).uid;
-                    if ( curuid === uid )
-                    {
-                        // forward to the caller
-                        callback.apply( this, arguments );
+                    // forward to the caller
+                    callback.apply( this, arguments );
 
-                        // clear the pending flag
-                        _self._pendingApiCall[ id ] = undefined;
-                        _self.emit( 'fieldLoaded', name, +index );
-                    }
-                } );
-            }
-            catch ( e )
-            {
-                fc( e );
-            }
+                    // clear the pending flag
+                    _self._pendingApiCall[ id ] = undefined;
+                    _self.emit( 'fieldLoaded', name, +index );
+                }
+            } ) )
+                .catch( e => fc( e ) );
         };
 
         // field is about to be re-loaded
