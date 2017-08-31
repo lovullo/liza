@@ -42,8 +42,8 @@ An example script to start the server is shown in @ref{f:server-start}.
        which uses a dummy encryption service.}
 
 To start the server,
-  invoke @srcref{bin/server}.
-You may also invoke @srcref{bin/server.js} directly using Node.js,
+  invoke @srcrefraw{bin/server}.
+You may also invoke @srcrefraw{bin/server.js} directly using Node.js,
   but the use of @srcref{bin/server} is recommended,
     as it uses the Node.js executable determined at configure-time,
     along with any command-line options required for Liza@tie{}Server
