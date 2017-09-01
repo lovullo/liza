@@ -15,6 +15,10 @@
     "node": ">0.0.0"
   },
 
+  "bin": {
+    "liza-server": "bin/server"
+  },
+
   "dependencies": {
     "easejs": "0.2.x",
     "mongodb": "1.2.8"
