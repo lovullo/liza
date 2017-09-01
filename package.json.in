@@ -19,6 +19,10 @@
     "liza-server": "bin/server"
   },
 
+  "scripts": {
+    "postinstall": "./configure"
+  },
+
   "dependencies": {
     "easejs": "0.2.x",
     "mongodb": "1.2.8"
