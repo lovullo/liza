@@ -158,16 +158,15 @@ module.exports = Class( 'RatingService',
                     rate_data, actions, program, quote
                 );
 
-                var class_dest = {};
+                const class_dest = {};
 
-                rate_data = _self._cleanRateData(
+                const cleaned = _self._cleanRateData(
                     rate_data,
                     class_dest
                 );
 
                 // TODO: move me during refactoring
                 _self._dao.saveQuoteClasses( quote, class_dest );
-
 
                 // save all data server-side (important: do after
                 // post-processing); async
@@ -179,7 +178,7 @@ module.exports = Class( 'RatingService',
 
                 // no need to wait for the save; send the response
                 _self._server.sendResponse( request, quote, {
-                    data: rate_data
+                    data: cleaned
                 }, actions );
             },
             function( message )
