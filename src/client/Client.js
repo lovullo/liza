@@ -1873,7 +1873,7 @@ module.exports = Class( 'Client' )
             }
 
             // set data all at once to avoid extraneous calls
-            quote.setData( values, true );
+            quote.setData( values );
         } ).on( 'indexReset', function( index, groupui )
         {
             var fields = groupui.getGroup().getFieldNames(),
@@ -1894,7 +1894,7 @@ module.exports = Class( 'Client' )
             }
 
             // set data all at once to avoid extraneous calls
-            quote.setData( values, true );
+            quote.setData( values );
         } );
 
         // when the step is rendered, run the onchange events

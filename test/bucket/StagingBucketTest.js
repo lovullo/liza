@@ -30,160 +30,204 @@ const sinon     = require( 'sinon' );
 
 const {
     Bucket,
-    StagingBucket: Sut
+    StagingBucket: Sut,
+
+    // TODO: decouple test from this
+    QuoteDataBucket,
 } = root.bucket;
 
 
 describe( 'StagingBucket', () =>
 {
-    describe( 'pre-update event', () =>
+    it( 'pre-update event allows updating data before set', () =>
     {
-        it( 'allows updating data before set', () =>
+        const sut = Sut( createStubBucket() );
+
+        const data = {
+            foo: [ 'bar', 'baz' ],
+        };
+
+        sut.on( 'preStagingUpdate', data =>
         {
-            const sut = Sut( createStubBucket() );
+            data.foo[ 1 ] = 'quux';
+        } );
 
-            const data = {
-                foo: [ 'bar', 'baz' ],
-            };
+        // triggers setValues
+        sut.setValues( data );
 
-            sut.on( 'preStagingUpdate', data =>
+        expect( sut.getDataByName( 'foo' ) )
+            .to.deep.equal( [ 'bar', 'quux' ] );
+    } );
+
+
+    [
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', 'baz' ] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: {},
+            },
+        },
+
+        // actual changes
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'change', 'baz' ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'change', 'baz' ] },
+                diff: { foo: [ 'change' ] },
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', 'change' ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar', 'change' ] },
+                diff: { foo: [ , 'change' ] },
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ undefined, 'change' ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar', 'change' ] },
+                diff: { foo: [ , 'change' ] },
+            },
+        },
+
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ undefined, 'baz' ] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: {},
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', undefined ] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: {},
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', null ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar' ] },
+                diff: { foo: [ , null ] },
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', 'baz', null ] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: {},
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [ 'bar', 'baz', 'quux' ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar', 'baz', 'quux' ] },
+                diff: { foo: [ , , 'quux' ]},
+            },
+        },
+        {
+            initial:     { foo: [ 'bar', 'baz' ] },
+            update:      { foo: [] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: {},
+            },
+        },
+
+        // null not at end of set means unchanged
+        {
+            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
+            update:      { foo: [ null, null, 'quux' ] },
+            is_change:   false,
+            expected:    {
+                data: { foo: [ 'bar', 'baz', 'quux' ] },
+                diff: {},
+            },
+        },
+        // but the last one is
+        {
+            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
+            update:      { foo: [ null, 'baz', null ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: { foo: [ , , null ] },
+            },
+        },
+        // given a string of nulls, only the last one is terminating; the
+        // rest are interpreted as undefined (because JSON serializes
+        // undefined values to `null' -_-)
+        {
+            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
+            update:      { foo: [ null, null, null ] },
+            is_change:   true,
+            expected:    {
+                data: { foo: [ 'bar', 'baz' ] },
+                diff: { foo: [ , , null ] },
+            },
+        },
+    ].forEach( ( { initial, update, is_change, expected }, i ) =>
+    {
+        it( `pre-commit, properly processes diff and change (${i})`, () =>
+        {
+            const sut    = Sut( createStubBucket() );
+            let   called = false;
+
+            sut.setValues( initial );
+
+            expect( sut.getDiff() ).to.deep.equal( initial );
+
+            sut.on( 'preStagingUpdate', () => called = true );
+            sut.setValues( update );
+
+            expect( called ).to.equal( is_change );
+
+            if ( expected )
             {
-                data.foo[ 1 ] = 'quux';
-            } );
-
-            // triggers setValues
-            sut.setValues( data );
-
-            expect( sut.getDataByName( 'foo' ) )
-                .to.deep.equal( [ 'bar', 'quux' ] );
+                expect( sut.getData() ).to.deep.equal( expected.data );
+            }
         } );
 
 
-        [
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz' ] },
-                merge_index: true,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz' ] },
-                merge_index: false,
-                is_change:   false,
-            },
-
-            // actual changes
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'change', 'baz' ] },
-                merge_index: true,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'change' ] },
-                merge_index: true,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ undefined, 'change' ] },
-                merge_index: true,
-                is_change:   true,
-            },
-
-            // single-index changes make sense only if merge_index
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ undefined, 'baz' ] },
-                merge_index: true,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', undefined ] },
-                merge_index: true,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', null ] },
-                merge_index: true,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz', null ] },
-                merge_index: true,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz', null ] },
-                merge_index: false,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz', 'quux' ] },
-                merge_index: true,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', 'baz', 'quux' ] },
-                merge_index: false,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [] },
-                merge_index: true,
-                is_change:   false,
-            },
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [] },
-                merge_index: false,
-                is_change:   true,
-            },
-            {
-                initial:     { foo: [ 'bar' ] },
-                update:      { foo: [ 'bar', undefined ] },
-                merge_index: false,
-                is_change:   true,
-            },
-
-            // only interpreted as a diff if merge_index
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      { foo: [ 'bar', undefined ] },
-                merge_index: false,
-                is_change:   true,
-            },
-
-            // no index at all
-            {
-                initial:     { foo: [ 'bar', 'baz' ] },
-                update:      {},
-                merge_index: true,
-                is_change:   false,
-            },
-        ].forEach( ( { initial, update, merge_index, is_change }, i ) =>
+        it( `post-commit, properly processes diff and change (${i})`, () =>
         {
-            it( `is emitted only when data is changed (${i})`, () =>
+            const sut    = Sut( createStubBucket() );
+            let   called = false;
+
+            sut.setValues( initial );
+            sut.commit();
+
+            sut.on( 'preStagingUpdate', () => called = true );
+            sut.setValues( update );
+
+            expect( called ).to.equal( is_change );
+
+            if ( expected )
             {
-                const sut    = Sut( createStubBucket() );
-                let   called = false;
-
-                sut.setValues( initial, merge_index );
-
-                sut.on( 'preStagingUpdate', () => called = true );
-                sut.setValues( update, merge_index );
-
-                expect( called ).to.equal( is_change );
-            } );
+                expect( sut.getData() ).to.deep.equal( expected.data );
+                expect( sut.getDiff() ).to.deep.equal( expected.diff );
+            }
         } );
     } );
 
@@ -233,20 +277,5 @@ describe( 'StagingBucket', () =>
 
 function createStubBucket( bucket_obj )
 {
-    return Class.implement( Bucket ).extend(
-    {
-        'public getData'()
-        {
-            return bucket_obj;
-        },
-
-        'public setValues'( data, merge_index, merge_null ) {},
-        'public overwriteValues'( data ) {},
-        'public clear'() {},
-        'public each'( callback ) {},
-        'public getDataByName'( name ) {},
-        'public getDataJson'() {},
-        'public filter'( pred, callback) {},
-        'on'() {},
-    } )();
+    return QuoteDataBucket();
 }

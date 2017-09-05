@@ -75,15 +75,11 @@ module.exports = Class( 'QuoteDataBucket' )
      *
      * @param {Object.<string,Array>} data associative array of the data
      *
-     * @param {boolean} merge_index whether to merge indexes individually
-     * @param {boolean} merge_null whether to merge undefined values (vs
-     *                              ignore)
-     *
      * @return {QuoteDataBucket} self to allow for method chaining
      */
-    'public setValues': function( data, merge_index, merge_null )
+    'public setValues': function( data )
     {
-        this._mergeData( data, merge_index, merge_null );
+        this._mergeData( data );
         return this;
     },
 
@@ -118,11 +114,8 @@ module.exports = Class( 'QuoteDataBucket' )
      *
      * @return undefined
      */
-    'private _mergeData': function( data, merge_index, merge_null )
+    'private _mergeData': function( data )
     {
-        merge_index = !!merge_index; // default false
-        merge_null  = !!merge_null; // default false
-
         var ignore = {};
 
         // remove any data that has not been updated (the hooks do processing on
@@ -171,14 +164,6 @@ module.exports = Class( 'QuoteDataBucket' )
 
             var data_set = data[ name ];
 
-            // if we're not supposed to merge the indexes one by one, just set
-            // it
-            if ( merge_index === false )
-            {
-                this._data[name] = data_set;
-                continue;
-            }
-
             // initialize it if its undefined in the bucket
             if ( this._data[name] === undefined )
             {
@@ -197,7 +182,7 @@ module.exports = Class( 'QuoteDataBucket' )
                 }
 
                 // ignore if set to null (implying the index was removed)
-                if ( !merge_null && data_set[i] === null )
+                if ( data_set[i] === null )
                 {
                     // this marks the end of the array as far as we're concerned
                     this._data[ name ].length = i;
@@ -223,7 +208,16 @@ module.exports = Class( 'QuoteDataBucket' )
      */
     'public overwriteValues': function( data )
     {
-        this.setValues( data, false );
+        this.setValues(
+            Object.keys( data ).reduce(
+                ( vals, key ) => (
+                    vals[ key ] = data[ key ].concat( [ null ] ),
+                    vals
+                ),
+                {}
+            )
+        );
+
         return this;
     },
 

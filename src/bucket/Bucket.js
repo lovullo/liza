@@ -35,13 +35,9 @@ module.exports = Interface( 'Bucket',
      *
      * @param {Object.<string,Array>} data associative array of the data
      *
-     * @param {boolean} merge_index whether to merge indexes individually
-     * @param {boolean} merge_null whether to merge undefined values (vs
-     *                              ignore)
-     *
      * @return {Bucket} self
      */
-    'public setValues': [ 'data', 'merge_index', 'merge_null' ],
+    'public setValues': [ 'data' ],
 
 
     /**
