@@ -33,6 +33,17 @@ repository; you may generate the script by issuing the following command:
 You may then see `./configure --help` for more information.
 
 
+## Building
+If `configure` is not available, see the section "Configuring" above.
+
+
+```
+  $ ./configure   # see --help for optional arguments
+  $ make          # build
+  $ make check    # run test cases
+```
+
+
 ## Documentation
 Compiled documentation for the latest release is available via our GitLab
 mirror, which uses the same build pipeline as we do on our internal GitLab

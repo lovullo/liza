@@ -83,3 +83,6 @@ AC_CONFIG_FILES([bin/server],
                 [chmod +x bin/server])
 
 AC_OUTPUT
+
+AC_MSG_NOTICE([You may now invoke \`make' to build.])
+
