@@ -45,31 +45,17 @@ module.exports = Class( 'DelayedStagingBucket' )
     'private _timer': 0,
 
 
-    'public override setValues': function( data, merge_index, merge_null )
+    'public override setValues': function( data )
     {
         for ( var name in data )
         {
-            if ( merge_index )
+            if ( this._queued[ name ] === undefined )
             {
-                if ( this._queued[ name ] === undefined )
-                {
-                    this._queued[ name ] = [];
-                }
-
-                // merge individual indexes
-                this.merge( data[ name ], this._queued[ name ] );
+                this._queued[ name ] = [];
             }
-            else
-            {
-                // no index merge; replace any existing data
-                this._queued[ name ] = Array.prototype.slice.call(
-                    data[ name ], 0
-                );
 
-                // this will ensure that no data will follow what we were
-                // provided
-                this._queued[ name ].push( null );
-            }
+            // merge individual indexes
+            this.merge( data[ name ], this._queued[ name ] );
         }
 
         this._setTimer();

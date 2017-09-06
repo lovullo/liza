@@ -89,7 +89,7 @@ module.exports = Class( 'DataProcessor',
      */
     'public processDiff'( data, request, program, bucket )
     {
-        const filtered     = this.sanitizeDiff( data, request, program, false );
+        const filtered     = this.sanitizeDiff( data, request, program );
         const dapi_manager = this._dapif( program.apis, request );
         const staging      = this._stagingCtor( bucket );
 
@@ -127,21 +127,18 @@ module.exports = Class( 'DataProcessor',
      * @param {Object}      data        client-provided data
      * @param {UserRequest} request     client request
      * @param {Program}     program     active program
-     * @param {boolean}     permit_null whether null values should be retained
      *
      * @return {Object} filtered data
      */
-    'public sanitizeDiff'( data, request, program, permit_null )
+    'public sanitizeDiff'( data, request, program )
     {
-        permit_null = ( permit_null === undefined ) ? false : permit_null;
-
         if ( !request.getSession().isInternal() )
         {
             this._cleanInternals( data, program );
         }
 
         const types = program.meta.qtypes;
-        return this._filter.filter( data, types, {}, permit_null );
+        return this._filter.filter( data, types, {}, true );
     },
 
 
@@ -246,7 +243,9 @@ module.exports = Class( 'DataProcessor',
         return Object.keys( mapis ).reduce(
             ( result, src_field ) =>
             {
-                if ( data[ src_field ] === undefined )
+                const fdata = data[ src_field ];
+
+                if ( fdata === undefined )
                 {
                     return result;
                 }
@@ -258,12 +257,14 @@ module.exports = Class( 'DataProcessor',
                 {
                     result[ field ] = result[ field ] || [];
 
-                    Object.keys( data[ src_field ] ).forEach( i =>
+                    Object.keys( fdata ).forEach( i =>
                     {
-                        if ( data[ src_field ][ i ] !== undefined )
+                        if ( fdata[ i ] === undefined || fdata[ i ] === null )
                         {
-                            result[ field ][ i ] = i;
+                            return;
                         }
+
+                        result[ field ][ i ] = i;
                     } );
                 } );
 

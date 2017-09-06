@@ -113,13 +113,10 @@ module.exports = Class( 'StagingBucket' )
 
     'private _initState': function()
     {
-        const data    = this._bucket.getData();
-        const retdata = function() {};
-
         // ensure that we don't modify the original data
-        retdata.prototype = data;
+        const retdata = Object.create( this._bucket.getData() );
 
-        this._curdata = new retdata();
+        this._curdata = retdata;
         this._dirty   = false;
     },
 
@@ -142,7 +139,7 @@ module.exports = Class( 'StagingBucket' )
             }
             else if ( nonull && ( data === null ) )
             {
-                // nulls mark the end of the set
+                // nulls mark the end of the vector
                 dest.length = i;
                 break;
             }
@@ -193,45 +190,63 @@ module.exports = Class( 'StagingBucket' )
     /**
      * Determine whether values have changed
      *
-     * If all values are identical to the current bucket values (relative to
-     * `merge_index`), returns `false`.  Otherwise, this stops at the first
-     * recognized change and returns `true`.
+     * If all values are identical to the current bucket values returns
+     * `false`.  Otherwise, `true`.
+     *
+     * Because JSON serializes all undefined values to `null`, only the
+     * final null in a diff is considered terminating; the rest are
+     * converted into `undefined`.
+     *
+     * This creates a fresh copy of the data to prevent unexpected
+     * side-effects.
      *
      * @param {Object.<string,Array>} data        key/value data or diff
-     * @param {boolean}               merge_index compare indexes individually
      *
      * @return {boolean} whether a change was recognized
      */
-    'private _hasChanged': function( data, merge_index )
+    'private _parseChanges': function( data )
     {
+        // generate a new object so that we don't mutate the original, which
+        // may be used elsewhere
+        const result = {};
+
         let changed = false;
 
         for ( let name in data )
         {
-            let values   = data[ name ];
+            let values   = Array.prototype.slice.call( data[ name ], 0 );
             let cur      = this._curdata[ name ] || [];
             let len      = this._length( values );
             let has_null = ( len !== values.length );
 
+            result[ name ] = values;
+
             let merge_len_change = (
-                merge_index && has_null && ( len < cur.length )
+                has_null && ( len < cur.length )
             );
 
-            let replace_len_change = (
-                !merge_index && ( len !== cur.length )
-            );
-
-            // quick change check (index removal if merge_index, or index
-            // count change if not merge_index)
-            if ( merge_len_change || replace_len_change )
+            // quick change check; but we still have to keep processing the
+            // data to generate a proper diff and process non-terminating
+            // nulls
+            if ( merge_len_change )
             {
                 changed = true;
-                continue;
             }
 
             for ( let index = 0; index < len; index++ )
             {
-                if ( merge_index && ( values[ index ] === undefined ) )
+                // see #_length; if ending in a null, this is offset by -1
+                let last_index = ( index === len );
+
+                // only the last null is terminating; the rest are
+                // interpreted as `undefined' (because JSON serializes
+                // undefined values to `null')
+                if ( ( values[ index ] === null ) && !last_index )
+                {
+                    values[ index ] = undefined;
+                }
+
+                if ( values[ index ] === undefined )
                 {
                     continue;
                 }
@@ -249,11 +264,11 @@ module.exports = Class( 'StagingBucket' )
             // if nothing is left, remove entirely
             if ( !values.some( x => x !== undefined ) )
             {
-                delete data[ name ];
+                delete result[ name ];
             }
         }
 
-        return changed;
+        return [ changed, result ];
     },
 
 
@@ -312,17 +327,20 @@ module.exports = Class( 'StagingBucket' )
     /**
      * Explicitly sets the contents of the bucket
      *
-     * @param {Object.<string,Array>} data associative array of the data
+     * Because JSON serializes all undefined values to `null`, only the
+     * final null in a diff is considered terminating; the rest are
+     * converted into `undefined`.  Therefore, it is important that all
+     * truncations include no elements in the vector after the truncating null.
      *
-     * @param {boolean} merge_index whether to merge indexes individually
-     * @param {boolean} merge_null whether to merge undefined values (vs
-     *                              ignore)
+     * @param {Object.<string,Array>} given_data associative array of the data
      *
      * @return {Bucket} self
      */
-    'virtual public setValues': function( data, merge_index, merge_null )
+    'virtual public setValues': function( given_data )
     {
-        if ( !this._hasChanged( data, merge_index ) )
+        const [ changed, data ] = this._parseChanges( given_data );
+
+        if ( !changed )
         {
             return;
         }
@@ -331,7 +349,7 @@ module.exports = Class( 'StagingBucket' )
 
         for ( let name in data )
         {
-            let item = Array.prototype.slice.call( data[ name ], 0 );
+            let item = data[ name ];
 
             // initialize as array if necessary
             if ( this._staged[ name ] === undefined )
@@ -356,21 +374,12 @@ module.exports = Class( 'StagingBucket' )
                 }
             }
 
-            if ( merge_index )
-            {
-                // merge with previous values
-                this.merge( item, this._staged[ name ] );
+            // merge with previous values
+            this.merge( item, this._staged[ name ] );
 
-                // we do not want nulls in our current representation of the
-                // data
-                this.merge( item, this._curdata[ name ], true );
-            }
-            else
-            {
-                // overwrite
-                this._staged[ name ]  = item;
-                this._curdata[ name ] = item;
-            }
+            // we do not want nulls in our current representation of the
+            // data
+            this.merge( item, this._curdata[ name ], true );
         }
 
         this._dirty = true;
@@ -400,7 +409,7 @@ module.exports = Class( 'StagingBucket' )
             new_data[ name ].push( null );
         }
 
-        return this.setValues( new_data, false );
+        return this.setValues( new_data );
     },
 
 
@@ -432,9 +441,9 @@ module.exports = Class( 'StagingBucket' )
         // return each staged field
         for ( let field in this._staged )
         {
-            // retrieve the current value for this field
+            // retrieve the diff for this field
             ret[ field ] = Array.prototype.slice.call(
-                this._curdata[ field ], 0
+                this._staged[ field ], 0
             );
         }
 
@@ -521,7 +530,7 @@ module.exports = Class( 'StagingBucket' )
 
         this.emit( this.__self.$('EVENT_PRE_COMMIT') );
 
-        this._bucket.setValues( this._staged, true, false );
+        this._bucket.setValues( this._staged );
         this._staged = {};
 
         this.emit( this.__self.$('EVENT_COMMIT') );

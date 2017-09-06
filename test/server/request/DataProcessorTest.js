@@ -81,7 +81,7 @@ describe( 'DataProcessor', () =>
             {
                 expect( given_data ).to.equal( data );
                 expect( given_types ).to.equal( types );
-                expect( given_null ).to.equal( false );
+                expect( given_null ).to.equal( true );
 
                 // not used
                 expect( given_ignore ).to.deep.equal( {} );

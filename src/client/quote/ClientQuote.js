@@ -293,11 +293,9 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public setData': function( data, merge_nulls )
+    'public setData': function( data )
     {
-        merge_nulls = !!merge_nulls;
-
-        this._staging.setValues( data, true, merge_nulls );
+        this._staging.setValues( data );
         return this;
     },
 
@@ -442,6 +440,12 @@ module.exports = Class( 'ClientQuote' )
 
             callback.apply( null, arguments );
         } );
+
+        // XXX: we need to commit after a _successful_ save, otherwise the
+        // client will never post again!  But we don't want to commit
+        // everything that is staged, because that will possibly include
+        // data the user is filling out on the next step.  So, we need to
+        // store the diff separately to be committed.
 
         // commit staged quote data to the data bucket (important: do this
         // *after* save); will make the staged values available as old_store.old
