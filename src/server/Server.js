@@ -1148,9 +1148,7 @@ module.exports = Class( 'Server' )
 
     'private _monitorMetadataPromise'( quote, dapis, meta_clear )
     {
-        // save metadata clear to database to prevent stale data from being
-        // used while requests are pending
-        this.dao.saveQuoteMeta( quote, meta_clear, null, e => { throw e; } );
+        quote.getMetabucket().setValues( meta_clear );
 
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
