@@ -4,7 +4,7 @@
   "version":     "@VERSION@",
   "author":      "R-T Specialty, LLC. (https://www.lovullo.com)",
   "homepage":    "https://github.com/lovullo/liza",
-  "license":     "GPL-3.0+",
+  "license":     "AGPL-3.0+",
 
   "repository": {
     "type": "git",
