@@ -1,6 +1,6 @@
 {
   "name":   "Liza Server",
-  "daemon": "DevDaemon",
+  "daemon": "../src/server/daemon/DevDaemon",
 
   "http": {
     "port": 8822

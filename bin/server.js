@@ -21,7 +21,8 @@
 
 'use strict';
 
-const fs = require( 'fs' );
+const fs   = require( 'fs' );
+const path = require( 'path' );
 
 const {
     conf: {
@@ -39,6 +40,7 @@ const conf_path = (
         : ''
 ) || __dirname + '/../conf/vanilla-server.json';
 
+const conf_dir = path.dirname( conf_path );
 
 ConfLoader( fs, ConfStore )
     .fromFile( conf_path )
@@ -49,8 +51,10 @@ ConfLoader( fs, ConfStore )
     ] ) )
     .then( ([ name, daemon, conf ]) =>
     {
-        greet( name, daemon );
-        return server.daemon[ daemon ]( conf ).start();
+        const daemon_path = conf_dir + '/' + daemon;
+
+        greet( name );
+        return require( daemon_path )( conf ).start();
     } )
     .catch( e => {
         console.error( e.stack );
@@ -58,9 +62,8 @@ ConfLoader( fs, ConfStore )
     } );
 
 
-function greet( name, daemon )
+function greet( name )
 {
     console.log( `${name} (liza-${version})`);
     console.log( `Server configuration: ${conf_path}` );
-    console.log( `Starting with ${daemon}, pid ${process.pid}` );
 }
