@@ -536,7 +536,7 @@ module.exports = AbstractClass( 'Daemon',
                 .then( port => this._httpServer.listen( port, () =>
                 {
                     this._debugLog.log(
-                        1, "Server running on port %d", _self._httpPort
+                        1, "Server running on port %d", port
                     );
 
                     callback();
