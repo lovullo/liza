@@ -2,6 +2,8 @@
   "name":   "Liza Server",
   "daemon": "../src/server/daemon/DevDaemon",
 
+  "pidfile": "",
+
   "http": {
     "port": 8822
   },

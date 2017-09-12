@@ -47,13 +47,17 @@ ConfLoader( fs, ConfStore )
     .then( conf => Promise.all( [
         conf.get( 'name' ),
         conf.get( 'daemon' ),
+        conf.get( 'pidfile' ),
         Promise.resolve( conf ),
     ] ) )
-    .then( ([ name, daemon, conf ]) =>
+    .then( ([ name, daemon, pidfile, conf ]) =>
     {
         const daemon_path = conf_dir + '/' + daemon;
+        const pid_path    = conf_dir + '/' + ( pidfile || ".pid" );
 
-        greet( name );
+        writePidFile( pid_path );
+        greet( name, pid_path );
+
         return require( daemon_path )( conf ).start();
     } )
     .catch( e => {
@@ -62,8 +66,17 @@ ConfLoader( fs, ConfStore )
     } );
 
 
-function greet( name )
+function writePidFile( pid_path )
+{
+    fs.writeFile( pid_path, process.pid );
+
+    process.on( 'exit', () => fs.unlink( pid_path ) );
+}
+
+
+function greet( name, pid_path )
 {
     console.log( `${name} (liza-${version})`);
     console.log( `Server configuration: ${conf_path}` );
+    console.log( `PID file: ${pid_path}` );
 }
