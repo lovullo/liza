@@ -52,8 +52,8 @@ ConfLoader( fs, ConfStore )
     ] ) )
     .then( ([ name, daemon, pidfile, conf ]) =>
     {
-        const daemon_path = conf_dir + '/' + daemon;
-        const pid_path    = conf_dir + '/' + ( pidfile || ".pid" );
+        const daemon_path = _resolvePath( conf_dir, daemon );
+        const pid_path    = _resolvePath( conf_dir, ( pidfile || ".pid" ) );
 
         writePidFile( pid_path );
         greet( name, pid_path );
@@ -64,6 +64,23 @@ ConfLoader( fs, ConfStore )
         console.error( e.stack );
         process.exit( 1 );
     } );
+
+
+/**
+ * Produce an absolute path if `path` is absolute, otherwise a path relative
+ * to the configuration directory
+ *
+ * @param {string} conf_path configuration path (for relative `path`)
+ * @param {string} path      path to resolve
+ *
+ * @return resolved path
+ */
+function _resolvePath( conf_path, path )
+{
+    return ( path[ 0 ] === '/' )
+        ? path
+        :  conf_path + '/' + path;
+}
 
 
 function writePidFile( pid_path )
