@@ -28,5 +28,5 @@
 
 cd "$( dirname $( readlink -f "$0" ) )"
 
-"@NODE@" @NODE_FLAGS@ $NODE_FLAGS server.js "$@"
+exec "@NODE@" @NODE_FLAGS@ $NODE_FLAGS server.js "$@"
 
