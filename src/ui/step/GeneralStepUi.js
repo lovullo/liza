@@ -1102,7 +1102,8 @@ module.exports = Class( 'GeneralStepUi' )
         var len    = ids.length,
             groups = [];
 
-        if ( len === 0 )
+        // if one group (or none), nothing to sort
+        if ( len <= 1 )
         {
             return;
         }
