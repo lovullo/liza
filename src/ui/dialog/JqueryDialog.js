@@ -60,16 +60,35 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {undefined}
      */
-    __construct: function( jquery )
+    __construct: function( jquery, id )
     {
         this._jquery = jquery;
 
         this._$dialog = this._jquery( '<div>' )
             .dialog( {
                 // don't show until we're ready
-                autoOpen: false
+                autoOpen: false,
+
+                // default style
+                dialogClass: "liza.dialog",
             }
         );
+    },
+
+
+    /**
+     * Uniquely identify dialog type
+     *
+     * The `type_id` is exposed as a CSS class for styling.
+     *
+     * @param {string} type_id unique type identifier
+     *
+     * @return {JqueryDialog} self
+     */
+    'public setTypeId': function( type_id )
+    {
+        this._$dialog.dialog( { dialogClass: type_id } );
+        return this;
     },
 
 
