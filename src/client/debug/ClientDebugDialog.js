@@ -182,26 +182,22 @@ module.exports = Class( 'ClientDebugDialog' )
         this._showSidebarWarning();
 
         return $( '<div>' )
-            .append( $( '<p>' ).text(
-                "Everything in this dialog can be done via the console. " +
-                    "This simply exists to make life easier."
-            ) )
             .append( $( '<p>' ).html(
                 "<strong>To view this dialog:</strong> " +
                 "one can use the key combination " +
-                "<samp>CTRL+SHIFT+D</samp>, or <code>getProgramDebug()" +
+                "<samp>Ctrl+Shift+D</samp>, or <code>getProgramDebug()" +
                 ".toggle()</code> from the console. The latter may " +
                 "also be used even if the user is not logged in internally."
             ) )
             .append( this._createAutoloadToggle() )
             .append( $tabs = this._createTabs() )
             .dialog( {
-                title: "Developer Dialog",
-                modal: false,
-                width: 800,
-                height: 600,
-
-                autoOpen: false,
+                title:       "Developer Dialog",
+                dialogClass: "liza-dev-dialog",
+                width:       800,
+                height:      600,
+                modal:       false,
+                autoOpen:    false,
 
                 open: function()
                 {

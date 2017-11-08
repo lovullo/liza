@@ -520,16 +520,19 @@ module.exports = Class( 'BucketClientDebugTab' )
     'public showBucketEditor': function( staging, change_callback )
     {
         var $editor = $( '<div>' )
-                .dialog( {
-                    title: "Bucket Editor",
-                    width: 500,
-                    height: 600,
+            .dialog( {
+                title:       "Bucket Editor",
+                dialogClass: "liza-bucket-editor",
 
-                    close: function()
-                    {
-                        staging.removeListener( 'stagingUpdate', listener );
-                    }
-                } ),
+                // this dialog is resizable, so we can't set this with CSS
+                width:  500,
+                height: 600,
+
+                close: function()
+                {
+                    staging.removeListener( 'stagingUpdate', listener );
+                }
+            } ),
 
             listener = function( data )
             {
@@ -595,21 +598,14 @@ module.exports = Class( 'BucketClientDebugTab' )
 
             $editor.append(
                 $( '<div>' )
-                    .append( $( '<div>' )
+                    .append( $( '<div class="liza-bucket-field">' )
                         .text( name )
-                        .css( {
-                            fontWeight: 'bold'
-                        } )
                     .append( $( '<input>' )
                         .attr( {
                             name: name,
                             type: 'text'
                         } )
                         .val( JSON.stringify( vals ) )
-                        .css( {
-                            width:        '450px',
-                            marginBottom: '1em'
-                        } )
                         .change( ( function( name )
                         {
                             return function()

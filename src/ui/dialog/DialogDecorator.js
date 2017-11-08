@@ -85,6 +85,18 @@ module.exports = AbstractClass
 
 
     /**
+     * Uniquely identify dialog type
+     *
+     * The `type_id` is exposed as a CSS class for styling.
+     *
+     * @param {string} type_id unique type identifier
+     *
+     * @return {DialogDecorator} self
+     */
+    'public proxy setTypeId': '_dialog',
+
+
+    /**
      * Sets the dialog title
      *
      * @param {string} title dialog title

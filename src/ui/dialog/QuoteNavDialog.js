@@ -65,8 +65,8 @@ module.exports = Class( 'QuoteNavDialog' )
 
         // set defaults
         this.getDialog()
+            .setTypeId( 'liza-doc-nav-dialog' )
             .setResizable( false )
-            .setSize( { x: 500, y: 'auto' } )
             .setModal();
     },
 

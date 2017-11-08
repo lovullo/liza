@@ -77,8 +77,8 @@ module.exports = Class( 'EmailDialog' )
 
         // crate new dialog containing email form
         this.getDialog()
+            .setTypeId( 'liza-email-dialog' )
             .setResizable( false )
-            .setSize( { x: 450, y: 435 } )
             .setModal()
             .setTitle( 'Email CSR' )
             .setButtons( {

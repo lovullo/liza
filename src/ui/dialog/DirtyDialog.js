@@ -53,6 +53,7 @@ module.exports = Class( 'DirtyDialog' )
 
         // set defaults
         this.getDialog()
+            .setTypeId( 'liza-dirty-dialog' )
             .setHtml(
                 '<p>Changes have been made to this step. Would you like ' +
                     'to:</p>' +
@@ -70,7 +71,6 @@ module.exports = Class( 'DirtyDialog' )
                 '</ul>'
             )
             .setResizable( false )
-            .setSize( { x: 350 } )
             .setModal()
             .setTitle( 'You have made changes to this step' )
             .setButtons( {

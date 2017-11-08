@@ -28,6 +28,18 @@ var Interface = require( 'easejs' ).Interface;
 module.exports = Interface( 'Dialog',
 {
     /**
+     * Uniquely identify dialog type
+     *
+     * The `type_id` is exposed as a CSS class for styling.
+     *
+     * @param {string} type_id unique type identifier
+     *
+     * @return {Dialog} self
+     */
+    'public setTypeId': [ 'type_id' ],
+
+
+    /**
      * Sets the dialog title
      *
      * @param {string} title dialog title

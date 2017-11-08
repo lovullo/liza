@@ -39,8 +39,8 @@ module.exports = Class( 'NotificationDialog' )
     {
         // set defaults
         this.getDialog()
+            .setTypeId( 'liza-notification-dialog' )
             .addClass( 'notification-dialog' )
-            .setSize( { x: 400, y: 'auto' } )
             .setModal()
             .hideTitlebar()
             .setResizable( false );

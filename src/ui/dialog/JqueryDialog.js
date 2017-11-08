@@ -52,6 +52,13 @@ module.exports = Class( 'JqueryDialog' )
      */
     'private _buttons': {},
 
+    /**
+     * Dialog type id
+     *
+     * @type {string}
+     */
+    'private _typeId': 'liza-dialog',
+
 
     /**
      * Initializes dialog
@@ -60,16 +67,32 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {undefined}
      */
-    __construct: function( jquery )
+    __construct: function( jquery, id )
     {
         this._jquery = jquery;
 
         this._$dialog = this._jquery( '<div>' )
             .dialog( {
                 // don't show until we're ready
-                autoOpen: false
+                autoOpen: false,
             }
         );
+    },
+
+
+    /**
+     * Uniquely identify dialog type
+     *
+     * The `type_id` is exposed as a CSS class for styling.
+     *
+     * @param {string} type_id unique type identifier
+     *
+     * @return {JqueryDialog} self
+     */
+    'public setTypeId': function( type_id )
+    {
+        this._typeId = ''+type_id;
+        return this;
     },
 
 
@@ -341,7 +364,8 @@ module.exports = Class( 'JqueryDialog' )
     'virtual public open': function()
     {
         this._$dialog.dialog( {
-            buttons: this._buttons
+            buttons:     this._buttons,
+            dialogClass: this._typeId,
         } );
 
         this._$dialog.dialog( 'open' );

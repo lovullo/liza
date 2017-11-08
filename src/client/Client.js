@@ -1551,10 +1551,9 @@ module.exports = Class( 'Client' )
                 // when the quote id is clicked, display a dialog listing their
                 // options
                 _self.uiDialog.showNavErrorDialog( {
-                    title: 'Change quote id',
-                    text:  'Would you like to:',
-                    width: 550,
-                    noX:   false,
+                    title:       "Change quote id",
+                    text:        "Would you like to:",
+                    noX:         false,
 
                     search: function()
                     {
