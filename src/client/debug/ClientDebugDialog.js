@@ -196,12 +196,12 @@ module.exports = Class( 'ClientDebugDialog' )
             .append( this._createAutoloadToggle() )
             .append( $tabs = this._createTabs() )
             .dialog( {
-                title: "Developer Dialog",
-                modal: false,
-                width: 800,
-                height: 600,
-
-                autoOpen: false,
+                title:       "Developer Dialog",
+                dialogClass: "liza-dev-dialog",
+                width:       800,
+                height:      600,
+                modal:       false,
+                autoOpen:    false,
 
                 open: function()
                 {

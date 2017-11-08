@@ -40,9 +40,9 @@ module.exports = Class( 'ErrorDialog' )
 
         // set defaults
         this.getDialog()
+            .setTypeId( 'liza-error-dialog' )
             .addClass( 'error' )
             .setResizable( false )
-            .setSize( { y: 'auto' } )
             .setModal()
             .setTitle( 'An error has occurred' );
     }

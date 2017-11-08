@@ -73,17 +73,15 @@ module.exports = Class( 'UiDialog',
      * @param {string}     text     message to display
      * @param {string}     caption  button caption
      * @param {function()} callback function to call when button is clicked
-     * @param {number}     width    width of dialog (default 350)
      *
      * @return {UiDialog} self
      */
-    showErrorDialog: function( text, caption, callback, width )
+    showErrorDialog: function( text, caption, callback )
     {
         callback = callback || function() {};
 
         ErrorDialog( this._createDialog() )
             .setHtml( text )
-            .setSize( { x: ( width || 350 ) } )
             .onClose( callback )
             .appendButton( caption )
             .open();
@@ -120,7 +118,6 @@ module.exports = Class( 'UiDialog',
 
         QuoteNavDialog( this._createDialog() )
             .setHtml( '<p>' + text + '</p>' )
-            .setSize( { x: ( options.width || 500 ) } )
             .hideX( ( options.noX ) ? true : false )
             .setTitle( options.title || 'A navigation error has occurred' )
 
@@ -240,6 +237,8 @@ module.exports = Class( 'UiDialog',
         }
 
         this._createDialog()
+            .setTitle( 'Enter quote number' )
+            .setTypeId( 'liza-doc-id-prompt' )
             .setHtml(
                 $( '<div>' ).html(
                     '<p>Please enter the quote number of the quote you would ' +
@@ -248,12 +247,7 @@ module.exports = Class( 'UiDialog',
                 .append( $quote_input )
             )
             .setResizable( false )
-            .setSize( {
-                x: 250,
-                y: 'auto'
-            } )
             .setModal()
-            .setTitle( 'Enter quote number' )
             .hideX()
 
             .onOpen( function()

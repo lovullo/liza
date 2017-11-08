@@ -52,6 +52,13 @@ module.exports = Class( 'JqueryDialog' )
      */
     'private _buttons': {},
 
+    /**
+     * Dialog type id
+     *
+     * @type {string}
+     */
+    'private _typeId': 'liza-dialog',
+
 
     /**
      * Initializes dialog
@@ -68,9 +75,6 @@ module.exports = Class( 'JqueryDialog' )
             .dialog( {
                 // don't show until we're ready
                 autoOpen: false,
-
-                // default style
-                dialogClass: "liza.dialog",
             }
         );
     },
@@ -87,7 +91,7 @@ module.exports = Class( 'JqueryDialog' )
      */
     'public setTypeId': function( type_id )
     {
-        this._$dialog.dialog( { dialogClass: type_id } );
+        this._typeId = ''+type_id;
         return this;
     },
 
@@ -360,7 +364,8 @@ module.exports = Class( 'JqueryDialog' )
     'virtual public open': function()
     {
         this._$dialog.dialog( {
-            buttons: this._buttons
+            buttons:     this._buttons,
+            dialogClass: this._typeId,
         } );
 
         this._$dialog.dialog( 'open' );

@@ -1,0 +1,146 @@
+/**
+ * Base CSS for the Liza Data Collection Framework
+ *
+ *  Copyright (C) 2017 R-T Specialty, LLC.
+ *
+ *  This file is part of the Liza Data Collection Framework.
+ *
+ *  liza is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* These styles dictate the intended display of certain elements and provide
+ * base functionality.
+ *
+ * XXX: Various parts of the system (like dialogs and certain groups) use
+ * jQuery UI.  This will change in the future, but this drastically affects
+ * how the dialog is styled.  This CSS file _does no_ provide a jQuery UI
+ * theme.
+ *
+ * XXX: Further, since jQuery UI's dialog styles are _inlined_ as the @style
+ * of the element itself, we need `!important'.
+ *
+ * TODO: Many, many things need to be moved into this stylesheet!
+ */
+
+
+
+/* Navigation Dialogs
+ * ------------------
+ * The dialog prompting for document (quote) id changes contains three
+ * separate buttons with sizable text, and so should be wide.
+ */
+
+.liza-doc-nav-dialog {
+  width: 60ch !important;
+}
+
+/* The document (quote) number dialog prompts for a number to view.  Really,
+ * this should be consolodated with the above.  It contains only an input
+ * box prefixed by 'WEB', with some descriptive text above it, and an OK
+ * button.
+ */
+
+.liza-doc-id-prompt {
+  width: 35ch !important;
+}
+
+/* When skipping between steps using the upper navigation, the
+ * "Dirty Dialog" asks whether the user wants to save or discard
+ * changes.  It contains a third button---cancel---and should be wide enough
+ * to accommodate.
+ */
+
+.liza-dirty-dialog {
+  width: 60ch !important;
+}
+
+
+
+/* General-Purpose Dialogs
+ * -----------------------
+ * The Error Dialog shows a generic message for normal users, and error
+ * details for internal users.
+ */
+
+.liza-error-dialog {
+  width: 40ch !important;
+}
+
+/* The Email dialog is an e-mail form that prompts for recipients, subject,
+ * and message.  What you'd expect from a mail dialog.
+ */
+
+.liza-email-dialog {
+  width: 50ch !important;
+}
+
+.liza-email-dialog input {
+  width: 100%;
+}
+
+.liza-email-dialog textarea {
+  width:  100%;
+  height: 10em;
+}
+
+/* Notification dialogs serve as a basis for generic user notifications.
+ */
+.liza-notification-dialog {
+  width: 45ch !important;
+}
+
+
+
+/* Developer Dialog
+ * ----------------
+ * The developer dialog is intended for internal users to be able to inspect
+ * and modify the current state of the system.  It is intended to be
+ * non-modal and toggleable.
+ *
+ * This dialog contains a lot of information, so the default size should be
+ * considerable.  However, it should not be so large as to conceal the
+ * entire page by default, as certain types of interactions are reflected on
+ * the page itself.
+ */
+
+.liza-dev-dialog {
+  /* we can't style width/height because it's resizable with jQuery UI */
+}
+
+/* The Bucket Editor is a separate dialog from the main Developer
+ * Dialog.  It should be tall, as there tends to be a great amount of bucket
+ * values, and wide enough to display a good portion of a vector of strings
+ * (e.g. multi-index street addresses).
+ */
+
+.liza-bucket-editor {
+  /* we can't style width/height because it's resizable with jQuery UI */
+}
+
+/* The fields containing the bucket value (serialized as JSON) expand to the
+ * entire width of the dialog.  They are preceded by the name of the bucket
+ * value.  Because of the width of the input field, they will be on separate
+ * lines.
+ */
+
+.liza-bucket-editor .liza-bucket-field {
+  font-weight: bold;
+}
+
+.liza-bucket-editor input {
+  width:         100%;
+  margin-bottom: 1em;
+
+  font-weight: normal;
+}
