@@ -30,6 +30,11 @@
  * XXX: Further, since jQuery UI's dialog styles are _inlined_ as the @style
  * of the element itself, we need `!important'.
  *
+ * N.B.: Unfortunately, `ch' units are not properly rendered in IE---they do
+ * not consider the padding of `0', and so the width is less in IE than in
+ * other browsers, making it useless for consistent width styling.  Deeply
+ * disappointing.
+ *
  * TODO: Many, many things need to be moved into this stylesheet!
  */
 
@@ -42,7 +47,7 @@
  */
 
 .liza-doc-nav-dialog {
-  width: 60ch !important;
+  width: 35em !important;
 }
 
 /* The document (quote) number dialog prompts for a number to view.  Really,
@@ -52,7 +57,7 @@
  */
 
 .liza-doc-id-prompt {
-  width: 35ch !important;
+  width: 20em !important;
 }
 
 /* When skipping between steps using the upper navigation, the
@@ -62,7 +67,7 @@
  */
 
 .liza-dirty-dialog {
-  width: 60ch !important;
+  width: 40em !important;
 }
 
 
@@ -74,7 +79,7 @@
  */
 
 .liza-error-dialog {
-  width: 40ch !important;
+  width: 25em !important;
 }
 
 /* The Email dialog is an e-mail form that prompts for recipients, subject,
@@ -82,7 +87,7 @@
  */
 
 .liza-email-dialog {
-  width: 50ch !important;
+  width: 30em !important;
 }
 
 .liza-email-dialog input {
@@ -97,7 +102,7 @@
 /* Notification dialogs serve as a basis for generic user notifications.
  */
 .liza-notification-dialog {
-  width: 45ch !important;
+  width: 30em !important;
 }
 
 
