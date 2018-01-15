@@ -1,7 +1,7 @@
 /**
  * Adds static data to API response
  *
- *  Copyright (C) 2016 R-T Specialty, LLC.
+ *  Copyright (C) 2016, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -98,6 +98,13 @@ module.exports = Class( 'StaticAdditionDataApi' )
 
         this._api.request( data, function( err, response )
         {
+            // if the data are invalid, do nothing
+            if ( !Array.isArray( response ) )
+            {
+                callback.call( inst, err, response );
+                return;
+            }
+
             // return the response with our data
             callback.call( inst,
                 err,
