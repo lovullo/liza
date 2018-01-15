@@ -1,7 +1,7 @@
 /**
  * Contains BucketClientDebugTab class
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -199,6 +199,7 @@ module.exports = Class( 'BucketClientDebugTab' )
                         {
                             var data = {};
                             data[ name ] = value;
+                            data[ name ].push( null );
 
                             // set the data
                             staging.setValues( data );
