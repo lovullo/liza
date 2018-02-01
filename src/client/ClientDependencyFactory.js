@@ -1,7 +1,7 @@
 /**
  * Factory for Client dependencies
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -91,8 +91,7 @@ var Step          = require( '../step/Step' ),
     SidebarErrorStyler = require( '../ui/styler/SidebarErrorStyler' ),
     ErrorFieldStyler   = require( '../ui/styler/ErrorFieldStyler' ),
 
-    NaFieldStyler          = require( '../ui/styler/NaFieldStyler' ),
-    NaFieldStylerAnimation = require( '../ui/styler/NaFieldStylerAnimation' ),
+    NaFieldStyler = require( '../ui/styler/NaFieldStyler' ),
 
     DelegateEventHandler = require( './event/DelegateEventHandler' ),
 
@@ -331,8 +330,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
     createNaFieldStyler: function()
     {
-        return NaFieldStyler
-            .use( NaFieldStylerAnimation( jQuery ) )();
+        return NaFieldStyler();
     },
 
     createFormErrorBox: FormErrorBox,
