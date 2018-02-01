@@ -59,8 +59,8 @@ What it means for some object to be applicable depends on the context.
 @caption{Predicate system domain of discourse}
 @end float
 
-This system is limited to universal quantification over the domain of
-  discourse.
+This system is limited to existential quantification over the domain
+  of discourse.
 For other quantifiers and higher-order logic,
   defer to one of the systems that contributes to the domain of
   discourse,
