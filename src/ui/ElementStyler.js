@@ -452,7 +452,13 @@ module.exports = Class( 'ElementStyler',
     {
         change_event = ( change_event === undefined ) ? true : change_event;
 
-        var $element;
+        // just to be sure before we fully remove this
+        if ( change_event !== false )
+        {
+            throw Error(
+                "ElementStyler#setValueByName change_event is being removed"
+            );
+        }
 
         // set value
         switch ( this._getElementType( name ) )
@@ -486,31 +492,17 @@ module.exports = Class( 'ElementStyler',
                 var i = elements.length;
                 while ( i-- )
                 {
-                    var $question = $( elements[ i ] );
-
-                    if ( $question.attr( 'value' ) == value )
-                    {
-                        $question.attr( 'checked', true );
-                        $element = $question;
-                    }
-                    else
-                    {
-                        $question.attr( 'checked', false );
-                    }
+                    const question = elements[ i ];
+                    question.checked = ( question.value === ''+value );
                 }
 
                 break;
 
             default:
-                $element = this.getElementByName(
+                const $element = this.getElementByName(
                     name, index, null, $context
                 );
                 $element.val( ''+( value ) );
-        }
-
-        if ( $element && change_event )
-        {
-            $element.trigger( 'change' );
         }
 
         return this;
