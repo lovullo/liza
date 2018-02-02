@@ -113,12 +113,14 @@ but don't sacrifice space on small screens.
     margin: 0px;
 }
 
-.doc-notice.dev
+.doc-notice.devnotice,
+.doc-notice.devnote
 {
     border-color: #d33682;
 }
 
-.doc-notice.dev p::before,
+.doc-notice.devnotice p::before,
+.doc-notice.devnote p::before,
 .doc-notice.tip p::before
 {
     display: block;
@@ -126,10 +128,16 @@ but don't sacrifice space on small screens.
     margin-left: -1.5em;
 }
 
-.doc-notice.dev p::before
+.doc-notice.devnotice p::before
 {
     color: #d33682;
     content: '\01F6A7';
+}
+
+.doc-notice.devnote p::before
+{
+    color: #d33682;
+    content: '\01F4DD';
 }
 
 .doc-notice.tip p::before
@@ -137,13 +145,14 @@ but don't sacrifice space on small screens.
     content: '\261E';
 }
 
-.doc-notice.dev p,
+.doc-notice.devnotice p,
+.doc-notice.devnote p,
 .doc-notice.tip p
 {
     padding-left: 1.75em;
 }
 
-.footnote-notice.dev p:first-child::before
+.footnote-notice.devnotice p:first-child::before
 {
     content: '\01F6A7';
     margin-right: 0.5em;

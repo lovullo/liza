@@ -60,8 +60,17 @@
 @c notice for developers of liza
 @macro devnotice{text}
 @ifset DEVNOTES
-  @noticestart{dev}
+  @noticestart{devnotice}
   @emph{\text\}
+  @noticeend
+@end ifset
+@end macro
+
+@c implementation note for developers of liza
+@macro devnote{text}
+@ifset DEVNOTES
+  @noticestart{devnote}
+  \text\
   @noticeend
 @end ifset
 @end macro
