@@ -116,7 +116,7 @@ It also displays question help text (also configured through the XML)
 
 @cindex Group, Styling
 Groups support a number of @dfn{group styles} that determine how
-  they are delimited from other groups;
+  they are delimited from other groups (@pxref{Defining Groups});
   how the elements they contain are rendered and laid out;
   and how multiple indexes are displayed, added, and removed.
 A list of available styles is detailed in @ref{t:group-styles}.
@@ -184,13 +184,119 @@ A list of available styles is detailed in @ref{t:group-styles}.
 @helpwanted
 
 @menu
-* Specifying Predicates::
+* Defining Groups::       Grouping questions and other entities.
+* Specifying Predicates:: Predicating display of entities.
 @end menu
+
+
+@node Defining Groups
+@subsection Defining Groups
+
+@cindex Group
+A @dfn{group} organizes and relates entities.
+If given a @xmlattr{title},
+  a header will be displayed above the group with that title.
+A group may optionally be given a unique identifier@tie{}@xmlattr{id},
+  which is useful for debugging and scripting;
+    any such identifier should be @code{snake_case}.
+
+@float Figure, f:group
+@example
+  <group title="Foo Group">
+    <question id="question_1" ... />
+    <question id="question_2" ... />
+  </group>
+@end example
+@caption{Defining a simple group with a title}
+@end float
+
+@cindex Group, Styling
+Groups can be independently styled in a number of different ways to
+  provide different data representations (@pxref{Group Styles}).
+Style is optional@mdash{
+  }the @samp{default} group displays only the first index of each
+    entity.
+Further styling can be done using CSS using @xmlattr{class}.
+
+@cindex Group, Leader
+@cindex Group, Indexes
+All questions within a group share the same number of indexes;
+  this is accomplished by monitoring the @dfn{group leader}.
+By default,
+  the leader is the first indexable entity in the group (question,
+    answer, or display);
+      this can be overridden with the @xmlattr{indexedBy} attribute.
+This attribute is only practically meaningful if the chosen group
+  style supports indexes (@pxref{Group Styles}).
+
+
+@float Figure, f:group-leader
+@example
+  <group id="leader_override" indexedBy="question_2" style="tabbed">
+    <question id="question_1" ... />
+    <question id="question_2" ... />
+  </group>
+@end example
+@caption{Overriding group leader using @xmlattr{indexedBy}}
+@end float
+
+@cindex Group, Locking
+Some group styles allow the user to add indexes;
+  set @xmlattr{locked} to@tie{}@samp{true} to suppress this feature.
+
+@subsubsection Linking Groups
+@cindex Group, Linking
+Data collection for similar entities may span multiple steps or
+  groups;
+    for example,
+      one group may allow the user to define their risk locations,
+        and a future group may ask for additional information for each
+        of those locations.
+To have all entities within each of those groups share index length,
+  they may be linked.
+
+A @dfn{group link} is an arbitrary name given to a set of groups.
+Each group that wants to be part of the same link must set
+  @xmlattr{link} to the same string.
+The name of the link does not matter@mdash{
+  }it is @emph{not} a reference to a group@tie{}@xmlattr{id}.
+
+@float Figure, f:group-link
+@example
+  <group id="location" link="locations" style="tabbed">
+    <question id="address" ... />
+    <question id="city" ... />
+  </group>
+
+  <group id="underwriting" link="locations" style="tabbed">
+    <question id="diving_board" ... />
+    <question id="rabid_dog" ... />
+  </group>
+@end example
+@caption{Linking groups using @xmlattr{link}}
+@end float
+
+In @ref{f:group-link},
+  each question in @var{location} and @var{underwriting} will have the
+  same number of indexes@mdash{
+    }any time a new index is added to @var{location},
+      @var{underwriting} questions too will gain another index and
+      vice versa.
+There is no limit to the number of groups that can share the same link.
+
+@devnote{Linked groups are implemented such that the union of all fields
+       in each of the groups of a given link are assigned to each of the
+       individual groups.
+     When the leader of any group changes,
+       a new index is initialized for each group field,
+         which (in the case of linked groups) is comprised of all
+         fields in the link.}
 
 
 @node Specifying Predicates
 @subsection Specifying Predicates
 
+@cindex Predicate
 Object predicates (@pxref{Predicate System}) are specified using the
   @xmlattr{when} attribute of certain nodes.
 It must contain a string of references understood by the system
