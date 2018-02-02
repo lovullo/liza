@@ -149,6 +149,14 @@ A list of available styles is detailed in @ref{t:group-styles}.
   @tab@center Y
   @tab@center Add
 
+  @item @samp{stacked}
+  @tab
+  Groups respective indexes of elements such that one set of indexes
+    appears atop of another set,
+      much like separate groups are placed.
+  @tab@center Y
+  @tab@center N
+
   @item @samp{tabbedblock}
   @tab
   Each group is rendered as a block,

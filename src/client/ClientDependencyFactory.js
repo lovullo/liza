@@ -40,6 +40,7 @@ var Step          = require( '../step/Step' ),
     TableGroupUi         = require( '../ui/group/TableGroupUi' ),
     TabbedGroupUi        = require( '../ui/group/TabbedGroupUi' ),
     TabbedBlockGroupUi   = require( '../ui/group/TabbedBlockGroupUi' ),
+    StackedGroupUi       = require( '../ui/group/StackedGroupUi' ),
     SideTableGroupUi     = require( '../ui/group/SideTableGroupUi' ),
     CollapseTableGroupUi = require( '../ui/group/CollapseTableGroupUi' ),
 
@@ -316,6 +317,10 @@ module.exports = Class( 'ClientDependencyFactory',
         else if ( $content.hasClass( 'tabbedblock' ) )
         {
             obj = TabbedBlockGroupUi;
+        }
+        else if ( $content.hasClass( 'stacked' ) )
+        {
+            obj = StackedGroupUi;
         }
         else if ( $content.hasClass( 'accordion' ) )
         {

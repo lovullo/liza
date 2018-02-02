@@ -149,3 +149,25 @@
 
   font-weight: normal;
 }
+
+
+/* Groups
+ * ------
+ * Each group styles fields differently, but they all operate on the same
+ * general principle: provide a means of display multi-dimensional data
+ * where each respective field index in the group is displayed together.
+ *
+ * TODO: These need liza-* prefixes.
+ *
+ * Stacked Group
+ * ~~~~~~~~~~~~~
+ */
+
+.stepGroup dl.stacked dt.stack-header {
+  border-top:  0px;
+  font-weight: bold;
+}
+
+.stepGroup dl.stacked:not(:first-child) dt.stack-header {
+  margin-top: 2em;
+}
