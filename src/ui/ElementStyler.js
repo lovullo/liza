@@ -508,9 +508,7 @@ module.exports = Class( 'ElementStyler',
                 $element.val( ''+( value ) );
         }
 
-        // the autochange propery signifies that we should trigger the
-        // change event
-        if ( $element !== undefined && ( change_event || ( $element.data( 'autochange' ) === true ) ) )
+        if ( $element && change_event )
         {
             $element.trigger( 'change' );
         }
