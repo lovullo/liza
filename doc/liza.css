@@ -79,7 +79,13 @@ hr { border-width: 0; border-top-width: 3px; border-style: double; }
 dd > p:first-child { margin-top: 0.5em; }
 
 /* Limit maximum body width such that text is easier to read */
-body { max-width: 42em; margin-left: 0.5em; margin-right: 0.5em; }
+body {
+  max-width: 42em;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+
+  text-align: justify;
+}
 
 /* On small screens don't indent the code examples to prevent overflow */
 div.example { margin-left: auto; max-width: 38.8em; }
