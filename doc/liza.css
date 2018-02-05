@@ -125,9 +125,7 @@ but don't sacrifice space on small screens.
     border-color: #d33682;
 }
 
-.doc-notice.devnotice p::before,
-.doc-notice.devnote p::before,
-.doc-notice.tip p::before
+.doc-notice p::before
 {
     display: block;
     float: left;
@@ -151,9 +149,12 @@ but don't sacrifice space on small screens.
     content: '\261E';
 }
 
-.doc-notice.devnotice p,
-.doc-notice.devnote p,
-.doc-notice.tip p
+.doc-notice.trivia p::before
+{
+    content: '\1F914';
+}
+
+.doc-notice p
 {
     padding-left: 1.75em;
 }
