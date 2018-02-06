@@ -2618,12 +2618,17 @@ module.exports = Class( 'Client' )
         {
             case 'set':
                 var setdata = {};
+                var maxi    = data.value.length - 1;
+
                 setdata[ data.elementName ] = [];
 
+                // use last available index (just as assertions do)
                 for ( var i in data.indexes )
                 {
-                    var index   = data.indexes[ i ];
-                    setdata[ data.elementName ][ index ] = data.value[ index ];
+                    var desti = data.indexes[ i ];
+                    var srci  = Math.min( desti, maxi );
+
+                    setdata[ data.elementName ][ desti ] = data.value[ srci ];
                 }
 
                 this._quote.setData( setdata );
