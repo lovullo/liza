@@ -1125,11 +1125,14 @@ module.exports = Class( 'Client' )
                     // populate and enable field *only if* results were returned
                     // and if the quote has not been locked; but first, give the
                     // UI a chance to finish updating
-                    setTimeout( function()
+                    (function ( index )
                     {
-                        group
-                            .setOptions( name, i, data, cur );
-                    }, 25 );
+                        setTimeout( function()
+                        {
+                            group
+                                .setOptions( name, index, data, cur );
+                        }, 25 );
+                    })(i)
 
                 }
 
