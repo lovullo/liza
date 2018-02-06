@@ -15,6 +15,16 @@ To build and publish a new version on NPM:
 - Publish:
     $ npm publish liza-VERSION.tar.gz
 
+If your system cannot create a distribution tarball for whatever reason
+(e.g. because of large user/group ids), then you'll have to create a
+distribution directory instead:
+
+- Create distribution:
+    $ make distdir
+- Publish:
+    $ npm publish liza-VERSION/
+
+
 If you have a personal account on NPM, you may use that; otherwise,
 use the `lovullo' account.
 
