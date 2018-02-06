@@ -150,6 +150,18 @@ This system has maintenance concerns.
 @end macro
 
 
+@c Conveying the historical details of the project is important to
+@c understand why the system exists in the state that it does
+@c today.  Use of this macro will hopefully help mitigate some of the
+@c problems noted by Peter Naur in his paper Programming as Theory Building:
+@c   http://pages.cs.wisc.edu/~remzi/Naur.pdf
+@macro trivia{text}
+@noticestart{trivia}
+\text\
+@noticeend
+@end macro
+
+
 @c link to source file if URI is known, otherwise display
 @c the path to the file
 @ifset SRCURI

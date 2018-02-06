@@ -45,6 +45,7 @@ Programs are ideally compiled from a @ref{Program XML,,Program@tie{}XML}
 @end menu
 
 
+
 @node Program UI
 @section Program UI
 @maintenance{
@@ -101,9 +102,11 @@ It also displays question help text (also configured through the XML)
   and any error messages (@pxref{Error Handling}).
 
 @menu
-* Group Styles:: Different ways of displaying groups of questions to
-                 the user.
+* Group Styles::     Different ways of displaying groups of questions
+                       to the user.
+* DOM Abstraction :: Representing and efficiently manipulating the DOM.
 @end menu
+
 
 
 @node Group Styles
@@ -185,6 +188,104 @@ A list of available styles is detailed in @ref{t:group-styles}.
 @caption{Group styles and index support}
 @end float
 
+
+
+@node DOM Abstraction
+@subsection DOM Abstraction
+@cindex DOM
+@cindex Dojo, History
+@cindex jQuery
+@devnotice{jQuery is still used throughout parts of the framework and
+             is a performance bottleneck@mdash{
+               }it needs to be fully removed and replaced with this
+                 DOM@tie{}abstraction.@footnote{
+                   See @srcrefraw{src/ui/ElementStyler}.}}
+
+@trivia{Liza was conceived long before frameworks like React existed.
+          The implementation originally used Dojo because of its
+            broad widget set,
+              but it was later dropped because of extreme performance issues,
+                especially on the browsers of the day
+                  (Liza had to support Internet Explorer@tie{}6!);
+                  at one point,
+                    certain steps took over a minute to load for the
+                    most unfortunate of users.
+          jQuery was then used for various parts of the UI and for ease of
+            DOM manipulation,
+              because of the lack of good and universal DOM APIs back then.
+          It too became a bottleneck.
+          Using DOM@tie{}APIs is now easy with modern browsers.}
+
+Liza's DOM abstraction contains a couple of components:
+
+@cindex DOM, Context
+@cindex DOM, Field
+@itemize
+@item @dfn{DOM Fields} represent a field on the DOM.
+      Each field has a name and an index associated with the
+        DOM@tie{}node.
+      Nodes are cached in memory after first access and queue requests
+        during lookups to prevent stampeding.
+      Provides basic DOM operations,
+        including styling, containing row, and  parent/sibling selecting.
+      See @srcref{src/ui/field}.
+@item @dfn{DOM Context} is a slice of the DOM used for restricting queries.
+      It can attach and detach sections of the DOM,
+        and be further split into a context hierarchy.
+      The @srcrefjs{src/ui/context,DomContext} provides field querying
+        (see @srcrefjs{src/ui/field,DomField}) and caching.
+      See @srcrefraw{src/ui/context}.
+@end itemize
+
+@tip{It is important to always use these abstractions for any portions
+      of the DOM under control of this abstraction;
+        otherwise, assumptions used for caching may result in
+          unintended behavior.}
+
+Using DOM contexts,
+  DOM operations can be restricted to small windows (for example,
+    groups or tabs),
+      further reducing the impact of DOM queries.
+
+The @dfn{root context} is represented by
+  @srcrefjs{src/ui/context,RootDomContext}@mdash{
+    }sub-contexts can be obtained by invoking @jsmethod{slice} on any
+      context,
+        which creates a new context from a subset of the parent.
+Detaching a parent will detach all child contexts.
+
+Contexts can be manipulated in memory before being re-attached.
+Detach a context from the DOM with @jsmethod{detach},
+  and attach with@tie{}@jsmethod{attach}.
+A context is aware of its parent and will re-attach itself to the DOM
+  in the correct place.
+A child context always attaches to the parent,
+  and so will not be rendered until the parent attaches.
+
+@tip{Always detach from the DOM before performing extensive manipulations;
+       this prevents the need for expensive re-painting until
+         manipulation is done,
+           at which point the context can be re-attached.}
+
+
+@menu
+* Field Styling:: Styling @srcrefjs{src/ui/field,DomField}.
+@end menu
+
+
+
+@node Field Styling
+@subsubsection Field Styling
+@cindex Field, Styling
+@helpwanted
+
+@srcrefjs{src/ui/field,DomField} is styled using field stylers
+  (see @srcrefraw{src/ui/styler}).
+The two most notable stylers are
+  @srcrefjs{src/ui/field/ErrorFieldStyler} and
+  @srcrefjs{src/ui/field/NaFieldStyler},
+    which style fields in error and hide fields that are no applicable
+    respectively.
 
 
 @node Program XML
@@ -299,6 +400,7 @@ There is no limit to the number of groups that can share the same link.
        a new index is initialized for each group field,
          which (in the case of linked groups) is comprised of all
          fields in the link.}
+
 
 
 @node Specifying Predicates
