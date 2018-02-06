@@ -5,9 +5,10 @@ Publishing New Versions
 =======================
 To build and publish a new version on NPM:
 
-- Bump version in configure.ac
+- Regenerate `configure' with version information:
+    $ ./autogen.sh
 - Test:
-    $ ./autogen.sh && ./configure && make
+    $ ./configure && make
 - Tag version with 'v' prefix
 - Create tarball:
     $ make dist
