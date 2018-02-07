@@ -1,7 +1,7 @@
 /**
  * Liza client
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -2616,24 +2616,6 @@ module.exports = Class( 'Client' )
         // perform event (XXX: replace me; see above)
         switch ( event_name )
         {
-            case 'set':
-                var setdata = {};
-                var maxi    = data.value.length - 1;
-
-                setdata[ data.elementName ] = [];
-
-                // use last available index (just as assertions do)
-                for ( var i in data.indexes )
-                {
-                    var desti = data.indexes[ i ];
-                    var srci  = Math.min( desti, maxi );
-
-                    setdata[ data.elementName ][ desti ] = data.value[ srci ];
-                }
-
-                this._quote.setData( setdata );
-                break;
-
             case 'reset':
                 var reset = {};
                 reset[ data.elementName ] = data.indexes;

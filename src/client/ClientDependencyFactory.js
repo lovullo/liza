@@ -369,6 +369,8 @@ module.exports = Class( 'ClientDependencyFactory',
             'show': field_vis_handler,
             'hide': field_vis_handler,
 
+            'set': requireh( 'ValueSetEventHandler' )( client ),
+
             'action$cvv2Dialog':   requireh( 'Cvv2DialogEventHandler' )( jquery )
         } );
     }
