@@ -452,6 +452,14 @@ module.exports = Class( 'ElementStyler',
     {
         change_event = ( change_event === undefined ) ? true : change_event;
 
+        // just to be sure before we fully remove this
+        if ( change_event !== false )
+        {
+            console.warning(
+                "ElementStyler#setValueByName change_event is being removed"
+            );
+        }
+
         // set value
         switch ( this._getElementType( name ) )
         {
