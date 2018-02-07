@@ -493,7 +493,11 @@ module.exports = Class( 'ElementStyler',
                 while ( i-- )
                 {
                     const question = elements[ i ][ 0 ];
-                    question.checked = ( question.value === ''+value );
+
+                    if ( question )
+                    {
+                        question.checked = ( question.value === ''+value );
+                    }
                 }
 
                 break;
