@@ -492,7 +492,10 @@ module.exports = Class( 'ElementStyler',
                 var i = elements.length;
                 while ( i-- )
                 {
-                    const question = elements[ i ][ 0 ];
+                    // BC until jQuery is fully removed
+                    const question = ( elements[ i ] instanceof jQuery )
+                        ? elements[ i ][ 0 ]
+                        : elements[ i ];
 
                     if ( question )
                     {
