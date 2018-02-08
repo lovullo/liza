@@ -2561,14 +2561,12 @@ module.exports = Class( 'Client' )
     /**
      * Handles client-side events
      *
-     * @param String   event_name name of the event
-     * @param Object   data       data to pass to event
-     * @param Function callback   function to call when event is done (if
-     *                            not asynchronous, it'll be called immediately)
+     * @param {string}           event_name     name of the event
+     * @param {Object}           data           data to pass to event
+     * @param {function(Object)} callback       function to call when event is done
+     * @param {function(Error)}  error_callback function to call if event fails
      *
-     * @param Function error_callback function to call if event fails
-     *
-     * @return Client self to allow for method chaining
+     * @return {Client} self to allow for method chaining
      */
     handleEvent: function( event_name, data, callback, error_callback )
     {
@@ -2577,108 +2575,26 @@ module.exports = Class( 'Client' )
 
         this.emit( this.__self.$('EVENT_TRIGGER'), event_name, data );
 
-        try
-        {
-            this._eventHandler.handle(
-                event_name, function( err, data )
-                {
-                    if ( err )
-                    {
-                        error_callback( err );
-                        return this;
-                    }
-
-                    // XXX: move me
-                    if ( event_name === 'rate' )
-                    {
-                        _self.emit( _self.__self.$('EVENT_POST_RATE'), data );
-                    }
-
-                    callback && callback( data );
-                }, data
-            );
-
-            // we had no problem handling this event; no need to continue with
-            // the old event handling system
-            return this;
-        }
-        catch ( e )
-        {
-            // segue into the old event handling system
-            if ( !( Class.isA( UnknownEventError, e ) ) )
+        this._eventHandler.handle(
+            event_name, function( err, data )
             {
-                // ruh roh
-                this._handleError( e );
-                return this;
-            }
-        }
-
-        this._handleError( Error(
-            'Unknown client-side event: ' + event_name
-        ) );
-
-        // call the callback, if one was provided
-        if ( callback instanceof Function )
-        {
-            callback.call( this );
-        }
-
-        return this;
-    },
-
-
-    /**
-     * Trigger DataApi event for field FIELD
-     *
-     * @param {string} field field name
-     *
-     * @return {undefined}
-     */
-    'private _dapiTrigger': function( field )
-    {
-        var _self = this;
-
-        this.getQuote().visitData( function( bucket )
-        {
-            _self.program.dapi(
-                _self._currentStepId,
-                field,
-                bucket,
-                {},
-                _self._cmatch,
-                null
-            );
-        } );
-    },
-
-
-    'private _resetFields': function( fields )
-    {
-        var update = {};
-
-        for ( var field in fields )
-        {
-            var cur   = fields[ field ],
-                cdata = this._quote.getDataByName( field ),
-                val   = this.elementStyler.getDefault( field );
-
-            var data = [];
-            for ( var i in cur )
-            {
-                var index = cur[ i ];
-
-                if ( cdata[ index ] === val )
+                if ( err )
                 {
-                    continue;
+                    error_callback && error_callback( err );
+                    return this;
                 }
 
-                data[ index ] = val;
-            }
+                // XXX: move me
+                if ( event_name === 'rate' )
+                {
+                    _self.emit( _self.__self.$('EVENT_POST_RATE'), data );
+                }
 
-            update[ field ] = data;
-        }
+                callback && callback( data );
+            }, data
+        );
 
-        this._quote.setData( update );
+        return this;
     },
 
 
