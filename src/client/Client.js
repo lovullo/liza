@@ -2585,7 +2585,7 @@ module.exports = Class( 'Client' )
                     if ( err )
                     {
                         error_callback( err );
-                        return;
+                        return this;
                     }
 
                     // XXX: move me
@@ -2600,7 +2600,7 @@ module.exports = Class( 'Client' )
 
             // we had no problem handling this event; no need to continue with
             // the old event handling system
-            return;
+            return this;
         }
         catch ( e )
         {
@@ -2609,25 +2609,13 @@ module.exports = Class( 'Client' )
             {
                 // ruh roh
                 this._handleError( e );
-                return;
+                return this;
             }
         }
 
-        // perform event (XXX: replace me; see above)
-        switch ( event_name )
-        {
-            case 'reset':
-                var reset = {};
-                reset[ data.elementName ] = data.indexes;
-
-                this._resetFields( reset );
-                break;
-
-            default:
-                this._handleError( Error(
-                    'Unknown client-side event: ' + event_name
-                ) );
-        }
+        this._handleError( Error(
+            'Unknown client-side event: ' + event_name
+        ) );
 
         // call the callback, if one was provided
         if ( callback instanceof Function )
