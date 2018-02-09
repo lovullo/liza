@@ -300,17 +300,7 @@ module.exports = Class( 'Cmatch',
                 ( ( vis[ i ] ) ? show : hide ).push( i );
             }
 
-            if ( show.length )
-            {
-                visq[ field ] = { event_id: 'show', name: field, indexes: show };
-                this._mergeCmatchHidden( field, show, false );
-            }
-
-            if ( hide.length )
-            {
-                visq[ field ] = { event_id: 'hide', name: field, indexes: hide };
-                this._mergeCmatchHidden( field, hide, true );
-            }
+            this.markShowHide( field, visq, show, hide );
         }
 
         // it's important to do this before showing/hiding fields, since
@@ -336,6 +326,41 @@ module.exports = Class( 'Cmatch',
                 this._dapiTrigger( name );
             } );
         }, 25 );
+    },
+
+
+    /**
+     * Mark fields to be shown/hidden
+     *
+     * This also updates the cached visibility of field FIELD.
+     *
+     * XXX: This method makes very obvious a nasty bug where hides override
+     * shows if both are set.
+     *
+     * @param {string} field field name
+     * @param {Array}  show  indexes to show
+     * @param {Array}  hide  indexes to hide
+     *
+     * @return {undefined}
+     */
+    'protected markShowHide'( field, visq, show, hide )
+    {
+        if ( !( show.length || hide.length ) )
+        {
+            return;
+        }
+
+        if ( show.length )
+        {
+            this._mergeCmatchHidden( field, show, false );
+            visq[ field ] = { event_id: 'show', name: field, indexes: show };
+        }
+
+        if ( hide.length )
+        {
+            this._mergeCmatchHidden( field, hide, true );
+            visq[ field ] = { event_id: 'hide', name: field, indexes: hide };
+        }
     },
 
 
