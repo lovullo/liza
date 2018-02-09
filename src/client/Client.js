@@ -23,6 +23,7 @@ const Class                 = require( 'easejs' ).Class;
 const EventEmitter          = require( 'events' ).EventEmitter;
 const DomFieldNotFoundError = require( '../ui/field/DomFieldNotFoundError' );
 const UnknownEventError     = require( './event/UnknownEventError' );
+const system                = require( '../system/client' );
 
 
 /**
@@ -198,30 +199,10 @@ module.exports = Class( 'Client' )
     'private _validatorFormatter': null,
 
     /**
-     * Contains classification match data per field
-     *
-     * TODO: Move this to somewhere more appropriate
-     *
-     * @type {Object}
+     * Classification match handler
+     * @type {Cmatch}
      */
-    'private _cmatch': {},
-
-    /**
-     * Performs classification matching on fields
-     *
-     * A field will have a positive match for a given index if all of its
-     * classes match
-     *
-     * @type {FieldClassMatcher}
-     */
-    'private _classMatcher': null,
-
-
-    /**
-     * Fields that were hidden (including indexes) since the last cmatch clear
-     * @type {Object}
-     */
-    'private _cmatchHidden': {},
+    'private _cmatch': null,
 
     /**
      * Automatically discards staging bucket contents
@@ -347,9 +328,7 @@ module.exports = Class( 'Client' )
             this, this._dataValidator, this.elementStyler, this.dataProxy, jQuery
         );
 
-        this._classMatcher = this._factory.createFieldClassMatcher(
-            this.program.whens
-        );
+        this._cmatch = system.cmatch( this.program, this.__inst );
 
         this._validatorFormatter = this._factory.createValidatorFormatter(
             this.program.meta.qtypes
@@ -428,7 +407,7 @@ module.exports = Class( 'Client' )
         {
             client.ui.displayStep( step_id, function()
             {
-                client.forceCmatchAction();
+                client._cmatch.forceCmatchAction();
             } );
 
             client._currentStepId = step_id;
@@ -503,7 +482,7 @@ module.exports = Class( 'Client' )
 
             client._quote.setQuickSaveData( data.content.quicksave || {} );
 
-            client._hookClassifier();
+            client._cmatch.hookClassifier( client._dataValidator );
 
             // store internal status
             client._isInternal = client.program.isInternal =
@@ -557,285 +536,6 @@ module.exports = Class( 'Client' )
 
 
     /**
-     * Force handling of the most recent cmatch data
-     *
-     * This can be used to refresh the UI to ensure that it is consistent with
-     * the cmatch data.
-     *
-     * @return {Client} self
-     */
-    'public forceCmatchAction': function()
-    {
-        if ( !( this._cmatch ) )
-        {
-            return this;
-        }
-
-        this._handleClassMatch( this._cmatch, true );
-
-        return this;
-    },
-
-
-    'private _hookClassifier': function()
-    {
-        var _self   = this,
-            program = this.program;
-
-        // clear/initialize cmatches
-        this._cmatch = {};
-
-        var cmatchprot = false;
-
-        // set classifier
-        this._quote
-            .setClassifier( program.getClassifierKnownFields(), function()
-            {
-                return program.classify.apply( program, arguments );
-            } )
-            .on( 'classify', function( classes )
-            {
-                if ( cmatchprot === true )
-                {
-                    _self._handleError( Error( 'cmatch recursion' ) );
-                }
-
-                cmatchprot = true;
-
-                // handle field fixes
-                _self._dataValidator.validate( undefined, classes )
-                    .catch( e => _self.handleError( e ) );
-
-                _self._classMatcher.match( classes, function( cmatch )
-                {
-                    // it's important that we do this here so that everything
-                    // that uses the cmatch data will consistently benefit
-                    _self._postProcessCmatch( cmatch );
-
-                    // if we're not on a current step, defer
-                    if ( !( _self.ui.getCurrentStep() ) )
-                    {
-                        _self._cmatch = cmatch;
-                        cmatchprot = false;
-                        return;
-                    }
-
-                    _self._handleClassMatch( cmatch );
-                    cmatchprot = false;
-                } );
-            } );
-    },
-
-
-    'private _postProcessCmatch': function( cmatch )
-    {
-        // for any matches that are scalars (they will have no indexes), loop
-        // through each field and set the index to the value of 'all'
-        for ( var field in cmatch )
-        {
-            if ( field === '__classes' )
-            {
-                continue;
-            }
-
-            var cfield = cmatch[ field ];
-
-            if ( cfield.indexes.length === 0 )
-            {
-                var data = this.getQuote().getDataByName( field  ),
-                    i    = data.length;
-
-                // this will do nothing if there is no data found
-                while ( i-- )
-                {
-                    cfield.indexes[ i ] = cfield.all;
-                }
-            }
-        }
-
-        return cmatch;
-    },
-
-
-    // from UI
-    'private _cmatchVisFromUi': function( field, all )
-    {
-        var step = this.getUi().getCurrentStep();
-
-        if ( !step )
-        {
-            return [];
-        }
-
-        var group = step.getElementGroup( field );
-        if ( !group )
-        {
-            return [];
-        }
-
-        var i   = group.getCurrentIndexCount(),
-            ret = [];
-
-        while ( i-- )
-        {
-            ret.push( all );
-        }
-
-        return ret;
-    },
-
-
-    'private _handleClassMatch': function( cmatch, force )
-    {
-        force = !!force;
-
-        this.ui.setCmatch( cmatch );
-
-        var _self = this,
-            quote = this.getQuote(),
-
-            // oh dear god...(Demeter, specifically..)
-            fields = this.getUi().getCurrentStep().getStep()
-                .getExclusiveFieldNames();
-
-
-        var visq = [];
-        for ( var field in cmatch )
-        {
-            // ignore fields that are not on the current step
-            if ( !( fields[ field ] ) )
-            {
-                continue;
-            }
-
-            // if the match is still false, then we can rest assured
-            // that nothing has changed (and skip the overhead)
-            if ( !force
-                && ( cmatch[ field ] === false )
-                && ( _self._cmatch[ field ] === false )
-            )
-            {
-                continue;
-            }
-
-            var show = [],
-                hide = [],
-
-                cfield = cmatch[ field ],
-
-                vis = cfield.indexes,
-                cur = (
-                    ( _self._cmatch[ field ] || {} ).indexes
-                    || []
-                );
-
-            // the system was previously unable to determine the length, so
-            // let's attempt to get it from the UI
-            if ( vis.length === 0 )
-            {
-                vis = this._cmatchVisFromUi( field, cfield.all );
-            }
-
-            // consider the number of indexes in the bucket first;
-            // otherwise, we might try to operate on fields that don't
-            // exist (bucket/class indexes not the same).  the check for
-            // undefined in the first index is a workaround for the explicit
-            // setting of the length property of the bucket value when
-            // indexes are removed
-            var curdata = quote.getDataByName( field ),
-                fieldn  = ( curdata.length > 0 && ( curdata[ 0 ] !== undefined ) )
-                    ? curdata.length
-                    : vis.length;
-
-            for ( var i = 0; i < fieldn; i++ )
-            {
-                // do not record unchanged indexes as changed
-                // (avoiding the event overhead)
-                if ( !force && ( vis[ i ] === cur[ i ] ) )
-                {
-                    continue;
-                }
-
-                ( ( vis[ i ] ) ? show : hide ).push( i );
-            }
-
-            if ( show.length )
-            {
-                visq[ field ] = { event_id: 'show', name: field, indexes: show };
-                this._mergeCmatchHidden( field, show, false );
-            }
-
-            if ( hide.length )
-            {
-                visq[ field ] = { event_id: 'hide', name: field, indexes: hide };
-                this._mergeCmatchHidden( field, hide, true );
-            }
-        }
-
-        // it's important to do this before showing/hiding fields, since
-        // those might trigger events that check the current cmatches
-        this._cmatch = cmatch;
-
-
-        // allow DOM operations to complete before we trigger
-        // manipulations on it (TODO: this is a workaround for group
-        // show/hide issues; we need a better solution to guarantee
-        // order
-        setTimeout( () =>
-        {
-            Object.keys( visq ).forEach( field =>
-            {
-                const { event_id, name, indexes } = visq[ field ];
-
-                this.handleEvent( event_id, {
-                    elementName: name,
-                    indexes:     indexes,
-                } );
-
-                this._dapiTrigger( name );
-            } );
-        }, 25 );
-    },
-
-
-    'private _mergeCmatchHidden': function( name, indexes, hidden )
-    {
-        if ( !( this._cmatchHidden[ name ] ) )
-        {
-            this._cmatchHidden[ name ] = {};
-        }
-
-        var cindexes = this._cmatchHidden[ name ];
-
-        for ( i in indexes )
-        {
-            if ( hidden )
-            {
-                cindexes[ indexes[ i ] ] = i;
-            }
-            else
-            {
-                delete cindexes[ indexes[ i ] ];
-            }
-        }
-
-        var some = false;
-        for ( var i in cindexes )
-        {
-            some = true;
-            break;
-        }
-
-        if ( !some )
-        {
-            // v8 devs do not recomment delete as it progressively slows down
-            // property access on the object
-            this._cmatchHidden[ name ] = undefined;
-        }
-    },
-
-
-    /**
      * Hooks quote for performing validations on data change
      *
      * @return {undefined}
@@ -862,7 +562,7 @@ module.exports = Class( 'Client' )
                 name,
                 bucket,
                 diff,
-                this._cmatch,
+                this._cmatch.getMatches(),
                 function()
                 {
                     var args = arguments;
@@ -937,7 +637,7 @@ module.exports = Class( 'Client' )
         {
             // N.B.: We pass {} as the diff because nothing has actually changed
             _self.ui.invalidateForm(
-                validate_callback( bucket, {}, _self._cmatch )
+                validate_callback( bucket, {}, _self._cmatch.getMatches() )
             );
         } );
     },
@@ -1009,7 +709,7 @@ module.exports = Class( 'Client' )
         // force UI cmatch update, since we may have fields that have been added
         // that need to be shown/hidden based on the current set of
         // classifications
-        this.forceCmatchAction();
+        this._cmatch.forceCmatchAction();
     },
 
 
@@ -1049,7 +749,7 @@ module.exports = Class( 'Client' )
         catch ( e )
         {
             // todo: better suited for brokers
-            this._handleError( Error(
+            this.handleError( Error(
                 "Error loading program data: " + e.message
             ) );
 
@@ -1058,7 +758,7 @@ module.exports = Class( 'Client' )
 
         program.on( 'error', function( e )
         {
-            _self._handleError( e );
+            _self.handleError( e );
         } );
 
         // handle field updates
@@ -1158,7 +858,7 @@ module.exports = Class( 'Client' )
             } )
             .on( 'error', function( e )
             {
-                _self._handleError( e );
+                _self.handleError( e );
             } );
 
         return program;
@@ -1412,7 +1112,7 @@ module.exports = Class( 'Client' )
         // handle context errors
         root_context.on( 'error', function( e )
         {
-            client._handleError( e );
+            client.handleError( e );
         } );
 
         // must init after the Ui obj is available
@@ -1472,7 +1172,7 @@ module.exports = Class( 'Client' )
             } )
             .on( 'error', function( e )
             {
-                client._handleError( e );
+                client.handleError( e );
             } );
 
         return ui.saveStep( function( stepui )
@@ -1929,7 +1629,7 @@ module.exports = Class( 'Client' )
         var client = this;
 
         // if the step contains invalid data, they must correct it
-        if ( !( stepui.isValid( this._cmatch ) ) )
+        if ( !( stepui.isValid( this._cmatch.getMatches() ) ) )
         {
             // well we didn't get very far
             callback( false );
@@ -1947,7 +1647,7 @@ module.exports = Class( 'Client' )
 
         // we want to do this before save so that we don't re-mark the bucket as
         // dirty by populating it with uncommitted data
-        client._clearCmatchFields();
+        client._cmatch.clearCmatchFields();
 
         // give devs the option to disable client-side submit events so we can
         // test server-side functionality
@@ -1959,7 +1659,7 @@ module.exports = Class( 'Client' )
             // shouldn't occurr, we should still throw an exception if one is
             // triggered
             var failures = this.program.submit(
-                step_id, bucket, this._cmatch
+                step_id, bucket, this._cmatch.getMatches()
             );
 
             if ( failures !== null )
@@ -2072,7 +1772,7 @@ module.exports = Class( 'Client' )
         {
             event.abort();
 
-            _self._handleError( Error(
+            _self.handleError( Error(
                 'Save timeout; please try again'
             ) );
         }, 15000 );
@@ -2371,57 +2071,6 @@ module.exports = Class( 'Client' )
     },
 
 
-    'private _clearCmatchFields': function()
-    {
-        var step    = this.getUi().getCurrentStep(),
-            program = this.program;
-
-        // don't bother if we're not yet on a step
-        if ( !step )
-        {
-            return;
-        }
-
-        var reset = {};
-        for ( var name in step.getStep().getExclusiveFieldNames() )
-        {
-            var data = this._cmatchHidden[ name ];
-
-            // if there is no data or we have been asked to retain this field's
-            // value, then do not clear
-            if ( !data || program.cretain[ name ] )
-            {
-                continue;
-            }
-
-            // what state is the current data in?
-            var cur = this.getQuote().getDataByName( name );
-
-            // we could have done Array.join(',').split(','), but we're trying
-            // to keep performance sane here
-            var indexes = [];
-            for ( var i in data )
-            {
-                // we do *not* want to reset fields that have been removed
-                if ( cur[ i ] === undefined )
-                {
-                    break;
-                }
-
-                indexes.push( i );
-            }
-
-            reset[ name ] = indexes;
-        }
-
-        // batch reset (limit the number of times events are kicked off)
-        this._resetFields( reset );
-
-        // we've done our deed; reset it for the next time around
-        this._cmatchHidden = {};
-    },
-
-
     /**
      * Perform `forward' validations if needed
      *
@@ -2449,7 +2098,7 @@ module.exports = Class( 'Client' )
         var failures = this.program.forward(
             cur_step_id,
             bucket,
-            this._cmatch,
+            this._cmatch.getMatches(),
             function( trigger_event, question_id, value )
             {
                 client.handleEvent( trigger_event, { stepId: +value } );
@@ -2561,14 +2210,12 @@ module.exports = Class( 'Client' )
     /**
      * Handles client-side events
      *
-     * @param String   event_name name of the event
-     * @param Object   data       data to pass to event
-     * @param Function callback   function to call when event is done (if
-     *                            not asynchronous, it'll be called immediately)
+     * @param {string}           event_name     name of the event
+     * @param {Object}           data           data to pass to event
+     * @param {function(Object)} callback       function to call when event is done
+     * @param {function(Error)}  error_callback function to call if event fails
      *
-     * @param Function error_callback function to call if event fails
-     *
-     * @return Client self to allow for method chaining
+     * @return {Client} self to allow for method chaining
      */
     handleEvent: function( event_name, data, callback, error_callback )
     {
@@ -2577,120 +2224,26 @@ module.exports = Class( 'Client' )
 
         this.emit( this.__self.$('EVENT_TRIGGER'), event_name, data );
 
-        try
-        {
-            this._eventHandler.handle(
-                event_name, function( err, data )
-                {
-                    if ( err )
-                    {
-                        error_callback( err );
-                        return;
-                    }
-
-                    // XXX: move me
-                    if ( event_name === 'rate' )
-                    {
-                        _self.emit( _self.__self.$('EVENT_POST_RATE'), data );
-                    }
-
-                    callback && callback( data );
-                }, data
-            );
-
-            // we had no problem handling this event; no need to continue with
-            // the old event handling system
-            return;
-        }
-        catch ( e )
-        {
-            // segue into the old event handling system
-            if ( !( Class.isA( UnknownEventError, e ) ) )
+        this._eventHandler.handle(
+            event_name, function( err, data )
             {
-                // ruh roh
-                this._handleError( e );
-                return;
-            }
-        }
-
-        // perform event (XXX: replace me; see above)
-        switch ( event_name )
-        {
-            case 'reset':
-                var reset = {};
-                reset[ data.elementName ] = data.indexes;
-
-                this._resetFields( reset );
-                break;
-
-            default:
-                this._handleError( Error(
-                    'Unknown client-side event: ' + event_name
-                ) );
-        }
-
-        // call the callback, if one was provided
-        if ( callback instanceof Function )
-        {
-            callback.call( this );
-        }
-
-        return this;
-    },
-
-
-    /**
-     * Trigger DataApi event for field FIELD
-     *
-     * @param {string} field field name
-     *
-     * @return {undefined}
-     */
-    'private _dapiTrigger': function( field )
-    {
-        var _self = this;
-
-        this.getQuote().visitData( function( bucket )
-        {
-            _self.program.dapi(
-                _self._currentStepId,
-                field,
-                bucket,
-                {},
-                _self._cmatch,
-                null
-            );
-        } );
-    },
-
-
-    'private _resetFields': function( fields )
-    {
-        var update = {};
-
-        for ( var field in fields )
-        {
-            var cur   = fields[ field ],
-                cdata = this._quote.getDataByName( field ),
-                val   = this.elementStyler.getDefault( field );
-
-            var data = [];
-            for ( var i in cur )
-            {
-                var index = cur[ i ];
-
-                if ( cdata[ index ] === val )
+                if ( err )
                 {
-                    continue;
+                    error_callback && error_callback( err );
+                    return this;
                 }
 
-                data[ index ] = val;
-            }
+                // XXX: move me
+                if ( event_name === 'rate' )
+                {
+                    _self.emit( _self.__self.$('EVENT_POST_RATE'), data );
+                }
 
-            update[ field ] = data;
-        }
+                callback && callback( data );
+            }, data
+        );
 
-        this._quote.setData( update );
+        return this;
     },
 
 
@@ -2926,7 +2479,7 @@ module.exports = Class( 'Client' )
         // proxy errors
         this._fieldMonitor.on( 'error', function( e )
         {
-            _self._handleError( e );
+            _self.handleError( e );
         } );
     },
 
@@ -2960,7 +2513,7 @@ module.exports = Class( 'Client' )
      *
      * @return {undefined}
      */
-    'private _handleError': function( e )
+    'public handleError': function( e )
     {
         if ( !e )
         {
@@ -3024,10 +2577,4 @@ module.exports = Class( 'Client' )
     {
         return this.program.id;
     },
-
-
-    'public getCmatchData': function()
-    {
-        return this._cmatch;
-    }
 } );

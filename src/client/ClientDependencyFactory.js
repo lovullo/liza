@@ -82,9 +82,8 @@ var Step          = require( '../step/Step' ),
     NavStyler       = require( '../ui/nav/NavStyler' ),
     Sidebar         = require( '../ui/sidebar/Sidebar' ),
 
-    FieldClassMatcher = require( '../field/FieldClassMatcher' ),
-    DataApiFactory    = require( '../dapi/DataApiFactory' ),
-    DataApiManager    = require( '../dapi/DataApiManager' ),
+    DataApiFactory = require( '../dapi/DataApiFactory' ),
+    DataApiManager = require( '../dapi/DataApiManager' ),
 
     RootDomContext     = require( '../ui/context/RootDomContext' ),
     DomFieldFactory    = require( '../ui/field/DomFieldFactory' ),
@@ -345,8 +344,6 @@ module.exports = Class( 'ClientDependencyFactory',
 
     createNotifyBar: UiNotifyBar,
 
-    createFieldClassMatcher: FieldClassMatcher,
-
 
     createClientEventHandler: function(
         client, data_validator, styler, data_proxy, jquery
@@ -373,5 +370,5 @@ module.exports = Class( 'ClientDependencyFactory',
 
             'action$cvv2Dialog':   requireh( 'Cvv2DialogEventHandler' )( jquery )
         } );
-    }
-});
+    },
+} );

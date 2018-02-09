@@ -21,7 +21,9 @@
 
 "use strict";
 
-const store = require( '../store' );
+const Cmatch = require( '../client/Cmatch' );
+const field  = require( '../field' );
+const store  = require( '../store' );
 
 
 /**
@@ -33,6 +35,12 @@ const store = require( '../store' );
  * This is incomplete; it will be added to as code is ported to liza.
  */
 module.exports = {
+    cmatch: ( program, client ) => Cmatch(
+        field.FieldClassMatcher( program.whens ),
+        program,
+        client
+    ),
+
     data: {
         /**
          * Create a store suitable for comparing diffs
