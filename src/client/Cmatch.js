@@ -238,7 +238,7 @@ module.exports = Class( 'Cmatch',
                 .getExclusiveFieldNames();
 
 
-        var visq = [];
+        var visq = {};
         for ( var field in cmatch )
         {
             // ignore fields that are not on the current step
@@ -316,11 +316,16 @@ module.exports = Class( 'Cmatch',
         {
             Object.keys( visq ).forEach( field =>
             {
-                const { event_id, name, indexes } = visq[ field ];
+                const field_vis = visq[ field ];
 
-                this._client.handleEvent( event_id, {
-                    elementName: name,
-                    indexes:     indexes,
+                Object.keys( field_vis ).forEach( event_id =>
+                {
+                    const indexes = field_vis[ event_id ];
+
+                    this._client.handleEvent( event_id, {
+                        elementName: field,
+                        indexes:     indexes,
+                    } );
                 } );
 
                 this._dapiTrigger( name );
@@ -334,33 +339,36 @@ module.exports = Class( 'Cmatch',
      *
      * This also updates the cached visibility of field FIELD.
      *
-     * XXX: This method makes very obvious a nasty bug where hides override
-     * shows if both are set.
-     *
      * @param {string} field field name
      * @param {Array}  show  indexes to show
      * @param {Array}  hide  indexes to hide
      *
      * @return {undefined}
      */
-    'protected markShowHide'( field, visq, show, hide )
+    'virtual protected markShowHide'( field, visq, show, hide )
     {
         if ( !( show.length || hide.length ) )
         {
-            return;
+            return visq;
         }
+
+        const { [field]: result = {} } = visq;
 
         if ( show.length )
         {
             this._mergeCmatchHidden( field, show, false );
-            visq[ field ] = { event_id: 'show', name: field, indexes: show };
+            result.show = show;
         }
 
         if ( hide.length )
         {
             this._mergeCmatchHidden( field, hide, true );
-            visq[ field ] = { event_id: 'hide', name: field, indexes: hide };
+            result.hide = hide;
         }
+
+        visq[ field ] = result;
+
+        return visq;
     },
 
 
