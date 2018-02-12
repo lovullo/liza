@@ -455,7 +455,7 @@ module.exports = Class( 'ElementStyler',
         // just to be sure before we fully remove this
         if ( change_event !== false )
         {
-            console.warning(
+            console.warn(
                 "ElementStyler#setValueByName change_event is being removed"
             );
         }
