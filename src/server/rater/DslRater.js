@@ -55,7 +55,7 @@ module.exports = Class( 'DslRater' )
         {
             // TODO: this is a BS answer
             callback(
-                Error( 'No dwelling raters are available at this time.' ),
+                Error( 'No raters are available at this time.' ),
                 null
             );
             return this;
