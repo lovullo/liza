@@ -136,7 +136,7 @@ module.exports = Class( 'HashNav',
 
         // if we have a good URL, then we have nothing to do (just make sure we
         // have a trailing slash after the rater name)
-        if ( url.match( /[a-z0-9-]\/(?:#.*)?$/ ) )
+        if ( url.match( /\/(?:#.*)?$/ ) )
         {
             return;
         }

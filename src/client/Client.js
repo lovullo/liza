@@ -245,20 +245,34 @@ module.exports = Class( 'Client' )
      */
     'private _validationMessages': {},
 
+    /**
+     * Default program id (if none provided)
+     * @type {string}
+     */
+    'private _defaultId': 'default',
+
 
     /**
      * Instantiates all the necessary objects and initializes the UI.
      *
-     * @param {jQuery} $body element that should act as the body for the client
+     * The DEFAULT_ID represents whatever default program should be used in
+     * the event that no program id can be determined from the URL (defaults
+     * to `default`).
+     *
+     * @param {jQuery}                 $body      client body
+     * @param {ClientDependencyFactor} factory    dependency factory
+     * @param {string}                 default_id default program id
      *
      * @return undefined
      */
-    __construct: function( $body, factory )
+    __construct: function( $body, factory, default_id )
     {
         this._factory      = factory;
         this.$body         = $body;
         this.elementStyler = factory.createElementStyler( jQuery );
         this.$navBar       = this.$body.find( 'ul.step-nav' );
+
+        this._defaultId = default_id || 'default';
 
         // initialize our more complicated objects
         this._init();
@@ -722,7 +736,10 @@ module.exports = Class( 'Client' )
     {
         // grab out of the url
         var data = window.location.href.match( /\/quote\/([a-z0-9-]+)\//i );
-        return data[1] || '';
+
+        return ( data === null )
+            ? this._defaultId
+            : data[ 1 ];
     },
 
 
