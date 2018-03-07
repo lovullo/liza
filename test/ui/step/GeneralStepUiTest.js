@@ -329,12 +329,14 @@ function createElementStyler( style_callback )
         getAnswerElementByName: function()
         {
             // jQuery element
-            return {
+            const $element = [ {
                 attributes: [],
-                length:     1,
+            } ];
 
-                text: function() {},
-            }
+            $element.length = 1;
+            $element.text   = () => {};
+
+            return $element;
         },
 
         getProperIndex: function()
