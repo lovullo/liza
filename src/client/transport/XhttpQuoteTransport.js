@@ -96,6 +96,11 @@ module.exports = Class( 'XhttpQuoteTransport' )
     /**
      * Retrieve bucket data in JSON format
      *
+     * The serialized data will have the arrays truncated at the position of
+     * the first `null`; since all `undefined` values are serialized as
+     * `"null"`, there is otherwise no way to disambiguate a truncation
+     * point.
+     *
      * Allows subtypes to override what data is retrieved from the bucket
      *
      * @param {Bucket} bucket bucket from which to retrieve data
@@ -106,9 +111,47 @@ module.exports = Class( 'XhttpQuoteTransport' )
     {
         // get a "filled" diff containing the merged values of only the fields
         // that have changed
-        var data = bucket.getFilledDiff();
+        const raw_data = bucket.getFilledDiff();
+
+        // truncated data to serialize
+        const data = {};
+
+        Object.keys( raw_data ).forEach( field =>
+            data[ field ] = this._truncateDiff( raw_data[ field ] )
+        );
 
         return JSON.stringify( data );
+    },
+
+
+    /**
+     * Truncate just after first null
+     *
+     * If there are no nulls, then the diff is returned
+     * unmodified.  Otherwise, the array is truncated at the index of the
+     * first `null` (so that a trailing `null` still exists).
+     *
+     * WARNING: This modifies DIFF; it does not return a copy!
+     *
+     * @param {Array} diff bucket diff
+     *
+     * @return {Array} possibly truncated diff
+     */
+    'private _truncateDiff'( diff )
+    {
+        const null_i = diff.findIndex( x => x === null );
+
+        // no nulls, retain as-is
+        if ( null_i === -1 )
+        {
+            return diff;
+        }
+
+        // truncate following the first null (indicating that we terminate at
+        // this position)
+        diff.length = null_i + 1;
+
+        return diff;
     }
 } );
 

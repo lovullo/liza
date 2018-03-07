@@ -25,6 +25,7 @@
 
 @menu
 * Error Handling::
+* Saving to Server::  Posting bucket diff to the Server.
 @end menu
 
 
@@ -96,3 +97,44 @@ When any field or classification changes that is represented on the
 
 Error state is managed by
   @srcref{src/validate/ValidStateMonitor.js, ValidStateMonitor}.
+
+
+
+@node Saving to Server
+@section Saving to Server
+@helpwanted
+
+@cindex Saving
+@cindex Bucket Diff
+@cindex Bucket Truncation
+@cindex Serialization
+To save changes,
+  the client posts only the bucket diff (@pxref{Bucket Diff}) to the
+  Server (@pxref{Server}).
+Because JSON serialization encodes @code{undefined} values as @code{null}
+  (as noted in @ref{Bucket Diff}),
+    and only the null in the tail position marks the truncation point,
+    the Client first truncates the array to include only the first
+      @code{null}.@footnote{
+        The server would otherwise remove only the last index,
+          even if multiple indexes were removed.}
+An example is shown in @ref{f:client-diff}.
+
+@float Figure, f:client-diff
+@example
+  // given (two unchanged, three removed)
+  [ undefined, undefined, null, null, null ]
+
+  // encodes into JSON as (bad; represents four unchanged, one removed)
+  [ null, null, null, null, null ]
+
+  // Client truncates to (two unchanged, >=2 removed)
+  [ null, null, null ]
+@end example
+@caption{Client diff truncation}
+@end float
+
+This conversion is handled by
+  @srcrefjs{client/transport,XhttpQuoteTransport}.
+Examples can be found in the respective test case
+  @testrefjs{client/transport,XhttpQuoteTransport}.
