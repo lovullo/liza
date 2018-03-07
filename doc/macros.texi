@@ -176,6 +176,10 @@ This system has maintenance concerns.
 @macro srcrefjs{base,module}
 @srcref{src/\base\/\module\.js, \module\}
 @end macro
+
+@macro testrefjs{base,module}
+@srcref{test/\base\/\module\.js, \module\}
+@end macro
 @end ifset
 
 @ifclear SRCURI
@@ -190,7 +194,11 @@ This system has maintenance concerns.
 @c intended to display a name without JS,
 @c so just do that rather than the actual path
 @macro srcrefjs{base,path}
-@srcrefraw{\base\/\path\}
+@srcrefraw{src/\base\/\path\}
+@end macro
+
+@macro testrefjs{base,module}
+@srcref{test/\base\/\module\.js, \module\}
 @end macro
 @end ifclear
 
