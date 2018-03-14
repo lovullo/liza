@@ -311,12 +311,10 @@ module.exports = Class( 'MongoServerDao' )
             // full save will include all metadata
             save_data.meta = quote.getMetabucket().getData();
         }
-        else if ( save_data.data !== undefined )
-        {
-            // when we update the quote data, clear quick save data (this data
-            // should take precedence)
-            save_data.quicksave = {};
-        }
+
+        // when we update the quote data, clear quick save data (this data
+        // should take precedence)
+        save_data.quicksave = {};
 
         var id = quote.getId();
 
