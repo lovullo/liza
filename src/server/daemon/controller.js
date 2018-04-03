@@ -94,6 +94,7 @@ var sflag = {};
 
 // TODO: kluge to get liza somewhat decoupled from lovullo (rating module)
 exports.rater = {};
+exports.skey  = "";
 
 
 exports.init = function( logger, enc_service, conf )
@@ -619,12 +620,24 @@ function createQuoteQuick( id )
 }
 
 
+/**
+ * Check whether the proper skey (session key) was provided
+ *
+ * This is a basic authentication token that allows bypassing authentication
+ * for internal tasks (like creating quotes).
+ *
+ * XXX: A single shared secret is a terrible idea; this was intended to
+ * be a temporary solution.  Fix this crap in favor of proper authentication
+ * between services.
+ */
 function has_skey( user_request )
 {
-    // a basic authentication token that allows our systems to bypass
-    // authentication...this isn't really secure, but it doesn't need to be,
-    // because for our uses, they really cannot do any damage
-    return ( user_request.getGetData().skey === 'fd29d02ac1' )
+    if ( !exports.skey )
+    {
+        return false;
+    }
+
+    return ( user_request.getGetData().skey === exports.skey );
 }
 
 

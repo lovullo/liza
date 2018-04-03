@@ -112,7 +112,8 @@ module.exports = AbstractClass( 'Daemon',
         return Promise.all( [
             this._createDebugLog(),
             this._createAccessLog(),
-        ] ).then( ([ debug_log, access_log ]) =>
+            this._conf.get( 'skey' ),
+        ] ).then( ([ debug_log, access_log, skey ]) =>
         {
             this._debugLog   = debug_log;
             this._accessLog  = access_log;
@@ -121,7 +122,7 @@ module.exports = AbstractClass( 'Daemon',
             this._rater      = liza.server.rater.ProcessManager();
             this._encService = this.getEncryptionService();
             this._memcache   = this.getMemcacheClient();
-            this._routers    = this.getRouters();
+            this._routers    = this.getRouters( skey );
         } )
             .then( () => this._startDaemon() );
     },
@@ -181,10 +182,15 @@ module.exports = AbstractClass( 'Daemon',
     },
 
 
-    'protected getProgramController': function()
+    'protected getProgramController': function( skey )
     {
         var controller = require( './controller' );
         controller.rater = this._rater;
+
+        if ( skey )
+        {
+            controller.skey  = skey;
+        }
 
         return controller;
     },
@@ -270,10 +276,10 @@ module.exports = AbstractClass( 'Daemon',
     'abstract protected getEncryptionService': [],
 
 
-    'protected getRouters': function()
+    'protected getRouters': function( skey )
     {
         return [
-            this.getProgramController(),
+            this.getProgramController( skey ),
             this.getScriptsController(),
             this.getClientErrorController(),
         ];

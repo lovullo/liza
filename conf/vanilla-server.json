@@ -18,6 +18,8 @@
     }
   },
 
+  "skey": "",
+
   "user": {
     "session": {
       "handler": {
