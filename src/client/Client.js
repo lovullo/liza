@@ -842,15 +842,13 @@ module.exports = Class( 'Client' )
                     // populate and enable field *only if* results were returned
                     // and if the quote has not been locked; but first, give the
                     // UI a chance to finish updating
-                    (function ( index )
+                    ( function( index, cur )
                     {
                         setTimeout( function()
                         {
-                            group
-                                .setOptions( name, index, data, cur );
-                        }, 25 );
-                    })(i)
-
+                            group.setOptions( name, index, data, cur );
+                        }, 0 );
+                    } )( i, cur );
                 }
 
                 update.length && _self._quote.setDataByName( name, update );
