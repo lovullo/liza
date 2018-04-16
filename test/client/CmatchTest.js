@@ -25,13 +25,22 @@ const { expect } = require( 'chai' );
 const Sut = require( '../../src/client/Cmatch' )
     .extend(
 {
-    'override constructor'( _, __, ___ ) {},
+    'override constructor'( class_matcher, program, client )
+    {
+        this.__super( class_matcher || {}, program || {}, client || {} );
+    },
 
     // make public
     'override public markShowHide'( field, visq, show, hide )
     {
         return this.__super( field, visq, show, hide );
-    }
+    },
+
+    // make public
+    'override public handleClassMatch'( cmatch, force )
+    {
+        this.__super( cmatch, force );
+    },
 } );
 
 
@@ -83,5 +92,39 @@ describe( "Cmatch", () =>
         Sut().markShowHide( 'foo', {}, [ 1 ], [ 0 ] );
 
         expect( visq.bar ).to.equal( barval );
+    } );
+
+
+    /**
+     * __classes is always returned (at least at the time of writing) by
+     * TAME.  here was a bug when it was recognized as a field (e.g. marked
+     * as an `external' in program.xml),
+     */
+    it( "does not fail when __classes is a known field", () =>
+    {
+        const cmatch = {
+            // populated by TAME, always
+            __classes: {},
+        };
+
+        const field_names = {
+            __classes: true,
+        };
+
+        const mock_client = {
+            getUi: () => ( {
+                setCmatch() {},
+                getCurrentStep: () => ( {
+                    getStep: () => ( {
+                        getExclusiveFieldNames: () => field_names,
+                    } )
+                } )
+            } ),
+            getQuote: () => ( {} ),
+        };
+
+        Sut( {}, {}, mock_client ).handleClassMatch(
+            cmatch, false
+        );
     } );
 } );

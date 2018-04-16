@@ -150,7 +150,7 @@ module.exports = Class( 'Cmatch',
                         return;
                     }
 
-                    _self._handleClassMatch( cmatch );
+                    _self.handleClassMatch( cmatch );
                     cmatchprot = false;
                 } );
             } );
@@ -224,7 +224,7 @@ module.exports = Class( 'Cmatch',
     },
 
 
-    'private _handleClassMatch': function( cmatch, force )
+    'virtual protected handleClassMatch': function( cmatch, force )
     {
         force = !!force;
 
@@ -267,6 +267,12 @@ module.exports = Class( 'Cmatch',
                     ( _self._cmatch[ field ] || {} ).indexes
                     || []
                 );
+
+            // this should really only ever be the case for __classes
+            if ( !vis )
+            {
+                continue;
+            }
 
             // TODO: Figure out something better here.  This is currently
             // needed for hiding statics---they are registered as exclusive
@@ -494,7 +500,7 @@ module.exports = Class( 'Cmatch',
             return this;
         }
 
-        this._handleClassMatch( this._cmatch, true );
+        this.handleClassMatch( this._cmatch, true );
 
         return this;
     },
