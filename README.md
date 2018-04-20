@@ -54,6 +54,11 @@ instance.  Available formats are:
 - [Info][doc-info]
 
 
+## Hacking
+For more information on hacking Liza and publishing to npm, see
+[`HACKING`](./HACKING).
+
+
 ## License
 Liza is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
