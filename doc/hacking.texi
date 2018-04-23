@@ -19,12 +19,10 @@ This chapter provides general information and guidance for
 @dnindex Mocha
 @dnindex Chai
 For writing classes; interfaces; and traits,
-  developers should familiarize themselves with
-  @url{https://gnu.org/software/easejs,GNU ease.js}.
+  developers should familiarize themselves with @easejs{}.
 For writing unit tests,
   developers should be familiarize themselves with
-  @url{https://mochajs.org/,Mocha} and
-  @url{http://www.chaijs.com/,Chai}.
+  @mocha{} and @chai{}.
 For more information on the libraries used by Liza,
   see @ref{Libraries}.
 
@@ -55,7 +53,7 @@ They further introduce maintenance obligations for keeping up with
 JavaScript does not natively support the classical object-oriented
   model familiar to users of more traditional classical
   object-oriented languages like Java, C++, C#, and@tie{}PHP.
-Liza is built using @url{https://gnu.org/software/easejs,GNU ease.js},
+Liza is built using @easejs{},
   which provides those familiar features.
 The primary language used by developers in the office that created
   Liza is@tie{}PHP,
@@ -74,9 +72,8 @@ The @code{class} keyword introduced in ECMAScript@tie{} is largely
 @subsection Testing Libraries
 @dnindex Mocha
 @dnindex Chai
-@url{https://mochajs.org/,Mocha} is used as the test runner for
-  JavaScript unit tests.
-@url{http://www.chaijs.com/,Chai} is the assertion library.
+@mocha{} is used as the test runner for JavaScript unit tests.
+@chai{} is the assertion library.
 This differs from PHP development where a single system (PHPUnit)
   encompasses both of these needs.
 
