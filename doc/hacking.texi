@@ -1,0 +1,107 @@
+@c  This document is part of the Liza Data Collection Framework manual.
+@c  Copyright (C) 2018 R-T Specialty, LLC.
+@c
+@c    Permission is granted to copy, distribute and/or modify this document
+@c    under the terms of the GNU Free Documentation License, Version 1.3
+@c    or any later version published by the Free Software Foundation;
+@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@c    Free Documentation License''.
+
+@node Hacking
+@chapter Hacking Liza
+@helpwanted
+This chapter provides general information and guidance for
+  [prospective] developers of Liza.
+
+@dnindex Libraries
+@dnindex GNU ease.js
+@dnindex Mocha
+@dnindex Chai
+For writing classes; interfaces; and traits,
+  developers should familiarize themselves with
+  @url{https://gnu.org/software/easejs,GNU ease.js}.
+For writing unit tests,
+  developers should be familiarize themselves with
+  @url{https://mochajs.org/,Mocha} and
+  @url{http://www.chaijs.com/,Chai}.
+For more information on the libraries used by Liza,
+  see @ref{Libraries}.
+
+@menu
+* Libraries::  The few libraries used by Liza
+@end menu
+
+
+@node Libraries
+@section Libraries Used
+@dnindex Libraries
+Liza does not use many libraries.
+The primary reason for this was that few libraries useful to Liza
+  existed during its initial development@mdash{
+    }Node.js and its community was still very young.
+With that said,
+  care should be taken to ensure that libraries are added only after a
+    careful analysis of its costs and benefits,
+      as they add volatility to the whole system and may also
+      introduce security vulnerabilities outside of our control.
+They further introduce maintenance obligations for keeping up with
+  newer versions of those libraries and addressing
+  backwards-compatibility concerns.
+
+
+@subsection System Libraries
+@dnindex ease.js, GNU
+JavaScript does not natively support the classical object-oriented
+  model familiar to users of more traditional classical
+  object-oriented languages like Java, C++, C#, and@tie{}PHP.
+Liza is built using @url{https://gnu.org/software/easejs,GNU ease.js},
+  which provides those familiar features.
+The primary language used by developers in the office that created
+  Liza is@tie{}PHP,
+    which motivated the creation of ease.js to ease the burden of
+    entry.
+
+Consequently,
+  Liza is written in a classical object-oriented style rather than
+  using prototypes.
+The @code{class} keyword introduced in ECMAScript@tie{} is largely
+  syntatic sugar around the prototype model and does not address the
+  primary concerns of ease.js,
+    nor does it provide traits.
+
+
+@subsection Testing Libraries
+@dnindex Mocha
+@dnindex Chai
+@url{https://mochajs.org/,Mocha} is used as the test runner for
+  JavaScript unit tests.
+@url{http://www.chaijs.com/,Chai} is the assertion library.
+This differs from PHP development where a single system (PHPUnit)
+  encompasses both of these needs.
+
+Chai offers a few different styles of assertions (``should'',
+  ``expect'', and ``assert'');
+      Liza uses @url{http://www.chaijs.com/guide/styles/#expect,``expect''}.
+
+
+@subsection UI Libraries
+@dnindex jQuery
+jQuery was used in the past,
+  but has been largely purged from the system (and continues to be
+  removed) due to strong performance issues.
+Further,
+  now that browser APIs have stabalized and Liza no longer needs to
+    support as far back as Internet Explorer@tie{}6,
+      the standard DOM APIs are more than sufficient.
+
+Liza instead provides its own UI and DOM abstractions
+  (@srcrefraw{src/ui}) that have been optimized for Liza's needs.
+
+There are modern frameworks that may overlap with the type of UI
+  operations that Liza performs,
+    as well as certain DOM optimizations that it performs;
+  however,
+    it is unlikely that such frameworks (e.g. React, Angular, Meteor)
+      will ever be integrated,
+        as the cost of doing so exceeds the marginal benefit.
