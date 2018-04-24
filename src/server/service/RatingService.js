@@ -154,7 +154,7 @@ module.exports = Class( 'RatingService',
             {
                 actions = actions || [];
 
-                _self._postProcessRaterData(
+                _self.postProcessRaterData(
                     rate_data, actions, program, quote
                 );
 
@@ -251,7 +251,7 @@ module.exports = Class( 'RatingService',
      *
      * @return {undefined}
      */
-    _postProcessRaterData: function( data, actions, program, quote )
+    'virtual protected postProcessRaterData': function( data, actions, program, quote )
     {
         var meta = data._cmpdata || {};
 
