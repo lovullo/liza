@@ -139,14 +139,33 @@ module.exports = Class( 'HttpDataApi' )
 
         this._validateDataType( data );
 
-        this._impl.requestData(
-            this._url,
-            this._method,
+        this.requestData( this._url, this._method, data, callback );
+
+        return this;
+    },
+
+
+    /**
+     * Request data from underlying HttpImpl
+     *
+     * Subtypes may override this method to alter any aspect of the request
+     * before sending.
+     *
+     * @param {string}                    url      destination URL
+     * @param {string}                    method   RFC-2616-compliant HTTP method
+     * @param {Object|string}             data     request params
+     * @param {function(?Error, ?string)} callback server response callback
+     *
+     * @return {HttpDataApi} self
+     */
+    'virtual protected requestData'( url, method, data, callback )
+    {
+        return this._impl.requestData(
+            url,
+            method,
             this.encodeData( data ),
             callback
         );
-
-        return this;
     },
 
 

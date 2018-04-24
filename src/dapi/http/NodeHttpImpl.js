@@ -87,7 +87,7 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {HttpImpl} self
      */
-    'public requestData'( url, method, data, callback )
+    'virtual public requestData'( url, method, data, callback )
     {
         const options  = this._parseUrl( url );
         const protocol = options.protocol.replace( /:$/, '' );
