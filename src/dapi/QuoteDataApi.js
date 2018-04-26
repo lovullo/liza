@@ -61,7 +61,7 @@ module.exports = Class( 'QuoteDataApi' )
         if ( !( Class.isA( DataApi, dapi ) ) )
         {
             throw TypeError(
-                'Expected object of type DataApi; given: ' + data_api
+                'Expected object of type DataApi; given: ' + dapi
             );
         }
 
