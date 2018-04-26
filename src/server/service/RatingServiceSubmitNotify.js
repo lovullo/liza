@@ -32,6 +32,10 @@ const RatingService   = require( './RatingService' );
  * This information is currently stored in `__prem_avail_count`.  In the
  * future, it may be worth accepting a parameter to configure this at
  * runtime.
+ *
+ * Notification status will persist using the provided DAO.  The next time
+ * such a notification is requested, it will only occur if the flag is not
+ * set.
  */
 module.exports = Trait( 'RatingServiceSubmitNotify' )
     .extend( RatingService,
@@ -42,15 +46,23 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
      */
     'private _dapi': null,
 
+    /**
+     * Data store for notification flag
+     * @type {ServerDao}
+     */
+    'private _notifyDao': null,
+
 
     /**
      * Initialize mixin with DataApi to trigger
      *
-     * @param {DataApi} dapi DataApi to trigger
+     * @param {DataApi}   dapi DataApi to trigger
+     * @param {ServerDao} dao  data store for notification flag
      */
-    __mixin( dapi )
+    __mixin( dapi, dao )
     {
-        this._dapi = dapi;
+        this._dapi      = dapi;
+        this._notifyDao = dao;
     },
 
 
@@ -73,9 +85,51 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
 
         if ( avail === 0 )
         {
-            this._dapi.request( { quote_id: quote_id }, () => {} );
+            this._getNotifyState( quote_id, notified =>
+            {
+                if ( notified === true )
+                {
+                    return;
+                }
+
+                this._dapi.request( { quote_id: quote_id }, () => {} );
+                this._setNotified( quote_id );
+            } );
         }
 
         this.__super( data, actions, program, quote );
+    },
+
+
+    /**
+     * Get value of notification flag
+     *
+     * @param {number}            quote_id id of quote
+     * @param {function(boolean)} callback callback to call when complete
+     *
+     * @return {undefined}
+     */
+    'private _getNotifyState'( quote_id, callback )
+    {
+        this._notifyDao.getDocumentField(
+            quote_id,
+            'submitNotified',
+            ( err, value ) => callback( value )
+        );
+    },
+
+
+    /**
+     * Set notification flag
+     *
+     * @param {number} quote_id id of quote
+     *
+     * @return {undefined}
+     */
+    'private _setNotified'( quote_id )
+    {
+        this._notifyDao.setDocumentField(
+            quote_id, 'submitNotified', true
+        );
     },
 } );

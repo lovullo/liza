@@ -50,18 +50,39 @@ describe( 'RatingServiceSubmitNotify', () =>
     [
         {
             prem_avail_count: [ 0 ],
+            prev_called:      false,
             expected_request: true,
         },
         {
             prem_avail_count: [ 2 ],
+            prev_called:      false,
             expected_request: false,
         },
         {
             // this shouldn't happen; ignore all but first index
             prem_avail_count: [ 2, 2 ],
+            prev_called:      false,
             expected_request: false,
         },
-    ].forEach( ( { prem_avail_count, expected_request }, i ) =>
+
+        // save as above, but already saved
+        {
+            prem_avail_count: [ 0 ],
+            prev_called:      true,
+            expected_request: false,
+        },
+        {
+            prem_avail_count: [ 2 ],
+            prev_called:      true,
+            expected_request: false,
+        },
+        {
+            // this shouldn't happen; ignore all but first index
+            prem_avail_count: [ 2, 2 ],
+            prev_called:      true,
+            expected_request: false,
+        },
+    ].forEach( ( { prem_avail_count, expected_request, prev_called }, i ) =>
         it( `sends request on post process if no premiums (#${i})`, done =>
         {
             const {
@@ -91,7 +112,7 @@ describe( 'RatingServiceSubmitNotify', () =>
                 },
             } )();
 
-            const sut = RatingService.use( Sut( dapi ) )(
+            const sut = RatingService.use( Sut( dapi, dao ) )(
                 logger, dao, server, raters
             );
 
@@ -101,12 +122,38 @@ describe( 'RatingServiceSubmitNotify', () =>
             let save_called = false;
             dao.setWorksheets = () => save_called = true;
 
+            // whether the notify flag is actually set
+            let notify_saved = false;
+
+            // request for notification status
+            dao.getDocumentField = ( qid, key, callback ) =>
+            {
+                expect( qid ).to.equal( quote_id );
+                expect( key ).to.equal( 'submitNotified' );
+
+                callback( null, prev_called );
+            };
+
+            dao.setDocumentField = ( qid, key, value, callback ) =>
+            {
+                expect( qid ).to.equal( quote_id );
+                expect( key ).to.equal( 'submitNotified' );
+                expect( value ).to.equal( true );
+
+                notify_saved = true;
+            };
+
             stub_rate_data.__prem_avail_count = prem_avail_count;
 
             sut.request( request, response, quote, 'something', () =>
             {
                 expect( requested ).to.equal( expected_request );
                 expect( save_called ).to.be.true;
+
+                // only save notification status if we're notifying
+                expect( notify_saved ).to.equal(
+                    !prev_called && expected_request
+                );
 
                 done();
             } );
