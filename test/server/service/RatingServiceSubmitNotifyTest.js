@@ -86,33 +86,35 @@ describe( 'RatingServiceSubmitNotify', () =>
         it( `sends request on post process if no premiums (#${i})`, done =>
         {
             const {
-                stub_rate_data,
-                logger,
-                server,
-                raters,
                 dao,
+                logger,
+                quote,
+                raters,
                 request,
                 response,
-                quote,
+                server,
+                stub_rate_data,
             } = RatingServiceStub.getStubs();
 
             const quote_id  = 1234;
             let   requested = false;
 
-            const dapi = Class.implement( DataApi ).extend(
-            {
-                // warning: if an expectation fails, because of how
-                // RatingService handles errors, it will cause the test to
-                // _hang_ rather than throw the assertion error
-                request( data, callback )
+            const dapif = given_request =>
+                Class.implement( DataApi ).extend(
                 {
-                    expect( data ).to.deep.equal( { quote_id: quote_id } );
+                    // warning: if an expectation fails, because of how
+                    // RatingService handles errors, it will cause the test to
+                    // _hang_ rather than throw the assertion error
+                    request( data, callback )
+                    {
+                        expect( given_request ).to.equal( request );
+                        expect( data ).to.deep.equal( { quote_id: quote_id } );
 
-                    requested = true;
-                },
-            } )();
+                        requested = true;
+                    },
+                } )();
 
-            const sut = RatingService.use( Sut( dapi, dao ) )(
+            const sut = RatingService.use( Sut( dapif, dao ) )(
                 logger, dao, server, raters
             );
 

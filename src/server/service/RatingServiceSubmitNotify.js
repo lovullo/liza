@@ -41,10 +41,10 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
     .extend( RatingService,
 {
     /**
-     * DataApi to trigger
-     * @type {DataApi}
+     * Function returning DataApi to trigger
+     * @type {Function(UserSession):DataApi}
      */
-    'private _dapi': null,
+    'private _dapif': null,
 
     /**
      * Data store for notification flag
@@ -56,12 +56,12 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
     /**
      * Initialize mixin with DataApi to trigger
      *
-     * @param {DataApi}   dapi DataApi to trigger
-     * @param {ServerDao} dao  data store for notification flag
+     * @param {Function(UserSession):DataApi} dapif Function producing DataApi
+     * @param {ServerDao}                     dao   store for notification flag
      */
-    __mixin( dapi, dao )
+    __mixin( dapif, dao )
     {
-        this._dapi      = dapi;
+        this._dapif     = dapif;
         this._notifyDao = dao;
     },
 
@@ -71,14 +71,17 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
      *
      * Result count is determined by DATA.__prem_avail_count.
      *
-     * @param {Object}  data    rating data returned
-     * @param {Array}   actions actions to send to client
-     * @param {Program} program program used to perform rating
-     * @param {Quote}   quote   quote used for rating
+     * @param {UserRequest} request user request
+     * @param {Object}      data    rating data returned
+     * @param {Array}       actions actions to send to client
+     * @param {Program}     program program used to perform rating
+     * @param {Quote}       quote   quote used for rating
      *
      * @return {undefined}
      */
-    'override protected postProcessRaterData'( data, actions, program, quote )
+    'override protected postProcessRaterData'(
+        request, data, actions, program, quote
+    )
     {
         const quote_id = quote.getId();
         const avail    = ( data.__prem_avail_count || [ 0 ] )[ 0 ];
@@ -92,12 +95,14 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
                     return;
                 }
 
-                this._dapi.request( { quote_id: quote_id }, () => {} );
+                this._dapif( request )
+                    .request( { quote_id: quote_id }, () => {} );
+
                 this._setNotified( quote_id );
             } );
         }
 
-        this.__super( data, actions, program, quote );
+        this.__super( request, data, actions, program, quote );
     },
 
 

@@ -61,6 +61,7 @@ exports.getStubs = function()
 
     const request = {
         getSession: () => session,
+        getSessionIdName: () => {},
     };
     const response = {};
 

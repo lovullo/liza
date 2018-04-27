@@ -33,7 +33,15 @@ describe( 'RatingService', () =>
         {
             let processed = false;
 
-            const { logger, server, raters, dao, request, response, quote } = RatingServiceStub.getStubs();
+            const {
+                logger,
+                server,
+                raters,
+                dao,
+                request,
+                response,
+                quote,
+            } = RatingServiceStub.getStubs();
 
             dao.mergeBucket = () =>
             {
@@ -43,7 +51,9 @@ describe( 'RatingService', () =>
 
             const sut = Sut.extend(
             {
-                'override postProcessRaterData'( data, actions, program, quote )
+                'override postProcessRaterData'(
+                    request, data, actions, program, quote
+                )
                 {
                     processed = true;
                 }
