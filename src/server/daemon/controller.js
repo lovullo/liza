@@ -100,8 +100,9 @@ var sflag = {};
 
 
 // TODO: kluge to get liza somewhat decoupled from lovullo (rating module)
-exports.rater = {};
-exports.skey  = "";
+exports.rater          = {};
+exports.skey           = "";
+exports.no_results_url = "";
 
 
 exports.init = function( logger, enc_service, conf )
@@ -125,10 +126,11 @@ exports.init = function( logger, enc_service, conf )
         server_cache = _createCache( server );
         server.init( server_cache, exports.rater );
 
+        // TODO: do none of this if no_results_url is provided
         const createSubmitDapi = request => HttpDataApi
             .use( HttpDataApiUrlData( [ 'quote_id' ] ) )
             (
-                'http://localhost:2222',
+                exports.no_results_url,
                 'PUT',
 
                 NodeHttpImpl
