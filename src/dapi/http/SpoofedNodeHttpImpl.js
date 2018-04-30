@@ -37,7 +37,7 @@ module.exports = Trait( 'SpoofedNodeHttpImpl' )
 {
     /**
      * Session to spoof
-     * @type {UserSession}
+     * @type {UserRequest}
      */
     'private _request': null,
 
@@ -45,11 +45,11 @@ module.exports = Trait( 'SpoofedNodeHttpImpl' )
     /**
      * Use session for spoofing requests
      *
-     * @param {UserSession} session session to spoof
+     * @param {UserRequest} request session to spoof
      */
-    __mixin( session )
+    __mixin( request )
     {
-        this._request = session;
+        this._request = request;
     },
 
 
