@@ -43,6 +43,12 @@ const {
     },
 
     dapi: {
+        http: {
+            HttpDataApi,
+            HttpDataApiUrlData,
+            NodeHttpImpl,
+            SpoofedNodeHttpImpl,
+        },
         DataApiFactory,
         DataApiManager,
     },
@@ -69,6 +75,7 @@ const {
             },
 
             RatingService,
+            RatingServiceSubmitNotify,
             TokenedService,
             TokenDao,
         },
@@ -93,8 +100,9 @@ var sflag = {};
 
 
 // TODO: kluge to get liza somewhat decoupled from lovullo (rating module)
-exports.rater = {};
-exports.skey  = "";
+exports.rater          = {};
+exports.skey           = "";
+exports.no_results_url = "";
 
 
 exports.init = function( logger, enc_service, conf )
@@ -118,7 +126,31 @@ exports.init = function( logger, enc_service, conf )
         server_cache = _createCache( server );
         server.init( server_cache, exports.rater );
 
-        rating_service = RatingService( logger, dao, server, exports.rater );
+        // TODO: do none of this if no_results_url is provided
+        const createSubmitDapi = request => HttpDataApi
+            .use( HttpDataApiUrlData( [ 'quote_id' ] ) )
+            (
+                exports.no_results_url,
+                'PUT',
+
+                NodeHttpImpl
+                    .use( SpoofedNodeHttpImpl( request ) )
+                    (
+                        {
+                            http: require( 'http' ),
+                            https: require( 'https' ),
+                        },
+                        require( 'url' ),
+                        this._origin
+                    ),
+                ''
+            );
+
+        rating_service = RatingService
+            .use( RatingServiceSubmitNotify( createSubmitDapi, dao ) )
+            (
+                logger, dao, server, exports.rater
+            );
 
         // TODO: exports.init needs to support callbacks; this will work, but
         // only because it's unlikely that we'll get a request within

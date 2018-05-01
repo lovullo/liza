@@ -154,8 +154,8 @@ module.exports = Class( 'RatingService',
             {
                 actions = actions || [];
 
-                _self._postProcessRaterData(
-                    rate_data, actions, program, quote
+                _self.postProcessRaterData(
+                    request, rate_data, actions, program, quote
                 );
 
                 const class_dest = {};
@@ -244,14 +244,17 @@ module.exports = Class( 'RatingService',
     /**
      * Process rater data returned from a rater
      *
-     * @param {Object}  data    rating data returned
-     * @param {Array}   actions actions to send to client
-     * @param {Program} program program used to perform rating
-     * @param {Quote}   quote   quote used for rating
+     * @param {UserRequest} request user request to satisfy
+     * @param {Object}      data    rating data returned
+     * @param {Array}       actions actions to send to client
+     * @param {Program}     program program used to perform rating
+     * @param {Quote}       quote   quote used for rating
      *
      * @return {undefined}
      */
-    _postProcessRaterData: function( data, actions, program, quote )
+    'virtual protected postProcessRaterData': function(
+        request, data, actions, program, quote
+    )
     {
         var meta = data._cmpdata || {};
 

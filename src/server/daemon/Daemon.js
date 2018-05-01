@@ -113,7 +113,8 @@ module.exports = AbstractClass( 'Daemon',
             this._createDebugLog(),
             this._createAccessLog(),
             this._conf.get( 'skey' ),
-        ] ).then( ([ debug_log, access_log, skey ]) =>
+            this._conf.get( 'services.rating.noResultsUrl' ),
+        ] ).then( ([ debug_log, access_log, skey, no_results_url ]) =>
         {
             this._debugLog   = debug_log;
             this._accessLog  = access_log;
@@ -122,7 +123,7 @@ module.exports = AbstractClass( 'Daemon',
             this._rater      = liza.server.rater.ProcessManager();
             this._encService = this.getEncryptionService();
             this._memcache   = this.getMemcacheClient();
-            this._routers    = this.getRouters( skey );
+            this._routers    = this.getRouters( skey, no_results_url );
         } )
             .then( () => this._startDaemon() );
     },
@@ -182,14 +183,16 @@ module.exports = AbstractClass( 'Daemon',
     },
 
 
-    'protected getProgramController': function( skey )
+    'protected getProgramController': function( skey, no_results_url )
     {
         var controller = require( './controller' );
-        controller.rater = this._rater;
+
+        controller.rater          = this._rater;
+        controller.no_results_url = no_results_url || "";
 
         if ( skey )
         {
-            controller.skey  = skey;
+            controller.skey = skey;
         }
 
         return controller;
@@ -276,10 +279,10 @@ module.exports = AbstractClass( 'Daemon',
     'abstract protected getEncryptionService': [],
 
 
-    'protected getRouters': function( skey )
+    'protected getRouters': function( skey, no_results_url )
     {
         return [
-            this.getProgramController( skey ),
+            this.getProgramController( skey, no_results_url ),
             this.getScriptsController(),
             this.getClientErrorController(),
         ];

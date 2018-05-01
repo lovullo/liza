@@ -783,5 +783,70 @@ module.exports = Class( 'MongoServerDao' )
             }
         );
     },
-} );
 
+
+    /**
+     * Set arbitrary data on a document
+     *
+     * @param {number}           qid      quote/document id
+     * @param {string}           key      field key
+     * @param {*}                value    field value
+     * @param {function(?Error)} callback completion callback
+     *
+     * @return {undefined}
+     */
+    'public setDocumentField'( qid, key, value, callback )
+    {
+        this._collection.update(
+            { id: qid },
+            { '$set': { [key]: value } },
+
+            // create record if it does not yet exist
+            { upsert: true },
+
+            // on complete
+            function( err )
+            {
+                callback && callback( err );
+                return;
+            }
+        );
+    },
+
+
+    /**
+     * Retrieve arbitrary data on a document
+     *
+     * @param {number}           qid      quote/document id
+     * @param {string}           key      field key
+     * @param {function(?Error)} callback completion callback
+     *
+     * @return {undefined}
+     */
+    'public getDocumentField'( qid, key, callback )
+    {
+        this._collection.find(
+            { id: qid },
+            { limit: 1 },
+            function( err, cursor )
+            {
+                if ( err !== null )
+                {
+                    callback( err, null );
+                    return;
+                }
+
+                cursor.toArray( function( err, data )
+                {
+                    if ( err !== null )
+                    {
+                        callback( err, null );
+                        return;
+                    }
+
+                    callback( null, data[ key ] );
+                } );
+            }
+        );
+    },
+} );

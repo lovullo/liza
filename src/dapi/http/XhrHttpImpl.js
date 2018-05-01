@@ -71,7 +71,7 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {HttpImpl} self
      */
-    'public requestData': function( url, method, data, callback )
+    'virtual public requestData': function( url, method, data, callback )
     {
         if ( typeof data !== 'string' )
         {
