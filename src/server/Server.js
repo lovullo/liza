@@ -1,7 +1,7 @@
 /*
  * Contains program Server class
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -815,7 +815,11 @@ module.exports = Class( 'Server' )
         // permitted), thereby evading client-side forward-validations
         if ( step_id > cur_id )
         {
-            if ( this._forwardValidate( quote, program, cur_id ) === false )
+            const validated = this._forwardValidate(
+                quote, program, cur_id, session
+            );
+
+            if ( !validated )
             {
                 this.sendError( request,
                     "The previous step contains errors; please correct them " +
@@ -903,13 +907,14 @@ module.exports = Class( 'Server' )
      * otherwise permitted), preventing the `forward' event from triggering on
      * the client (as it is a relative event).
      *
-     * @param {Quote}   quote   quote to forward-validate
-     * @param {Program} program program to validate against
-     * @param {number}  step_id id of current step (before navigation)
+     * @param {Quote}       quote   quote to forward-validate
+     * @param {Program}     program program to validate against
+     * @param {number}      step_id id of current step (before navigation)
+     * @param {UserSession} session user session
      *
      * @return {boolean} validation success/failure
      */
-    'private _forwardValidate': function( quote, program, step_id )
+    'private _forwardValidate': function( quote, program, step_id, session )
     {
         var success = false,
             _self   = this;
@@ -921,6 +926,10 @@ module.exports = Class( 'Server' )
         {
             try
             {
+                // WARNING: must set immediately before running assertions,
+                // ensuring that stack doesn't clear
+                program.isInternal = session.isInternal();
+
                 // forward event returns an object containing failures
                 success = ( program.forward( step_id, bucket, {} ) === null );
             }
@@ -1182,7 +1191,7 @@ module.exports = Class( 'Server' )
             quote.setLastPremiumDate( 0 );
         }
 
-        server.quoteFill( quote, step_id,
+        server.quoteFill( quote, step_id, request.getSession(),
             // success
             function()
             {
@@ -1376,7 +1385,7 @@ module.exports = Class( 'Server' )
     },
 
 
-    quoteFill: function( data, step_id, success, failure )
+    quoteFill: function( data, step_id, session, success, failure )
     {
         if ( data instanceof Function )
         {
@@ -1398,7 +1407,7 @@ module.exports = Class( 'Server' )
         var len = this.quoteFillHooks.length;
         for ( var i = 0; i < len; i++ )
         {
-            this.quoteFillHooks[i].call( event, data, step_id );
+            this.quoteFillHooks[i].call( event, data, step_id, session );
 
             // if we aborted, there's no need to continue
             if ( abort )
@@ -1480,7 +1489,7 @@ module.exports = Class( 'Server' )
                 const program        = program_module();
 
                 // hook ourselves
-                server.quoteFill( function( quote, step_id )
+                server.quoteFill( function( quote, step_id, session )
                 {
                     var _self = this;
 
@@ -1533,6 +1542,10 @@ module.exports = Class( 'Server' )
                     FieldClassMatcher( program.whens )
                         .match( classdata, function( cmatch )
                         {
+                            // WARNING: must set immediately before running
+                            // assertions, ensuring that stack doesn't clear
+                            program.isInternal = session.isInternal();
+
                             var failures = program.submit( step_id,
                                 bucket_tmp,
                                 cmatch
