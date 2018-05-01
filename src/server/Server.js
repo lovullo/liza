@@ -1247,7 +1247,7 @@ module.exports = Class( 'Server' )
                     quote.getId(),
                     program.id,
                     step_id,
-                    util.inspect( failures )
+                    util.inspect( server._formatValidationFailures( failures ) )
                 );
 
                 server.sendError( request,
@@ -1264,6 +1264,25 @@ module.exports = Class( 'Server' )
                 c && c( false );
             }
         );
+    },
+
+
+    /**
+     * Format validation failures for encoded display
+     *
+     * That is, output data in a format that is useful for JSON-encoded display.
+     *
+     * @param {Object} failures failure array per key
+     *
+     * @return {Object} formatted object
+     */
+    'private _formatValidationFailures'( failures )
+    {
+        return Object.keys( failures ).reduce( ( results, id ) =>
+        {
+            results[ id ] = failures[ id ].map( failure => failure.toString() );
+            return results;
+        }, {} );
     },
 
 
