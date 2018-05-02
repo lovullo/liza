@@ -48,41 +48,63 @@ const {
 describe( 'RatingServiceSubmitNotify', () =>
 {
     [
+        // not available; make successful request and save flag
         {
             prem_avail_count: [ 0 ],
             prev_called:      false,
             expected_request: true,
+            request_err:      null,
+            save:             true,
         },
+        // not available; make failing request, don't save flag
+        {
+            prem_avail_count: [ 0 ],
+            prev_called:      false,
+            expected_request: true,
+            request_err:      Error(),
+            save:             false,
+        },
+        // available
         {
             prem_avail_count: [ 2 ],
             prev_called:      false,
             expected_request: false,
+            request_err:      null,
+            save:             false,
         },
+        // this shouldn't happen; ignore all but first index
         {
-            // this shouldn't happen; ignore all but first index
             prem_avail_count: [ 2, 2 ],
             prev_called:      false,
             expected_request: false,
+            request_err:      null,
+            save:             false,
         },
-
         // save as above, but already saved
         {
             prem_avail_count: [ 0 ],
             prev_called:      true,
             expected_request: false,
+            request_err:      null,
+            save:             false,
         },
+        // available; don't make request
         {
             prem_avail_count: [ 2 ],
             prev_called:      true,
             expected_request: false,
+            request_err:      null,
+            save:             false,
         },
+        // this shouldn't happen; ignore all but first index
         {
-            // this shouldn't happen; ignore all but first index
             prem_avail_count: [ 2, 2 ],
             prev_called:      true,
             expected_request: false,
+            request_err:      null,
+            save:             false,
         },
-    ].forEach( ( { prem_avail_count, expected_request, prev_called }, i ) =>
+    ].forEach( ( expected, i ) =>
         it( `sends request on post process if no premiums (#${i})`, done =>
         {
             const {
@@ -111,6 +133,8 @@ describe( 'RatingServiceSubmitNotify', () =>
                         expect( data ).to.deep.equal( { quote_id: quote_id } );
 
                         requested = true;
+
+                        callback( expected.request_err, null );
                     },
                 } )();
 
@@ -133,7 +157,7 @@ describe( 'RatingServiceSubmitNotify', () =>
                 expect( qid ).to.equal( quote_id );
                 expect( key ).to.equal( 'submitNotified' );
 
-                callback( null, prev_called );
+                callback( expected.flag_error, expected.prev_called );
             };
 
             dao.setDocumentField = ( qid, key, value, callback ) =>
@@ -145,17 +169,15 @@ describe( 'RatingServiceSubmitNotify', () =>
                 notify_saved = true;
             };
 
-            stub_rate_data.__prem_avail_count = prem_avail_count;
+            stub_rate_data.__prem_avail_count = expected.prem_avail_count;
 
             sut.request( request, response, quote, 'something', () =>
             {
-                expect( requested ).to.equal( expected_request );
+                expect( requested ).to.equal( expected.expected_request );
                 expect( save_called ).to.be.true;
 
                 // only save notification status if we're notifying
-                expect( notify_saved ).to.equal(
-                    !prev_called && expected_request
-                );
+                expect( notify_saved ).to.equal( expected.save );
 
                 done();
             } );

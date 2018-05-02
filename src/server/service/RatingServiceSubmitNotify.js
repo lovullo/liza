@@ -35,7 +35,8 @@ const RatingService   = require( './RatingService' );
  *
  * Notification status will persist using the provided DAO.  The next time
  * such a notification is requested, it will only occur if the flag is not
- * set.
+ * set.  The flag is not set in the event of an error (determined by the
+ * DataApi; usually an HTTP error).
  */
 module.exports = Trait( 'RatingServiceSubmitNotify' )
     .extend( RatingService,
@@ -69,7 +70,10 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
     /**
      * Trigger previously provided DataApi when no results are available
      *
-     * Result count is determined by DATA.__prem_avail_count.
+     * Result count is determined by DATA.__prem_avail_count.  If the
+     * notification is successful (determined by the DataApi), then a
+     * flag will be set preventing the request from being trigerred for
+     * subsequent rating data.
      *
      * @param {UserRequest} request user request
      * @param {Object}      data    rating data returned
@@ -88,21 +92,40 @@ module.exports = Trait( 'RatingServiceSubmitNotify' )
 
         if ( avail === 0 )
         {
-            this._getNotifyState( quote_id, notified =>
-            {
-                if ( notified === true )
-                {
-                    return;
-                }
-
-                this._dapif( request )
-                    .request( { quote_id: quote_id }, () => {} );
-
-                this._setNotified( quote_id );
-            } );
+            this._maybeNotify( quote_id, request );
         }
 
         this.__super( request, data, actions, program, quote );
+    },
+
+
+    /**
+     * Perform notification if flag has not been set
+     *
+     * See #postProcessRaterData for more information.
+     *
+     * @param {number}      quote_id effective quote/document id
+     * @param {UserRequest} request  user request
+     *
+     * @return {undefined}
+     */
+    'private _maybeNotify'( quote_id, request )
+    {
+        this._getNotifyState( quote_id, notified =>
+        {
+            if ( notified === true )
+            {
+                return;
+            }
+
+            // make the request, only setting the notification flag if
+            // it is successful
+            this._dapif( request )
+                .request( { quote_id: quote_id }, err =>
+                {
+                    err || this._setNotified( quote_id );
+                } );
+        } );
     },
 
 
