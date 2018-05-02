@@ -1,7 +1,7 @@
 /**
  * Route controller
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -378,9 +378,6 @@ function doRoute( program, request, data, resolve, reject )
     {
         request.getSession().setAgentId( '900000' );
     }
-
-    // if we're internal, let the program know for the sake of assertions
-    program.isInternal = request.getSession().isInternal();
 
     // we'll be serving all our responses as plain text
     request.setContentType( 'text/plain' );
