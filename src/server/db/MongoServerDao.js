@@ -844,7 +844,7 @@ module.exports = Class( 'MongoServerDao' )
                         return;
                     }
 
-                    callback( null, data[ key ] );
+                    callback( null, ( data[ 0 ] || {} )[ key ] );
                 } );
             }
         );
