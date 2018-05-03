@@ -728,6 +728,8 @@ module.exports = Class( 'Server' )
                 valid: valid,
                 data:  bucket.getData() || {},
 
+                programId: program_id,
+
                 currentStepId:      quote.getCurrentStepId(),
                 topVisitedStepId:   quote.getTopVisitedStepId(),
                 imported:           quote.isImported(),
