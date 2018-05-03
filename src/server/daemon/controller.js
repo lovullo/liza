@@ -146,11 +146,16 @@ exports.init = function( logger, enc_service, conf )
                 ''
             );
 
-        rating_service = RatingService
-            .use( RatingServiceSubmitNotify( createSubmitDapi, dao ) )
-            (
-                logger, dao, server, exports.rater
-            );
+        // only use the submit notification if a URL was provided
+        const RatingServiceBase = ( exports.no_results_url )
+            ? RatingService.use(
+                RatingServiceSubmitNotify( createSubmitDapi, dao )
+            )
+            : RatingService;
+
+        rating_service = RatingServiceBase(
+            logger, dao, server, exports.rater
+        );
 
         // TODO: exports.init needs to support callbacks; this will work, but
         // only because it's unlikely that we'll get a request within
