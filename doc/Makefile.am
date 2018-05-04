@@ -24,7 +24,7 @@ info_TEXINFOS = liza.texi
 liza_TEXINFOS = license.texi macros.texi config.texi liza.css \
                 design.texi assert.texi bucket.texi client.texi \
                 dapi.texi pred.texi program.texi server.texi \
-                validation.texi \
+                validation.texi hacking.texi \
                 diagram/event-graph.svg
 
 diagram/%.svg: diagram/%.dot
