@@ -11,6 +11,7 @@
 @node Hacking
 @chapter Hacking Liza
 @helpwanted
+
 This chapter provides general information and guidance for
   [prospective] developers of Liza.
 
@@ -26,9 +27,141 @@ For writing unit tests,
 For more information on the libraries used by Liza,
   see @ref{Libraries}.
 
+@dnindex Copyright Header
+@dnindex Source Files
+@dnindex Source File Naming
+Most source files have a general structure that must be followed.
+For example,
+  all such files must have a copyright header and
+    must be named after the class they define or system under test.
+For more information,
+  @pxref{Source Files}.
+
+Generally speaking,
+  developers should be familiar with vanilla ECMAScript;
+  DOM APIs;
+  and have a basic understanding of Node.js for well-rounded Liza
+    development.
+Writing this manual requires basic understanding of Texinfo.
+References for these topics and others are provided in
+  @pxref{Developer Resources}.
+
 @menu
-* Libraries::  The few libraries used by Liza
+* Source Files::         Conventions for project files
+* Libraries::            The few libraries used by Liza
+* Developer Resources::  Where to look for more information
 @end menu
+
+
+@node Source Files
+@section Source Files
+@helpwanted
+
+@dnindex Source Files
+This section describes conventions for organizing files,
+  both in directory structure and in content.
+
+@menu
+* Copyright Header::                   Important header at the top of all
+                                       source files
+* ECMAScript Strict Mode:Strict Mode.  Always indicate strict mode
+@end menu
+
+@node Copyright Header
+@subsection Copyright Header
+@dnindex Copyright Header
+@dnindex License
+@dnindex GNU General Public License version 3
+@dnindex GNU General Public License version 3, Or Later
+Every source file should begin with a copyright header including the
+  appropriate years and license information.
+This ensures that this information is always available even if the
+  file becomes separated from the source distribution (e.g. is
+  distributed independently).
+Further,
+  it is necessary to indicate that the source file is distributed under
+  the GNU General Public License version@tie{}3 @emph{or later}@mdash{
+    }that ``or later'' clause does not exist as part of the license itself,
+      and so the mere presence of the license in @file{COPYING} is
+      insufficient.
+
+The copyright headers vary slightly between JavaScript and Texinfo
+  source files,
+    represented in @ref{f:cheader-js} and @ref{f:cheader-texi}
+    respectively.
+
+@float Figure, f:cheader-js
+@example
+/**
+ * DESCRIPTION OF FILE
+ *
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
+ *
+ *  This file is part of the Liza Data Collection Framework
+ *
+ *  Liza is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+@end example
+@caption{Example copyright header for JavaScript files}
+@end float
+
+@float Figure, f:cheader-texi
+@example
+@@c  This document is part of the Liza Data Collection Framework manual.
+@@c  Copyright (C) 2018 R-T Specialty, LLC.
+@@c
+@@c    Permission is granted to copy, distribute and/or modify this document
+@@c    under the terms of the GNU Free Documentation License, Version 1.3
+@@c    or any later version published by the Free Software Foundation;
+@@c    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+@@c    Texts.  A copy of the license is included in the section entitled ``GNU
+@@c    Free Documentation License''.
+@end example
+@caption{Example copyright header for JavaScript files}
+@end float
+
+For more information, see ``How to Apply These Terms to Your New
+  Programs'' under the @gplvthree{}.
+
+
+@node Strict Mode
+@subsection ECMAScript Strict Mode
+@dnindex Strict Mode, ECMAScript
+ECMAScript@tie{}5's
+  @url{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode,Strict Mode}
+  throws errors in more situations that may lead to buggy code,
+    allows for better optimization of ECMAScript code during runtime,
+    and prohibits syntax that conflicts with future ECMAScript versions.
+It also enables certain features,
+  like using @code{let} inside blocks.
+
+It should always be enabled going forward as shown in @ref{f:strict-mode}.
+The statement should immediately follow the copyright header
+  (@pxref{Copyright Header}),
+    before any other code.
+
+@float Figure, f:strict-mode
+@example
+// Copyright header
+
+'use strict';
+
+// ...
+@end example
+@caption{Enabling strict mode}
+@end float
+
 
 
 @node Libraries
@@ -49,7 +182,7 @@ They further introduce maintenance obligations for keeping up with
 
 
 @subsection System Libraries
-@dnindex ease.js, GNU
+@dnindex GNU ease.js
 JavaScript does not natively support the classical object-oriented
   model familiar to users of more traditional classical
   object-oriented languages like Java, C++, C#, and@tie{}PHP.
@@ -102,3 +235,53 @@ There are modern frameworks that may overlap with the type of UI
     it is unlikely that such frameworks (e.g. React, Angular, Meteor)
       will ever be integrated,
         as the cost of doing so exceeds the marginal benefit.
+
+
+@node Developer Resources
+@section Developer Resources
+@dnindex Resources, Developer
+@dnindex MDN
+@url{https://developer.mozilla.org/en-US/docs/Web,MDN}@footnote{
+  Formerly the ``Mozilla Developer Network''; see
+    @url{https://blog.mozilla.org/opendesign/future-mdn-focus-web-docs/,''The Future of MDN: A Focus on Web Docs''}
+    for the history of the rename.}
+  is an essential resource for web development in general,
+    especially for JavaScript/ECMAScript and the various Web APIs.
+It contains resources for all levels,
+  including for those @url{https://developer.mozilla.org/en-US/docs/Learn/JavaScript/First_steps,unfamiliar with JavaScript}.
+All developers should familiarize themselves with the resources
+  available on MDN so that they understand what type of information is
+  readily accessible for future reference.
+
+@dnindex Node.js
+The Server (@pxref{Server}) uses Node.js.
+Although it's largely abstracted away,
+  there may be times where you need to touch on it,
+    in which case the
+    @url{https://nodejs.org/en/docs/,Node.js documentation} will be helpful.
+However,
+  it is important to note the version of Node.js that Liza is currently using,
+    as it may be woefully out of date and require looking at older
+    versions of the documentation.
+
+@dnindex Texinfo, GNU
+@cindex Documentation
+This manual is written using
+  @url{https://www.gnu.org/software/texinfo/,Texinfo},
+    which is the documentation format of the GNU@tie{}operating system.
+The format is structured and well-suited for software documentation
+  with output in a variety of formats.
+Looking at the source code of this manual will be helpful@mdash{
+  }it provides the general structure and numerous macros that are
+    specific to Liza.
+
+@dnindex MongoDB
+@cindex Database
+Data are persisted using @url{https://www.mongodb.com/,MongoDB}.
+Database operations in Liza are abstracted away,
+  but it's helpful to understand how to query the database directly to
+    understand how the system works and composes its data,
+  and for the purposes of debugging.
+
+For information on specific libraries used by Liza,
+  @pxref{Libraries}.

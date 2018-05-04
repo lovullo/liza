@@ -262,3 +262,7 @@ in the Liza Program@tie{}UI Compiler manual
 @macro easejs{}
 @url{https://www.gnu.org/software/easejs,GNU ease.js}
 @end macro
+
+@macro gplvthree{}
+@url{https://www.gnu.org/licenses/gpl.html,GNU General Public License version@tie{}3}
+@end macro
