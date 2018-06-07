@@ -139,11 +139,14 @@ module.exports = Class( 'DocumentProgramFormatter',
             const step_group  = {};
             const group_id    = step_groups[ group ];
             const group_title = this._program.groups[ group_id ].title || "";
+            const group_link  = this._program.groups[ group_id ].link || "";
             const fields      = this._program.groupExclusiveFields[ group_id ];
 
             const questions = this._parseFields( fields, bucket, classes );
 
-            step_group.title = group_title;
+            step_group.id        = group_id;
+            step_group.title     = group_title;
+            step_group.link      = group_link;
             step_group.questions = questions;
             groups.push( step_group );
         }

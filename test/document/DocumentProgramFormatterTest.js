@@ -58,7 +58,9 @@ describe( 'DocumentProgramFormatter', () =>
                     title: "General Information",
                     groups: [
                         {
+                            id: "group_one",
                             title: "Group One",
+                            link: "locations",
                             questions: [
                                 {
                                     id:         "sell_alcohol",
@@ -84,7 +86,9 @@ describe( 'DocumentProgramFormatter', () =>
                             ]
                         },
                         {
+                            id: "group_two",
                             title: "",
+                            link: "",
                             questions: [
                                 {
                                     id:         "sell_ecigs",
@@ -181,7 +185,8 @@ function createStubProgram()
         {
             'group_one':
             {
-                title: "Group One"
+                title: "Group One",
+                link: "locations"
             },
             'group_two': {},
         },
