@@ -24,17 +24,11 @@
 
 const chai   = require( 'chai' );
 const expect = chai.expect;
-const sinon  = require( 'sinon' );
 
 const {
     document: {
         DocumentProgramFormatter: Sut,
     },
-
-    field: {
-        FieldClassMatcher,
-    },
-
 } = require( '../../' );
 
 chai.use( require( 'chai-as-promised' ) );
@@ -42,7 +36,7 @@ chai.use( require( 'chai-as-promised' ) );
 
 describe( 'DocumentProgramFormatter', () =>
 {
-    it( "formats bucket data", () =>
+    it( "formats bucket data by steps, groups and fields", () =>
     {
         const bucket_data = {
             sell_alcohol: [ "foo", "" ],
@@ -122,7 +116,6 @@ describe( 'DocumentProgramFormatter', () =>
             Sut( program, class_matcher ).format( bucket )
         ).to.eventually.deep.equal( expected_object );
     } );
-
 } );
 
 
@@ -163,8 +156,7 @@ function createStubProgram()
     return {
         steps: [
             {
-                title: "Index 0",
-                groups: []
+                title: "Index 0"
             },
             {
                 title: "Manage Quote",
@@ -230,7 +222,6 @@ function createStubProgram()
         {
             'group_one': [ "sell_alcohol", "serve_alcohol", "field_no_label", "field_no_vis" ],
             'group_two': [ "sell_ecigs", "dist_ecigs", "field_no_array" ],
-
         },
         whens:
         {
@@ -242,6 +233,3 @@ function createStubProgram()
         },
     };
 }
-
-
-

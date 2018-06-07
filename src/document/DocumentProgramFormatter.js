@@ -27,8 +27,8 @@ const Class = require( 'easejs' ).Class;
 /**
  * Formats program bucket data
  *
- * This takes a document and formats the data in a
- * structured manner.
+ * This takes a document and formats the bucket data in a
+ * structured manner of steps, groups and fields metadata
  */
 module.exports = Class( 'DocumentProgramFormatter',
 {
@@ -65,12 +65,12 @@ module.exports = Class( 'DocumentProgramFormatter',
 
     /**
      * Returns formatted document bucket data
-     * Calls FieldClassMatcher.match to retrieve
-     * index of show/hide values for each field
+     * Calls FieldClassMatcher.match to retrieve index of show/hide
+     * values for each field
      *
      * @param {Bucket} bucket document bucket
      *
-     * @return {Object} JSON object
+     * @return {Promise.<Object>} a promise of a data object
      */
     'public format'( bucket )
     {
@@ -80,8 +80,9 @@ module.exports = Class( 'DocumentProgramFormatter',
 
             this._class_matcher.match( cmatch, ( field_matches ) =>
             {
-                const len  = this._program.steps.length;
-                const data = this._parseSteps( len, bucket, field_matches );
+                const len     = this._program.steps.length;
+                const classes = field_matches.__classes;
+                const data    = this._parseSteps( len, bucket, classes );
 
                 resolve( data );
             } );
@@ -93,13 +94,13 @@ module.exports = Class( 'DocumentProgramFormatter',
     /**
      * Parses step data
      *
-     * @param {Integer} len           step length
-     * @param {Bucket}  bucket        document bucket
-     * @param {Array}   field_matches array of matches for fields
+     * @param {Integer} len     step length
+     * @param {Bucket}  bucket  document bucket
+     * @param {Object}  classes class/field matches
      *
      * @return {Object} step data
      */
-    'private _parseSteps'( len, bucket, field_matches )
+    'private _parseSteps'( len, bucket, classes )
     {
         const data = { steps: [] };
 
@@ -108,7 +109,7 @@ module.exports = Class( 'DocumentProgramFormatter',
             const step = {};
             const step_groups = this._program.steps[ i ].groups;
 
-            const groups = this._parseGroups( step_groups, bucket, field_matches );
+            const groups = this._parseGroups( step_groups, bucket, classes );
 
             step.title = this._program.steps[ i ].title;
             step.groups = groups;
@@ -123,13 +124,13 @@ module.exports = Class( 'DocumentProgramFormatter',
     /**
      * Parses group data
      *
-     * @param {Array}  step_groups   array of group data
-     * @param {Bucket} bucket        document bucket
-     * @param {Array}  field_matches array of matches for fields
+     * @param {Array}  step_groups array of group data
+     * @param {Bucket} bucket      document bucket
+     * @param {Object} classes     class/field matches
      *
      * @return {Array} array of groups
      */
-    'private _parseGroups'( step_groups, bucket, field_matches )
+    'private _parseGroups'( step_groups, bucket, classes )
     {
         const groups = [];
 
@@ -140,7 +141,7 @@ module.exports = Class( 'DocumentProgramFormatter',
             const group_title = this._program.groups[ group_id ].title || "";
             const fields      = this._program.groupExclusiveFields[ group_id ];
 
-            const questions = this._parseFields( fields, bucket, field_matches );
+            const questions = this._parseFields( fields, bucket, classes );
 
             step_group.title = group_title;
             step_group.questions = questions;
@@ -154,17 +155,15 @@ module.exports = Class( 'DocumentProgramFormatter',
     /**
      * Parses fields/question data
      *
-     * @param {Array}  fields        array of field data
-     * @param {Bucket} bucket        document bucket
-     * @param {Array}  field_matches array of matches for fields
+     * @param {Array}  fields  array of field data
+     * @param {Bucket} bucket  document bucket
+     * @param {Object} classes class/field matches
      *
      * @return {Array} array of questions
      */
-    'private _parseFields'( fields, bucket, field_matches )
+    'private _parseFields'( fields, bucket, classes )
     {
         const questions = [];
-
-        const classes = field_matches.__classes;
 
         for ( let field in fields )
         {
