@@ -258,32 +258,27 @@ exports.relativeDate = function( data, value )
             now_day   = now.getUTCDate(),
             date_new  = null;
 
+        date_new = new Date( now_year + '/' + now_month + '/' + now_day );
         switch ( type )
         {
             // years
             case 'y':
-                date_new = new Date(
-                    ( now_year + +tval ) + '/' + now_month + '/' + now_day
-                );
+                date_new.setYear(date_new.getYear() + +tval);
                 break;
 
             // months
             case 'm':
-                date_new = new Date(
-                    now_year + '/' + ( now_month + +tval ) + '/' + now_day
-                );
+                date_new.setMonth(date_new.getMonth() + +tval);
                 break;
 
             // days
             case 'd':
-                date_new = new Date(
-                    now_year + '/' + now_month + '/' + ( now_day + +tval )
-                );
+                date_new.setDay(date_new.getDay() + +tval);
                 break;
 
             // seconds
             case 's':
-                date_new = new Date( now.getTime() + ( tval * 1000 ) );
+                date_new.setSeconds(date_new.getSeconds() + +tval);
                 break;
 
             default:
