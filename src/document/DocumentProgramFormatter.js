@@ -177,11 +177,13 @@ module.exports = Class( 'DocumentProgramFormatter',
 
             const field_value = bucket.getDataByName( field_id );
             const field_label = this._program.fields[ field_id ].label;
+            const field_type  = this._program.fields[ field_id ].type;
             const question    = {};
 
             question.id         = field_id;
             question.label      = field_label;
             question.value      = field_value;
+            question.type       = field_type;
             question.applicable = this._getApplicable(
                 classes,
                 field_id,

@@ -64,18 +64,21 @@ describe( 'DocumentProgramFormatter', () =>
                                     id:         "sell_alcohol",
                                     label:      "Does the insured sell alcohol?",
                                     value:      [ "foo", "" ],
+                                    type:       "noyes",
                                     applicable: [ true, false ]
                                 },
                                 {
                                     id:         "serve_alcohol",
                                     label:      "Does the insured serve alcohol?",
                                     value:      [ "" ],
+                                    type:       "noyes",
                                     applicable: [ false ]
                                 },
                                 {
                                     id:         "field_no_vis",
                                     label:      "Does this field have a visibility class?",
                                     value:      [ "true" ],
+                                    type:       "noyes",
                                     applicable: [ true ]
                                 }
                             ]
@@ -87,18 +90,21 @@ describe( 'DocumentProgramFormatter', () =>
                                     id:         "sell_ecigs",
                                     label:      "Does the insured sell e-cigarettes?",
                                     value:      [ "", "bar" ],
+                                    type:       "noyes",
                                     applicable: [ false, true ]
                                 },
                                 {
                                     id:         "dist_ecigs",
                                     label:      "Does the Insured distribute Electronic Cigarette products?",
                                     value:      [ "" ],
+                                    type:       "noyes",
                                     applicable: [ false ]
                                 },
                                 {
                                     id:         "field_no_array",
                                     label:      "Does this field have an array for the visibility class?",
                                     value:      [ "bar" ],
+                                    type:       "noyes",
                                     applicable: [ true ]
                                 }
                             ]
