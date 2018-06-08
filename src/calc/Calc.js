@@ -262,7 +262,7 @@ exports.relativeDate = function( data, value )
         {
             // years
             case 'y':
-                date_new.setYear( date_new.getYear() + +tval );
+                date_new.setYear( date_new.getFullYear() + +tval );
                 break;
 
             // months
