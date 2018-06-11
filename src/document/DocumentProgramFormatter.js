@@ -64,9 +64,7 @@ module.exports = Class( 'DocumentProgramFormatter',
 
 
     /**
-     * Returns formatted document bucket data
-     * Calls FieldClassMatcher.match to retrieve index of show/hide
-     * values for each field
+     * Formats document data into structure similar to program
      *
      * @param {Bucket} bucket document bucket
      *
@@ -94,7 +92,7 @@ module.exports = Class( 'DocumentProgramFormatter',
     /**
      * Parses step data
      *
-     * @param {Integer} len     step length
+     * @param {Number} len     step length
      * @param {Bucket}  bucket  document bucket
      * @param {Object}  classes class/field matches
      *
@@ -132,26 +130,18 @@ module.exports = Class( 'DocumentProgramFormatter',
      */
     'private _parseGroups'( step_groups, bucket, classes )
     {
-        const groups = [];
-
-        for ( let group in step_groups )
+        return step_groups.map( group_id =>
         {
-            const step_group  = {};
-            const group_id    = step_groups[ group ];
-            const group_title = this._program.groups[ group_id ].title || "";
-            const group_link  = this._program.groups[ group_id ].link || "";
-            const fields      = this._program.groupExclusiveFields[ group_id ];
+            const fields          = this._program.groupExclusiveFields[ group_id ];
+            const { title, link } = this._program.groups[ group_id ];
 
-            const questions = this._parseFields( fields, bucket, classes );
-
-            step_group.id        = group_id;
-            step_group.title     = group_title;
-            step_group.link      = group_link;
-            step_group.questions = questions;
-            groups.push( step_group );
-        }
-
-        return groups;
+            return {
+                id:        group_id,
+                title:     title || "",
+                link:      link || "",
+                questions: this._parseFields( fields, bucket, classes ),
+            };
+        } );
     },
 
 
@@ -178,22 +168,17 @@ module.exports = Class( 'DocumentProgramFormatter',
                 continue;
             }
 
-            const field_value = bucket.getDataByName( field_id );
-            const field_label = this._program.fields[ field_id ].label;
-            const field_type  = this._program.fields[ field_id ].type;
-            const question    = {};
+            const value = bucket.getDataByName( field_id );
+            const { label, type } = this._program.fields[ field_id ];
 
-            question.id         = field_id;
-            question.label      = field_label;
-            question.value      = field_value;
-            question.type       = field_type;
-            question.applicable = this._getApplicable(
-                classes,
-                field_id,
-                field_value
-            );
+            questions.push( {
+                id:         field_id,
+                label:      label || "",
+                value:      value,
+                type:       type || "",
+                applicable: this._getApplicable( classes, field_id, value ),
+            } );
 
-            questions.push( question );
         }
 
         return questions;

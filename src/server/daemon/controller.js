@@ -468,7 +468,8 @@ function doRoute( program, request, data, resolve, reject )
                 const bucket        = quote.getBucket();
                 const class_matcher = FieldClassMatcher( program.whens );
 
-                DocumentProgramFormatter( program, class_matcher ).format( bucket )
+                DocumentProgramFormatter( program, class_matcher )
+                    .format( bucket )
                     .then( data => response.ok( data ) )
                     .catch( e => response.error( e ) );
             } );
