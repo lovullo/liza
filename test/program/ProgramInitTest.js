@@ -68,7 +68,10 @@ describe( 'ProgramInit', () =>
         },
         {
             label:    "keeps existing data with defaults",
-            defaults: { foo: "init" },
+            defaults: {
+                foo: "init",
+                bar: "test"
+            },
             meta: {
                 groups: {}
             },
@@ -80,20 +83,6 @@ describe( 'ProgramInit', () =>
             expected: {
                 foo: [ "init" ],
                 bar: [ "baz" ],
-            },
-        },
-        {
-            label:    "keeps existing doc data with no defaults",
-            defaults: {},
-            meta: {
-                groups: {}
-            },
-            groupExclusiveFields: {
-                Something: [ "foo" ],
-            },
-            doc_data: { foo: [ "bar" ] },
-            expected: {
-                foo: [ "bar" ],
             },
         },
         {

@@ -66,35 +66,34 @@ module.exports = Class( 'ProgramInit',
             while ( length-- )
             {
                 var field = program.groupExclusiveFields[ group ][ length ],
-                    defaultValue = {};
+                    defaultValue;
 
                 if ( defaults.hasOwnProperty(field) )
                 {
                     defaultValue = defaults[ field ];
-                }
+                    // Initialize with existing document data if any
+                    data[ field ] = doc_data[ field ] ? doc_data[ field ] : [];
 
-                // Initialize with existing document data if any
-                data[ field ] = doc_data[ field ] ? doc_data[ field ] : [];
-
-                // If no document data, initialize with default value
-                if ( !doc_data[ field ] )
-                {
-                    data[ field ][ 0 ] = defaultValue;
-                }
-
-                // If min rows on the group is greater than the data
-                // currently in the bucket, then populate the rest
-                // of the data with the default data until the
-                // arrays are the same length
-                if ( groups.hasOwnProperty( group ) &&
-                     data[ field ].length < groups[ group ].min )
-                {
-                    var index = data[ field ].length;
-
-                    while ( index < groups[ group ].min )
+                    // If no document data, initialize with default value
+                    if ( !doc_data[ field ] )
                     {
-                        data[ field ][ index ] = defaultValue;
-                        index++;
+                        data[ field ][ 0 ] = defaultValue;
+                    }
+
+                    // If min rows on the group is greater than the data
+                    // currently in the bucket, then populate the rest
+                    // of the data with the default data until the
+                    // arrays are the same length
+                    if ( groups.hasOwnProperty( group ) &&
+                         data[ field ].length < groups[ group ].min )
+                    {
+                        var index = data[ field ].length;
+
+                        while ( index < groups[ group ].min )
+                        {
+                            data[ field ][ index ] = defaultValue;
+                            index++;
+                        }
                     }
                 }
             }
