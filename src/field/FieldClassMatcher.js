@@ -102,7 +102,7 @@ module.exports = Class( 'FieldClassMatcher',
                     // default to visible; note that, if we've encountered any
                     // "all index" situations (scalars), then we must only be
                     // true if the scalar value was true
-                    vis[ i ] = (
+                    vis[ i ] = +(
                         ( !hasall || all )
                         && ( ( vis[ i ] === undefined )
                             ? 1

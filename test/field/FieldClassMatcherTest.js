@@ -260,8 +260,7 @@ describe( 'FieldClassMatcher', () =>
                 foo: {
                     all:     false,
                     any:     false,
-                    // FIXME: should be [ 0, 0 ]
-                    indexes: [ false, false ],
+                    indexes: [ 0, 0 ],
                 },
             },
         },
