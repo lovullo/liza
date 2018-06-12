@@ -792,7 +792,7 @@ module.exports = Class( 'GroupUi' )
     },
 
 
-    'public hideField': function( field, index )
+    'virtual public hideField': function( field, index )
     {
         if ( this.isFieldVisible( field, index ) === false )
         {
@@ -814,7 +814,13 @@ module.exports = Class( 'GroupUi' )
     },
 
 
-    'public showField': function( field, index )
+    'protected hasVisibleField'( index )
+    {
+        return this._visCount[ index ] > 0 ? true : false;
+    },
+
+
+    'virtual public showField': function( field, index )
     {
         if ( this.isFieldVisible( field, index ) === true )
         {

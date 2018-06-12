@@ -100,4 +100,49 @@ module.exports = Class( 'StackedGroupUi' )
 
         return this.__super( index );
     },
+
+
+    /**
+     * Hide the header if there are no visible fields
+     *
+     * @param field
+     * @param index
+     */
+    'public override hideField'( field, index )
+    {
+        this.__super( field, index );
+
+        if ( !this.hasVisibleField( index ) )
+        {
+            const header = this._$container.find( 'dl' )[ index ];
+            var attribute = header.getAttribute( 'class' );
+
+            attribute = attribute.includes( ' hidden ' ) ? attribute : attribute + ' hidden ';
+
+            header.setAttribute( 'class', attribute );
+        }
+    },
+
+
+    /**
+     * Show the header if there are visible fields
+     *
+     * @param field
+     * @param index
+     */
+    'public override showField'( field, index )
+    {
+        this.__super( field, index );
+
+        if ( this.hasVisibleField( index ) )
+        {
+            const header = this._$container.find( 'dl' )[ index ];
+            var attribute = header.getAttribute( 'class' );
+
+            attribute = attribute.includes( ' hidden ' ) ? attribute.replace(' hidden ', '') : attribute;
+
+            header.setAttribute( 'class', attribute );
+        }
+
+    }
 } );
