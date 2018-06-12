@@ -1,7 +1,7 @@
 /**
- * Contains FieldClassMatcher class
+ * Reduce field predicate results into vectors and flags
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -19,12 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
+'use strict';
+
+const { Class } = require( 'easejs' );
 
 
 /**
- * Generates match sets for field based on their classifications and a given
- * classification set
+ * Generate match vector for fields given field predicates and
+ * classification results
+ *
+ * TODO: Support for multiple predicates on fields is for
+ * backwards-compatibility with older classification systems; newer systems
+ * generate a single classification representing the visibility of the
+ * field, allowing the classification reduction complexity and logic to stay
+ * within TAME.  Much of the complexity in this class can therefore be
+ * removed in the future.
  */
 module.exports = Class( 'FieldClassMatcher',
 {
@@ -40,7 +49,7 @@ module.exports = Class( 'FieldClassMatcher',
      *
      * @param {Object.<Array.<string>>} fields field names and their classes
      */
-    __construct: function( fields )
+    constructor( fields )
     {
         this._fields = fields;
     },
@@ -58,94 +67,96 @@ module.exports = Class( 'FieldClassMatcher',
      *
      * @return {FieldClassMatcher} self
      */
-    'public match': function( classes, callback )
+    'public match'( classes, callback )
     {
-        var cmatch = {};
-        cmatch.__classes = classes;
-
-        for ( var field in this._fields )
-        {
-            var cur    = this._fields[ field ],
-                vis    = [],
-                all    = true,
-                hasall = false;
-
-            if ( cur.length === 0 )
-            {
-                continue;
-            }
-
-            // determine if we have a match based on the given classifications
-            for ( var c in cur )
-            {
-                // if the indexes property is a scalar, then it applies to all
-                // indexes
-                var data    = ( classes[ cur[ c ] ] || {} ),
-                    thisall = ( typeof data.indexes !== 'object' ),
-                    alltrue = ( !thisall || data.indexes === 1 );
-
-                // if no indexes apply for the given classification (it may be a
-                // pure boolean), then this variable will be true if any only if
-                // all of them are true. Note that we only want to take the
-                // value of thisall if we're on our first index, as if hasall is
-                // empty thereafter, then all of them certainly aren't true!
-                hasall = ( hasall || ( thisall && +c === 0 ) );
-
-                // this will ensure that, if we've already determined some sort
-                // of visibility, that encountering a scalar will still manage
-                // to affect previous results even if it is the last
-                // classification that we are checking
-                var indexes = ( thisall ) ? vis : data.indexes;
-
-                for ( var i in indexes )
-                {
-                    // default to visible; note that, if we've encountered any
-                    // "all index" situations (scalars), then we must only be
-                    // true if the scalar value was true
-                    vis[ i ] = +(
-                        ( !hasall || all )
-                        && ( ( vis[ i ] === undefined )
-                            ? 1
-                            : vis[ i ]
-                        )
-                        && this._reduceMatch(
-                            ( thisall ) ? data.indexes : data.indexes[ i ]
-                        )
-                    );
-
-                    // all are true unless one is false (duh?)
-                    alltrue = !!( alltrue && vis[ i ] );
-                }
-
-                all = ( all && alltrue );
-            }
-
-            // default 'any' to 'all'; this will have the effect of saying "yes
-            // there are matches, but we don't care what" if there are no
-            // indexes associated with the match, implying that all indexes
-            // should match
-            var any = all;
-            for ( var i = 0, len = vis.length; i < len; i++ )
-            {
-                if ( vis[ i ] )
-                {
-                    any = true;
-                    break;
-                }
-            }
-
-            // store the classification match data for assertions, etc
-            cmatch[ field ] = {
-                all:     all,
-                any:     any,
-                indexes: vis
-            };
-        }
-
         // currently not asynchronous, but leaves open the possibility
-        callback( cmatch );
+        callback(
+            Object.keys( this._fields ).reduce(
+                ( cmatch, id ) =>
+                {
+                    cmatch[ id ] = this._reduceFieldMatches(
+                        this._fields[ id ],
+                        classes
+                    ), cmatch;
+
+                    return cmatch;
+                },
+                { __classes: classes }
+            )
+        );
 
         return this;
+    },
+
+
+    /**
+     * Reduce field class matches to a vector
+     *
+     * All field predicates in FIELDC will be reduced and combined into a
+     * single vector representing the visibility of each index.
+     *
+     * @param {Array}  fieldc  field predicate class names
+     * @param {Object} classes cmatch results
+     *
+     * @return {Object} all, any, indexes
+     */
+    'private _reduceFieldMatches'( fieldc, classes )
+    {
+        const vis = [];
+
+        let all    = true;
+        let hasall = false;
+
+        // determine if we have a match based on the given classifications
+        for ( let c in fieldc )
+        {
+            // if the indexes property is a scalar, then it applies to all
+            // indexes
+            const data    = ( classes[ fieldc[ c ] ] || {} );
+            const thisall = !Array.isArray( data.indexes );
+
+            let alltrue = ( !thisall || data.indexes === 1 );
+
+            // if no indexes apply for the given classification (it may be a
+            // pure boolean), then this variable will be true if any only if
+            // all of them are true. Note that we only want to take the
+            // value of thisall if we're on our first index, as if hasall is
+            // empty thereafter, then all of them certainly aren't true!
+            hasall = ( hasall || ( thisall && +c === 0 ) );
+
+            // this will ensure that, if we've already determined some sort
+            // of visibility, that encountering a scalar will still manage
+            // to affect previous results even if it is the last
+            // classification that we are checking
+            const indexes = ( thisall ) ? vis : data.indexes;
+
+            for ( let i in indexes )
+            {
+                // default to visible; note that, if we've encountered any
+                // "all index" situations (scalars), then we must only be
+                // true if the scalar value was true
+                vis[ i ] = +(
+                    ( !hasall || all )
+                    && ( ( vis[ i ] === undefined )
+                        ? 1
+                        : vis[ i ]
+                    )
+                    && this._reduceMatch(
+                        ( thisall ) ? data.indexes : data.indexes[ i ]
+                    )
+                );
+            }
+
+            alltrue = alltrue && vis.every( x => x );
+            all     = ( all && alltrue );
+        }
+
+        // store the classification match data for assertions, etc
+        return {
+            all:     all,
+            any:     all || vis.some( x => !!x ),
+            indexes: vis
+        };
     },
 
 
@@ -164,27 +175,13 @@ module.exports = Class( 'FieldClassMatcher',
      *
      * @return {number} 0 if false otherwise 1 for true
      */
-    'private _reduceMatch': function( result )
+    'private _reduceMatch'( result )
     {
-        if ( ( result === undefined )
-            || ( result === null )
-            || ( result.length === undefined )
-        )
+        if ( !Array.isArray( result ) )
         {
-            return result;
+            return !!result;
         }
 
-        var ret = false,
-            i   = result.length;
-
-        // reduce with logical or
-        while( i-- )
-        {
-            // recurse just in case we have another array of values
-            ret = ret || this._reduceMatch( result[ i ] );
-        }
-
-        return +ret;
+        return +result.some( x => this._reduceMatch( x ) );
     }
 } );
-

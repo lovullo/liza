@@ -456,12 +456,17 @@ describe( 'FieldClassMatcher', () =>
             },
         },
 
-        // TODO: perhaps this should default to all: true?
         {
-            label:    "ignores fields with no predicates",
+            label:    "sets all for fields with no predicates",
             fields:   { foo: [] },
             classes:  {},
-            expected: {},
+            expected: {
+                foo: {
+                    all:     true,
+                    any:     true,
+                    indexes: [],
+                }
+            },
         },
     ].forEach( ( { label, fields, classes, expected } ) =>
     {
