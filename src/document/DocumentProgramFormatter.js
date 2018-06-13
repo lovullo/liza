@@ -76,11 +76,10 @@ module.exports = Class( 'DocumentProgramFormatter',
         {
             const cmatch = this._program.classify( bucket.getData() );
 
-            this._class_matcher.match( cmatch, ( field_matches ) =>
+            this._class_matcher.match( cmatch, ( matches ) =>
             {
                 const len     = this._program.steps.length;
-                const classes = field_matches.__classes;
-                const data    = this._parseSteps( len, bucket, classes );
+                const data    = this._parseSteps( len, bucket, matches );
 
                 resolve( data );
             } );
@@ -93,12 +92,12 @@ module.exports = Class( 'DocumentProgramFormatter',
      * Parses step data
      *
      * @param {Number} len     step length
-     * @param {Bucket}  bucket  document bucket
-     * @param {Object}  classes class/field matches
+     * @param {Bucket} bucket  document bucket
+     * @param {Object} matches field matches
      *
      * @return {Object} step data
      */
-    'private _parseSteps'( len, bucket, classes )
+    'private _parseSteps'( len, bucket, matches )
     {
         const data = { steps: [] };
 
@@ -107,7 +106,7 @@ module.exports = Class( 'DocumentProgramFormatter',
             const step = {};
             const step_groups = this._program.steps[ i ].groups;
 
-            const groups = this._parseGroups( step_groups, bucket, classes );
+            const groups = this._parseGroups( step_groups, bucket, matches );
 
             step.title = this._program.steps[ i ].title;
             step.groups = groups;
@@ -124,11 +123,11 @@ module.exports = Class( 'DocumentProgramFormatter',
      *
      * @param {Array}  step_groups array of group data
      * @param {Bucket} bucket      document bucket
-     * @param {Object} classes     class/field matches
+     * @param {Object} matches     field matches
      *
      * @return {Array} array of groups
      */
-    'private _parseGroups'( step_groups, bucket, classes )
+    'private _parseGroups'( step_groups, bucket, matches )
     {
         return step_groups.map( group_id =>
         {
@@ -139,7 +138,7 @@ module.exports = Class( 'DocumentProgramFormatter',
                 id:        group_id,
                 title:     title || "",
                 link:      link || "",
-                questions: this._parseFields( fields, bucket, classes ),
+                questions: this._parseFields( fields, bucket, matches ),
             };
         } );
     },
@@ -150,11 +149,11 @@ module.exports = Class( 'DocumentProgramFormatter',
      *
      * @param {Array}  fields  array of field data
      * @param {Bucket} bucket  document bucket
-     * @param {Object} classes class/field matches
+     * @param {Object} matches field matches
      *
      * @return {Array} array of questions
      */
-    'private _parseFields'( fields, bucket, classes )
+    'private _parseFields'( fields, bucket, matches )
     {
         const questions = [];
 
@@ -176,7 +175,7 @@ module.exports = Class( 'DocumentProgramFormatter',
                 label:      label || "",
                 value:      value,
                 type:       type || "",
-                applicable: this._getApplicable( classes, field_id, value ),
+                applicable: this._getApplicable( matches, field_id, value ),
             } );
 
         }
@@ -189,31 +188,31 @@ module.exports = Class( 'DocumentProgramFormatter',
      * Determine when a field is shown by index
      * Map boolean values of [0, 1] to [true, false]
      *
-     * @param {Object} classes     object of visibility classes
+     * @param {Object} matches     field matches
      * @param {String} field_id    id of field
      * @param {Object} field_value field object
      *
      * @return {Array.<boolean>} array of booleans
      */
-    'private _getApplicable'( classes, field_id, field_value )
+    'private _getApplicable'( matches, field_id, field_value )
     {
         // If object is undefined, default to array of true
-        if ( typeof this._program.whens[ field_id ] === "undefined" )
+        if ( typeof matches[ field_id ] === "undefined" )
         {
             return field_value.map( _ => true );
         }
 
-        const class_id = this._program.whens[ field_id ][ 0 ];
-        const indexes  = classes[ class_id ].indexes;
+        const indexes   = matches[ field_id ].indexes;
+        const any_match = matches[ field_id ].any;
 
-        // Map indexes of  0, 1 to true, false
-        if ( Array.isArray( indexes ) )
+        if ( indexes.length > 0 )
         {
+            // Map indexes of  0, 1 to true, false
             return indexes.map( x => !!x );
         }
         else
         {
-            return field_value.map( _ => !!indexes );
+            return field_value.map( _ => any_match );
         }
     },
 } );

@@ -39,13 +39,14 @@ describe( 'DocumentProgramFormatter', () =>
     it( "formats bucket data by steps, groups and fields", () =>
     {
         const bucket_data = {
-            sell_alcohol: [ "foo", "" ],
-            serve_alcohol: [ "" ],
-            sell_ecigs: [ "", "bar" ],
-            dist_ecigs: [ "" ],
+            alcohol_shown: [ "foo", "" ],
+            alcohol_not_shown: [ "" ],
+            ecigs_shown_twice: [ "foo", "bar" ],
+            ecigs_not_shown: [ "" ],
             field_no_label: [ "" ],
-            field_no_array: [ "bar" ],
-            field_no_vis: [ "true" ]
+            field_no_vis: [ "true" ],
+            field_empty_array_any_true: [ "bar" ],
+            field_empty_array_any_false: [ "" ]
         };
 
         const expected_object = {
@@ -63,22 +64,22 @@ describe( 'DocumentProgramFormatter', () =>
                             link: "locations",
                             questions: [
                                 {
-                                    id:         "sell_alcohol",
-                                    label:      "Does the insured sell alcohol?",
+                                    id:         "alcohol_shown",
+                                    label:      "Alcohol?",
                                     value:      [ "foo", "" ],
                                     type:       "noyes",
                                     applicable: [ true, false ]
                                 },
                                 {
-                                    id:         "serve_alcohol",
-                                    label:      "Does the insured serve alcohol?",
+                                    id:         "alcohol_not_shown",
+                                    label:      "No alcohol?",
                                     value:      [ "" ],
                                     type:       "noyes",
                                     applicable: [ false ]
                                 },
                                 {
                                     id:         "field_no_vis",
-                                    label:      "Does this field have a visibility class?",
+                                    label:      "Is this field found in FieldMatcher?",
                                     value:      [ "true" ],
                                     type:       "noyes",
                                     applicable: [ true ]
@@ -91,25 +92,32 @@ describe( 'DocumentProgramFormatter', () =>
                             link: "",
                             questions: [
                                 {
-                                    id:         "sell_ecigs",
-                                    label:      "Does the insured sell e-cigarettes?",
-                                    value:      [ "", "bar" ],
+                                    id:         "ecigs_shown_twice",
+                                    label:      "Two ecig answers?",
+                                    value:      [ "foo", "bar" ],
                                     type:       "noyes",
-                                    applicable: [ false, true ]
+                                    applicable: [ true, true ]
                                 },
                                 {
-                                    id:         "dist_ecigs",
-                                    label:      "Does the Insured distribute Electronic Cigarette products?",
+                                    id:         "ecigs_not_shown",
+                                    label:      "No ecigs?",
                                     value:      [ "" ],
                                     type:       "noyes",
                                     applicable: [ false ]
                                 },
                                 {
-                                    id:         "field_no_array",
-                                    label:      "Does this field have an array for the visibility class?",
+                                    id:         "field_empty_array_any_true",
+                                    label:      "Empty match array?",
                                     value:      [ "bar" ],
                                     type:       "noyes",
                                     applicable: [ true ]
+                                },
+                                {
+                                    id:         "field_empty_array_any_false",
+                                    label:      "Empty match array and 'any' is false?",
+                                    value:      [ "" ],
+                                    type:       "noyes",
+                                    applicable: [ false ]
                                 }
                             ]
                         }
@@ -135,14 +143,39 @@ function createStubClassMatcher()
         match( _, callback )
         {
             callback({
-                __classes:
-                {
-                    '--vis-sell-alcohol': { is: true, indexes: [1,0] },
-                    '--vis-serve-alcohol': { is: false, indexes: [0] },
-                    '--vis-sell-ecigs': { is: false, indexes: [0,1] },
-                    '--vis-dist-ecigs': { is: true, indexes: [0] },
-                    '--vis-no-array': { is: true, indexes: 1 },
-                }
+                "__classes": {
+                    '--vis-foo': { is: true, indexes: [1,0] },
+                },
+                "alcohol_shown": {
+                    "all": false,
+                    "any": true,
+                    "indexes": [1, 0]
+                },
+                "alcohol_not_shown": {
+                    "all": false,
+                    "any": false,
+                    "indexes": [0]
+                },
+                "ecigs_shown_twice": {
+                    "all": false,
+                    "any": true,
+                    "indexes": [1, 1]
+                },
+                "ecigs_not_shown": {
+                    "all": false,
+                    "any": false,
+                    "indexes": []
+                },
+                "field_empty_array_any_false": {
+                    "all": false,
+                    "any": false,
+                    "indexes": []
+                },
+                "field_empty_array_any_true": {
+                    "all": true,
+                    "any": true,
+                    "indexes": []
+                },
             }) ;
         }
     }
@@ -192,55 +225,63 @@ function createStubProgram()
         },
         fields:
         {
-            sell_alcohol:
+            alcohol_shown:
             {
-                label: "Does the insured sell alcohol?",
+                label: "Alcohol?",
                 type: "noyes",
                 required: "true",
             },
-            serve_alcohol:
+            alcohol_not_shown:
             {
-                label: "Does the insured serve alcohol?",
+                label: "No alcohol?",
                 type: "noyes",
                 required: "true"
             },
-            sell_ecigs:
+            ecigs_shown_twice:
             {
-                label: "Does the insured sell e-cigarettes?",
+                label: "Two ecig answers?",
                 type: "noyes",
                 required: "true"
             },
-            dist_ecigs:
+            ecigs_not_shown:
             {
-                label: "Does the Insured distribute Electronic Cigarette products?",
+                label: "No ecigs?",
                 type: "noyes",
                 required: "true"
             },
-            field_no_array:
+            field_empty_array_any_true:
             {
-                label: "Does this field have an array for the visibility class?",
+                label: "Empty match array?",
+                type: "noyes",
+                required: "true"
+            },
+            field_empty_array_any_false:
+            {
+                label: "Empty match array and 'any' is false?",
                 type: "noyes",
                 required: "true"
             },
             field_no_vis:
             {
-                label: "Does this field have a visibility class?",
+                label: "Is this field found in FieldMatcher?",
                 type: "noyes",
                 required: "true"
             }
         },
         groupExclusiveFields:
         {
-            'group_one': [ "sell_alcohol", "serve_alcohol", "field_no_label", "field_no_vis" ],
-            'group_two': [ "sell_ecigs", "dist_ecigs", "field_no_array" ],
-        },
-        whens:
-        {
-            sell_alcohol: [ "--vis-sell-alcohol" ],
-            serve_alcohol: [ "--vis-serve-alcohol" ],
-            sell_ecigs: [ "--vis-sell-ecigs" ],
-            dist_ecigs: [ "--vis-dist-ecigs" ],
-            field_no_array: [ "--vis-no-array" ],
+            'group_one': [
+                "alcohol_shown",
+                "alcohol_not_shown",
+                "field_no_label",
+                "field_no_vis"
+            ],
+            'group_two': [
+                "ecigs_shown_twice",
+                "ecigs_not_shown",
+                "field_empty_array_any_true",
+                "field_empty_array_any_false"
+            ],
         },
     };
 }
