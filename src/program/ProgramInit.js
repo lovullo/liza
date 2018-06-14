@@ -72,10 +72,10 @@ module.exports = Class( 'ProgramInit',
                 {
                     defaultValue = defaults[ field ];
                     // Initialize with existing document data if any
-                    data[ field ] = doc_data[ field ] ? doc_data[ field ] : [];
+                    data[ field ] = doc_data && doc_data[ field ] ? doc_data[ field ] : [];
 
                     // If no document data, initialize with default value
-                    if ( !doc_data[ field ] )
+                    if ( !doc_data || !doc_data[ field ] )
                     {
                         data[ field ][ 0 ] = defaultValue;
                     }
