@@ -115,11 +115,8 @@ module.exports = Class( 'StackedGroupUi' )
         if ( !this.hasVisibleField( index ) )
         {
             const header = this._$container.find( 'dl' )[ index ];
-            var attribute = header.getAttribute( 'class' );
 
-            attribute = attribute.includes( ' hidden ' ) ? attribute : attribute + ' hidden ';
-
-            header.setAttribute( 'class', attribute );
+            header.classList.add( 'hidden' );
         }
     },
 
@@ -137,11 +134,8 @@ module.exports = Class( 'StackedGroupUi' )
         if ( this.hasVisibleField( index ) )
         {
             const header = this._$container.find( 'dl' )[ index ];
-            var attribute = header.getAttribute( 'class' );
 
-            attribute = attribute.includes( ' hidden ' ) ? attribute.replace(' hidden ', '') : attribute;
-
-            header.setAttribute( 'class', attribute );
+            header.classList.remove( 'hidden' );
         }
 
     }

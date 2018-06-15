@@ -56,44 +56,45 @@ module.exports = Class( 'ProgramInit',
     {
         const defaults = program.defaults || {};
 
-        var data = {},
-            groups = program.meta.groups;
+        let data = doc_data || {};
+        let groups = program.meta.groups;
 
-        Object.keys( program.groupExclusiveFields ).forEach( function( group, index )
+        Object.keys( program.groupExclusiveFields ).forEach( group =>
         {
-            var length = program.groupExclusiveFields[ group ].length;
+            let length = program.groupExclusiveFields[ group ].length;
 
             while ( length-- )
             {
-                var field = program.groupExclusiveFields[ group ][ length ],
-                    defaultValue;
+                let field = program.groupExclusiveFields[ group ][ length ];
+                let defaultValue;
 
-                if ( defaults.hasOwnProperty(field) )
+                if ( !defaults.hasOwnProperty( field ))
                 {
-                    defaultValue = defaults[ field ];
-                    // Initialize with existing document data if any
-                    data[ field ] = doc_data && doc_data[ field ] ? doc_data[ field ] : [];
+                    continue;
+                }
 
-                    // If no document data, initialize with default value
-                    if ( !doc_data || !doc_data[ field ] )
+                defaultValue = defaults[ field ];
+                // Initialize with existing document data if any
+
+                // If no document data, initialize with default value
+                if ( data[ field ] === undefined )
+                {
+                    data[ field ] = [ defaultValue ];
+                }
+
+                // If min rows on the group is greater than the data
+                // currently in the bucket, then populate the rest
+                // of the data with the default data until the
+                // arrays are the same length
+                if ( groups.hasOwnProperty( group ) &&
+                     data[ field ].length < groups[ group ].min )
+                {
+                    let index = data[ field ].length;
+
+                    while ( index < groups[ group ].min )
                     {
-                        data[ field ][ 0 ] = defaultValue;
-                    }
-
-                    // If min rows on the group is greater than the data
-                    // currently in the bucket, then populate the rest
-                    // of the data with the default data until the
-                    // arrays are the same length
-                    if ( groups.hasOwnProperty( group ) &&
-                         data[ field ].length < groups[ group ].min )
-                    {
-                        var index = data[ field ].length;
-
-                        while ( index < groups[ group ].min )
-                        {
-                            data[ field ][ index ] = defaultValue;
-                            index++;
-                        }
+                        data[ field ][ index ] = defaultValue;
+                        index++;
                     }
                 }
             }

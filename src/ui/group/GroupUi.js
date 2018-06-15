@@ -791,7 +791,12 @@ module.exports = Class( 'GroupUi' )
             : $element;
     },
 
-
+    /**
+     * Hides the field based on field name and index
+     *
+     * @param field
+     * @param index
+     */
     'virtual public hideField': function( field, index )
     {
         if ( this.isFieldVisible( field, index ) === false )
@@ -813,13 +818,25 @@ module.exports = Class( 'GroupUi' )
             .applyStyle( this._naStyler );
     },
 
-
+    /**
+     * Returns a boolean depending on if there are visible fields
+     * based off of the visCount
+     *
+     * @param index
+     * @returns {boolean}
+     */
     'protected hasVisibleField'( index )
     {
         return this._visCount[ index ] > 0 ? true : false;
     },
 
 
+    /**
+     * Shows the field based on field name and index
+     *
+     * @param field
+     * @param index
+     */
     'virtual public showField': function( field, index )
     {
         if ( this.isFieldVisible( field, index ) === true )
