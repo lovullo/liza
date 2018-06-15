@@ -53,6 +53,14 @@ const {
         DataApiManager,
     },
 
+    document: {
+        DocumentProgramFormatter,
+    },
+
+    field: {
+        FieldClassMatcher,
+    },
+
     server: {
         DocumentServer,
 
@@ -447,6 +455,23 @@ function doRoute( program, request, data, resolve, reject )
                     // concurrent access?
                     getConcurrentSessionUser( quote_id, session )
                 );
+            } );
+        } );
+    }
+    else if ( cmd == 'progdata' )
+    {
+        acquireReadLock( quote_id, request, function()
+        {
+            handleRequest( function( quote )
+            {
+                const response      = UserResponse( request );
+                const bucket        = quote.getBucket();
+                const class_matcher = FieldClassMatcher( program.whens );
+
+                DocumentProgramFormatter( program, class_matcher )
+                    .format( bucket )
+                    .then( data => response.ok( data ) )
+                    .catch( e => response.error( e ) );
             } );
         } );
     }
