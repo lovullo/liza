@@ -203,7 +203,7 @@ module.exports = Class( 'DocumentProgramFormatter',
         }
 
         const indexes   = matches[ field_id ].indexes;
-        const any_match = matches[ field_id ].any;
+        const all_match = matches[ field_id ].all;
 
         if ( indexes.length > 0 )
         {
@@ -212,7 +212,7 @@ module.exports = Class( 'DocumentProgramFormatter',
         }
         else
         {
-            return field_value.map( _ => any_match );
+            return field_value.map( _ => all_match );
         }
     },
 } );
