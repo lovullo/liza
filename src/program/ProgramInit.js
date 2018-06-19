@@ -55,31 +55,29 @@ module.exports = Class( 'ProgramInit',
     'public init'( program, doc_data )
     {
         const defaults = program.defaults || {};
-
-        let data = doc_data || {};
-        let groups = program.meta.groups;
+        const data = doc_data || {};
+        const groups = program.meta.groups;
 
         Object.keys( program.groupExclusiveFields ).forEach( group =>
         {
-            let length = program.groupExclusiveFields[ group ].length;
+            let i = program.groupExclusiveFields[ group ].length;
 
-            while ( length-- )
+            while ( i-- )
             {
-                let field = program.groupExclusiveFields[ group ][ length ];
-                let defaultValue;
+                const field = program.groupExclusiveFields[ group ][ i ];
+                const default_value = defaults[ field ];
 
                 if ( !defaults.hasOwnProperty( field ))
                 {
                     continue;
                 }
 
-                defaultValue = defaults[ field ];
                 // Initialize with existing document data if any
 
                 // If no document data, initialize with default value
                 if ( data[ field ] === undefined )
                 {
-                    data[ field ] = [ defaultValue ];
+                    data[ field ] = [ default_value ];
                 }
 
                 // If min rows on the group is greater than the data
@@ -93,7 +91,7 @@ module.exports = Class( 'ProgramInit',
 
                     while ( index < groups[ group ].min )
                     {
-                        data[ field ][ index ] = defaultValue;
+                        data[ field ][ index ] = default_value;
                         index++;
                     }
                 }

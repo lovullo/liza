@@ -86,6 +86,20 @@ describe( 'ProgramInit', () =>
             },
         },
         {
+            label:    "keeps existing data with no defaults",
+            defaults: {},
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {
+                SomethingElse: [ "bar" ]
+            },
+            doc_data: { bar: [ "baz" ] },
+            expected: {
+                bar: [ "baz" ],
+            },
+        },
+        {
             label:    "does not overwrite existing data with defaults",
             defaults: { foo: "init" },
             meta: {
