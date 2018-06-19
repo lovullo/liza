@@ -34,6 +34,12 @@ describe( 'ProgramInit', () =>
         {
             label:    "initializes defaults",
             defaults: { a: "one", b: "two" },
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {
+                Something: [ "a", "b" ]
+            },
             doc_data: {},
             expected: {
                 a: [ "one" ],
@@ -43,18 +49,36 @@ describe( 'ProgramInit', () =>
         {
             label:    "does nothing with no data or defaults",
             defaults: {},
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {},
             doc_data: {},
             expected: {},
         },
         {
             label:    "produces empty object given undefined data",
             defaults: {},
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {},
             doc_data: undefined,
             expected: {},
         },
         {
             label:    "keeps existing data with defaults",
-            defaults: { foo: "init" },
+            defaults: {
+                foo: "init",
+                bar: "test"
+            },
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ],
+                SomethingElse: [ "bar" ]
+            },
             doc_data: { bar: [ "baz" ] },
             expected: {
                 foo: [ "init" ],
@@ -62,22 +86,90 @@ describe( 'ProgramInit', () =>
             },
         },
         {
-            label:    "keeps existing doc data with no defaults",
+            label:    "keeps existing data with no defaults",
             defaults: {},
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {
+                SomethingElse: [ "bar" ]
+            },
+            doc_data: { bar: [ "baz" ] },
+            expected: {
+                bar: [ "baz" ],
+            },
+        },
+        {
+            label:    "does not overwrite existing data with defaults",
+            defaults: { foo: "init" },
+            meta: {
+                groups: {}
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ]
+            },
             doc_data: { foo: [ "bar" ] },
             expected: {
                 foo: [ "bar" ],
             },
         },
         {
-            label:    "does not overwrite existing data with defaults",
+            label:    "does not overwrite existing data with defaults and multiple rows",
             defaults: { foo: "init" },
-            doc_data: { foo: [ "bar" ] },
+            meta: {
+                groups: {
+                    Something: {
+                        min: 3
+                    }
+                }
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ]
+            },
+            doc_data: { foo: [ "bar", "baz", "test" ] },
             expected: {
-                foo: [ "bar" ],
+                foo: [ "bar", "baz", "test" ],
             },
         },
-    ].forEach( ({ label, doc_data, id, defaults, expected }) =>
+        {
+            label:    "initializes with default bucket data",
+            defaults: { foo: "init" },
+            meta: {
+                groups: {
+                    Something: {
+                        min: 5
+                    }
+                }
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ]
+            },
+            doc_data: {},
+            expected: {
+                foo: [ "init", "init", "init", "init", "init" ],
+            },
+        },
+        {
+            label:    "fix missing bucket data values",
+            defaults: { foo: "init" },
+            meta: {
+                groups: {
+                    Something: {
+                        min: 5
+                    }
+                }
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ]
+            },
+            doc_data: {
+                foo: [ "1", "2", "3", "4" ],
+            },
+            expected: {
+                foo: [ "1", "2", "3", "4", "init" ],
+            },
+        },
+    ].forEach( ({ label, doc_data, id, defaults, meta, groupExclusiveFields, expected }) =>
     {
         it( label, () =>
         {
@@ -86,6 +178,8 @@ describe( 'ProgramInit', () =>
             const program = {
                 id:       "foo",
                 defaults: defaults,
+                meta: meta,
+                groupExclusiveFields : groupExclusiveFields
             };
 
             return expect( sut.init( program, doc_data ) )

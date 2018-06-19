@@ -55,15 +55,49 @@ module.exports = Class( 'ProgramInit',
     'public init'( program, doc_data )
     {
         const defaults = program.defaults || {};
+        const data = doc_data || {};
+        const groups = program.meta.groups;
 
-        // initialize to an array with a single element of the default value
-        return Promise.resolve(
-            Object.keys( defaults ).reduce(
-                ( data, key ) => ( data[ key ] === undefined )
-                    ? ( data[ key ] = [ defaults[ key ] ], data )
-                    : data,
-                doc_data || {}
-            )
-        );
+        Object.keys( program.groupExclusiveFields ).forEach( group =>
+        {
+            let i = program.groupExclusiveFields[ group ].length;
+
+            while ( i-- )
+            {
+                const field = program.groupExclusiveFields[ group ][ i ];
+                const default_value = defaults[ field ];
+
+                if ( !defaults.hasOwnProperty( field ))
+                {
+                    continue;
+                }
+
+                // Initialize with existing document data if any
+
+                // If no document data, initialize with default value
+                if ( data[ field ] === undefined )
+                {
+                    data[ field ] = [ default_value ];
+                }
+
+                // If min rows on the group is greater than the data
+                // currently in the bucket, then populate the rest
+                // of the data with the default data until the
+                // arrays are the same length
+                if ( groups.hasOwnProperty( group ) &&
+                     data[ field ].length < groups[ group ].min )
+                {
+                    let index = data[ field ].length;
+
+                    while ( index < groups[ group ].min )
+                    {
+                        data[ field ][ index ] = default_value;
+                        index++;
+                    }
+                }
+            }
+        });
+
+        return Promise.resolve( data );
     },
 } );
