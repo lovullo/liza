@@ -471,7 +471,7 @@ function doRoute( program, request, data, resolve, reject )
                 DocumentProgramFormatter( program, class_matcher )
                     .format( bucket )
                     .then( data => response.ok( data ) )
-                    .catch( e => response.error( e ) );
+                    .catch( e => response.internalError( {}, e ) );
             } );
         } );
     }
