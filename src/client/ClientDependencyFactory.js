@@ -97,6 +97,8 @@ var Step          = require( '../step/Step' ),
 
     diffStore = require( 'liza/system/client' ).data.diffStore,
 
+    DataApiMediator = require( './dapi/DataApiMediator' ),
+
     Class = require( 'easejs' ).Class;
 
 
@@ -371,4 +373,6 @@ module.exports = Class( 'ClientDependencyFactory',
             'action$cvv2Dialog':   requireh( 'Cvv2DialogEventHandler' )( jquery )
         } );
     },
+
+    createDataApiMediator: DataApiMediator,
 } );
