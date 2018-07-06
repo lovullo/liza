@@ -59,7 +59,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "first", "second" ],
-                expected: [ "first" ],
+                expected: { foo: [ "first" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -72,7 +72,7 @@ describe( "DataApiMediator", () =>
                 name:     'bar',
                 index:    1,
                 value:    [ "first", "second" ],
-                expected: [ , "second" ],
+                expected: { bar: [ , "second" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -86,7 +86,7 @@ describe( "DataApiMediator", () =>
                 name:     'bar',
                 index:    -1,
                 value:    [ "first", "second" ],
-                expected: [ "first", "second" ],
+                expected: { bar: [ "first", "second" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -101,7 +101,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "does not", "exist" ],
-                expected: [ "first result" ],
+                expected: { foo: [ "first result" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -115,7 +115,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    1,
                 value:    [ "does not", "exist" ],
-                expected: [ , "first result" ],
+                expected: { foo: [ , "first result" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -129,7 +129,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    -1,
                 value:    [ "does not", "exist" ],
-                expected: [ "first result", "first result" ],
+                expected: { foo: [ "first result", "first result" ] },
 
                 val_label: [
                     { value: "first result",  label: "first" },
@@ -144,7 +144,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "foo" ],
-                expected: [ "" ],
+                expected: { foo: [ "" ] },
 
                 val_label: [],
                 results:   {},
@@ -154,7 +154,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    1,
                 value:    [ "foo", "bar" ],
-                expected: [ , "" ],
+                expected: { foo: [ , "" ] },
 
                 val_label: [],
                 results:   {},
@@ -164,7 +164,7 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    -1,
                 value:    [ "foo", "bar" ],
-                expected: [ "", "" ],
+                expected: { foo: [ "", "" ] },
 
                 val_label: [],
                 results:   {},
@@ -182,9 +182,8 @@ describe( "DataApiMediator", () =>
                         return value;
                     },
 
-                    setDataByName( given_name, given_data )
+                    setData( given_data )
                     {
-                        expect( given_name ).to.equal( name );
                         expect( given_data ).to.deep.equal( expected );
 
                         // should have called setOptions by now

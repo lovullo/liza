@@ -151,7 +151,7 @@ module.exports = Class( 'DataApiMediator',
             group.setOptions( name, i, val_label, existing[ i ] )
         );
 
-        quote.setDataByName( name, update );
+        quote.setData( { [name]: update } );
     },
 
 
