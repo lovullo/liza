@@ -22,7 +22,11 @@
 'use strict';
 
 const { expect } = require( 'chai' );
-const Sut        = require( '../../../' ).client.dapi.DataApiMediator;
+
+const {
+    client: { dapi: { DataApiMediator: Sut } },
+    dapi:   { MissingDataError },
+} = require( '../../../' );
 
 
 describe( "DataApiMediator", () =>
@@ -48,7 +52,7 @@ describe( "DataApiMediator", () =>
             } );
 
             const ui  = createStubUi( {} );   // no field groups
-            const sut = Sut( ui, {}, getQuote ).monitor( dapi_manager );
+            const sut = Sut( ui, {}, {}, getQuote ).monitor( dapi_manager );
 
             dapi_manager.emit( 'updateFieldData', '', 0, {}, {} );
         } );
@@ -59,41 +63,83 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "first", "second" ],
-                expected: { foo: [ "first" ] },
+                expected: {
+                    foo:   [ "first" ],
+                    dest1: [ "src1data" ],
+                    dest2: [ "src2data" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                 ],
 
-                results: { first: {}, second: {} },
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: {},
+                },
+
+                expansion: [ {
+                    dest1: [ "src1data" ],
+                    dest2: [ "src2data" ],
+                } ],
             },
             {
                 label:    "keeps existing value if in result set (second index)",
                 name:     'bar',
                 index:    1,
                 value:    [ "first", "second" ],
-                expected: { bar: [ , "second" ] },
+                expected: {
+                    bar:   [ , "second" ],
+                    dest1: [ , "src1data_2" ],
+                    dest2: [ , "src2data_2" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                     { value: "second result", label: "second" },
                 ],
 
-                results: { first: {}, second: {} },
+                results: {
+                    first:  {},
+                    second: { src1: "src1data_2", src2: "src2data_2" },
+                },
+
+                expansion: [ , {
+                    dest1: [ , "src1data_2" ],
+                    dest2: [ , "src2data_2" ],
+                } ],
             },
             {
                 label:    "keeps existing value if in result set (all indexes)",
                 name:     'bar',
                 index:    -1,
                 value:    [ "first", "second" ],
-                expected: { bar: [ "first", "second" ] },
+                expected: {
+                    bar: [ "first", "second" ],
+                    dest1: [ "src1data", "src1data_2" ],
+                    dest2: [ "src2data", "src2data_2" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                     { value: "second result", label: "second" },
                 ],
 
-                results: { first: {}, second: {} },
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: { src1: "src1data_2", src2: "src2data_2" },
+                },
+
+                expansion: [
+                    {
+                        dest1: [ "src1data" ],
+                        dest2: [ "src2data" ],
+                    },
+                    {
+                        dest1: [ , "src1data_2" ],
+                        dest2: [ , "src2data_2" ],
+                    },
+                ],
             },
 
             {
@@ -101,42 +147,84 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "does not", "exist" ],
-                expected: { foo: [ "first result" ] },
+                expected: {
+                    foo:   [ "first result" ],
+                    desta: [ "src1data" ],
+                    destb: [ "src2data" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                     { value: "second result", label: "second" },
                 ],
 
-                results: {},
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: {},
+                },
+
+                expansion: [ {
+                    desta: [ "src1data" ],
+                    destb: [ "src2data" ],
+                } ],
             },
             {
                 label:    "uses first value of result if existing not in result set (second index)",
                 name:     'foo',
                 index:    1,
                 value:    [ "does not", "exist" ],
-                expected: { foo: [ , "first result" ] },
+                expected: {
+                    foo:   [ , "first result" ],
+                    desta: [ , "src1data" ],
+                    destb: [ , "src2data" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                     { value: "second result", label: "second" },
                 ],
 
-                results: {},
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: {},
+                },
+
+                expansion: [ , {
+                    desta: [ , "src1data" ],
+                    destb: [ , "src2data" ],
+                } ],
             },
             {
                 label:    "uses first value of result if existing not in result set (all indexes)",
                 name:     'foo',
                 index:    -1,
                 value:    [ "does not", "exist" ],
-                expected: { foo: [ "first result", "first result" ] },
+                expected: {
+                    foo:   [ "first result", "first result" ],
+                    desta: [ "src1data", "src1data" ],
+                    destb: [ "src1data", "src2data" ],
+                },
 
                 val_label: [
                     { value: "first result",  label: "first" },
                     { value: "second result", label: "second" },
                 ],
 
-                results: {},
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: {},
+                },
+
+                expansion: [
+                    {
+                        desta: [ "src1data" ],
+                        destb: [ "src1data" ],
+                    },
+                    {
+                        desta: [ , "src1data" ],
+                        destb: [ , "src2data" ],
+                    },
+                ],
             },
 
             {
@@ -144,38 +232,66 @@ describe( "DataApiMediator", () =>
                 name:     'foo',
                 index:    0,
                 value:    [ "foo" ],
-                expected: { foo: [ "" ] },
+                expected: {
+                    foo:   [ "" ],
+                    dest1: [ "" ],
+                },
 
                 val_label: [],
                 results:   {},
+                expansion: [ {
+                    dest1: [ "" ],
+                } ],
             },
             {
                 label:    "uses empty string if empty result set (second index)",
                 name:     'foo',
                 index:    1,
                 value:    [ "foo", "bar" ],
-                expected: { foo: [ , "" ] },
+                expected: {
+                    foo:   [ , "" ],
+                    dest1: [ , "" ],
+                },
 
                 val_label: [],
                 results:   {},
+                expansion: [ , {
+                    dest1: [ , "" ],
+                } ],
             },
             {
                 label:    "uses empty string if empty result set (all indexes)",
                 name:     'foo',
                 index:    -1,
                 value:    [ "foo", "bar" ],
-                expected: { foo: [ "", "" ] },
+                expected: {
+                    foo:   [ "", "" ],
+                    dest1: [ "", "" ],
+                    dest2: [ "", "" ],
+                },
 
                 val_label: [],
                 results:   {},
+                expansion: [
+                    {
+                        dest1: [ "" ],
+                        dest2: [ "" ],
+                    },
+                    {
+                        dest1: [ , "" ],
+                        dest2: [ , "" ],
+                    },
+                ],
             },
-        ].forEach( ( { label, name, index, value, expected, val_label, results }, i ) =>
+        ].forEach( ( {
+            label, name, index, value, expected, val_label, results, expansion
+        } ) =>
         {
             it( label, done =>
             {
                 let set_options = false;
 
-                const getQuote = () => ( {
+                const quote = {
                     getDataByName( given_name )
                     {
                         expect( given_name ).to.equal( name );
@@ -191,9 +307,29 @@ describe( "DataApiMediator", () =>
 
                         done();
                     },
-                } );
+                };
 
-                const dapi_manager = createStubDapiManager();
+                const getQuote = () => quote;
+
+                const dapi_manager = createStubDapiManager( expansion );
+
+                // this isn't a valid map, but comparing the objects will
+                // ensure that the map is actually used
+                const dapimap = { foo: {}, bar: {} };
+
+                dapi_manager.getDataExpansion = (
+                    given_name, given_index, given_quote, given_map,
+                    predictive, diff
+                ) =>
+                {
+                    expect( given_name ).to.equal( name );
+                    expect( given_quote ).to.equal( quote );
+                    expect( given_map ).to.deep.equal( dapimap );
+                    expect( predictive ).to.be.false;
+                    expect( diff ).to.deep.equal( {} );
+
+                    return expansion[ given_index ];
+                };
 
                 const field_groups = {
                     [name]: {
@@ -209,13 +345,55 @@ describe( "DataApiMediator", () =>
                     },
                 };
 
-                const ui  = createStubUi( field_groups );
-                const sut = Sut( ui, {}, getQuote ).monitor( dapi_manager );
+                const ui = createStubUi( field_groups );
+
+                const sut = Sut( ui, {}, { [name]: dapimap }, getQuote )
+                    .monitor( dapi_manager );
 
                 dapi_manager.emit(
                     'updateFieldData', name, index, val_label, results
                 );
             } );
+        } );
+
+
+        it( 'does not perform expansion if data are not available', done =>
+        {
+            const dapi_manager = createStubDapiManager();
+
+            dapi_manager.getDataExpansion = () =>
+            {
+                throw MissingDataError(
+                    'this should happen, but should be caught'
+                );
+            };
+
+            const name  = 'foo';
+            const value = 'bar';
+
+            const getQuote = () => ( {
+                getDataByName: () => [ value ],
+                setData( given_data )
+                {
+                    // only the value should be set with no expansion data
+                    expect( given_data ).to.deep.equal( {
+                        [name]: [ value ],
+                    } );
+
+                    done();
+                },
+            } );
+
+            const field_groups = { [name]: { setOptions() {} } };
+
+            const ui  = createStubUi( field_groups );
+            const sut = Sut( ui, {}, {}, getQuote ).monitor( dapi_manager );
+
+            const val_label = [
+                { value: value, label: "bar" },
+            ];
+
+            dapi_manager.emit( 'updateFieldData', name, 0, val_label, {} );
         } );
     } );
 
@@ -229,7 +407,7 @@ describe( "DataApiMediator", () =>
             const field_groups = {};    // no groups
 
             const ui  = createStubUi( field_groups );
-            const sut = Sut( ui ).monitor( dapi_manager );
+            const sut = Sut( ui, {}, {} ).monitor( dapi_manager );
 
             dapi_manager.emit( 'clearFieldData', 'unknown', 0 );
         } );
@@ -254,7 +432,7 @@ describe( "DataApiMediator", () =>
             };
 
             const ui  = createStubUi( field_groups );
-            const sut = Sut( ui ).monitor( dapi_manager );
+            const sut = Sut( ui, {}, {} ).monitor( dapi_manager );
 
             dapi_manager.emit( 'clearFieldData', name, index );
         } );
@@ -279,7 +457,7 @@ describe( "DataApiMediator", () =>
             };
 
             const ui  = {};    // unused by this event
-            const sut = Sut( ui, data_validator ).monitor( dapi_manager );
+            const sut = Sut( ui, data_validator, {} ).monitor( dapi_manager );
 
             dapi_manager.emit( 'fieldLoaded', name, index );
         } );

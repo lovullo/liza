@@ -347,6 +347,7 @@ module.exports = Class( 'Client' )
         this._factory.createDataApiMediator(
             this.ui,
             this._dataValidator,
+            this.program.dapimap,
             () => this.getQuote()
         ).monitor( this._dapiManager );
 
