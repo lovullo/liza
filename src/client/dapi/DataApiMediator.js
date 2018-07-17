@@ -185,7 +185,10 @@ module.exports = Class( 'DataApiMediator',
      * Generate bucket update with field expansion data
      *
      * If multiple indexes are provided, updates will be merged.  If
-     * expansion data are missing, then the field will be ignored.
+     * expansion data are missing, then the field will be ignored.  If a
+     * destination field is populated such that auto-expanding would
+     * override that datum, then that field will be excluded from the
+     * expansion.
      *
      * @param {DataApiManager} dapi_manager manager responsible for fields
      * @param {string}         name         field name
@@ -233,6 +236,16 @@ module.exports = Class( 'DataApiMediator',
             // merge each key individually
             Object.keys( expansion ).forEach( key =>
             {
+                const existing = ( quote.getDataByName( key ) || [] )[ i ];
+
+                // if set and non-empty, then it's already populated and we
+                // must leave the value alone (so as not to override
+                // something the user directly entered)
+                if ( existing !== undefined && existing !== "" )
+                {
+                    return;
+                }
+
                 update[ key ]      = update[ key ] || [];
                 update[ key ][ i ] = expansion[ key ][ i ];
             } );

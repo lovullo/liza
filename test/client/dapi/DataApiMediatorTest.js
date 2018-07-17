@@ -62,7 +62,7 @@ describe( "DataApiMediator", () =>
                 label:    "keeps existing value if in result set (first index)",
                 name:     'foo',
                 index:    0,
-                value:    [ "first", "second" ],
+                value:    { foo: [ "first", "second" ] },
                 expected: {
                     foo:   [ "first" ],
                     dest1: [ "src1data" ],
@@ -87,7 +87,7 @@ describe( "DataApiMediator", () =>
                 label:    "keeps existing value if in result set (second index)",
                 name:     'bar',
                 index:    1,
-                value:    [ "first", "second" ],
+                value:    { bar: [ "first", "second" ] },
                 expected: {
                     bar:   [ , "second" ],
                     dest1: [ , "src1data_2" ],
@@ -113,7 +113,7 @@ describe( "DataApiMediator", () =>
                 label:    "keeps existing value if in result set (all indexes)",
                 name:     'bar',
                 index:    -1,
-                value:    [ "first", "second" ],
+                value:    { bar: [ "first", "second" ] },
                 expected: {
                     bar: [ "first", "second" ],
                     dest1: [ "src1data", "src1data_2" ],
@@ -146,7 +146,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses first value of result if existing not in result set (first index)",
                 name:     'foo',
                 index:    0,
-                value:    [ "does not", "exist" ],
+                value:    { foo: [ "does not", "exist" ] },
                 expected: {
                     foo:   [ "first result" ],
                     desta: [ "src1data" ],
@@ -172,7 +172,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses first value of result if existing not in result set (second index)",
                 name:     'foo',
                 index:    1,
-                value:    [ "does not", "exist" ],
+                value:    { foo: [ "does not", "exist" ] },
                 expected: {
                     foo:   [ , "first result" ],
                     desta: [ , "src1data" ],
@@ -198,7 +198,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses first value of result if existing not in result set (all indexes)",
                 name:     'foo',
                 index:    -1,
-                value:    [ "does not", "exist" ],
+                value:    { foo: [ "does not", "exist" ] },
                 expected: {
                     foo:   [ "first result", "first result" ],
                     desta: [ "src1data", "src1data" ],
@@ -231,7 +231,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses empty string if empty result set (first index)",
                 name:     'foo',
                 index:    0,
-                value:    [ "foo" ],
+                value:    { foo: [ "foo" ] },
                 expected: {
                     foo:   [ "" ],
                     dest1: [ "" ],
@@ -247,7 +247,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses empty string if empty result set (second index)",
                 name:     'foo',
                 index:    1,
-                value:    [ "foo", "bar" ],
+                value:    { foo: [ "foo", "bar" ] },
                 expected: {
                     foo:   [ , "" ],
                     dest1: [ , "" ],
@@ -263,7 +263,7 @@ describe( "DataApiMediator", () =>
                 label:    "uses empty string if empty result set (all indexes)",
                 name:     'foo',
                 index:    -1,
-                value:    [ "foo", "bar" ],
+                value:    { foo: [ "foo", "bar" ] },
                 expected: {
                     foo:   [ "", "" ],
                     dest1: [ "", "" ],
@@ -283,6 +283,36 @@ describe( "DataApiMediator", () =>
                     },
                 ],
             },
+
+            {
+                label:    "does not auto-expand into non-empty fields",
+                name:     'foo',
+                index:    0,
+                value:    {
+                    foo:   [ "first", "second" ],
+                    dest1: [ "leave alone" ],
+                    dest2: [ "" ],
+                },
+                expected: {
+                    foo:   [ "first" ],
+                    // dest1 missing because it is already populated
+                    dest2: [ "src2data" ],
+                },
+
+                val_label: [
+                    { value: "first result",  label: "first" },
+                ],
+
+                results: {
+                    first:  { src1: "src1data", src2: "src2data" },
+                    second: {},
+                },
+
+                expansion: [ {
+                    dest1: [ "src1data" ],
+                    dest2: [ "src2data" ],
+                } ],
+            }
         ].forEach( ( {
             label, name, index, value, expected, val_label, results, expansion
         } ) =>
@@ -294,8 +324,7 @@ describe( "DataApiMediator", () =>
                 const quote = {
                     getDataByName( given_name )
                     {
-                        expect( given_name ).to.equal( name );
-                        return value;
+                        return value[ given_name ];
                     },
 
                     setData( given_data )
@@ -338,7 +367,7 @@ describe( "DataApiMediator", () =>
                             // index is implicitly tested by the given_cur line
                             expect( given_name ).to.equal( name );
                             expect( given_data ).to.deep.equal( val_label );
-                            expect( given_cur ).to.equal( value[ given_index ] );
+                            expect( given_cur ).to.equal( value[ given_name ][ given_index ] );
 
                             set_options = true;
                         },
