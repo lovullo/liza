@@ -1,7 +1,7 @@
 /**
  * Manages DataAPI requests and return data
  *
- *  Copyright (C) 2016 R-T Specialty, LLC.
+ *  Copyright (C) 2016, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -19,8 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter;
+const { Class }        = require( 'easejs' );
+const { EventEmitter } = require( 'events' );
+const MissingDataError = require( './MissingDataError' );
 
 
 /**
@@ -613,14 +614,14 @@ module.exports = Class( 'DataApiManager' )
     )
     {
         var field_data  = ( this._fieldData[ name ] || {} )[ index ],
-            data        = {};
+            data        = {},
             field_value = ( diff[ name ] || bucket.getDataByName( name ) )[ index ];
 
         // if it's undefined, then the change probably represents a delete
         if ( field_value === undefined )
         {
             ( this._fieldDataEmitted[ name ] || [] )[ index ] = false;
-            return;
+            return {};
         }
 
         // if we have no field data, try the "combined" index
@@ -638,9 +639,9 @@ module.exports = Class( 'DataApiManager' )
             if ( !predictive && !( data ) && ( field_value !== '' ) )
             {
                 // hmm..that's peculiar.
-                this.emit( 'error', Error(
+                throw MissingDataError(
                     'Data missing for field ' + name + '[' + index + ']!'
-                ) );
+                );
             }
             else if ( !data )
             {

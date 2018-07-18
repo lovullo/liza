@@ -240,6 +240,12 @@ module.exports = Class( 'Client' )
     'private _rootContext': null,
 
     /**
+     * DataApi Manager
+     * @type {DataApiManager}
+     */
+    'private _dapiManager': null,
+
+    /**
      * User-visible validation error messages
      * @type {Object}
      */
@@ -337,6 +343,13 @@ module.exports = Class( 'Client' )
         );
 
         this.ui = this._createUi( this.nav );
+
+        this._factory.createDataApiMediator(
+            this.ui,
+            this._dataValidator,
+            this.program.dapimap,
+            () => this.getQuote()
+        ).monitor( this._dapiManager );
 
         this._eventHandler = this._factory.createClientEventHandler(
             this, this._dataValidator, this.elementStyler, this.dataProxy, jQuery
@@ -756,11 +769,11 @@ module.exports = Class( 'Client' )
 
         try
         {
-            var dapi_manager = this._factory.createDataApiManager();
+            this._dapiManager = this._factory.createDataApiManager();
 
             var program = this._factory.createProgram(
                 this.programId,
-                dapi_manager
+                this._dapiManager
             );
         }
         catch ( e )
@@ -779,98 +792,7 @@ module.exports = Class( 'Client' )
         } );
 
         // handle field updates
-        dapi_manager
-            .on( 'fieldLoading', function( name, index )
-            {
-                var group = _self.getUi().getCurrentStep().getElementGroup(
-                    name
-                );
-
-                if ( !group )
-                {
-                    return;
-                }
-
-                // -1 represents "all indexes"
-                if ( index === -1 )
-                {
-                    index = undefined;
-                }
-            } )
-            .on( 'updateFieldData', function( name, index, data, fdata )
-            {
-                var group = _self.getUi().getCurrentStep().getElementGroup(
-                    name
-                );
-
-                if ( !group )
-                {
-                    return;
-                }
-
-                var cur_data = _self._quote.getDataByName( name );
-                if ( +index === -1 )
-                {
-                    // -1 is the "combined" index, representing every field
-                    indexes = cur_data;
-                }
-                else
-                {
-                    indexes = [];
-                    indexes[ index ] = index;
-                }
-
-
-                var update = [];
-                for ( var i in indexes )
-                {
-                    var cur = undefined;
-
-                    if ( data.length )
-                    {
-                        cur = cur_data[ i ];
-
-                        update[ i ] = ( fdata[ cur ] )
-                            ? cur
-                            : data[ 0 ].value;
-                    }
-                    else
-                    {
-                        update[ i ] = '';
-                    }
-
-                    // populate and enable field *only if* results were returned
-                    // and if the quote has not been locked; but first, give the
-                    // UI a chance to finish updating
-                    ( function( index, cur )
-                    {
-                        setTimeout( function()
-                        {
-                            group.setOptions( name, index, data, cur );
-                        }, 0 );
-                    } )( i, cur );
-                }
-
-                update.length && _self._quote.setDataByName( name, update );
-            } )
-            .on( 'clearFieldData', function( name, index )
-            {
-                if ( !_self.getUi().getCurrentStep().getElementGroup( name ) )
-                {
-                    return;
-                }
-
-                // clear and disable the field (if there's no value, then there
-                // is no point in allowing them to do something with it)
-                _self.getUi().getCurrentStep().getElementGroup( name )
-                    .clearOptions( name, index );
-            } )
-            .on( 'fieldLoaded', ( name, index ) =>
-            {
-                _self._dataValidator.clearFailures( {
-                    [name]: [ index ],
-                } );
-            } )
+        this._dapiManager
             .on( 'error', function( e )
             {
                 _self.handleError( e );
