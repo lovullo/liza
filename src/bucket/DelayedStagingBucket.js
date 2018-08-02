@@ -1,7 +1,7 @@
 /**
  * Delayed writing to staging bucket
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -118,34 +118,29 @@ module.exports = Class( 'DelayedStagingBucket' )
 
     'public override getData': function()
     {
-        // gah!
-        var _s = this.__super;
         this.processValues();
-        return _s.call( this );
+        return this.__super.call( this );
     },
 
 
     'public override each': function( c )
     {
-        var _s = this.__super;
         this.processValues();
-        return _s.call( this, c );
+        return this.__super.call( this, c );
     },
 
 
     'public override getFilledDiff': function()
     {
-        var _s = this.__super;
         this.processValues();
-        return _s.call( this );
+        return this.__super.call( this );
     },
 
 
     'public override hasIndex': function( name, i )
     {
-        var _s = this.__super;
         this.processValues();
-        return _s.call( this, name, i );
+        return this.__super.call( this, name, i );
     },
 
 
