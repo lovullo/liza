@@ -19,16 +19,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class         = require( 'easejs' ).Class,
-    StagingBucket = require( './StagingBucket' );
+const { Class }             = require( 'easejs' );
+const StagingBucket         = require( './StagingBucket' );
+const DelayedRecursionError = require( './DelayedRecursionError' );
 
 
 /**
-  * Holds changes until explicitly processed to avoid cascades
-  *
-  * Since each write could trigger any number of event listeners, writes
-  * should be queued and done en-masse.
-  */
+ * Holds changes until explicitly processed to avoid cascades
+ *
+ * Since each write could trigger any number of event listeners, writes
+ * should be queued and done en-masse.
+ *
+ * TODO: Convert to Trait.
+ */
 module.exports = Class( 'DelayedStagingBucket' )
     .extend( StagingBucket,
 {
@@ -43,6 +46,12 @@ module.exports = Class( 'DelayedStagingBucket' )
      * @type {number}
      */
     'private _timer': 0,
+
+    /**
+     * Whether #processValues is still on the stack
+     * @type {boolean}
+     */
+    'private _processing': 0,
 
 
     'public override setValues': function( data )
@@ -73,8 +82,12 @@ module.exports = Class( 'DelayedStagingBucket' )
 
         // invoke when stack clears
         var _self = this;
-        this._timer = setTimeout( function()
+        this._timer = setTimeout( () =>
         {
+            // just in case something prevented us from decrementing the
+            // lock (e.g. an exception)
+            this._processing = 0;
+
             _self.processValues();
         }, 0 );
     },
@@ -107,7 +120,7 @@ module.exports = Class( 'DelayedStagingBucket' )
     {
         // if enqueued data is requested, then we have no choice but to merge to
         // ensure that the data is up-to-date
-        if ( this._queued[ name ] )
+        if ( this._queued[ name ] !== undefined )
         {
             this.processValues();
         }
@@ -154,14 +167,60 @@ module.exports = Class( 'DelayedStagingBucket' )
 
         // since additional data may be queued as a consequence of the below
         // set, prepare for it by providing an empty queue
-        var oldqueue = this._queued;
-        this._queued = {};
-        this._timer  = 0;
+        this._withProcessLock( () =>
+        {
+            var oldqueue = this._queued;
+            this._queued = {};
+            this._timer  = 0;
 
-        this.setValues['super'].call( this,
-            oldqueue, true, true
-        );
+            this.setValues['super'].call( this,
+                oldqueue, true, true
+            );
+        } );
 
         return this;
+    },
+
+
+    /**
+     * Increment lock for duration of function F
+     *
+     * The lock is incremented before calling F and decremented after F
+     * returns.  The maximum lock count is hard-coded to 5, after which an
+     * exception will be thrown.  The intent of this value is to provide a
+     * little bit of flexibility to hook implementations that allows for
+     * some gentle recursion, but preempts hooks when it looks like things
+     * may be going awry.
+     *
+     * @param {Function} f function to call
+     *
+     * @throws {DelayedRecursionError} when lock count exceeds maximum
+     *
+     * @return {undefined}
+     */
+    'private _withProcessLock'( f )
+    {
+        // protect against runaway recursion from hooks
+        if ( this._processing === 5 )
+        {
+            // throwing the exception will halt execution of the stack if
+            // uncaught, meaning _processing will never be fully
+            // decremented, so clear it out
+            this._processing = 0;
+
+            throw DelayedRecursionError(
+                "Recursion on DelayedStagingBucket#processValues " +
+                    "(likely caused by a bucket hook)"
+            );
+        }
+
+        // note that this isn't guarded with a try/catch, because we handle
+        // resetting the lock in a couple other places---this is more
+        // fool-proof, since catching an exception mail fail in certain
+        // circumstances (e.g. when reaching a resource limit, like
+        // stack/memory)
+        this._processing++;
+        f();
+        this._processing--;
     }
 } );

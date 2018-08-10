@@ -177,7 +177,11 @@ module.exports = Class( 'DataApiMediator',
 
         update[ name ] = field_update;
 
-        quote.setData( update );
+        // allow the stack to clear before setting data to allow any
+        // existing bucket processing to complete before hooks are kicked
+        // off yet again (which, in practice, could otherwise result in
+        // infinite recursion depending on what the hooks are doing)
+        setTimeout( () => quote.setData( update ) );
     },
 
 
