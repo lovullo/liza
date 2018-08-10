@@ -319,7 +319,8 @@ describe( "DataApiMediator", () =>
         {
             it( label, done =>
             {
-                let set_options = false;
+                let set_options   = false;
+                let stack_cleared = false;
 
                 const quote = {
                     getDataByName( given_name )
@@ -329,6 +330,9 @@ describe( "DataApiMediator", () =>
 
                     setData( given_data )
                     {
+                        // we should have allowed the stack to clear first
+                        expect( stack_cleared ).to.be.true;
+
                         expect( given_data ).to.deep.equal( expected );
 
                         // should have called setOptions by now
@@ -382,6 +386,11 @@ describe( "DataApiMediator", () =>
                 dapi_manager.emit(
                     'updateFieldData', name, index, val_label, results
                 );
+
+                // #setData should be triggered after the stack clears to
+                // #mitigate issues with hooks causing too much / infinite
+                // #recursion on the bucket on the same stack
+                stack_cleared = true;
             } );
         } );
 
