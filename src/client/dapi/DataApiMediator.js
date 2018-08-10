@@ -166,22 +166,26 @@ module.exports = Class( 'DataApiMediator',
                 : this._getDefaultValue( val_label )
         );
 
-        indexes.forEach( ( _, i ) =>
-            group.setOptions( name, i, val_label, existing[ i ] )
-        );
-
-
-        const update = this._populateWithMap(
-            dapi_manager, name, indexes, quote
-        );
-
-        update[ name ] = field_update;
-
         // allow the stack to clear before setting data to allow any
         // existing bucket processing to complete before hooks are kicked
         // off yet again (which, in practice, could otherwise result in
-        // infinite recursion depending on what the hooks are doing)
-        setTimeout( () => quote.setData( update ) );
+        // infinite recursion depending on what the hooks are doing), and to
+        // allow the UI to update with any new elements we might be about to
+        // populate
+        setTimeout( () =>
+        {
+            indexes.forEach( ( _, i ) =>
+                group.setOptions( name, i, val_label, existing[ i ] )
+            );
+
+            const update = this._populateWithMap(
+                dapi_manager, name, indexes, quote
+            );
+
+            update[ name ] = field_update;
+
+            quote.setData( update );
+        } );
     },
 
 

@@ -368,6 +368,8 @@ describe( "DataApiMediator", () =>
                     [name]: {
                         setOptions( given_name, given_index, given_data, given_cur )
                         {
+                            expect( stack_cleared ).to.be.true;
+
                             // index is implicitly tested by the given_cur line
                             expect( given_name ).to.equal( name );
                             expect( given_data ).to.deep.equal( val_label );
