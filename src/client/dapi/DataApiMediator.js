@@ -143,29 +143,6 @@ module.exports = Class( 'DataApiMediator',
             return;
         }
 
-        const quote    = this._quotef();
-        const existing = quote.getDataByName( name ) || [];
-
-        let indexes = [];
-
-        // index of -1 indicates that all indexes should be affected
-        if ( index === -1 )
-        {
-            indexes = existing;
-        }
-        else
-        {
-            indexes[ index ] = index;
-        }
-
-        // keep existing value if it exists in the result set, otherwise
-        // use the first value of the set
-        const field_update = indexes.map( ( _, i ) =>
-            ( results[ existing[ i ] ] )
-                ? existing[ i ]
-                : this._getDefaultValue( val_label )
-        );
-
         // allow the stack to clear before setting data to allow any
         // existing bucket processing to complete before hooks are kicked
         // off yet again (which, in practice, could otherwise result in
@@ -174,6 +151,29 @@ module.exports = Class( 'DataApiMediator',
         // populate
         setTimeout( () =>
         {
+            const quote    = this._quotef();
+            const existing = quote.getDataByName( name ) || [];
+
+            let indexes = [];
+
+            // index of -1 indicates that all indexes should be affected
+            if ( index === -1 )
+            {
+                indexes = existing;
+            }
+            else
+            {
+                indexes[ index ] = index;
+            }
+
+            // keep existing value if it exists in the result set, otherwise
+            // use the first value of the set
+            const field_update = indexes.map( ( _, i ) =>
+                ( results[ existing[ i ] ] )
+                    ? existing[ i ]
+                    : this._getDefaultValue( val_label )
+            );
+
             indexes.forEach( ( _, i ) =>
                 group.setOptions( name, i, val_label, existing[ i ] )
             );
@@ -277,7 +277,7 @@ module.exports = Class( 'DataApiMediator',
         const group = this._ui.getCurrentStep().getElementGroup( name );
 
         // ignore unknown fields
-        if ( group === undefined )
+        if ( !group )
         {
             return;
         }
