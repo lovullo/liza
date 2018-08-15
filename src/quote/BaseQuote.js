@@ -75,13 +75,13 @@ module.exports = Class( 'BaseQuote' )
     'private _program': null,
 
     /**
-     * Date (UNIX timestamp) that the quote was started
+     * Date (Unix timestamp) that the quote was started
      * @type {number}
      */
     'private _startDate': 0,
 
     /**
-     * Date (UNIX timestamp) that the quote was initially rated
+     * Date (Unix timestamp) that the quote was initially rated
      * @type {number}
      */
     'private _initialRatedDate': 0,
@@ -225,7 +225,7 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Sets the quote start date
      *
-     * @param {number} time start date as a UNIX timestamp
+     * @param {number} time start date as a Unix timestamp
      *
      * @return {Quote} self
      */
@@ -250,7 +250,7 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Sets the quote's initial rated date
      *
-     * @param {number} time initial rated date as a UNIX timestamp
+     * @param {number} time initial rated date as a Unix timestamp
      *
      * @return {Quote} self
      */
