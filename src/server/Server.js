@@ -741,7 +741,7 @@ module.exports = Class( 'Server' )
                 explicitLockStepId: lock_step,
                 agentId:            quote.getAgentId(),
                 agentName:          quote.getAgentName(),
-                agentEntityId:      quote.getAgentEntityId(),
+                agentEntityId:      ( internal ) ? quote.getAgentEntityId() : 0,
                 startDate:          quote.getStartDate(),
                 initialRatedDate:   quote.getInitialRatedDate(),
 
