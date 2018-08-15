@@ -326,8 +326,8 @@ module.exports = Class( 'Server' )
                     .setQuickSaveData( quote_data.quicksave || {} )
                     .setAgentId( quote_data.agentId || agent_id )
                     .setAgentName( quote_data.agentName || agent_name )
-                    .setAgentEntityId( data.agentEntityId || "" )
-                    .setInitialRatedDate( data.initialRatedDate || 0 )
+                    .setAgentEntityId( quote_data.agentEntityId || "" )
+                    .setInitialRatedDate( quote_data.initialRatedDate || 0 )
                     .setStartDate(
                         quote_data.getStartDate
                         || Math.round( new Date().getTime() / 1000 )
