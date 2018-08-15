@@ -183,12 +183,24 @@ module.exports = AbstractClass( 'Daemon',
     },
 
 
+    /**
+     * Get (and initialize) controller
+     *
+     * The controller will only be initialized with the session key SKEY and
+     * all-submit notification URL NO_RESULTS_URL if they are provided,
+     * respectively.
+     *
+     * @param {string=}         skey           session key
+     * @param {no_results_url=} no_results_url URL for all-submit notification
+     *
+     * @return {Object} controller
+     */
     'protected getProgramController': function( skey, no_results_url )
     {
         var controller = require( './controller' );
 
         controller.rater          = this._rater;
-        controller.no_results_url = no_results_url || "";
+        controller.no_results_url = no_results_url || controller.no_results_url;
 
         if ( skey )
         {
