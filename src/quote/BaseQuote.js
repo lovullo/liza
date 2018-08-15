@@ -81,10 +81,22 @@ module.exports = Class( 'BaseQuote' )
     'private _startDate': 0,
 
     /**
+     * Date (UNIX timestamp) that the quote was initially rated
+     * @type {number}
+     */
+    'private _initialRatedDate': 0,
+
+    /**
      * Id of agent that owns the quote
      * @type {number}
      */
     'private _agentId': 0,
+
+    /**
+     * Id of agent entity that owns the quote
+     * @type {string}
+     */
+    'private _agentEntityId': '',
 
     /**
      * Agency name
@@ -236,6 +248,30 @@ module.exports = Class( 'BaseQuote' )
 
 
     /**
+     * Sets the quote's initial rated date
+     *
+     * @param {number} time initial rated date as a UNIX timestamp
+     *
+     * @return {Quote} self
+     */
+    'public setInitialRatedDate': function( time )
+    {
+        this._initialRatedDate = +( time );
+        return this;
+    },
+
+    /**
+     * Returns the quote's initial rated date
+     *
+     * @return {number} quote's initial rated date
+     */
+    'public getInitialRatedDate': function()
+    {
+        return this._initialRatedDate;
+    },
+
+
+    /**
      * Sets id of agent that owns the quote
      *
      * @param {number} id agent id
@@ -257,6 +293,31 @@ module.exports = Class( 'BaseQuote' )
     'public getAgentId': function()
     {
         return this._agentId;
+    },
+
+
+    /**
+     * Sets id of agent entity that owns the quote
+     *
+     * @param {string} id agent id
+     *
+     * @return {Quote} self
+     */
+    'public setAgentEntityId': function( id )
+    {
+        this._agentEntityId = ''+( id );
+        return this;
+    },
+
+
+    /**
+     * Returns the id of the agent entity that owns the quote
+     *
+     * @return {string} agent entity id
+     */
+    'public getAgentEntityId': function()
+    {
+        return this._agentEntityId;
     },
 
 

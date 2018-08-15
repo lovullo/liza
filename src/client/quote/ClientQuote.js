@@ -135,6 +135,10 @@ module.exports = Class( 'ClientQuote' )
             .setCurrentStepId( data.currentStepId || 0 )
             .setTopVisitedStepId( data.topVisitedStepId || 0 )
             .setAgentId( data.agentId || 0 )
+            .setAgentName( data.agentName || "" )
+            .setAgentEntityId( data.agentEntityId || "" )
+            .setStartDate( data.startDate || 0 )
+            .setInitialRatedDate( data.initialRatedDate || 0 )
             .setImported( data.imported || false )
             .setBound( data.bound || false )
             .needsImport( data.needsImport || false )
@@ -554,11 +558,35 @@ module.exports = Class( 'ClientQuote' )
 
 
     /**
+     * Returns the quote's initial rated date
+     *
+     * @return {number} quote's initial rated date
+     */
+    'public proxy getInitialRatedDate': '_quote',
+
+
+    /**
      * Returns the id of the agent that owns the quote
      *
      * @return {number} agent id
      */
     'public proxy getAgentId': '_quote',
+
+
+    /**
+     * Returns the name of the agent that owns the quote
+     *
+     * @return {string} agent name
+     */
+    'public proxy getAgentName': '_quote',
+
+
+    /**
+     * Returns the entity id of the agent that owns the quote
+     *
+     * @return {string} agent entity id
+     */
+    'public proxy getAgentEntityId': '_quote',
 
 
     /**
