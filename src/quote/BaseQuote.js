@@ -299,13 +299,13 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Sets id of agent entity that owns the quote
      *
-     * @param {string} id agent id
+     * @param {number} id agent entity id
      *
      * @return {Quote} self
      */
     'public setAgentEntityId': function( id )
     {
-        this._agentEntityId = ''+( id );
+        this._agentEntityId = ( id );
         return this;
     },
 
@@ -313,7 +313,7 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Returns the id of the agent entity that owns the quote
      *
-     * @return {string} agent entity id
+     * @return {number} agent entity id
      */
     'public getAgentEntityId': function()
     {
