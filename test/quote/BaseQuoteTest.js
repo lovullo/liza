@@ -1,7 +1,7 @@
 /**
  * Tests BaseQuote
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -25,8 +25,6 @@ const chai            = require( 'chai' );
 const expect          = chai.expect;
 const { BaseQuote }   = require( '../../' ).quote;
 
-chai.use( require( 'chai-as-promised' ) );
-
 describe( 'BaseQuote', () =>
 {
     [
@@ -44,20 +42,15 @@ describe( 'BaseQuote', () =>
         },
     ].forEach( testCase =>
     {
-        const quote      = BaseQuote( 123, {} ),
-              property   = testCase.property,
-              titleCased = property.charAt( 0 ).toUpperCase() + property.slice( 1 ),
-              setter     = 'set' + titleCased,
-              getter     = 'get' + titleCased;
+        const quote       = BaseQuote( 123, {} );
+        const property    = testCase.property;
+        const title_cased = property.charAt( 0 ).toUpperCase() + property.slice( 1 );
+        const setter      = 'set' + title_cased;
+        const getter      = 'get' + title_cased;
 
-        it( property, () =>
+        it( property + ' can be mutated and accessed', () =>
         {
-            expect( quote ).to.be.an.instanceof( BaseQuote );
-
-            expect( quote[setter] ).to.not.be.undefined;
-            expect( quote[getter] ).to.not.be.undefined;
             expect( quote[getter].call( null ) ).to.be.undefined;
-
             quote[setter].call( null, testCase.value );
             expect( quote[getter].call( null ) ).to.equal( testCase.value );
         } );

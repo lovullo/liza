@@ -1,7 +1,7 @@
 /**
  * Tests ClientQuote
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -27,60 +27,48 @@ const { BaseQuote }               = require( '../../../' ).quote;
 const { ClientQuote }             = require( '../../../' ).client.quote;
 const { QuoteDataBucket }         = require( '../../../' ).bucket;
 
-chai.use( require( 'chai-as-promised' ) );
-
 describe( 'ClientQuote', () =>
 {
-    const baseQuote        = BaseQuote( 123, QuoteDataBucket() ),
-          startDate        = 12345,
-          agentId          = 90000,
-          agentName        = 'John Doe',
-          agentEntityId    = '12434300',
-          initialRatedDate = 1531507748,
-          quote         = ClientQuote(
-              baseQuote,
+    const base_quote         = BaseQuote( 123, QuoteDataBucket() );
+    const start_date         = 12345;
+    const agent_id           = 90000;
+    const agent_name         = 'John Doe';
+    const agent_entity_id    = '12434300';
+    const initial_rated_date = 1531507748;
+    const quote              = ClientQuote(
+              base_quote,
               {
-                  startDate: startDate,
-                  agentId: agentId,
-                  agentName: agentName,
-                  agentEntityId: agentEntityId,
-                  initialRatedDate: initialRatedDate,
+                  startDate: start_date,
+                  agentId: agent_id,
+                  agentName: agent_name,
+                  agentEntityId: agent_entity_id,
+                  initialRatedDate: initial_rated_date,
               },
                   bucket => bucket
           );
 
-    it( 'constructor', () =>
+    it( 'getStartDate returns base quote startDate', () =>
     {
-        expect( quote ).to.be.an.instanceof( ClientQuote );
+        expect( quote.getStartDate() ).to.equal( start_date );
     } );
 
-    it( 'getStartDate proxy', () =>
+    it( 'getAgentId returns base quote agentId', () =>
     {
-        expect( quote.getStartDate ).to.not.be.undefined;
-        expect( quote.getStartDate() ).to.equal( startDate );
+        expect( quote.getAgentId() ).to.equal( agent_id );
     } );
 
-    it( 'getAgentId proxy', () =>
+    it( 'getAgentName returns base quote agentName', () =>
     {
-        expect( quote.getAgentId ).to.not.be.undefined;
-        expect( quote.getAgentId() ).to.equal( agentId );
+        expect( quote.getAgentName() ).to.equal( agent_name );
     } );
 
-    it( 'getAgentName proxy', () =>
+    it( 'getAgentEntityId returns base quote agentEntityId', () =>
     {
-        expect( quote.getAgentName ).to.not.be.undefined;
-        expect( quote.getAgentName() ).to.equal( agentName );
+        expect( quote.getAgentEntityId() ).to.equal( agent_entity_id );
     } );
 
-    it( 'getAgentEntityId proxy', () =>
+    it( 'getInitialRatedDate returns base quote initialRatedDate', () =>
     {
-        expect( quote.getAgentEntityId ).to.not.be.undefined;
-        expect( quote.getAgentEntityId() ).to.equal( agentEntityId );
-    } );
-
-    it( 'getInitialRatedDate proxy', () =>
-    {
-        expect( quote.getInitialRatedDate ).to.not.be.undefined;
-        expect( quote.getInitialRatedDate() ).to.equal( initialRatedDate );
+        expect( quote.getInitialRatedDate() ).to.equal( initial_rated_date );
     } );
 } );
