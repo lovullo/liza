@@ -1,7 +1,7 @@
 /**
  * Contains program Quote class
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -75,16 +75,28 @@ module.exports = Class( 'BaseQuote' )
     'private _program': null,
 
     /**
-     * Date (UNIX timestamp) that the quote was started
+     * Date (Unix timestamp) that the quote was started
      * @type {number}
      */
     'private _startDate': 0,
+
+    /**
+     * Date (Unix timestamp) that the quote was initially rated
+     * @type {number}
+     */
+    'private _initialRatedDate': 0,
 
     /**
      * Id of agent that owns the quote
      * @type {number}
      */
     'private _agentId': 0,
+
+    /**
+     * Id of agent entity that owns the quote
+     * @type {number}
+     */
+    'private _agentEntityId': 0,
 
     /**
      * Agency name
@@ -213,7 +225,7 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Sets the quote start date
      *
-     * @param {number} time start date as a UNIX timestamp
+     * @param {number} time start date as a Unix timestamp
      *
      * @return {Quote} self
      */
@@ -232,6 +244,30 @@ module.exports = Class( 'BaseQuote' )
     'public getStartDate': function()
     {
         return this._startDate;
+    },
+
+
+    /**
+     * Sets the quote's initial rated date
+     *
+     * @param {number} time initial rated date as a Unix timestamp
+     *
+     * @return {Quote} self
+     */
+    'public setInitialRatedDate': function( time )
+    {
+        this._initialRatedDate = +( time );
+        return this;
+    },
+
+    /**
+     * Returns the quote's initial rated date
+     *
+     * @return {number} quote's initial rated date
+     */
+    'public getInitialRatedDate': function()
+    {
+        return this._initialRatedDate;
     },
 
 
@@ -257,6 +293,31 @@ module.exports = Class( 'BaseQuote' )
     'public getAgentId': function()
     {
         return this._agentId;
+    },
+
+
+    /**
+     * Sets id of agent entity that owns the quote
+     *
+     * @param {number} id agent entity id
+     *
+     * @return {Quote} self
+     */
+    'public setAgentEntityId': function( id )
+    {
+        this._agentEntityId = +id;
+        return this;
+    },
+
+
+    /**
+     * Returns the id of the agent entity that owns the quote
+     *
+     * @return {number} agent entity id
+     */
+    'public getAgentEntityId': function()
+    {
+        return this._agentEntityId;
     },
 
 
