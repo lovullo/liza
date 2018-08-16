@@ -94,9 +94,9 @@ module.exports = Class( 'BaseQuote' )
 
     /**
      * Id of agent entity that owns the quote
-     * @type {string}
+     * @type {number}
      */
-    'private _agentEntityId': '',
+    'private _agentEntityId': 0,
 
     /**
      * Agency name
@@ -305,7 +305,7 @@ module.exports = Class( 'BaseQuote' )
      */
     'public setAgentEntityId': function( id )
     {
-        this._agentEntityId = ( id );
+        this._agentEntityId = +id;
         return this;
     },
 

@@ -38,7 +38,7 @@ describe( 'BaseQuote', () =>
         },
         {
             property: 'agentEntityId',
-            value: 'AGT5432'
+            value: 12434300
         },
     ].forEach( testCase =>
     {

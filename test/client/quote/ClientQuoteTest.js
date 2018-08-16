@@ -33,7 +33,7 @@ describe( 'ClientQuote', () =>
     const start_date         = 12345;
     const agent_id           = 90000;
     const agent_name         = 'John Doe';
-    const agent_entity_id    = '12434300';
+    const agent_entity_id    = 12434300;
     const initial_rated_date = 1531507748;
     const quote              = ClientQuote(
               base_quote,
