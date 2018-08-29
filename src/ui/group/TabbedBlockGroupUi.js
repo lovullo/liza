@@ -66,6 +66,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     'private _curIndex': 0,
 
     /**
+     * Index of the default selected tab
+     * @type {number}
+     */
+    'private _defaultSelectionIndex': null,
+
+    /**
      * Disable flags
      * @type {string}
      */
@@ -130,8 +136,9 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     {
         var $box = this._getBox();
 
-        this._tabExtractSrc  = $box.attr( 'data-tabextract-src' );
-        this._tabExtractDest = $box.attr( 'data-tabextract-dest' );
+        this._tabExtractSrc         = $box.attr( 'data-tabextract-src' );
+        this._tabExtractDest        = $box.attr( 'data-tabextract-dest' );
+        this._defaultSelectionIndex = $box.attr( 'data-default-selected-field' ) || '';
     },
 
 
@@ -486,9 +493,18 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         // we will have already rated once by the time this is called
         this._processHideFlags( this._bucket.getData() );
 
-        // select first tab that is eligible and
-        // perform tab extraction (to reflect first eligible tab)
-         this._selectTab( this._getLastEligibleTab() );
+        if ( this._defaultSelectionIndex == '' )
+        {
+            // select first tab that is eligible and
+            // perform tab extraction (to reflect first eligible tab)
+            this._selectTab( this._getLastEligibleTab() );
+        }
+        else
+        {
+            // select the tab based on selection index
+            var index = this._bucket.getDataByName( this._defaultSelectionIndex )[0];
+            this._selectTab( index );
+        }
 
         return this;
     }
