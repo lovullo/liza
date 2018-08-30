@@ -485,6 +485,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     },
 
 
+    'private _isEligibleTab': function( index )
+    {
+        return !this._$tabList.find( 'li' ).get( index ).classList.contains( 'disabled' );
+    },
+
+
     'override public visit': function()
     {
         // let supertype do its own thing
@@ -503,7 +509,15 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         {
             // select the tab based on selection index
             var index = this._bucket.getDataByName( this._defaultSelectionField )[0];
-            this._selectTab( index || 0 );
+
+            if( this._isEligibleTab( index ) )
+            {
+                this._selectTab( index || 0 );
+            }
+            else
+            {
+                this._selectTab( this._getLastEligibleTab() );
+            }
         }
 
         return this;
