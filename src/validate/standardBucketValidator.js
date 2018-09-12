@@ -44,7 +44,6 @@ module.exports = function( type_map )
             city:       formatter.CityFormatter,
             currency:   formatter.CurrencyFormatter(),
             'float':    formatter.FloatFormatter,
-            datalist:   Base.use( formatter.Number )(),
             date:       formatter.FullDateFormatter,
             dollars:    formatter.DollarFormatter(),
             manualDate: formatter.FullDateFormatter,
@@ -74,6 +73,7 @@ module.exports = function( type_map )
                 .use( formatter.MultiDimension( '; ' ) )(),
 
             // no validators for these (yet)
+            datalist:    formatter.VoidFormatter,
             select:      formatter.VoidFormatter,
             noyes:       formatter.VoidFormatter,
             radio:       formatter.VoidFormatter,
