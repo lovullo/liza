@@ -73,14 +73,15 @@ module.exports = function( type_map )
                 .use( formatter.MultiDimension( '; ' ) )(),
 
             // no validators for these (yet)
-            select:  formatter.VoidFormatter,
-            noyes:   formatter.VoidFormatter,
-            radio:   formatter.VoidFormatter,
-            legacyradio:   formatter.VoidFormatter,
-            text:    formatter.VoidFormatter,
-            explain: formatter.VoidFormatter,
-            dateTime:   formatter.VoidFormatter,
-            waitable:   formatter.VoidFormatter,
+            datalist:    formatter.VoidFormatter,
+            select:      formatter.VoidFormatter,
+            noyes:       formatter.VoidFormatter,
+            radio:       formatter.VoidFormatter,
+            legacyradio: formatter.VoidFormatter,
+            text:        formatter.VoidFormatter,
+            explain:     formatter.VoidFormatter,
+            dateTime:    formatter.VoidFormatter,
+            waitable:    formatter.VoidFormatter,
 
             /* TODO:*/
             state:      formatter.VoidFormatter,
