@@ -153,18 +153,6 @@ module.exports = Class( 'ElementStyler',
                 : val;
         },
 
-        'datalist': function( value, ref_id )
-        {
-            var val = this._selectData[ref_id][value];
-
-            // return the string associated with the given value
-            // (the text for the option), or the given value if it does not
-            // exist
-            return ( val === undefined )
-                ? value
-                : val;
-        },
-
         'dateTime': function( value )
         {
             var ret_val = new Date( ( +value ) * 1000 );
@@ -403,9 +391,9 @@ module.exports = Class( 'ElementStyler',
     {
         var $element = this.getElementByName( name, index, null, $context );
 
-        // if the provided question is not a select or a datalist, then we cannot add options
+        // if the provided question is not a select, then we cannot add options
         // to it---use the first index instead
-        if ( ! [ 'select', 'datalist' ].includes( this._getElementType( name ) ) )
+        if ( this._getElementType( name ) !== 'select' )
         {
             $element.val( ( options[ 0 ] || { value: '' } ).value );
             return;
