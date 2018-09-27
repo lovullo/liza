@@ -321,7 +321,7 @@ module.exports = Class( 'RatingService',
 
         this._server.sendError( request,
             'There was a problem during the rating process. Unable to ' +
-            'continue. Please contact RT Specialty / LoVullo for assistance.' +
+            'continue. Please contact our support team for assistance.' +
 
             // show details for internal users
             ( ( request.getSession().isInternal() )

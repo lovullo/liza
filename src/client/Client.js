@@ -2481,7 +2481,7 @@ module.exports = Class( 'Client' )
         // let the user know that something is amiss.
         this.uiDialog.showErrorDialog(
             'An unexpected error has occurred. If you continue to receive ' +
-            'this message, please contact RT Specialty / LoVullo for support.' +
+            'this message, please contact our support team.' +
 
             // if internal, show the actual error
             ( ( this.isInternal() )

@@ -42,7 +42,7 @@ exports.Program = AbstractClass( 'Program' )
      * Program title
      * @type {string}
      */
-    title: 'LoVullo Rater',
+    title: 'Rater',
 
 
     eventData: [],

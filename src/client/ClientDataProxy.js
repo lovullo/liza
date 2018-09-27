@@ -105,7 +105,7 @@ module.exports = Class( 'ClientDataProxy' )
             hasError: true,
             content:  'There was a problem communicating with the quote ' +
                 'server. If you continue to receive this message, please ' +
-                'contact RT Specialty / LoVullo for assistance.'
+                'contact our support team for assistance.'
         };
 
         return data;

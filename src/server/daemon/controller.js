@@ -350,7 +350,7 @@ function doRoute( program, request, data, resolve, reject )
     if ( program === null )
     {
         server.sendError( request,
-            'Internal error. Please contact RT Specialty / LoVullo for ' +
+            'Internal error. Please contact our support team for ' +
                 'support.' +
             '<br /><br />Your information has <em>not</em> been saved!'
         );
@@ -613,7 +613,7 @@ function doRoute( program, request, data, resolve, reject )
                 // an error occurred; quote invalid
                 server.sendError( request,
                     'There was a problem loading this quote; please contact ' +
-                    'RT Specialty / LoVullo for support.'
+                    'our support team for assistance.'
                 );
 
                 return;
