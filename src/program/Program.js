@@ -1,7 +1,7 @@
 /**
  * Contains Program base class
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -564,13 +564,31 @@ exports.Program = AbstractClass( 'Program' )
      * index array will be used to check the associated index of the cmatch
      * array for a boolean value.
      *
+     * CDATA should contain a modern set of classification match data if
+     * supported by the underlying system.  CDATA.indexes is precisely the
+     * first argument CMATCH in this case, but both are retained for
+     * backwards-compatibility.  It also contains `CDATA.all' to indicate
+     * whether all indexes matched and `CDATA.any' to indicate whether any
+     * matched; this is needed to disambiguate the situation when
+     * `CDATA.indexes' (or CMATCH) is empty, which is otherwise assumed to
+     * mean "all matched" (a now-false assumption).
+     *
      * @param {Array.<number>} cmatch  match array
      * @param {Array.<number>} indexes indexes to check
+     * @param {Object}         cdata   modern cmatch data
      *
      * @return {Array.<number>} cmatch-filtered index array
      */
-    'protected cmatchCheck': function( cmatch, indexes )
+    'protected cmatchCheck': function( cmatch, indexes, cdata )
     {
+        // start with a modern interpretation, if available, and
+        // purposefully fall back to old logic so as not to break existing
+        // quirky behavior that may depend on it
+        if ( cdata && cdata.any === false )
+        {
+            return [];
+        }
+
         // if there's no cmatch data for this field, or if the cmatch data
         // exists but is empty (indicating a true match for any number of
         // indexes) then simply return what we were given
