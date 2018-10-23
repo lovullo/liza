@@ -1,7 +1,7 @@
 /**
  * Tests ProgramQuoteCleaner
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -27,6 +27,71 @@ const Sut        = require( '../../../' ).server.quote.ProgramQuoteCleaner;
 
 describe( 'ProgramQuoteCleaner', () =>
 {
+    describe( "group cleaning", () =>
+    {
+        [
+            {
+                label: "expands indexes of linked and non-linked groups",
+
+                group_index: {
+                    one:   'field11',   // linked
+                    two:   'field11',   // linked
+                    three: 'field31',
+                },
+
+                exclusive: {
+                    one:   [ "field11", "field12" ],
+                    two:   [ "field21", "field22" ],
+                    three: [ "field31", "field32" ],
+                },
+
+                defaults: {
+                    field12: "12default",
+                },
+
+                existing: {
+                    "field11": [ "1", "", "3" ],  // leader one, two
+                    "field12": [ "a", "b" ],
+                    "field21": [ "e" ],
+                    "field22": [ "I", "II" ],
+                    "field31": [ "i", "ii" ],      // leader three
+                    "field32": [ "x" ],
+                },
+
+                expected: {
+                    "field12": [ , , "12default" ],
+                    "field21": [ , "", "" ],
+                    "field22": [ , , "" ],
+                    "field32": [ , "" ],
+                },
+            },
+        ].forEach( test  =>
+            it( test.label, done =>
+            {
+                const quote   = createStubQuote( test.existing, {} );
+                const program = createStubProgram( {} );
+
+                program.defaults             = test.defaults;
+                program.groupIndexField      = test.group_index;
+                program.groupExclusiveFields = test.exclusive;
+
+                const updates = {};
+
+                quote.setData = given =>
+                    Object.keys( given ).forEach( k => updates[ k ] = given[ k ] );
+
+                Sut( program ).clean( quote, err =>
+                {
+                    expect( err ).to.deep.equal( null );
+                    expect( updates ).to.deep.equal( test.expected );
+
+                    done();
+                } );
+            } )
+        );
+    } );
+
+
     describe( "metadata cleaning", () =>
     {
         [
@@ -51,7 +116,7 @@ describe( 'ProgramQuoteCleaner', () =>
         ].forEach( ( { label, existing, fields, expected } ) =>
             it( label, done =>
             {
-                const quote   = createStubQuote( existing );
+                const quote   = createStubQuote( {}, existing );
                 const program = createStubProgram( fields );
 
                 Sut( program ).clean( quote, err =>
@@ -68,11 +133,12 @@ describe( 'ProgramQuoteCleaner', () =>
 } );
 
 
-function createStubQuote( metadata )
+function createStubQuote( data, metadata )
 {
     return {
         getProgramId: () => 'foo',
         setData: () => {},
+        getDataByName: name => data[ name ],
         getMetabucket: () => ( {
             getDataByName: name => metadata[ name ],
             getData: () => metadata,
@@ -92,5 +158,6 @@ function createStubProgram( meta_fields )
     return {
         getId: () => 'foo',
         meta: { fields: meta_fields },
+        defaults: {},
     };
 }

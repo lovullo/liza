@@ -1,7 +1,7 @@
 /**
  * Contains ProgramQuoteCleaner
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -39,6 +39,16 @@ module.exports = Class( 'ProgramQuoteCleaner',
     },
 
 
+    /**
+     * "Clean" quote, getting it into a stable state
+     *
+     * Quote cleaning will ensure that all group fields share at least the
+     * same number of indexes as its leader, and that meta fields are
+     * initialized.  This is useful when questions or meta fields are added.
+     *
+     * @param {Quote}    quote    target quote
+     * @param {Function} callback continuation
+     */
     'public clean': function( quote, callback )
     {
         // consider it an error to attempt cleaning a quote with the incorrect
@@ -47,116 +57,102 @@ module.exports = Class( 'ProgramQuoteCleaner',
         {
             callback( null );
             return;
-
-            // TODO: once we move the program redirect before this check
-            // callback( Error( 'Program mismatch' ) );
         }
 
-        // fix any problems with linked groups
-        this._fixLinkedGroups( quote, err =>
-        {
-            if ( err )
-            {
-                callback( err );
-                return;
-            }
+        // correct group indexes
+        Object.keys( this._program.groupIndexField || {} ).forEach(
+            group_id => this._fixGroup( group_id, quote )
+        );
 
-            this._fixMeta( quote );
-            callback( null );
-        } );
-    },
+        this._fixMeta( quote );
 
-
-    'private _fixLinkedGroups': function( quote, callback )
-    {
-        var links  = this._program.links,
-            update = {};
-
-        for ( var link in links )
-        {
-            var len = this._getLinkedIndexLength( link, quote ),
-                cur = links[ link ];
-
-            // for each field less than the given length, correct it by adding
-            // the necessary number of indexes and filling them with their
-            // default values
-            for ( var i in cur )
-            {
-                var field = cur[ i ];
-
-                if ( !field )
-                {
-                    continue;
-                }
-
-                var data  = quote.getDataByName( field ),
-                    flen  =  data.length;
-
-                //varnity check
-                if ( !( Array.isArray( data ) ) )
-                {
-                    data = [];
-                    flen = 0;
-                }
-
-                // if the length matches, continue
-                if ( flen === len )
-                {
-                    continue;
-                }
-                else if ( flen > len )
-                {
-                    // length is greater; cut it off
-                    data = data.slice( 0, len );
-                }
-
-                var d = this._program.defaults[ field ] || '';
-                for ( var j = flen; j < len; j++ )
-                {
-                    data[ j ] = d;
-                }
-
-                update[ field ] = data;
-            }
-        }
-
-        // perform quote update a single time once we have decided what needs to
-        // be done
-        quote.setData( update );
-
-        // we're not async, but we'll keep with the callback to simplify such a
-        // possibility in the future
         callback( null );
     },
 
 
-    'private _getLinkedIndexLength': function( link, quote )
+    /**
+     * Correct group fields to be at least the length of the leader
+     *
+     * If a group is part of a link, then its leader may be part of another
+     * group, and the length of the fields of all linked groups will match
+     * be at least the length of the leader.
+     *
+     * Unlike previous implementations, this _does not_ truncate fields,
+     * since that risks data loss.  Instead, field length should be
+     * validated on save.
+     *
+     * @param {string} group_id group identifier
+     * @param {Quote}  quote    target quote
+     *
+     * @return {undefined} data are set on QUOTE
+     */
+    'private _fixGroup'( group_id, quote )
     {
-        var fields = this._program.links[ link ],
-            chklen = 20,
-            len    = 0;
+        const length = +this._getGroupLength( group_id, quote );
 
-        // loop through the first N fields, take the largest index length and
-        // consider that to be the length of the group
-        for ( var i = 0; i < chklen; i++ )
+        // if we cannot accurately determine the length then it's too
+        // dangerous to proceed and risk screwing up the data; abort
+        // processing this group (this should never happen unless a program
+        // is either not properly compiled or is out of date)
+        if ( isNaN( length ) )
         {
-            var field = fields[ i ];
-            if ( !field )
-            {
-                break;
-            }
-
-            var data = quote.getDataByName( field );
-            if ( !( Array.isArray( data ) ) )
-            {
-                continue;
-            }
-
-            // increaes the length if a larger field was found
-            len = ( len > data.length ) ? len : data.length;
+            return;
         }
 
-        return len;
+        const update = {};
+
+        const group_fields = this._program.groupExclusiveFields[ group_id ];
+
+        group_fields.forEach( field =>
+        {
+            const flen = ( quote.getDataByName( field ) || [] ).length;
+
+            if ( flen >= length )
+            {
+                return;
+            }
+
+            const data          = [];
+            const field_default = this._program.defaults[ field ] || '';
+
+            for ( var i = flen; i < length; i++ )
+            {
+                data[ i ] = field_default;
+            }
+
+            update[ field ] = data;
+        } );
+
+        quote.setData( update );
+    },
+
+
+    /**
+     * Determine length of group GROUP_ID
+     *
+     * The length of a group is the length of its leader, which may be part
+     * of another group (if the group is linked).
+     *
+     * @param {string} group_id group identifier
+     * @param {Quote}  quote    target quote
+     *
+     * @return {number} length of group GROUP_ID
+     */
+    'private _getGroupLength'( group_id, quote )
+    {
+        const index_field = this._program.groupIndexField[ group_id ];
+
+        // we don't want to give the wrong answer, so just abort
+        if ( !index_field )
+        {
+            return NaN;
+        }
+
+        const data = quote.getDataByName( index_field );
+
+        return ( Array.isArray( data ) )
+            ? data.length
+            : NaN;
     },
 
 
