@@ -1,7 +1,7 @@
 /**
  * Standard formatters
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2018 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -81,6 +81,7 @@ module.exports = function( type_map )
             explain: formatter.VoidFormatter,
             dateTime:   formatter.VoidFormatter,
             waitable:   formatter.VoidFormatter,
+            checkbox:   formatter.VoidFormatter,
 
             /* TODO:*/
             state:      formatter.VoidFormatter,

@@ -1,7 +1,7 @@
 /**
  * General UI logic for steps
  *
- *  Copyright (C) 2015 R-T Specialty, LLC.
+ *  Copyright (C) 2015, 2018 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -343,19 +343,20 @@ module.exports = Class( 'GeneralStepUi' )
                 || $element.attr( 'type' ) === 'checkbox'
             )
             {
-                // if it's not checked, then this isn't the radio we're
-                // interested in. Sorry!
-                if ( !( $element.attr( 'checked' ) ) )
+
+                // 2 in this instance is the yes/no group length.
+                var group_length = $element.attr( 'data-question-length' )
+                    ? +$element.attr( 'data-question-length' )
+                    : 2;
+
+                // if it's not checked and in a group, then this isn't
+                // the radio we're interested in. Sorry!
+                if ( !( $element.attr( 'checked' ) ) && group_length !== 1 )
                 {
                     $element.attr( 'checked', true );
 
                     return;
                 }
-
-                // 2 in this instance is the yes/no group length.
-                var group_length = $element.attr( 'data-question-length' )
-                    ? $element.attr( 'data-question-length' )
-                    : 2;
 
                 index = Math.floor( index / group_length );
             }
