@@ -466,6 +466,7 @@ module.exports = Class( 'ElementStyler',
             case 'noyes':
             case 'radio':
             case 'legacyradio':
+            case 'checkbox':
                 var elements = [];
                 if ( $context && $context.singleIndex )
                 {
