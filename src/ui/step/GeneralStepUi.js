@@ -349,13 +349,21 @@ module.exports = Class( 'GeneralStepUi' )
                     ? +$element.attr( 'data-question-length' )
                     : 2;
 
+                var is_checked = $element.attr( 'checked' );
+
                 // if it's not checked and in a group, then this isn't
                 // the radio we're interested in. Sorry!
-                if ( !( $element.attr( 'checked' ) ) && group_length !== 1 )
+                if ( !is_checked && group_length !== 1 )
                 {
                     $element.attr( 'checked', true );
 
                     return;
+                }
+
+                // if this is a lonely checkbox, we only want the value if it is checked
+                if ( group_length === 1 && !is_checked )
+                {
+                    val = 0;
                 }
 
                 index = Math.floor( index / group_length );
