@@ -102,10 +102,18 @@ module.exports = Class( 'ProgramQuoteCleaner',
         const update = {};
 
         const group_fields = this._program.groupExclusiveFields[ group_id ];
+        const qtypes       = this._program.meta.qtypes || {};
 
         group_fields.forEach( field =>
         {
             const flen = ( quote.getDataByName( field ) || [] ).length;
+
+            // generated questions with no types should never be part of
+            // the bucket
+            if ( !this._isKnownType( qtypes[ field ] ) )
+            {
+                return;
+            }
 
             if ( flen >= length )
             {
@@ -181,6 +189,23 @@ module.exports = Class( 'ProgramQuoteCleaner',
 
             metabucket.setValues( { [field_name]: [] } );
         } );
+    },
+
+
+    /**
+     * Determine whether question type QTYPE is known
+     *
+     * This assumes that the type is known unless QTYPE.type is "undefined".
+     *
+     * @param {Object} qtype type data for question
+     *
+     * @return {boolean} whether type is known
+     */
+    'private _isKnownType'( qtype )
+    {
+        return qtype
+            && ( typeof qtype.type === 'string' )
+            && ( qtype.type !== 'undefined' );
     },
 } );
 

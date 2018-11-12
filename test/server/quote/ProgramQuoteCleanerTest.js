@@ -42,11 +42,20 @@ describe( 'ProgramQuoteCleaner', () =>
                 exclusive: {
                     one:   [ "field11", "field12" ],
                     two:   [ "field21", "field22" ],
-                    three: [ "field31", "field32" ],
+                    three: [ "field31", "field32", "unknown_ignore_me" ],
                 },
 
                 defaults: {
                     field12: "12default",
+                },
+
+                qtypes: {
+                    "field11": { type: "text" },
+                    "field12": { type: "text" },
+                    "field21": { type: "text" },
+                    "field22": { type: "text" },
+                    "field31": { type: "text" },
+                    "field32": { type: "text" },
                 },
 
                 existing: {
@@ -74,6 +83,7 @@ describe( 'ProgramQuoteCleaner', () =>
                 program.defaults             = test.defaults;
                 program.groupIndexField      = test.group_index;
                 program.groupExclusiveFields = test.exclusive;
+                program.meta.qtypes          = test.qtypes;
 
                 const updates = {};
 
