@@ -536,6 +536,8 @@ module.exports = Class( 'Server' )
      */
     'private _getDefaultBucket': function( program, quote_data )
     {
+        // TOOD: this duplicates some logic with ProgramQuoteCleaner; we
+        // probably do not need both of them
         return this._progInit.init( program, quote_data.data );
     },
 

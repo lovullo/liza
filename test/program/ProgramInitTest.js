@@ -35,7 +35,11 @@ describe( 'ProgramInit', () =>
             label:    "initializes defaults",
             defaults: { a: "one", b: "two" },
             meta: {
-                groups: {}
+                groups: {},
+                qtypes: {
+                    a: { type: "noyes" },
+                    b: { type: "noyes" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "a", "b" ]
@@ -73,7 +77,11 @@ describe( 'ProgramInit', () =>
                 bar: "test"
             },
             meta: {
-                groups: {}
+                groups: {},
+                qtypes: {
+                    foo: { type: "noyes" },
+                    bar: { type: "noyes" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "foo" ],
@@ -89,7 +97,10 @@ describe( 'ProgramInit', () =>
             label:    "keeps existing data with no defaults",
             defaults: {},
             meta: {
-                groups: {}
+                groups: {},
+                qtypes: {
+                    bar: { type: "text" },
+                },
             },
             groupExclusiveFields: {
                 SomethingElse: [ "bar" ]
@@ -103,7 +114,10 @@ describe( 'ProgramInit', () =>
             label:    "does not overwrite existing data with defaults",
             defaults: { foo: "init" },
             meta: {
-                groups: {}
+                groups: {},
+                qtypes: {
+                    foo: { type: "text" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "foo" ]
@@ -121,7 +135,10 @@ describe( 'ProgramInit', () =>
                     Something: {
                         min: 3
                     }
-                }
+                },
+                qtypes: {
+                    foo: { type: "text" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "foo" ]
@@ -139,7 +156,10 @@ describe( 'ProgramInit', () =>
                     Something: {
                         min: 5
                     }
-                }
+                },
+                qtypes: {
+                    foo: { type: "text" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "foo" ]
@@ -157,7 +177,10 @@ describe( 'ProgramInit', () =>
                     Something: {
                         min: 5
                     }
-                }
+                },
+                qtypes: {
+                    foo: { type: "text" },
+                },
             },
             groupExclusiveFields: {
                 Something: [ "foo" ]
@@ -169,6 +192,21 @@ describe( 'ProgramInit', () =>
                 foo: [ "1", "2", "3", "4", "init" ],
             },
         },
+        {
+            label:    "ignores undefined types",
+            defaults: { foo: "default" },
+            meta: {
+                groups: {},
+                qtypes: {
+                    foo: { type: "undefined" },
+                },
+            },
+            groupExclusiveFields: {
+                Something: [ "foo" ]
+            },
+            doc_data: {},
+            expected: {},
+        },
     ].forEach( ({ label, doc_data, id, defaults, meta, groupExclusiveFields, expected }) =>
     {
         it( label, () =>
@@ -176,10 +214,10 @@ describe( 'ProgramInit', () =>
             const sut = Sut( null );
 
             const program = {
-                id:       "foo",
-                defaults: defaults,
-                meta: meta,
-                groupExclusiveFields : groupExclusiveFields
+                id:                   "foo",
+                defaults:             defaults,
+                meta:                 meta,
+                groupExclusiveFields: groupExclusiveFields
             };
 
             return expect( sut.init( program, doc_data ) )

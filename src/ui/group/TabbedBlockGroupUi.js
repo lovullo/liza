@@ -510,7 +510,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
             // select the tab based on selection index
             var index = this._bucket.getDataByName( this._defaultSelectionField )[0];
 
-            if( this._isEligibleTab( index ) )
+            if ( ( index !== undefined ) && this._isEligibleTab( index ) )
             {
                 this._selectTab( index || 0 );
             }

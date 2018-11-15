@@ -54,9 +54,12 @@ module.exports = Class( 'ProgramInit',
      */
     'public init'( program, doc_data )
     {
-        const defaults = program.defaults || {};
         const data = doc_data || {};
-        const groups = program.meta.groups;
+
+        const {
+            defaults = {},
+            meta: { groups = {}, qtypes = {} },
+        } = program;
 
         Object.keys( program.groupExclusiveFields ).forEach( group =>
         {
@@ -64,10 +67,17 @@ module.exports = Class( 'ProgramInit',
 
             while ( i-- )
             {
-                const field = program.groupExclusiveFields[ group ][ i ];
+                const field         = program.groupExclusiveFields[ group ][ i ];
                 const default_value = defaults[ field ];
 
-                if ( !defaults.hasOwnProperty( field ))
+                // generated questions with no types should never be part of
+                // the bucket
+                if ( !this._isKnownType( qtypes[ field ] ) )
+                {
+                    continue;
+                }
+
+                if ( !defaults.hasOwnProperty( field ) )
                 {
                     continue;
                 }
@@ -96,8 +106,25 @@ module.exports = Class( 'ProgramInit',
                     }
                 }
             }
-        });
+        } );
 
         return Promise.resolve( data );
+    },
+
+
+    /**
+     * Determine whether question type QTYPE is known
+     *
+     * This assumes that the type is known unless QTYPE.type is "undefined".
+     *
+     * @param {Object} qtype type data for question
+     *
+     * @return {boolean} whether type is known
+     */
+    'private _isKnownType'( qtype )
+    {
+        return qtype
+            && ( typeof qtype.type === 'string' )
+            && ( qtype.type !== 'undefined' );
     },
 } );
