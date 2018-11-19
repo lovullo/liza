@@ -55,7 +55,9 @@ describe( 'ProgramQuoteCleaner', () =>
                     "field21": { type: "text" },
                     "field22": { type: "text" },
                     "field31": { type: "text" },
-                    "field32": { type: "text" },
+
+                    // ancient pre-"liza" data representation
+                    "field32": "text",
                 },
 
                 existing: {

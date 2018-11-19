@@ -50,6 +50,27 @@ describe( 'ProgramInit', () =>
                 b: [ "two" ],
             },
         },
+        // for ancient versions of liza-proguic (before it was even called
+        // "liza")
+        {
+            label:    "initializes defaults for ancient data representations",
+            defaults: { a: "one", b: "two" },
+            meta: {
+                groups: {},
+                qtypes: {
+                    a: "noyes",
+                    b: "noyes",
+                },
+            },
+            groupExclusiveFields: {
+                Something: [ "a", "b" ]
+            },
+            doc_data: {},
+            expected: {
+                a: [ "one" ],
+                b: [ "two" ],
+            },
+        },
         {
             label:    "does nothing with no data or defaults",
             defaults: {},
