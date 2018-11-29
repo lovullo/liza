@@ -312,7 +312,7 @@ module.exports = Class( 'DslRaterContext' )
     },
 
 
-    'virtual protected postProcessResults': function( results )
+    'virtual public postProcessResults': function( results )
     {
         var ret = {};
 
