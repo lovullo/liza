@@ -290,17 +290,28 @@ describe( "DataApiMediator", () =>
                 index:    0,
                 value:    {
                     foo:   [ "first", "second" ],
+                    label: [ "populated label" ],   // exception to the rule
                     dest1: [ "leave alone" ],
                     dest2: [ "" ],
                 },
                 expected: {
                     foo:   [ "first" ],
+
+                    // labels should _always_ be populated, since they're
+                    // considered to be part of the actual value, not a
+                    // user-modifiable destination field
+                    label: [ "first label" ],
+
                     // dest1 missing because it is already populated
                     dest2: [ "src2data" ],
                 },
 
                 val_label: [
-                    { value: "first result",  label: "first" },
+                    {
+                        value:    "first result",
+                        label:    "first label",
+                        label_id: 'label',
+                    },
                 ],
 
                 results: {
@@ -311,6 +322,7 @@ describe( "DataApiMediator", () =>
                 expansion: [ {
                     dest1: [ "src1data" ],
                     dest2: [ "src2data" ],
+                    label: [ "first label" ],
                 } ],
             }
         ].forEach( ( {

@@ -451,11 +451,18 @@ module.exports = Class( 'DataApiManager' )
 
         fdepth[ index ]++;
 
+        // TODO: remove this assumption
+        const label_id = name + '_label';
+
         try
         {
             this._fieldDataEmitted[ name ][ index ] = true;
-            this.emit( 'updateFieldData',
-                name, index, this._genUiFieldData( data, value, label ), fdata
+            this.emit(
+                'updateFieldData',
+                name,
+                index,
+                this._genUiFieldData( data, value, label, label_id ),
+                fdata
             );
         }
         catch ( e )
@@ -499,13 +506,14 @@ module.exports = Class( 'DataApiManager' )
      *
      * This data is ideal for updating a UI and contains no extra information.
      *
-     * @param {Array.<Object>} data  return data
-     * @param {string}         value param to map to value
-     * @param {string}         label param to map to label
+     * @param {Array.<Object>} data     return data
+     * @param {string}         value    param to map to value
+     * @param {string}         label    param to map to label
+     * @param {string}         label_id label field id
      *
      * @return {Array.<Object>} value and label data set
      */
-    'private _genUiFieldData': function( data, value, label )
+    'private _genUiFieldData': function( data, value, label, label_id )
     {
         var ret = [],
             len = data.length;
@@ -515,8 +523,9 @@ module.exports = Class( 'DataApiManager' )
             var idata = data[ i ];
 
             ret[ i ] = {
-                value: idata[ value ],
-                label: idata[ label ]
+                value:    idata[ value ],
+                label:    idata[ label ],
+                label_id: label_id,
             };
         }
 

@@ -178,8 +178,10 @@ module.exports = Class( 'DataApiMediator',
                 group.setOptions( name, i, val_label, existing[ i ] )
             );
 
+            const { label_id = "" } = val_label[ 0 ] || {};
+
             const update = this._populateWithMap(
-                dapi_manager, name, indexes, quote
+                dapi_manager, name, indexes, quote, label_id
             );
 
             update[ name ] = field_update;
@@ -196,16 +198,19 @@ module.exports = Class( 'DataApiMediator',
      * expansion data are missing, then the field will be ignored.  If a
      * destination field is populated such that auto-expanding would
      * override that datum, then that field will be excluded from the
-     * expansion.
+     * expansion.  Labels are exempt from this rule, since they are
+     * considered to be married to the value; labels are not
+     * user-modifiable.
      *
      * @param {DataApiManager} dapi_manager manager responsible for fields
      * @param {string}         name         field name
      * @param {Array<number>}  indexes      field indexes
      * @param {Quote}          quote        source quote
+     * @param {string}         label_id     name of label field
      *
      * @return {undefined}
      */
-    'private _populateWithMap'( dapi_manager, name, indexes, quote )
+    'private _populateWithMap'( dapi_manager, name, indexes, quote, label_id )
     {
         const map = this._dapi_map[ name ];
 
@@ -249,7 +254,7 @@ module.exports = Class( 'DataApiMediator',
                 // if set and non-empty, then it's already populated and we
                 // must leave the value alone (so as not to override
                 // something the user directly entered)
-                if ( existing !== undefined && existing !== "" )
+                if ( key !== label_id && existing !== undefined && existing !== "" )
                 {
                     return;
                 }
