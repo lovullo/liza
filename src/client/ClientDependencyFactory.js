@@ -36,6 +36,7 @@ var Step          = require( '../step/Step' ),
 
     Group                = require( '../group/Group' ),
     GroupUi              = require( '../ui/group/GroupUi' ),
+    AccordionGroupUi     = require( '../ui/group/AccordionGroupUi' ),
     FlatGroupUi          = require( '../ui/group/FlatGroupUi' ),
     TableGroupUi         = require( '../ui/group/TableGroupUi' ),
     TabbedGroupUi        = require( '../ui/group/TabbedGroupUi' ),
@@ -43,9 +44,6 @@ var Step          = require( '../step/Step' ),
     StackedGroupUi       = require( '../ui/group/StackedGroupUi' ),
     SideTableGroupUi     = require( '../ui/group/SideTableGroupUi' ),
     CollapseTableGroupUi = require( '../ui/group/CollapseTableGroupUi' ),
-
-    // TODO: delete me
-    AccordionGroupUi = require( 'program/ui/AccordionGroupUi' ),
 
     Ui           = require( '../ui/Ui' ),
     UiStyler     = require( '../ui/UiStyler' ),

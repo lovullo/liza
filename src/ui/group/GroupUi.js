@@ -745,7 +745,7 @@ module.exports = Class( 'GroupUi' )
      *
      * @return {GroupUi} self to allow for method chaining
      */
-    'protected postAddRow': function( $element, index )
+    'virtual protected postAddRow': function( $element, index )
     {
         this.emit( this.__self.$('EVENT_POST_ADD_ROW'), $element, index );
         return this;
