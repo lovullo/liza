@@ -1,7 +1,7 @@
 /**
  * Base CSS for the Liza Data Collection Framework
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2017, 2019 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -159,15 +159,46 @@
  *
  * TODO: These need liza-* prefixes.
  *
- * Stacked Group
- * ~~~~~~~~~~~~~
+ * Stacked and Accordion Groups
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Note that the Accordion group is an extended styling of the Stacked group.
  */
 
-.stepGroup dl.stacked dt.stack-header {
+.stepGroup dl > dt.stack-header {
   border-top:  0px;
   font-weight: bold;
 }
 
-.stepGroup dl.stacked:not(:first-child) dt.stack-header {
-  margin-top: 2em;
+/* Upper margins should not appear for accordions, because they should*/
+/* appear flush when collapsed. */
+.stepGroup dl.stacked:not(:first-child) > dt.stack-header {
+  margin-bottom: 2em;
+}
+
+/* Accordions are generalized into a `liza-collapsable' class.  Colllapsable
+/* groups can have their children hidden when collapsed.
+ */
+.stepGroup dl.liza-collapsable > dt.stack-header {
+  cursor: pointer;
+}
+
+.stepGroup dl.liza-collapsable.liza-collapsed > dt:not(.stack-header),
+.stepGroup dl.liza-collapsable.liza-collapsed > dd {
+  display: none;
+}
+
+/* Arrows indicate expanded/collapsed status.  A downward-facing arrow*/
+/* indicates that content is expanded (appearing in the direction of the
+ * arrow), and rightward-facing indicates collapsed (as if into the header).
+ */
+.stepGroup dl.liza-collapsable > dt.stack-header::before {
+  display: inline-block;
+  margin-right: 0.25em;
+  content: "▼";
+}
+/* Rotation is used for the collapse arrow rather than the character `►'
+/* because this allows for easy animation via `transition'.
+ */
+.stepGroup dl.liza-collapsable.liza-collapsed > dt.stack-header::before {
+  transform: rotate(-90deg);
 }
