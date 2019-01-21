@@ -136,6 +136,17 @@ A list of available styles is detailed in @ref{t:group-styles}.
   @tab@center N
   @tab@center N
 
+  @item @samp{accordion}
+  @tab
+  Styled as a @samp{stacked} group with a header that toggles
+    the body associated with that index.
+  When collapsed,
+    only the header is visible for that index.
+  The default styling indicates the collapsed status using an arrow in
+    the header.
+  @tab@center Y
+  @tab@center N
+
   @item @samp{collapsetable}
   @tab
   Renders element label in the leftmost column like @samp{sidetable}.
