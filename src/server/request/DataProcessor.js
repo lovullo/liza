@@ -297,7 +297,19 @@ module.exports = Class( 'DataProcessor',
                 const bdata = ( diff_data[ bucketid ] || [] )[ index ] ||
                       ( bucket.getDataByName( bucketid ) || [] )[ index ];
 
-                result[ srcid ] = bdata || [];
+                if ( typeof bdata === 'undefined' )
+                {
+                    // This might be better as an empty string, but we will
+                    // need to look into it more before we change it. It has
+                    // been an empty array for a long time and it might cause
+                    // issues to change it now.
+                    result[ srcid ] = [];
+                }
+                else
+                {
+                    result[ srcid ] = bdata;
+                }
+
                 return result;
             },
             {}
