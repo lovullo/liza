@@ -107,7 +107,7 @@ describe( 'DataProcessor', () =>
             expect( given_request ).to.equal( request );
 
             done();
-        }
+        };
 
         Sut( filter, dapi_factory, null, createStubStagingBucket )
             .processDiff( {}, request, program );
@@ -247,6 +247,69 @@ describe( 'DataProcessor', () =>
         expect( triggered.dapi_no_call ).to.equal( undefined );
 
         expect( meta_clear ).to.deep.equal( expected_clear );
+
+        return Promise.all( dapis );
+    } );
+
+
+    it( "check _mapDapiData default values", () =>
+    {
+        const triggered = {};
+
+        // g prefix = "given"
+        const getFieldData = function( gfield, gindex, gdapim, gdapi, gdata)
+        {
+            triggered[ gdapi.name ]           = triggered[ gdapi.name ] || [];
+            triggered[ gdapi.name ][ gindex ] = arguments;
+
+            expect( gdata ).to.deep.equal( { ina: '', inb: [] } );
+
+            return Promise.resolve( true );
+        };
+
+        const dapi_manager = {};
+
+        const {
+            request,
+            program,
+            filter,
+            meta_source,
+        } = createStubs( false, {}, getFieldData );
+
+        const sut = Sut(
+            filter,
+            () => dapi_manager,
+            meta_source,
+            createStubStagingBucket
+        );
+
+        program.meta.fields = {
+            foo: {
+                dapi: {
+                    name:   'dapi_foo',
+                    mapsrc: { ina: 'src', inb: 'src1' },
+                },
+            },
+        };
+
+        program.mapis = {
+            src1: [ 'foo' ],          // change
+        };
+
+        // data changed
+        const data = {
+            src:  [ 'src0', '' ],
+            src1: [ undefined, '' ],
+        };
+
+        const bucket = createStubBucket( {
+            src:  [ 'bsrc0', '' ],
+            src1: [ 'bsrc10', undefined],
+        } );
+
+        const { dapis } = sut.processDiff(
+            data, request, program, bucket
+        );
 
         return Promise.all( dapis );
     } );
