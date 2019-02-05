@@ -287,7 +287,8 @@ module.exports = Class( 'MongoServerDao' )
         quote, success_callback, failure_callback, save_data
     )
     {
-        var dao = this;
+        var   dao = this;
+        const meta = {};
 
         // if we're not ready, then we can't save the quote!
         if ( this._ready === false )
@@ -309,7 +310,7 @@ module.exports = Class( 'MongoServerDao' )
             };
 
             // full save will include all metadata
-            save_data.meta = quote.getMetabucket().getData();
+            meta = quote.getMetabucket().getData();
         }
 
         // when we update the quote data, clear quick save data (this data
@@ -333,8 +334,16 @@ module.exports = Class( 'MongoServerDao' )
             ( new Date() ).getTime() / 1000
         );
 
+        // meta will eventually take over for much of the above data
+        meta.liza_timestamp_initial_rated = quote.getRatedDate();
+
         // save the stack so we can track this call via the oplog
         save_data._stack = ( new Error() ).stack;
+
+        // avoid wiping out other metadata (since this may not be a full set)
+        Object.keys( meta ).forEach(
+            key => save_data[ 'meta.' + key ] = meta[ key ]
+        );
 
         // update the quote data if it already exists (same id), otherwise
         // insert it

@@ -16,6 +16,7 @@
 * Value Assignment:Bucket Assignment.  Writing data to the Bucket.
 * Bucket Diff::                        Representing bucket changes.
 * Calculated Values::                  Dynamic data derived from other values.
+* Metabucket::                         Bucket holding document metadata
 @end menu
 
 
@@ -116,3 +117,32 @@ A diff is applied to the underlying bucket by invoking
 @node Calculated Values
 @section Calculated Values
 @helpwanted
+
+
+@node Metabucket
+@section Metabucket
+@cindex Metabucket
+The @dfn{metabucket} is a loosely-structured key/value store
+  separate from the data bucket.@footnote{
+    It is stored in the @code{meta} field on the Mongo document.}
+It should be used to save data that should be accessible only to the server,
+  but never the client.
+
+The client has no means by which to access the metabucket.
+Custom fields can be populated by server-side DataAPIs
+  (@pxref{Server-Side Data API Calls}).
+
+Any fields prefixed with the string @samp{liza_} are reserved and are
+  populated automatically by the Server.
+They are shown in @ref{t:liza-meta}.
+
+@float Table, t:liza-meta
+@table @code
+  @cindex Initial rated date
+  @item liza_timestamp_initial_rated
+  A Unix timestamp representing the first time a document was acted
+    upon by a rating service.
+  This value is set once and is never updated or cleared.
+@end table
+@caption{Metabucket fields populated automatically by the Server}
+@end float
