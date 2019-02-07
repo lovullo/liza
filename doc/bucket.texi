@@ -122,11 +122,19 @@ A diff is applied to the underlying bucket by invoking
 @node Metabucket
 @section Metabucket
 @cindex Metabucket
-The @dfn{metabucket} is a loosely-structured key/value store
+The @dfn{metabucket} is a bucket-like key/value store
   separate from the data bucket.@footnote{
     It is stored in the @code{meta} field on the Mongo document.}
 It should be used to save data that should be accessible only to the server,
   but never the client.
+
+Data must still be formatted as a vector,
+  but unlike the data Bucket,
+  vector values are sometimes structured data instead of strings.
+
+@devnote{A standard still needs to be devised to provide guidance for
+           when storing structured data is appropriate,
+             rather than a vector of strings.}
 
 The client has no means by which to access the metabucket.
 Custom fields can be populated by server-side DataAPIs

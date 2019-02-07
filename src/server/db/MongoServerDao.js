@@ -335,7 +335,7 @@ module.exports = Class( 'MongoServerDao' )
         );
 
         // meta will eventually take over for much of the above data
-        meta.liza_timestamp_initial_rated = quote.getRatedDate();
+        meta.liza_timestamp_initial_rated = [ quote.getRatedDate() ];
 
         // save the stack so we can track this call via the oplog
         save_data._stack = ( new Error() ).stack;
