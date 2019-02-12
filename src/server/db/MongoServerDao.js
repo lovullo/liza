@@ -287,8 +287,8 @@ module.exports = Class( 'MongoServerDao' )
         quote, success_callback, failure_callback, save_data
     )
     {
-        var   dao = this;
-        const meta = {};
+        var dao  = this;
+        var meta = {};
 
         // if we're not ready, then we can't save the quote!
         if ( this._ready === false )
