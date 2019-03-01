@@ -171,7 +171,7 @@
 
 /* Upper margins should not appear for accordions, because they should*/
 /* appear flush when collapsed. */
-.stepGroup dl.stacked:not(:first-child) > dt.stack-header {
+.stepGroup dl.liza-collapsable:not(:first-child) > dt.stack-header {
   margin-bottom: 2em;
 }
 
