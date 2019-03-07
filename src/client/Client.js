@@ -2046,7 +2046,13 @@ module.exports = Class( 'Client' )
         // just as we would with the `submit' event.
         if ( failures !== null )
         {
-            this.ui.invalidateForm( failures );
+            this._genValidationMessages(
+                this._validationMessages,
+                failures
+            );
+
+            this._dataValidator.updateFailures( {}, failures );
+
             return false;
         }
 
