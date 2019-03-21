@@ -125,7 +125,7 @@ module.exports = AbstractClass( 'Daemon',
             this._encService = this.getEncryptionService();
             this._memcache   = this.getMemcacheClient();
 
-            post_rate.reduce(
+            return post_rate.reduce(
                 ( accum, value, key ) =>
                 {
                     accum[ key ] = value;
