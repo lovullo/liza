@@ -83,6 +83,7 @@ const {
             },
 
             RatingService,
+            RatingServicePublish,
             RatingServiceSubmitNotify,
             TokenedService,
             TokenDao,
@@ -98,6 +99,8 @@ const {
     store,
 } = require( '../..' );
 
+const amqplib = require( 'amqplib' );
+
 
 // read and write locks, as separate semaphores
 var rlock = Semaphore(),
@@ -108,9 +111,10 @@ var sflag = {};
 
 
 // TODO: kluge to get liza somewhat decoupled from lovullo (rating module)
-exports.rater          = {};
-exports.skey           = "";
-exports.no_results_url = "";
+exports.rater             = {};
+exports.skey              = "";
+exports.no_results_url    = "";
+exports.post_rate_publish = {};
 
 
 exports.init = function( logger, enc_service, conf )
@@ -161,7 +165,10 @@ exports.init = function( logger, enc_service, conf )
             )
             : RatingService;
 
-        rating_service = RatingServiceBase(
+        // TODO: temporary proof-of-concept
+        rating_service = RatingServiceBase.use(
+            RatingServicePublish( amqplib, exports.post_rate_publish )
+        )(
             logger, dao, server, exports.rater
         );
 

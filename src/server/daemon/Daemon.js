@@ -114,7 +114,8 @@ module.exports = AbstractClass( 'Daemon',
             this._createAccessLog(),
             this._conf.get( 'skey' ),
             this._conf.get( 'services.rating.noResultsUrl' ),
-        ] ).then( ([ debug_log, access_log, skey, no_results_url ]) =>
+            this._conf.get( 'services.rating.postRatePublish' ),
+        ] ).then( ([ debug_log, access_log, skey, no_results_url, post_rate ]) =>
         {
             this._debugLog   = debug_log;
             this._accessLog  = access_log;
@@ -123,7 +124,21 @@ module.exports = AbstractClass( 'Daemon',
             this._rater      = liza.server.rater.ProcessManager();
             this._encService = this.getEncryptionService();
             this._memcache   = this.getMemcacheClient();
-            this._routers    = this.getRouters( skey, no_results_url );
+
+            post_rate.reduce(
+                ( accum, value, key ) =>
+                {
+                    accum[ key ] = value;
+                    return accum;
+                },
+                {}
+            ).then( post_rate_publish =>
+                this._routers = this.getRouters(
+                    skey,
+                    no_results_url,
+                    post_rate_publish
+                )
+            );
         } )
             .then( () => this._startDaemon() );
     },
@@ -190,17 +205,23 @@ module.exports = AbstractClass( 'Daemon',
      * all-submit notification URL NO_RESULTS_URL if they are provided,
      * respectively.
      *
-     * @param {string=}         skey           session key
-     * @param {no_results_url=} no_results_url URL for all-submit notification
+     * @param {string=} skey              session key
+     * @param {string=} no_results_url    URL for all-submit notification
+     * @param {Object=} post_rate_publish configuration for post-rate messages
      *
      * @return {Object} controller
      */
-    'protected getProgramController': function( skey, no_results_url )
+    'protected getProgramController': function(
+        skey, no_results_url, post_rate_publish
+    )
     {
         var controller = require( './controller' );
 
         controller.rater          = this._rater;
         controller.no_results_url = no_results_url || controller.no_results_url;
+
+        controller.post_rate_publish =
+            post_rate_publish || controller.post_rate_publish;
 
         if ( skey )
         {
@@ -291,10 +312,14 @@ module.exports = AbstractClass( 'Daemon',
     'abstract protected getEncryptionService': [],
 
 
-    'protected getRouters': function( skey, no_results_url )
+    'protected getRouters': function(
+        skey, no_results_url, post_rate_publish
+    )
     {
         return [
-            this.getProgramController( skey, no_results_url ),
+            this.getProgramController(
+                skey, no_results_url, post_rate_publish
+            ),
             this.getScriptsController(),
             this.getClientErrorController(),
         ];
