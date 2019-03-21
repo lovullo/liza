@@ -95,10 +95,12 @@ module.exports = Trait( 'RatingServicePublish' )
     {
         const queue = this._conf.queueName;
 
-        let connection = null;
-
         this._amqp.connect( this._conf )
-            .then( conn => connection = conn.createChannel() )
+            .then( conn =>
+            {
+                setTimeout( () => conn.close(), 10000 );
+                return conn.createChannel();
+            } )
             .then( ch => {
                 ch.assertQueue( queue, { durable: true } );
 
