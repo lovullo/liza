@@ -113,7 +113,6 @@ var sflag = {};
 // TODO: kluge to get liza somewhat decoupled from lovullo (rating module)
 exports.rater             = {};
 exports.skey              = "";
-exports.no_results_url    = "";
 exports.post_rate_publish = {};
 
 
@@ -138,35 +137,8 @@ exports.init = function( logger, enc_service, conf )
         server_cache = _createCache( server );
         server.init( server_cache, exports.rater );
 
-        // TODO: do none of this if no_results_url is provided
-        const createSubmitDapi = request => HttpDataApi
-            .use( HttpDataApiUrlData( [ 'quote_id' ] ) )
-            (
-                exports.no_results_url,
-                'PUT',
-
-                NodeHttpImpl
-                    .use( SpoofedNodeHttpImpl( request ) )
-                    (
-                        {
-                            http: require( 'http' ),
-                            https: require( 'https' ),
-                        },
-                        require( 'url' ),
-                        this._origin
-                    ),
-                ''
-            );
-
-        // only use the submit notification if a URL was provided
-        const RatingServiceBase = ( exports.no_results_url )
-            ? RatingService.use(
-                RatingServiceSubmitNotify( createSubmitDapi, dao )
-            )
-            : RatingService;
-
         // TODO: temporary proof-of-concept
-        rating_service = RatingServiceBase.use(
+        rating_service = RatingService.use(
             RatingServicePublish( amqplib, exports.post_rate_publish )
         )(
             logger, dao, server, exports.rater

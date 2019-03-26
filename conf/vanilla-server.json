@@ -50,7 +50,6 @@
         "host":   "localhost",
         "domain": ""
       },
-      "noResultsUrl": "",
       "postRatePublish": {
         "protocol":   "amqp",
         "hostname":   "localhost",

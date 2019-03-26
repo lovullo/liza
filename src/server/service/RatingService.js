@@ -30,9 +30,9 @@ var Class  = require( 'easejs' ).Class;
  */
 module.exports = Class( 'RatingService',
 {
-    _logger: null,
+    logger: null,
 
-    _dao: null,
+    dao: null,
 
     _server: null,
 

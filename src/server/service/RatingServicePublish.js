@@ -111,6 +111,8 @@ module.exports = Trait( 'RatingServicePublish' )
                     quote
                 );
             } );
+
+        this.__super( request, data, actions, program, quote );
     },
 
 
