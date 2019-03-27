@@ -135,6 +135,7 @@ module.exports = Trait( 'RatingServicePublish' )
 
         const data = new Buffer( JSON.stringify( {
             quote_id:    quote.getId(),
+            program_id:  quote.getProgramId(),
             agent_id:    session.agentId(),
             entity_id:   session.agentEntityId(),
             entity_name: session.agentName(),
