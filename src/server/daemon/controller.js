@@ -139,7 +139,7 @@ exports.init = function( logger, enc_service, conf )
 
         // TODO: temporary proof-of-concept
         rating_service = RatingService.use(
-            RatingServicePublish( amqplib, exports.post_rate_publish )
+            RatingServicePublish( amqplib, exports.post_rate_publish, logger )
         )(
             logger, dao, server, exports.rater
         );
