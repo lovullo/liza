@@ -248,6 +248,8 @@ exports.relativeDate = function( data, value )
 {
     return _each( data, value, function( curdate, format )
     {
+        format = format || '';
+
         var type = format.substr( -1 ),
             tval = format.substr( 0, format.length - 1 ),
             ms   = 0;
