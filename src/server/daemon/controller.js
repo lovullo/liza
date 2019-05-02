@@ -25,6 +25,7 @@ const {
     Db: MongoDb,
     Server: MongoServer,
     Connection: MongoConnection,
+    ReplSetServers: ReplSetServers,
 } = require( 'mongodb/lib/mongodb' );
 
 const regex_base = /^\/quote\/([a-z0-9-]+)\/?(?:\/(\d+)\/?(?:\/(.*))?|\/(program.js))?$/;
@@ -118,16 +119,7 @@ exports.post_rate_publish = {};
 
 exports.init = function( logger, enc_service, conf )
 {
-    var db = new MongoDb(
-        'program',
-        new MongoServer(
-            process.env.MONGODB_HOST || '127.0.0.1',
-                +process.env.MONGODB_PORT || MongoConnection.DEFAULT_PORT,
-            { auto_reconnect: true }
-        ),
-        { native_parser: false, safe: false }
-    );
-
+    var db = _createDB( logger );
     const dao = MongoServerDao( db );
 
     _createDocumentServer( dao, logger, enc_service, conf ).then( srv =>
@@ -176,6 +168,35 @@ exports.init = function( logger, enc_service, conf )
     } );
 }
 
+function _createDB( logger )
+{
+    if(process.env.LIZA_MONGODB_HA==1)
+    {
+        var mongodbPort = process.env.MONGODB_PORT || MongoConnection.DEFAULT_PORT;
+        var mongodbReplSet = process.env.LIZA_MONGODB_REPLSET || 'rs0';
+        var dbServers = new ReplSetServers(
+            [
+                new MongoServer( process.env.LIZA_MONGODB_HOST_A, +process.env.LIZA_MONGODB_PORT_A || mongodbPort),
+                new MongoServer( process.env.LIZA_MONGODB_HOST_B, +process.env.LIZA_MONGODB_PORT_B || mongodbPort)
+            ],
+            {rs_name: mongodbReplSet, auto_reconnect: true}
+        );
+    }
+    else
+    {
+        var dbServers = new MongoServer(
+            process.env.MONGODB_HOST || '127.0.0.1',
+            +process.env.MONGODB_PORT || MongoConnection.DEFAULT_PORT,
+            {auto_reconnect: true}
+        );
+    }
+    var db = new MongoDb(
+        'program',
+        dbServers,
+        {native_parser: false, safe: false, logger: logger}
+    );
+    return db;
+}
 
 function _createDocumentServer( dao, logger, enc_service, conf )
 {
