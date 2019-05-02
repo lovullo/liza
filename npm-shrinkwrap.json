@@ -8,14 +8,14 @@
       "resolved": "https://registry.npmjs.org/easejs/-/easejs-0.2.9.tgz"
     },
     "mongodb": {
-      "version": "1.2.8",
-      "from": "mongodb@1.2.8",
-      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-1.2.8.tgz",
+      "version": "1.2.14",
+      "from": "mongodb@1.2.14",
+      "resolved": "https://registry.npmjs.org/mongodb/-/mongodb-1.2.14.tgz",
       "dependencies": {
         "bson": {
-          "version": "0.1.5",
-          "from": "bson@0.1.5",
-          "resolved": "https://registry.npmjs.org/bson/-/bson-0.1.5.tgz"
+          "version": "0.1.8",
+          "from": "bson@0.1.8",
+          "resolved": "https://registry.npmjs.org/bson/-/bson-0.1.8.tgz"
         }
       }
     }
