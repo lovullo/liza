@@ -1,4 +1,4 @@
-image: node:4
+image: node:4-stretch
 
 stages:
     - build
@@ -14,7 +14,9 @@ build:
         - autoreconf -fvi
         - ./configure --with-srcuri="$SRCURI"
         - npm install
-        - make all check info pdf html
+        - make all
+        - make info pdf html
+        - make check
     artifacts:
         paths:
             - doc/

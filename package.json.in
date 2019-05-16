@@ -25,7 +25,7 @@
 
   "dependencies": {
     "easejs": "0.2.x",
-    "mongodb": "1.2.8",
+    "mongodb": "1.2.14",
     "amqplib": "0.5.3"
   },
   "devDependencies": {
