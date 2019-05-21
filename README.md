@@ -40,6 +40,7 @@ If `configure` is not available, see the section "Configuring" above.
 ```
   $ ./configure   # see --help for optional arguments
   $ make          # build
+  $ npm install   # install js dependencies
   $ make check    # run test cases
 ```
 
