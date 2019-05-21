@@ -178,6 +178,6 @@ module.exports = Class( 'ServerSideQuote' )
 
         this._metabucket.setValues( data );
         return this;
-    },
+    }
 } );
 

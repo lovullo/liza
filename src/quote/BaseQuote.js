@@ -26,7 +26,6 @@ var Class        = require( 'easejs' ).Class,
     Program      = require( '../program/Program' ).Program,
     EventEmitter = require( 'events' ).EventEmitter;
 
-
 /**
  * Creates a new quote
  *
@@ -148,8 +147,8 @@ module.exports = Class( 'BaseQuote' )
      */
     'public __construct': function( id, bucket )
     {
-        this._id     = id;
-        this._bucket = bucket;
+        this._id          = id;
+        this._bucket      = bucket;
     },
 
 
@@ -268,6 +267,71 @@ module.exports = Class( 'BaseQuote' )
     'public getInitialRatedDate': function()
     {
         return this._initialRatedDate;
+    },
+
+
+    /**
+     * Returns the quote's expiration date
+     *
+     * @return {number} quote's initial rated date
+     */
+    'public getExpirationDate': function()
+    {
+        var post_rate = ( this._initialRatedDate > 0 );
+
+        // Don't attempt to calculate expiration date if expiration is not defined
+        if ( !this._program
+            || !this._program.lockTimeout
+            || ( !post_rate && !this._program.lockTimeout.preRateExpiration )
+            || ( post_rate && !this._program.lockTimeout.postRateExpiration ))
+        {
+            return Number.POSITIVE_INFINITY;
+        }
+
+        var reference_date    = ( post_rate ) ? this._initialRatedDate : this._startDate;
+        var expiration_period = ( post_rate )
+            ? this._program.lockTimeout.postRateExpiration
+            : this._program.lockTimeout.preRateExpiration;
+
+        // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
+        var expiration_date = new Date( reference_date );
+        expiration_date.setDate( expiration_date.getDate() + expiration_period );
+
+        return expiration_date.getTime();
+    },
+
+
+    /**
+     * Returns whether the quote has expired or not
+     *
+     * @param {Date} current_date current date to determine if expiration date has passed
+     *
+     * @return {boolean} flag indicating if the quote has expired
+     */
+    'public hasExpired': function( current_date )
+    {
+        var timeout = ( this._program && this._program.lockTimeout )
+            ? this._program.lockTimeout
+            : { preRateGracePeriod: 0, postRateGracePeriod: 0 };
+
+        var grace_period = ( this._initialRatedDate > 0 )
+            ? ( timeout.postRateGracePeriod || 0 )
+            : ( timeout.preRateGracePeriod || 0 );
+
+        var expiration_timestamp = this.getExpirationDate();
+
+        // If the timestamp is INFINITY, the quote will never expire
+        // NOTE: The Date constructor does not support INFINITY as the timestamp
+        if ( expiration_timestamp === Number.POSITIVE_INFINITY )
+        {
+            return false;
+        }
+
+        // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
+        var expiration_date = new Date( expiration_timestamp );
+        expiration_date.setDate( expiration_date.getDate() + grace_period );
+
+        return current_date.getTime() > expiration_date.getTime();
     },
 
 
