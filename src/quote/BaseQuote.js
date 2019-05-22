@@ -745,7 +745,7 @@ module.exports = Class( 'BaseQuote' )
     'public getExplicitLockReason': function()
     {
         return ( this.isBound() )
-            ? 'Quote has been bound'
+            ? 'This quote has been bound and cannot be modified.'
             : this._explicitLock;
     },
 

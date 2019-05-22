@@ -737,7 +737,7 @@ module.exports = Class( 'Server' )
                 )
             } ];
 
-            lock = 'concurrent-access';
+            lock = 'Quote is locked due to concurrent access.';
         }
 
         // decrypt bucket contents, if necessary, and return

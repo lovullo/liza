@@ -27,6 +27,12 @@ const { BaseQuote } = require( '../../' ).quote;
 const Program       = require( '../../src/program/Program' ).Program;
 const Util          = require( '../../src/test/program/util' );
 
+const messages = {
+    expire: 'This quote has expired and cannot be modified. ' +
+            'Please contact support with any questions.',
+    bound: 'This quote has been bound and cannot be modified.'
+};
+
 describe( 'BaseQuote', () =>
 {
     describe( 'accessors & mutators', () =>
@@ -143,7 +149,7 @@ describe( 'BaseQuote', () =>
             },
             {
                 description: 'bound quote',
-                reason: { given: '', expected: 'Quote has been bound' },
+                reason: { given: '', expected: messages.bound },
                 step: 0,
                 bound: true,
                 imported: false,
@@ -159,7 +165,7 @@ describe( 'BaseQuote', () =>
             },
             {
                 description: 'bound and imported quote',
-                reason: { given: '', expected: 'Quote has been bound' },
+                reason: { given: '', expected: messages.bound },
                 step: 0,
                 bound: true,
                 imported: true,
@@ -167,7 +173,7 @@ describe( 'BaseQuote', () =>
             },
             {
                 description: 'bound quote with a lock on step #2',
-                reason: { given: '', expected: 'Quote has been bound' },
+                reason: { given: '', expected: messages.bound },
                 step: { given: 2, expected: 0 },
                 bound: true,
                 imported: false,
@@ -218,7 +224,7 @@ describe( 'BaseQuote', () =>
                 expect( quote.isLocked() ).to.equal( locks );
 
                 quote.clearExplicitLock();
-                expect( quote.getExplicitLockReason() ).to.equal( bound ? 'Quote has been bound' : '' );
+                expect( quote.getExplicitLockReason() ).to.equal( bound ? messages.bound : '' );
                 expect( quote.getExplicitLockStep() ).to.equal( 0 );
             } );
         } );
