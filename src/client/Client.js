@@ -2206,6 +2206,9 @@ module.exports = Class( 'Client' )
         var client        = this,
             explicit_step = this._quote.getExplicitLockStep();
 
+        var lock_msg = this._quote.getExplicitLockReason() ||
+            "The quote is locked and cannot be modified.";
+
         // if the step is locked to step 1, then there is no noticable effect;
         // don't bother
         if ( explicit_step == 1 )
@@ -2222,9 +2225,7 @@ module.exports = Class( 'Client' )
             {
                 client.ui.showNotifyBar(
                     $( '<div>' ).append(
-                        $( '<div class="text">' ).html(
-                            "The quote is locked and cannot be modified."
-                        )
+                        $( '<div class="text">' ).html( lock_msg )
                     )
                 );
             }, 25 );

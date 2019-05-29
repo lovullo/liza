@@ -255,6 +255,12 @@ module.exports = Class( 'Server' )
     /**
      * Initializes a quote with any existing quote data
      *
+     * @param Integer           quote_id  id of the quote
+     * @param Program           program   program that the quote will be a part of
+     * @param Object            request   request to create quote
+     * @param Function( quote ) callback  function to call when quote is ready
+     * @param Function( quote ) callback  function to call when an error occurs
+     *
      * @return Server self to allow for method chaining
      */
     initQuote: function( quote, program, request, callback, error_callback )
@@ -696,6 +702,15 @@ module.exports = Class( 'Server' )
             }
         }
 
+        // Expire quote as needed
+        if ( quote.hasExpired( new Date() ) )
+        {
+            quote.setExplicitLock(
+                'This quote has expired and cannot be modified. ' +
+                'Please contact support with any questions.'
+            );
+        }
+
         var bucket    = quote.getBucket(),
             lock      = quote.getExplicitLockReason(),
             lock_step = quote.getExplicitLockStep(),
@@ -722,7 +737,7 @@ module.exports = Class( 'Server' )
                 )
             } ];
 
-            lock = 'concurrent-access';
+            lock = 'Quote is locked due to concurrent access.';
         }
 
         // decrypt bucket contents, if necessary, and return

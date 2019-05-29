@@ -245,8 +245,29 @@ exports.stubCmatch = ( cmatch_dfn ) =>
     return cmatch;
 };
 
-
-exports.stubProgram = Program => Program.extend(
+/**
+ * Produce a stub class that extends the abstract Program class
+ *
+ * @param {Program} ProgramSut class to extend
+ * @param {function} mockInitQuote optional: mock implementation of 'initQuote' function
+ *
+ * @return {Class} stub class for creating mock Program object(s)
+ */
+exports.stubProgram = ( ProgramSut, mockInitQuote ) =>
 {
-    classifier: __dirname + '/DummyClassifier',
-} );
+    // TODO: Make ProgramSut optional
+    if ( !ProgramSut )
+    {
+        throw new Error( "Class for Program stub must be specified." );
+    }
+
+    mockInitQuote = mockInitQuote ||
+                    ProgramSut.initQuote ||
+                    ( ( bucket, store_only ) => {} );
+
+    return ProgramSut.extend(
+    {
+        classifier: __dirname + '/DummyClassifier',
+        initQuote: mockInitQuote
+    } );
+};

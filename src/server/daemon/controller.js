@@ -633,9 +633,11 @@ function doRoute( program, request, data, resolve, reject )
 /**
  * Creates a new quote instance with the given quote id
  *
- * @param Integer           quote_id id of the quote
- * @param Program           program  program that the quote will be a part of
- * @param Function( quote ) callback function to call when quote is ready
+ * @param Integer           quote_id  id of the quote
+ * @param Program           program   program that the quote will be a part of
+ * @param Object            request   request to create quote
+ * @param Function( quote ) callback  function to call when quote is ready
+ * @param Function( quote ) callback  function to call when an error occurs
  *
  * @return undefined
  */
