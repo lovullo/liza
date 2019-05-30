@@ -285,7 +285,7 @@ module.exports = Class( 'BaseQuote' )
             || ( !post_rate && !this._program.lockTimeout.preRateExpiration )
             || ( post_rate && !this._program.lockTimeout.postRateExpiration ))
         {
-            return Number.POSITIVE_INFINITY;
+            return Infinity;
         }
 
         var reference_date    = ( post_rate ) ? this._initialRatedDate : this._startDate;
@@ -294,8 +294,8 @@ module.exports = Class( 'BaseQuote' )
             : this._program.lockTimeout.preRateExpiration;
 
         // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
-        var expiration_date = new Date( reference_date );
-        expiration_date.setDate( expiration_date.getDate() + expiration_period );
+        var expiration_date = new Date( reference_date * 1000 );
+        expiration_date.setDate( expiration_date.getDate() + +( expiration_period ) );
 
         return expiration_date.getTime();
     },
@@ -320,16 +320,16 @@ module.exports = Class( 'BaseQuote' )
 
         var expiration_timestamp = this.getExpirationDate();
 
-        // If the timestamp is INFINITY, the quote will never expire
-        // NOTE: The Date constructor does not support INFINITY as the timestamp
-        if ( expiration_timestamp === Number.POSITIVE_INFINITY )
+        // If the timestamp is infinite, the quote will never expire
+        // NOTE: The Date constructor does not support `Infinity` as the timestamp
+        if ( expiration_timestamp === Infinity )
         {
             return false;
         }
 
         // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
         var expiration_date = new Date( expiration_timestamp );
-        expiration_date.setDate( expiration_date.getDate() + grace_period );
+        expiration_date.setDate( expiration_date.getDate() + +( grace_period ));
 
         return current_date.getTime() > expiration_date.getTime();
     },

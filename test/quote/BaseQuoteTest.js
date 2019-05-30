@@ -245,9 +245,9 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                expirationDate: 7862400000,
-                currentDate: 86400000,
+                startDate: 86400,
+                expirationDate: 7862400,
+                currentDate: 86400,
                 expired: false
             },
             {
@@ -258,9 +258,9 @@ describe( 'BaseQuote', () =>
                     postRateExpiration: 30
                 },
                 startDate: 86400000,
-                initialRatedDate: 172800000,
-                expirationDate: 2764800000,
-                currentDate: 172800000,
+                initialRatedDate: 172800,
+                expirationDate: 2764800,
+                currentDate: 172800,
                 expired: false
             },
             {
@@ -271,9 +271,9 @@ describe( 'BaseQuote', () =>
                     postRateExpiration: 30
                 },
                 startDate: 86400,
-                initialRatedDate: 172800000,
-                expirationDate: 2764800000,
-                currentDate: 2851200000,
+                initialRatedDate: 172800,
+                expirationDate: 2764800,
+                currentDate: 2851200,
                 expired: true
             },
             {
@@ -286,9 +286,9 @@ describe( 'BaseQuote', () =>
                     postRateGracePeriod: 5
                 },
                 startDate: 86400,
-                initialRatedDate: 172800000,
-                expirationDate: 2764800000,
-                currentDate: 2851200000,
+                initialRatedDate: 172800,
+                expirationDate: 2764800,
+                currentDate: 2851200,
                 expired: false
             },
             {
@@ -298,9 +298,9 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                expirationDate: 7862400000,
-                currentDate: 5356800000,
+                startDate: 86400,
+                expirationDate: 7862400,
+                currentDate: 5356800,
                 expired: false
             },
             {
@@ -310,10 +310,10 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                initialRatedDate: 172800000,
-                expirationDate: 2764800000,
-                currentDate: 5356800000,
+                startDate: 86400,
+                initialRatedDate: 172800,
+                expirationDate: 2764800,
+                currentDate: 5356800,
                 expired: true
             },
             {
@@ -323,9 +323,9 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                expirationDate: 7862400000,
-                currentDate: 7948800000,
+                startDate: 86400,
+                expirationDate: 7862400,
+                currentDate: 7948800,
                 expired: true
             },
             {
@@ -337,9 +337,9 @@ describe( 'BaseQuote', () =>
                     postRateExpiration: 30,
                     postRateGracePeriod: 5
                 },
-                startDate: 86400000,
-                expirationDate: 7862400000,
-                currentDate: 7948800000,
+                startDate: 86400,
+                expirationDate: 7862400,
+                currentDate: 7948800,
                 expired: false
             },
             {
@@ -349,9 +349,9 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                expirationDate: 7862400000,
-                currentDate: 10540800000,
+                startDate: 86400,
+                expirationDate: 7862400,
+                currentDate: 10540800,
                 expired: true
             },
             {
@@ -361,10 +361,10 @@ describe( 'BaseQuote', () =>
                     preRateExpiration: 90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
-                initialRatedDate: 172800000,
-                expirationDate: 2764800000,
-                currentDate: 10540800000,
+                startDate: 86400,
+                initialRatedDate: 172800,
+                expirationDate: 2764800,
+                currentDate: 10540800,
                 expired: true
             }
 
@@ -374,8 +374,9 @@ describe( 'BaseQuote', () =>
             const description        = "Expiration is correct for " + testCase.description;
             const start_date         = testCase.startDate;
             const initial_rated_date = testCase.initialRatedDate;
-            const current_date       = testCase.currentDate;
-            const expiration_date    = testCase.expirationDate;
+            const current_date       = testCase.currentDate * 1000;
+            const expiration_date    = ( typeof testCase.expirationDate === "number" )
+                ? testCase.expirationDate * 1000 : undefined;
             const expired            = testCase.expired;
 
             quote.setProgram( createStubProgram( testCase.lockTimeout ) );
@@ -394,10 +395,10 @@ describe( 'BaseQuote', () =>
 
                 if ( expiration_date !== undefined )
                 {
-                    expect( quote.getExpirationDate() ).to.equal( +expiration_date );
+                    expect( quote.getExpirationDate() ).to.equal( expiration_date );
                 }
 
-                expect( quote.hasExpired( new Date( current_date ) ) ).to.equal( !!expired );
+                expect( quote.hasExpired( new Date( current_date ) ) ).to.equal( expired );
             } );
         } );
     } );
