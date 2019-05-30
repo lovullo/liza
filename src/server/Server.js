@@ -761,6 +761,7 @@ module.exports = Class( 'Server' )
                 agentEntityId:      ( internal ) ? quote.getAgentEntityId() : 0,
                 startDate:          quote.getStartDate(),
                 initialRatedDate:   quote.getInitialRatedDate(),
+                lastPremDate:       quote.getLastPremiumDate(),
 
                 quicksave: quote.getQuickSaveData(),
 
