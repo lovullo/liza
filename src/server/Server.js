@@ -335,7 +335,7 @@ module.exports = Class( 'Server' )
                     .setAgentEntityId( quote_data.agentEntityId || "" )
                     .setInitialRatedDate( quote_data.initialRatedDate || 0 )
                     .setStartDate(
-                        quote_data.getStartDate
+                        quote_data.startDate
                         || Math.round( new Date().getTime() / 1000 )
                     )
                     .setImported( quote_data.importedInd || false )
