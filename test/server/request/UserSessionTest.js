@@ -46,8 +46,16 @@ describe( 'UserSession', () =>
             expects: { "foo": { "0": "a" } },
         },
         {
-            session: 'foo|a:1:{i:0;s:1:"a";}|bar|a:1:{s:1:"a";i:1;}',
+            session: 'foo|a:1:{i:0;s:1:"a";}bar|a:1:{s:1:"a";i:1;}',
             expects: { "foo": { "0": "a" }, "bar": { "a": 1 } },
+        },
+        {
+            session: '_sf2_attributes|a:1:{i:0;s:1:"a";}',
+            expects: {},
+        },
+        {
+            session: 'foo|a:1:{i:0;s:1:"a";}_sf2_attributes|a:1:{i:0;s:1:"a";}',
+            expects: { "foo": { "0": "a" } },
         },
     ].forEach( ( data ) =>
     {
