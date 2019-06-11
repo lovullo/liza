@@ -178,7 +178,8 @@ module.exports = Class( 'RatingService',
 
                 // no need to wait for the save; send the response
                 _self._server.sendResponse( request, quote, {
-                    data: cleaned
+                    data: cleaned,
+                    initialRatedDate: quote.getInitialRatedDate()
                 }, actions );
             },
             function( message )
@@ -216,6 +217,7 @@ module.exports = Class( 'RatingService',
 
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
+            quote.setInitialRatedDate( cur_date );
 
             function done()
             {

@@ -566,6 +566,24 @@ module.exports = Class( 'ClientQuote' )
 
 
     /**
+     * Sets the quote's initial rated date
+     *
+     * @param {number} time initial rated date as a Unix timestamp
+     *
+     * @return {Quote} self
+     */
+    'public proxy setInitialRatedDate': '_quote',
+
+
+    /**
+     * Returns the quote's expiration date
+     *
+     * @return {number} quote's initial rated date
+     */
+    'public proxy getExpirationDate': '_quote',
+
+
+    /**
      * Returns the id of the agent that owns the quote
      *
      * @return {number} agent id

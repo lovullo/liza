@@ -141,7 +141,7 @@ module.exports = Class( 'RateEventHandler' )
         this._dataProxy.get( this._genRateUrl( quote, indv ),
             function( response, err )
             {
-                var data = ( response.content.data || {} );
+                const { initialRatedDate: initial_rated = 0, data = {} } = response.content || {};
 
                 if ( err )
                 {
@@ -153,6 +153,8 @@ module.exports = Class( 'RateEventHandler' )
                 // fill the bucket with the response data and save (client-side
                 // save only; no transport is specified)
                 quote.refreshData( data );
+
+                quote.setInitialRatedDate( initial_rated );
 
                 // let subtypes handle additional processing
                 _self.postRate( err, data, _self._client, quote );
