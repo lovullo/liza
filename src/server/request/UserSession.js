@@ -1,7 +1,7 @@
 /**
  * UserSession class
  *
- *  Copyright (C) 2019 R-T Specialty, LLC.
+ *  Copyright (C) 2017 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -280,17 +280,11 @@ module.exports = Class.extend( require( 'events' ).EventEmitter,
                     var key = splits[ i ],
                         val = splits[ ++i ];
 
-                    // we do not need _sf2_attributes since they are serialized PHP
-                    // objects and cause problems unserializing when they are
-                    // serialized in PHP7.
-                    if ( key !== '_sf2_attributes' )
-                    {
-                        // the values are serialized PHP data; unserialize them
-                        val = php.unserialize( val );
+                    // the values are serialized PHP data; unserialize them
+                    val = php.unserialize( val );
 
-                        // add to the session data
-                        session_data[ key ] = val;
-                    }
+                    // add to the session data
+                    session_data[ key ] = val;
                 }
             }
 
