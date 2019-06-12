@@ -61,5 +61,45 @@ describe( 'RatingService', () =>
 
             sut.request( request, response, quote, 'something', () => {} );
         } );
+
+        it( "calls getLastPremiumDate during #_performRating", done =>
+        {
+            let getLastPremiumDateCallCount = 0;
+
+            const last_date    = 1234;
+            const initial_date = 2345;
+
+            const {
+                logger,
+                server,
+                raters,
+                dao,
+                request,
+                response,
+                quote,
+            } = RatingServiceStub.getStubs();
+
+            quote.getLastPremiumDate = () =>
+            {
+                getLastPremiumDateCallCount++;
+                return last_date
+            };
+
+            quote.getRatedDate = () => initial_date;
+
+            const sut = Sut( logger, dao, server, raters );
+
+            server.sendResponse = ( request, quote, resp, actions ) =>
+            {
+                expect( getLastPremiumDateCallCount ).to.equal( 2 );
+                expect( resp.initialRatedDate ).to.equal( initial_date );
+                expect( resp.lastRatedDate ).to.equal( last_date );
+
+                done();
+            };
+
+            sut.request( request, response, quote, null, () => {} );
+        } );
+
     } );
 } );

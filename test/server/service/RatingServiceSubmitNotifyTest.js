@@ -179,8 +179,8 @@ describe( 'RatingServiceSubmitNotify', () =>
                 // only save notification status if we're notifying
                 expect( notify_saved ).to.equal( expected.save );
 
+                done();
             } );
-            done();
         } )
     );
 } );

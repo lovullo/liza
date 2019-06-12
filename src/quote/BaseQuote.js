@@ -86,6 +86,12 @@ module.exports = Class( 'BaseQuote' )
     'private _initialRatedDate': 0,
 
     /**
+     * Unix timestamp containing date of last premium calculation
+     * @type {number}
+     */
+    'private _lastPremDate': 0,
+
+    /**
      * Id of agent that owns the quote
      * @type {number}
      */
@@ -267,6 +273,31 @@ module.exports = Class( 'BaseQuote' )
     'public getInitialRatedDate': function()
     {
         return this._initialRatedDate;
+    },
+
+
+    /**
+     * Set the date that the premium was calculated as a Unix timestamp
+     *
+     * @param {number} timestamp Unix timestamp representing premium date
+     *
+     * @return {Quote} self
+     */
+    'public setLastPremiumDate': function( timestamp )
+    {
+        this._lastPremDate = ( timestamp || 0 );
+        return this;
+    },
+
+
+    /**
+     * Retrieve the last time the premium was calculated
+     *
+     * @return {number} last calculated time or 0
+     */
+    'public getLastPremiumDate': function()
+    {
+        return ( this._lastPremDate || 0 );
     },
 
 

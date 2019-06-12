@@ -139,6 +139,7 @@ module.exports = Class( 'ClientQuote' )
             .setAgentEntityId( data.agentEntityId || "" )
             .setStartDate( data.startDate || 0 )
             .setInitialRatedDate( data.initialRatedDate || 0 )
+            .setLastPremiumDate( data.lastRatedDate || 0 )
             .setImported( data.imported || false )
             .setBound( data.bound || false )
             .needsImport( data.needsImport || false )
@@ -573,6 +574,24 @@ module.exports = Class( 'ClientQuote' )
      * @return {Quote} self
      */
     'public proxy setInitialRatedDate': '_quote',
+
+
+    /**
+     * Set the date that the premium was calculated as a Unix timestamp
+     *
+     * @param {number} timestamp Unix timestamp representing premium date
+     *
+     * @return {Quote} self
+     */
+    'public proxy setLastPremiumDate': '_quote',
+
+
+    /**
+     * Retrieve the last time the premium was calculated
+     *
+     * @return {number} last calculated time or 0
+     */
+    'public proxy getLastPremiumDate': '_quote',
 
 
     /**

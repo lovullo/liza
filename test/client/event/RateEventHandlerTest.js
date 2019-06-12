@@ -26,20 +26,40 @@ const Sut        = require( '../../..' ).client.event.RateEventHandler;
 
 describe( 'RateEventHandler', () =>
 {
-    describe( "Handle Rating Event", () =>
+    describe( "Handle Rating Event with all conditions met for clean rating", () =>
     {
         it( "calls #handle to do the rating", done =>
         {
-            const stepId = 0;
-            const lockStep = 1;
+            let test_init_date = false;
+            let test_last_prem_date = false;
+            let test_lock_quote = false;
+
+            const stepId = 1;
+            const lockStep = 0;
             const indv = "somerater";
+            const initial_rated_date = 111;
+            const last_premium_date  = 222;
 
             const quote = {
                 getExplicitLockStep: () => lockStep,
-                setInitialRatedDate: ( value ) => {},
+                setLastPremiumDate:  given =>
+                {
+                    expect( given ).to.equal( last_premium_date );
+                    test_init_date = true;
+                },
+                setInitialRatedDate: given =>
+                {
+                    expect( given ).to.equal( initial_rated_date );
+                    test_last_prem_date = true;
+                },
                 getCurrentStepId:    () => stepId,
                 refreshData:         () => {},
-                isLocked:            () => false
+                isLocked:  given =>
+                {
+                    test_lock_quote = true;
+                    return false;
+                },
+                getId:               () => "111111"
             };
 
             const step = {
@@ -51,6 +71,7 @@ describe( 'RateEventHandler', () =>
             };
 
             const client = {
+                showRatingInProgressDialog: () => "Some Dialog",
                 getQuote: () => quote,
                 isSaving: () => false,
                 once:     ( event, callback ) => {},
@@ -59,11 +80,13 @@ describe( 'RateEventHandler', () =>
 
             const response = {
                 content: {
-                    data: "Some Data"
+                    data: "Some Data",
+                    initialRatedDate: initial_rated_date,
+                    lastRatedDate: last_premium_date
                 }
             };
 
-            const error = "ERROR";
+            const error = null;
 
             const proxy = {
                 get: ( url, callback ) => callback( response, error )
@@ -71,11 +94,159 @@ describe( 'RateEventHandler', () =>
 
             const sut = Sut( client, proxy );
 
-            sut.handle( "", function() {}, {
-                indv:   indv,
-                stepId: stepId
-            } );
-            done();
+            sut.handle(
+                "",
+                ( err, result ) =>
+                {
+                    expect( err ).to.equal( error );
+                    expect( result ).to.equal( response.content.data );
+                    expect( test_init_date ).to.equal( true );
+                    expect( test_last_prem_date ).to.equal( true );
+                    expect( test_lock_quote ).to.equal( true );
+                    done();
+                },
+                {
+                    indv:   indv,
+                    stepId: stepId
+                }
+            )
+
         } )
-    } )
+    } );
+
+    describe( "Handle Rating Event with locked quote", () =>
+    {
+        it( "calls #handle to do the rating with a locked quote", done =>
+        {
+
+            let test_lock_quote = false;
+
+            const stepId = 1;
+            const lockStep = 0;
+            const indv = "somerater";
+            const error = null;
+            const proxy = {
+                get: ( url, callback ) => callback( response, error )
+            };
+
+            const quote = {
+                getExplicitLockStep: () => lockStep,
+                getCurrentStepId:    () => stepId,
+                isLocked:  given =>
+                {
+                    test_lock_quote = true;
+                    return true;
+                }
+            };
+
+            const client = {
+                getQuote: () => quote,
+                isSaving: () => false,
+                getUi:    () => ui
+            };
+
+
+            const sut = Sut( client, proxy );
+
+            sut.handle(
+                "",
+                ( err, result ) =>
+                {
+                    expect( test_lock_quote ).to.equal( true );
+                    done();
+                },
+                {
+                    indv:   indv,
+                    stepId: stepId
+                }
+            )
+        } )
+    } );
+
+    describe( "Handle Rating Event during a save event", () =>
+    {
+        it( "calls #handle to do the rating with a saving quote", done =>
+        {
+            let test_init_date = false;
+            let test_last_prem_date = false;
+            let test_save_quote = false;
+
+            const stepId = 1;
+            const lockStep = 0;
+            const indv = "somerater";
+            const initial_rated_date = 111;
+            const last_premium_date  = 222;
+
+            const quote = {
+                getExplicitLockStep: () => lockStep,
+                setLastPremiumDate:  given =>
+                {
+                    expect( given ).to.equal( last_premium_date );
+                    test_init_date = true;
+                },
+                setInitialRatedDate: given =>
+                {
+                    expect( given ).to.equal( initial_rated_date );
+                    test_last_prem_date = true;
+                },
+                getCurrentStepId:    () => stepId,
+                refreshData:         () => {},
+                isLocked:            () => false,
+                getId:               () => "111111"
+            };
+
+            const step = {
+                invalidate: () => {}
+            };
+
+            const ui = {
+                getStep: ( dest ) => step
+            };
+
+            const client = {
+                showRatingInProgressDialog: () => "Some Dialog",
+                getQuote: () => quote,
+                isSaving: given =>
+                {
+                    test_save_quote = true;
+                    return true;
+                },
+                once:     ( event, callback ) => callback(),
+                getUi:    () => ui
+            };
+
+            const response = {
+                content: {
+                    data: "Some Data",
+                    initialRatedDate: initial_rated_date,
+                    lastRatedDate: last_premium_date
+                }
+            };
+
+            const error = null;
+
+            const proxy = {
+                get: ( url, callback ) => callback( response, error )
+            };
+
+            const sut = Sut( client, proxy );
+
+            sut.handle(
+                "",
+                ( err, result ) =>
+                {
+                    expect( err ).to.equal( error );
+                    expect( result ).to.equal( response.content.data );
+                    expect( test_init_date ).to.equal( true );
+                    expect( test_last_prem_date ).to.equal( true );
+                    expect( test_save_quote ).to.equal( true );
+                    done();
+                },
+                {
+                    indv:   indv,
+                    stepId: stepId
+                }
+            )
+        } )
+    } );
 } )
