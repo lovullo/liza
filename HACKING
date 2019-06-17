@@ -7,7 +7,7 @@ Publishing New Versions
 =======================
 To build and publish a new version on NPM:
 
-- Tag version with 'v' prefix
+- Tag version with 'v' prefix using semver (https://semver.org/)
 - Regenerate `configure' with version information:
     $ ./autogen.sh
 - Test:
