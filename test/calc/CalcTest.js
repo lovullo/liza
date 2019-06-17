@@ -64,7 +64,7 @@ describe( 'relativeDate', function()
             .to.have.all.members( ['2019-02-28'] );
     });
 
-    it( 'assert ege case february leap year', function()
+    it( 'assert edge case february leap year', function()
     {
         expect( relativeDate( ['2019-12-31'], ['2m'] ) )
             .to.have.all.members( ['2020-02-29'] );
