@@ -289,7 +289,7 @@ exports.relativeDate = function( data, value )
         // when adding a month to the last day of the month
         // make sure the new date is also the last day of the month
         // and not the first day of the next
-        if( type === 'm' && date_new.getDate() !== now_day )
+        if( type === 'm' && date_new.getUTCDate() !== now_day )
         {
             date_new.setDate(0);
         }
