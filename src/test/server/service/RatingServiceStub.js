@@ -53,6 +53,7 @@ exports.getStubs = function()
         mergeBucket:      () => {},
         saveQuoteClasses: () => {},
         setWorksheets:    () => {},
+        saveQuote:        () => {},
     };
 
     const session = {
@@ -60,15 +61,19 @@ exports.getStubs = function()
     };
 
     const request = {
-        getSession: () => session,
+        getSession:       () => session,
         getSessionIdName: () => {},
     };
     const response = {};
 
     const quote = {
-        getProgramId: () => program_id,
-        getProgram:   () => program,
-        getId:        () => 0,
+        getProgramId:       () => program_id,
+        getProgram:         () => program,
+        getId:              () => 0,
+        setLastPremiumDate: () => {},
+        setRatedDate:       () => {},
+        getRatedDate:       () => 0,
+        getLastPremiumDate: () => 0
     };
 
     return {

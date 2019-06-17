@@ -35,16 +35,18 @@ describe( 'ClientQuote', () =>
     const agent_name         = 'John Doe';
     const agent_entity_id    = 12434300;
     const initial_rated_date = 1531507748;
+    const last_rated_date    = 1531508748;
     const quote              = ClientQuote(
               base_quote,
               {
-                  startDate: start_date,
-                  agentId: agent_id,
-                  agentName: agent_name,
-                  agentEntityId: agent_entity_id,
+                  startDate:        start_date,
+                  agentId:          agent_id,
+                  agentName:        agent_name,
+                  agentEntityId:    agent_entity_id,
                   initialRatedDate: initial_rated_date,
+                  lastRatedDate:    last_rated_date,
               },
-                  bucket => bucket
+              bucket => bucket
           );
 
     it( 'getStartDate returns base quote startDate', () =>
@@ -70,5 +72,10 @@ describe( 'ClientQuote', () =>
     it( 'getInitialRatedDate returns base quote initialRatedDate', () =>
     {
         expect( quote.getInitialRatedDate() ).to.equal( initial_rated_date );
+    } );
+
+    it( 'getLastPremiumDate returns base quote lastRatedDate', () =>
+    {
+        expect( quote.getLastPremiumDate() ).to.equal( last_rated_date );
     } );
 } );

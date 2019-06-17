@@ -274,7 +274,7 @@ exports.relativeDate = function( data, value )
 
             // days
             case 'd':
-                date_new.setDay( date_new.getDay() + +tval );
+                date_new.setDate( date_new.getUTCDate() + +tval );
                 break;
 
             // seconds
