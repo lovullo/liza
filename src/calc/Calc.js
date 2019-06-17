@@ -274,7 +274,7 @@ exports.relativeDate = function( data, value )
 
             // days
             case 'd':
-                date_new.setDate( date_new.getUTCDate() + +tval );
+                date_new.setDate( date_new.getDate() + +tval );
                 break;
 
             // seconds
@@ -284,6 +284,14 @@ exports.relativeDate = function( data, value )
 
             default:
                 return '';
+        }
+
+        // when adding a month to the last day of the month
+        // make sure the new date is also the last day of the month
+        // and not the first day of the next
+        if( type === 'm' && date_new.getDate() !== now_day )
+        {
+            date_new.setDate(0);
         }
 
         // return in the YYYY-MM-DD format, since that's what our fields are
