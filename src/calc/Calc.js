@@ -274,7 +274,7 @@ exports.relativeDate = function( data, value )
 
             // days
             case 'd':
-                date_new.setDate( date_new.getUTCDate() + +tval );
+                date_new.setUTCDate( date_new.getUTCDate() + +tval );
                 break;
 
             // seconds
@@ -291,7 +291,7 @@ exports.relativeDate = function( data, value )
         // and not the first day of the next
         if( type === 'm' && date_new.getUTCDate() !== now_day )
         {
-            date_new.setDate(0);
+            date_new.setUTCDate(0);
         }
 
         // return in the YYYY-MM-DD format, since that's what our fields are
