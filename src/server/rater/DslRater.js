@@ -184,7 +184,7 @@ module.exports = Class( 'DslRater' )
             // should _not_ be displayed to the user
             if ( /^submit-.*[^-]$/.test( cname ) && c[ cname ] )
             {
-                submits.push( this._getCdesc( cname, rater ) );
+                submits.push( this.getCdesc( cname, rater, data ) );
             }
         }
 
@@ -210,7 +210,7 @@ module.exports = Class( 'DslRater' )
     },
 
 
-    'private _getCdesc': function( cname, rater, default_value )
+    'virtual public getCdesc': function( cname, rater, data, default_value )
     {
         default_value = ( default_value === undefined )
             ? cname
