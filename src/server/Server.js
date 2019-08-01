@@ -747,6 +747,8 @@ module.exports = Class( 'Server' )
                 valid: valid,
                 data:  bucket.getData() || {},
 
+                meta: ( internal ) ? quote.getMetabucket().getData() : {},
+
                 programId: program_id,
 
                 currentStepId:      quote.getCurrentStepId(),
