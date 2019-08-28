@@ -356,6 +356,7 @@ function doRoute( program, request, data, resolve, reject )
         );
 
         resolve( true );
+        return;
     }
 
     var skey = has_skey( request );
@@ -383,6 +384,7 @@ function doRoute( program, request, data, resolve, reject )
             } );
 
             resolve( true );
+            return;
         }
     }
 
@@ -502,6 +504,7 @@ function doRoute( program, request, data, resolve, reject )
         // no quote involved; just send the JS
         server.sendProgramJs( request, program_id );
         resolve( true );
+        return;
     }
     else if ( /^rate\b/.test( cmd ) )
     {
@@ -600,6 +603,7 @@ function doRoute( program, request, data, resolve, reject )
     else
     {
         resolve( false );
+        return;
     }
 
     // create a quote to represent this request
