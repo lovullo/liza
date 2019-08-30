@@ -2,7 +2,7 @@
  * @license
  * StringFormat formatter
  *
- *  Copyright (C) 2016 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *

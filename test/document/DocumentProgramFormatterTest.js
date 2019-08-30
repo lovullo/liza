@@ -1,7 +1,7 @@
 /**
  * Test of DocumentProgramFormatter
  *
- *  Copyright (C) 2018 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *

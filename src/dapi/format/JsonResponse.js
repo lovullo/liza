@@ -1,7 +1,7 @@
 /**
  * Processes DataApi return data as JSON
  *
- *  Copyright (C) 2014, 2015 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
