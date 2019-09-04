@@ -39,12 +39,17 @@ dist-hook: check
 
 # used to force typescript compilation (it handles its own incremental
 # compilation and dependency discovery)
-$(tsout): FORCE
+$(tsout): FORCE $(path_src)/.gitignore $(path_test)/.gitignore
 	node_modules/.bin/tsc
 
 modindex: $(nsindex)
 %/index.js: FORCE $(tsout)
 	./tools/gen-index "$*" > "$@"
+
+# ignore compiled JS files (this can be removed once all files are TS)
+%/.gitignore: FORCE
+	@echo "# THIS FILE IS GENERATED; DO NOT MODIFY!" > $@
+	( cd $*/ && find . -name '*.ts' -printf "%P\n" | sed 's/\.ts$$/.js/' ) >> $@
 
 test: check
 check: $(tsout)
