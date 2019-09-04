@@ -313,10 +313,6 @@ module.exports = Class( 'MongoServerDao' )
             meta = quote.getMetabucket().getData();
         }
 
-        // when we update the quote data, clear quick save data (this data
-        // should take precedence)
-        save_data.quicksave = {};
-
         var id = quote.getId();
 
         // some data should always be saved because the quote will be created if
@@ -454,46 +450,6 @@ module.exports = Class( 'MongoServerDao' )
         }
 
         return this.mergeData( quote, update, scallback, fcallback );
-    },
-
-
-    /**
-     * Perform a "quick save"
-     *
-     * A quick save simply saves the given diff to the database for recovery
-     * purposes
-     *
-     * @param {Quote}  quote quote being saved
-     * @param {Object} diff  staged changes
-     *
-     * @param {function(*)} callback callback to call when complete
-     *
-     * @return {MongoServerDao} self
-     */
-    'public quickSaveQuote': function( quote, diff, callback )
-    {
-        // unlikely, but possible for a request to come in before we're ready
-        // since this system is asynchronous
-        if ( this._ready === false )
-        {
-            callback( Error( 'Database server not ready' ) );
-            return;
-        }
-
-        var id = quote.getId();
-
-        this._collection.update(
-            { id: id },
-            { $set: { quicksave: diff } },
-
-            // on complete
-            function( err, docs )
-            {
-                callback( err );
-            }
-        );
-
-        return this;
     },
 
 

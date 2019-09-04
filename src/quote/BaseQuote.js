@@ -128,12 +128,6 @@ module.exports = Class( 'BaseQuote' )
     'private _error': '',
 
     /**
-     * Quick save data (diff format)
-     * @type {Object}
-     */
-    'private _quickSaveData': {},
-
-    /**
      * Allows quote to be locked for any reason
      * @type {string}
      */
@@ -707,31 +701,6 @@ module.exports = Class( 'BaseQuote' )
     'public hasError': function()
     {
         return ( this._error !== '' );
-    },
-
-
-    /**
-     * Set quicksave data
-     *
-     * @param {Object} data quicksave data, diff format
-     *
-     * @return {Quote} self
-     */
-    'public setQuickSaveData': function( data )
-    {
-        this._quickSaveData = data;
-        return this;
-    },
-
-
-    /**
-     * Retrieve quicksave data
-     *
-     * @return {Object} quicksave data
-     */
-    'public getQuickSaveData': function()
-    {
-        return this._quickSaveData;
     },
 
 

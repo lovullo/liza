@@ -329,7 +329,6 @@ module.exports = Class( 'Server' )
                 quote
                     .setData( default_bucket )
                     .setMetadata( quote_data.meta || {} )
-                    .setQuickSaveData( quote_data.quicksave || {} )
                     .setAgentId( quote_data.agentId || agent_id )
                     .setAgentName( quote_data.agentName || agent_name )
                     .setAgentEntityId( quote_data.agentEntityId || "" )
@@ -764,8 +763,6 @@ module.exports = Class( 'Server' )
                 startDate:          quote.getStartDate(),
                 initialRatedDate:   quote.getInitialRatedDate(),
                 lastPremDate:       quote.getLastPremiumDate(),
-
-                quicksave: quote.getQuickSaveData(),
 
                 // set to undefined if not internal so it's not included in the
                 // JSON response
@@ -1641,81 +1638,6 @@ module.exports = Class( 'Server' )
 
             return c;
         } )();
-    },
-
-
-    /**
-     * Handle quick save request
-     *
-     * @param {UserRequest} request user request
-     * @param {Quote}       quote   quote to save
-     * @param {Program}     program quote program
-     *
-     * @return {Server} self
-     */
-    'public handleQuickSave': function( request, quote, program )
-    {
-        var _self = this;
-
-        // do not allow quote modification if locked unless logged in as an
-        // internal user (FS#5772) and the program is unlockable
-        if ( quote.isImported() )
-        {
-            //return this;
-        }
-
-        request.getPostData( function( post_data )
-        {
-            // sanitize, permitting nulls (since the diff will have them)
-            try
-            {
-                var data = JSON.parse( post_data.data );
-
-                var filtered = _self._dataProcessor.sanitizeDiff(
-                    data, request, program, true
-                );
-            }
-            catch ( e )
-            {
-                _self.logger.log( server.logger.PRIORITY_ERROR,
-                    "Invalid quicksave data string (%s): %s",
-                    e.message,
-                    post_data.data
-                );
-
-                return;
-            }
-
-            var secure = program.secureFields,
-                i      = secure.length;
-
-            // strip out secure fields (we can encrypt them later; this is just
-            // a quick solution to prevent sensitive data in plain text)
-            while ( i-- )
-            {
-                delete filtered[ secure[ i ] ];
-            }
-
-            // attempt to save the diff
-            _self.dao.quickSaveQuote( quote, filtered, function( err )
-            {
-                if ( !err )
-                {
-                    return;
-                }
-
-                _self.logger.log( server.logger.PRIORITY_DB,
-                    "[Quick Save] Quick Save Failed: " + err
-                );
-            } );
-        } );
-
-        // just send the response immediately, as they do not need feedback if
-        // the quick-save fails (it is for debugging/backup in the event of a
-        // problem, so we need only concern ourselves if there is an issue)
-        this.sendEmptyReply( request, quote );
-
-        return this;
     },
 
 

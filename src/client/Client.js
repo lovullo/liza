@@ -507,8 +507,6 @@ module.exports = Class( 'Client' )
 
             client._monitorQuote( client._quote );
 
-            client._quote.setQuickSaveData( data.content.quicksave || {} );
-
             client._cmatch.hookClassifier( client._dataValidator );
 
             // store internal status
@@ -686,57 +684,6 @@ module.exports = Class( 'Client' )
                 value:       value
             } );
         };
-    },
-
-
-    /**
-     * Merge quick save data with bucket data
-     *
-     * This has the wonderful consequence of allowing the user to refresh the
-     * page and retain the majority of the data. This is useful if the broker
-     * experiences problems that require a refresh to resolve. This also allows
-     * us (developers) to jump into a quote to aid the broker before the step
-     * is saved.
-     *
-     * @return {undefined}
-     */
-    'private _mergeQuickSaveData': function()
-    {
-        var merge   = {},
-            qs_data = this._quote.getQuickSaveData();
-
-        // merge quick save data with bucket
-        for ( var name in qs_data )
-        {
-            var values = qs_data[ name ],
-                i      = values.length || 0;
-
-            merge[ name ] = [];
-
-            // merge each of the values individually, skipping unchanged (null)
-            // values
-            while ( i-- )
-            {
-                var val = values[ i ];
-
-                // ignore null values, as they are unchanged (well, this isn't
-                // 100% true (removing tabs/rows), but it will suffice for now)
-                if ( val !== null )
-                {
-                    merge[ name ][ i ] = val;
-                }
-            };
-        }
-
-        this._quote.setData( merge );
-
-        // empty quick save data
-        this._quote.setQuickSaveData( {} );
-
-        // force UI cmatch update, since we may have fields that have been added
-        // that need to be shown/hidden based on the current set of
-        // classifications
-        this._cmatch.forceCmatchAction();
     },
 
 
@@ -1141,10 +1088,6 @@ module.exports = Class( 'Client' )
             // care about a response). This will allow the server to save our
             // current step even if it's cached client-side.
             client.dataProxy.get( url );
-
-            // merge any quick save data *after* the UI is rendered, or we will
-            // run into validation/display issues
-            client._mergeQuickSaveData();
         } ).on( 'preRenderStep', function( step, $content )
         {
             client.elementStyler.setContext( $content );
@@ -1743,7 +1686,13 @@ module.exports = Class( 'Client' )
 
 
     /**
-     * Save the staging bucket to the server (for debug/recovery purposes)
+     * Heartbeat
+     *
+     * Previously, this would save the staging bucket to the server (for
+     * debug/recovery purposes).  While data are still sent, it should be
+     * ignored by the server.
+     *
+     * TODO: Remove once we have a proper heartbeat route.
      *
      * @return {Client} self
      */

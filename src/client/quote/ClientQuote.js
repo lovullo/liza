@@ -460,6 +460,12 @@ module.exports = Class( 'ClientQuote' )
     },
 
 
+    /**
+     * Save staging bucket
+     *
+     * TODO: This is now used as a heartbeat and should be removed in the
+     * future.
+     */
     'public saveStaging': function( transport, callback )
     {
         this._doSave( transport, callback );
@@ -713,24 +719,6 @@ module.exports = Class( 'ClientQuote' )
      * @return {ClientQuote} self
      */
     'public proxy setImported': '_quote',
-
-
-    /**
-     * Set quicksave data
-     *
-     * @param {Object} data quicksave data, diff format
-     *
-     * @return {Quote} self
-     */
-    'public proxy setQuickSaveData': '_quote',
-
-
-    /**
-     * Retrieve quicksave data
-     *
-     * @return {Object} quicksave data
-     */
-    'public proxy getQuickSaveData': '_quote',
 
 
     /**

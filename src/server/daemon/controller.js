@@ -567,27 +567,14 @@ function doRoute( program, request, data, resolve, reject )
     }
     else if ( cmd === 'quicksave' )
     {
-        // attempt to acquire the write lock, aborting immediately if we
-        // cannot (instead of queueing)
-        acquireWriteLockImmediate( quote_id, request, function( free )
+        // TODO: we keep this route around only as a heartbeat, for now; the
+        // original purpose of this route (to save staged data) has been
+        // removed
+        handleRequest( function( quote )
         {
-            handleRequest( function( quote )
-            {
-                // if we could not immediately obtain the lock, then something
-                // is currently saving, meaning that the quicksave data is
-                // probably irrelevant (since it would just be wiped out anyway
-                // if we had issued this request moments earlier); abort
-                if ( !free )
-                {
-                    server.sendEmptyReply( request, quote );
-                    return;
-                }
-
-                server.handleQuickSave( request, quote, program );
-            } );
+            server.sendEmptyReply( request, quote );
         } );
 
-        // keep the session alive
         touchSession( quote_id, session );
     }
     else if ( /^log\//.test( cmd ) )
