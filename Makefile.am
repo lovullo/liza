@@ -24,6 +24,8 @@ path_test = $(top_builddir)/test
 namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
 
+tsout = tsconfig.tsbuildinfo
+
 SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 			 tools autogen.sh README.md $(path_test) \
@@ -35,12 +37,17 @@ all-am: modindex
 
 dist-hook: check
 
+# used to force typescript compilation (it handles its own incremental
+# compilation and dependency discovery)
+$(tsout): FORCE
+	node_modules/.bin/tsc
+
 modindex: $(nsindex)
-%/index.js: FORCE
+%/index.js: FORCE $(tsout)
 	./tools/gen-index "$*" > "$@"
 
 test: check
-check:
+check: $(tsout)
 	PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
 		mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \

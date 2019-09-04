@@ -22,3 +22,7 @@ src/**/index.js
 
 # npm
 node_modules
+
+# typescript
+tsconfig.tsbuildinfo
+
