@@ -19,7 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
+/**
+ * Token status types
+ */
+type TokenType = 'ACTIVE' | 'DONE' | 'ACCEPTED' | 'DEAD';
+
+
+/**
+ * Token information
+ */
+interface TokenData
+{
+    id:     string,
+    status: string,
+}
 
 
 /**
@@ -27,23 +40,23 @@ var Class = require( 'easejs' ).Class;
  *
  * Note that this is tightly coupled with MongoDB.
  */
-module.exports = Class( 'TokenDao',
+export = class TokenDao
 {
     /**
-     * @type {MongoCollection} mongo database collection
+     * Mongo database collection
      */
-    'private _collection': null,
+    private _collection?: MongoCollection;
 
 
     /**
      * Initialize connection
      *
-     * @param {MongoCollection} collection token Mongo collection
+     * @param token Mongo collection
      */
-    'public __construct': function( collection )
+    constructor( collection: MongoCollection )
     {
         this._collection = collection;
-    },
+    }
 
 
     /**
@@ -52,24 +65,30 @@ module.exports = Class( 'TokenDao',
      * The token entry is entered in the token log, and then the current
      * entry is updated to reflect the changes.  The operation is atomic.
      *
-     * @param {number} quote_id unique quote identifier
-     * @param {string} ns       token namespace
-     * @param {string} token    token value
-     * @param {string} data     token data, if any
-     * @param {string} status   arbitrary token type
+     * @param quote_id unique quote identifier
+     * @param ns       token namespace
+     * @param token    token value
+     * @param data     token data, if any
+     * @param status   arbitrary token type
+     * @param callback with error or null (success)
      *
-     * @param {function(*)} callback with error or null (success)
-     *
-     * @return {TokenDao} self
+     * @return self
      */
-    'public updateToken': function( quote_id, ns, token, type, data, callback )
+    updateToken(
+        quote_id: number,
+        ns:       string,
+        token:    string,
+        type:     TokenType,
+        data:     string,
+        callback: ( err: Error|null ) => void,
+    ): this
     {
-        var token_data = {},
-            token_log  = {},
-            root       = this._genRoot( ns ) + '.',
-            current_ts = Math.floor( ( new Date() ).getTime() / 1000 );
+        const token_data: any = {};
+        const token_log: any  = {};
+        const root            = this._genRoot( ns ) + '.';
+        const current_ts      = Math.floor( ( new Date() ).getTime() / 1000 );
 
-        var token_entry = {
+        const token_entry: any = {
             type:      type,
             timestamp: current_ts,
         };
@@ -93,14 +112,14 @@ module.exports = Class( 'TokenDao',
             },
             { upsert: true },
 
-            function ( err, docs )
+            function ( err: Error|null )
             {
                 callback( err || null );
             }
         );
 
         return this;
-    },
+    }
 
 
     /**
@@ -110,20 +129,22 @@ module.exports = Class( 'TokenDao',
      * If a TOKEN_ID is provided, only that token will be queried; otherwise,
      * the most recently created token will be the subject of the query.
      *
-     * @param {number} quote_id quote identifier
-     * @param {string} ns       token namespace
-     * @param {string} token_id token identifier (unique to NS)
+     * @param quote_id quote identifier
+     * @param ns       token namespace
+     * @param token_id token identifier (unique to NS)
+     * @param callback
      *
-     * @param {function(?Error,{{id: string, status: string}})} callback
-     *
-     * @return {TokenDao} self
+     * @return self
      */
-    'public getToken': function( quote_id, ns, token_id, callback )
+    getToken(
+        quote_id: number,
+        ns:       string,
+        token_id: string,
+        callback: ( err: Error|null, data: TokenData|null ) => void,
+    )
     {
-        var _self = this;
-
-        var root   = this._genRoot( ns ) + '.',
-            fields = {};
+        const root        = this._genRoot( ns ) + '.';
+        const fields: any = {};
 
         fields[ root + 'last' ] = 1;
         fields[ root + 'lastStatus' ] = 1;
@@ -137,7 +158,7 @@ module.exports = Class( 'TokenDao',
         this._collection.findOne(
             { id: +quote_id },
             { fields: fields },
-            function( err, data )
+            ( err: Error|null, data: any ) =>
             {
                 if ( err )
                 {
@@ -151,31 +172,32 @@ module.exports = Class( 'TokenDao',
                     return;
                 }
 
-                var exports = data.exports || {},
-                    ns_data = exports[ ns ] || {};
+                const exports = data.exports || {};
+                const ns_data = exports[ ns ] || {};
 
                 callback(
                     null,
                     ( token_id )
-                        ? _self._getRequestedToken( token_id, ns_data )
-                        : _self._getLatestToken( ns_data )
+                        ? this._getRequestedToken( token_id, ns_data )
+                        : this._getLatestToken( ns_data )
                 );
             }
         );
 
         return this;
-    },
+    }
 
 
     /**
      * Retrieve latest token data, or `null` if none
      *
-     * @param {{last: string, lastStatus: string}} ns_data namespace data
+     * @param ns_data namespace data
      *
-     * @return {?{{id: string, status: string}}} data of latest token in
-     *                                           namespace
+     * @return data of latest token in namespace
      */
-    'private _getLatestToken': function( ns_data )
+    private _getLatestToken(
+        ns_data: {last: string, lastStatus: string}
+    ): TokenData|null
     {
         var last = ns_data.last;
 
@@ -188,22 +210,20 @@ module.exports = Class( 'TokenDao',
             id:     last,
             status: ns_data.lastStatus,
         };
-    },
+    }
 
 
     /**
      * Retrieve latest token data, or `null` if none
      *
-     * @param {string} token_id token identifier for namespace associated
-     *                           with NS_DATA
+     * @param token_id token identifier for namespace associated with NS_DATA
+     * @param ns_data  namespace data
      *
-     * @param {{last: string, lastStatus: string}} ns_data namespace data
-     *
-     * @return {?{{id: string, status: string}}} data of requested token
+     * @return data of requested token
      */
-    'private _getRequestedToken': function( token_id, ns_data )
+    private _getRequestedToken( token_id: string, ns_data: any ): TokenData|null
     {
-        var reqtok = ns_data[ token_id ];
+        const reqtok = ns_data[ token_id ];
 
         if ( !reqtok )
         {
@@ -214,20 +234,20 @@ module.exports = Class( 'TokenDao',
             id:     token_id,
             status: reqtok.status,
         };
-    },
+    }
 
 
     /**
      * Determine token root for the given namespace
      *
-     * @param {string} ns token namespace
+     * @param ns token namespace
      *
-     * @return {string} token root for namespace NS
+     * @return token root for namespace NS
      */
-    'private _genRoot': function( ns )
+    private _genRoot( ns: string ): string
     {
         // XXX: injectable
         return 'exports.' + ns;
-    },
-} );
+    }
+};
 
