@@ -19,11 +19,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * Token status types
- */
-type TokenType = 'ACTIVE' | 'DONE' | 'ACCEPTED' | 'DEAD';
-
+import {
+    TokenEntry,
+    TokenNamespaceData,
+    TokenNamespaceResults,
+    TokenQueryResult,
+    TokenStatus,
+    TokenType,
+} from "./TokenQueryResult";
 
 /**
  * Token information
@@ -31,7 +34,7 @@ type TokenType = 'ACTIVE' | 'DONE' | 'ACCEPTED' | 'DEAD';
 interface TokenData
 {
     id:     string,
-    status: string,
+    status: TokenStatus,
 }
 
 
@@ -45,13 +48,13 @@ export = class TokenDao
     /**
      * Mongo database collection
      */
-    private _collection?: MongoCollection;
+    private readonly _collection: MongoCollection;
 
 
     /**
      * Initialize connection
      *
-     * @param token Mongo collection
+     * @param collection Mongo collection
      */
     constructor( collection: MongoCollection )
     {
@@ -88,7 +91,7 @@ export = class TokenDao
         const root            = this._genRoot( ns ) + '.';
         const current_ts      = Math.floor( ( new Date() ).getTime() / 1000 );
 
-        const token_entry: any = {
+        const token_entry: TokenStatus = {
             type:      type,
             timestamp: current_ts,
         };
@@ -141,7 +144,7 @@ export = class TokenDao
         ns:       string,
         token_id: string,
         callback: ( err: Error|null, data: TokenData|null ) => void,
-    )
+    ): this
     {
         const root        = this._genRoot( ns ) + '.';
         const fields: any = {};
@@ -158,22 +161,23 @@ export = class TokenDao
         this._collection.findOne(
             { id: +quote_id },
             { fields: fields },
-            ( err: Error|null, data: any ) =>
+            ( err: Error|null, data: TokenQueryResult ) =>
             {
-                if ( err )
+                if ( err || !data )
                 {
                     callback( err, null );
                     return;
                 }
 
-                if ( !data || ( data.length === 0 ) )
+                const field   = <TokenNamespaceResults>data.exports || {};
+
+                if ( !field[ ns ] )
                 {
                     callback( null, null );
                     return;
                 }
 
-                const exports = data.exports || {};
-                const ns_data = exports[ ns ] || {};
+                const ns_data = <TokenNamespaceData>field[ ns ];
 
                 callback(
                     null,
@@ -195,9 +199,7 @@ export = class TokenDao
      *
      * @return data of latest token in namespace
      */
-    private _getLatestToken(
-        ns_data: {last: string, lastStatus: string}
-    ): TokenData|null
+    private _getLatestToken( ns_data: TokenNamespaceData ): TokenData | null
     {
         var last = ns_data.last;
 
@@ -221,9 +223,12 @@ export = class TokenDao
      *
      * @return data of requested token
      */
-    private _getRequestedToken( token_id: string, ns_data: any ): TokenData|null
+    private _getRequestedToken(
+        token_id: string,
+        ns_data:  TokenNamespaceData
+    ): TokenData | null
     {
-        const reqtok = ns_data[ token_id ];
+        const reqtok = <TokenEntry>ns_data[ token_id ];
 
         if ( !reqtok )
         {
