@@ -1,6 +1,6 @@
 ## liza Makefile.am for automake
 #
-#  Copyright (C) 2014 R-T Specialty, LLC.
+#  Copyright (C) 2010-2019 R-T Specialty, LLC.
 #
 #  This file is part of liza.
 #
