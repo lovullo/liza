@@ -50,15 +50,21 @@ export = class TokenDao
      */
     private readonly _collection: MongoCollection;
 
+    /**
+     * Field storing token data, relative to document root
+     */
+    private readonly _rootField: string;
+
 
     /**
      * Initialize connection
      *
      * @param collection Mongo collection
      */
-    constructor( collection: MongoCollection )
+    constructor( collection: MongoCollection, root_field: string )
     {
         this._collection = collection;
+        this._rootField  = root_field;
     }
 
 
@@ -169,7 +175,7 @@ export = class TokenDao
                     return;
                 }
 
-                const field   = <TokenNamespaceResults>data.exports || {};
+                const field = <TokenNamespaceResults>data[ this._rootField ] || {};
 
                 if ( !field[ ns ] )
                 {
@@ -252,7 +258,7 @@ export = class TokenDao
     private _genRoot( ns: string ): string
     {
         // XXX: injectable
-        return 'exports.' + ns;
+        return this._rootField + '.' + ns;
     }
 };
 

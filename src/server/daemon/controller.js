@@ -244,7 +244,7 @@ function _initExportService( db, callback )
             ExportService
                 .use( TokenedService(
                     'c1import',
-                    new TokenDao( collection ),
+                    new TokenDao( collection, "exports" ),
                     function tokgen()
                     {
                         var shasum = crypto.createHash( 'sha1' );
