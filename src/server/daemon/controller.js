@@ -87,6 +87,9 @@ const {
             RatingServicePublish,
             RatingServiceSubmitNotify,
             TokenedService,
+        },
+
+        token: {
             TokenDao,
         },
 
