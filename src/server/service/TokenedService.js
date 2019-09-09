@@ -22,7 +22,7 @@
 var Trait    = require( 'easejs' ).Trait,
     Class    = require( 'easejs' ).Class,
     Service  = require( './Service' ),
-    TokenDao = require( '../token/TokenDao' );
+    TokenDao = require( '../token/TokenDao' ).default;
 
 
 /**

@@ -90,7 +90,9 @@ const {
         },
 
         token: {
-            TokenDao,
+            TokenDao: {
+                default: TokenDao,
+            },
         },
 
         request: {

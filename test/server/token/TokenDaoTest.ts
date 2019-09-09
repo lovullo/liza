@@ -19,15 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { expect, use as chai_use } from 'chai';
-
 import {
     TokenQueryResult,
     TokenStatus,
 } from "../../../src/server/token/TokenQueryResult";
 
-import Sut = require( "../../../src/server/token/TokenDao" );
+import {
+    default as Sut,
+    TokenData,
+} from "../../../src/server/token/TokenDao";
 
+import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
 
 
@@ -118,8 +120,7 @@ describe( 'server.token.TokenDao', () =>
             data:      "",
         };
 
-        // TODO: export and use TokenData
-        ( <[string, string, TokenQueryResult, any][]>[
+        ( <[string, string, TokenQueryResult, TokenData][]>[
             [
                 'retrieves token by id',
                 'tok123',

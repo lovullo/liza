@@ -28,10 +28,11 @@ import {
     TokenType,
 } from "./TokenQueryResult";
 
+
 /**
  * Token information
  */
-interface TokenData
+export interface TokenData
 {
     id:     string,
     status: TokenStatus,
@@ -43,7 +44,7 @@ interface TokenData
  *
  * Note that this is tightly coupled with MongoDB.
  */
-export = class TokenDao
+export default class TokenDao
 {
     /**
      * Mongo database collection
