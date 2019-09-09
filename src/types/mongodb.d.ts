@@ -29,7 +29,7 @@ declare module "mongodb";
 /**
  * Node-style callback for queries
  */
-type MongoCallback<T> = ( err: Error|null, data: any ) => T;
+type MongoCallback = ( err: Error|null, data: any ) => void;
 
 
 /**
@@ -66,23 +66,11 @@ interface MongoFindOneOptions
 declare interface MongoCollection
 {
     /**
-     * Update a document
-     *
-     * @param selector document query
-     * @param data     update data
-     * @param callback continuation on completion
-     *
-     * @return callback return value
-     */
-    update<T>(
-        selector: object,
-        data:     object,
-        callback: MongoCallback<T>
-    ): T;
-
-
-    /**
      * Update a document with additional query options
+     *
+     * To simplify the interface, we're always going to require `options`,
+     * even if they are empty.  Otherwise typing is a verbose PITA when
+     * writing tests.
      *
      * @param selector document query
      * @param data     update data
@@ -91,12 +79,12 @@ declare interface MongoCollection
      *
      * @return callback return value
      */
-    update<T>(
+    update(
         selector: object,
         data:     object,
         options:  MongoQueryUpdateOptions,
-        callback: MongoCallback<T>
-    ): T;
+        callback: MongoCallback
+    ): void;
 
 
     /**
@@ -112,6 +100,6 @@ declare interface MongoCollection
     findOne(
         selector: object,
         fields:   MongoFindOneOptions,
-        callback: MongoCallback<void>
+        callback: MongoCallback
     ): void;
 }

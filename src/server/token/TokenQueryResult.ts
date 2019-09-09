@@ -40,7 +40,7 @@ export type TokenType = 'ACTIVE' | 'DONE' | 'ACCEPTED' | 'DEAD';
  */
 export interface TokenQueryResult
 {
-    [propName: string]: TokenNamespaceResults | null,
+    readonly [propName: string]: TokenNamespaceResults | null,
 }
 
 
@@ -49,7 +49,7 @@ export interface TokenQueryResult
  */
 export interface TokenNamespaceResults
 {
-    [propName: string]: TokenNamespaceData | null,
+    readonly [propName: string]: TokenNamespaceData | null,
 }
 
 
@@ -70,14 +70,14 @@ export interface TokenNamespaceData
     /**
      * Identifier of last token touched in this namespace
      */
-    last: TokenId,
+    readonly last: TokenId,
 
     /**
      * Most recent token status
      *
      * This is a duplicate of the last entry in `TokenEntry#statusLog`.
      */
-    lastStatus: TokenStatus,
+    readonly lastStatus: TokenStatus,
 
     /**
      * Tokens indexed by identifier
@@ -86,7 +86,7 @@ export interface TokenNamespaceData
      * accommodate the above fields.  Anything using this should cast to
      * `TokenEntry`.
      */
-    [propName: string]: TokenEntry | TokenStatus | TokenId | null,
+    readonly [propName: string]: TokenEntry | TokenStatus | TokenId | null,
 }
 
 
@@ -100,7 +100,7 @@ export interface TokenEntry
      *
      * This is a duplicate of the last element of `statusLog`.
      */
-    status: TokenStatus,
+    readonly status: TokenStatus,
 
     /**
      * Log of all past status changes and any associated data
@@ -108,7 +108,7 @@ export interface TokenEntry
      * This is pushed to on each status change.  The last element is
      * duplicated in `status`.
      */
-    statusLog: TokenStatus[],
+    readonly statusLog: TokenStatus[],
 }
 
 
@@ -123,12 +123,12 @@ export interface TokenStatus
     /**
      * State of the token
      */
-    type: TokenType,
+    readonly type: TokenType,
 
     /**
      * Unix timestamp representing when the status change occurred
      */
-    timestamp: number,
+    readonly timestamp: number,
 
     /**
      * Arbitrary data associated with the status change
@@ -137,5 +137,5 @@ export interface TokenStatus
      * fulfillment of a request, in which case this may contain the response
      * data.
      */
-    data?: string,
+    readonly data: string | null,
 }

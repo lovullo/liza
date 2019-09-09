@@ -88,30 +88,30 @@ export = class TokenDao
         ns:       string,
         token:    string,
         type:     TokenType,
-        data:     string,
+        data:     string | null,
         callback: ( err: Error|null ) => void,
     ): this
     {
-        const token_data: any = {};
-        const token_log: any  = {};
-        const root            = this._genRoot( ns ) + '.';
-        const current_ts      = Math.floor( ( new Date() ).getTime() / 1000 );
+        const root = this._genRoot( ns ) + '.';
+
+        // XXX: nondeterminism
+        const current_ts = Math.floor( ( new Date() ).getTime() / 1000 );
 
         const token_entry: TokenStatus = {
             type:      type,
             timestamp: current_ts,
+            data:      data,
         };
 
-        if ( data )
-        {
-            token_entry.data = data;
-        }
+        const token_data = {
+            [ root + 'last' ]:            token,
+            [ root + 'lastStatus' ]:      token_entry,
+            [ root + token + '.status' ]: token_entry,
+        };
 
-        token_data[ root + 'last' ]            = token;
-        token_data[ root + 'lastStatus' ]      = token_entry;
-        token_data[ root + token + '.status' ] = token_entry;
-
-        token_log[ root + token + '.statusLog' ] = token_entry;
+        const token_log = {
+            [ root + token + '.statusLog' ]: token_entry,
+        };
 
         this._collection.update(
             { id: +quote_id },
