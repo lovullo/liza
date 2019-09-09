@@ -242,18 +242,9 @@ module.exports = Trait( 'TokenedService' )
      */
     'private _getQuoteToken': function( quote, tokid, callback )
     {
-        this._dao.getToken(
-            quote.getId(),
-            this._ns,
-            tokid,
-            function( err, token )
+        this._dao.getToken( quote.getId(), this._ns, tokid )
+            .then( token =>
             {
-                if ( err )
-                {
-                    callback( err, null );
-                    return;
-                }
-
                 if ( tokid && !token )
                 {
                     callback(
@@ -265,8 +256,8 @@ module.exports = Trait( 'TokenedService' )
                 }
 
                 callback( null, token );
-            }
-        );
+            } )
+            .catch( err => callback( err, null ) );
     },
 
 
@@ -595,29 +586,9 @@ module.exports = Trait( 'TokenedService' )
         var tokid  = this._tokgen( program, quote ),
             status = this.getDefaultTokenStatus();
 
-        this._dao.updateToken(
-            quote.getId(),
-            this._ns,
-            tokid,
-            status,
-            null,
-            function( err )
-            {
-                if ( err )
-                {
-                    callback( err, null );
-                    return;
-                }
-
-                callback(
-                    null,
-                    {
-                        id:     tokid,
-                        status: status,
-                    }
-                );
-            }
-        );
+        this._dao.updateToken( quote.getId(), this._ns, tokid, status, null )
+            .then( () => callback( null, { id: tokid, status: status } ) )
+            .catch( err => callback( err, null ) );
     },
 
 
@@ -642,33 +613,13 @@ module.exports = Trait( 'TokenedService' )
      *
      * @param {function(?Error,Object)} callback continuation
      */
-    'virtual virtual protected killToken': function( quote, token, callback )
+    'virtual protected killToken': function( quote, token, callback )
     {
         callback = callback || function() {};
 
-        this._dao.updateToken(
-            quote.getId(),
-            this._ns,
-            token.id,
-            'DEAD',
-            null,
-            function( err )
-            {
-                if ( err )
-                {
-                    callback( err, null );
-                    return;
-                }
-
-                callback(
-                    null,
-                    {
-                        id:     token,
-                        status: 'DEAD',
-                    }
-                );
-            }
-        );
+        this._dao.updateToken( quote.getId(), this._ns, token.id, 'DEAD', null )
+            .then( () => callback( null, { id: token, status: 'DEAD' } ) )
+            .catch( err => callback( err, null ) );
     },
 
 
@@ -686,29 +637,9 @@ module.exports = Trait( 'TokenedService' )
     {
         callback = callback || function() {};
 
-        this._dao.updateToken(
-            quote.getId(),
-            this._ns,
-            token.id,
-            'ACCEPTED',
-            null,
-            function( err )
-            {
-                if ( err )
-                {
-                    callback( err, null );
-                    return;
-                }
-
-                callback(
-                    null,
-                    {
-                        id:     token,
-                        status: 'ACCEPTED',
-                    }
-                );
-            }
-        );
+        this._dao.updateToken( quote.getId(), this._ns, token.id, 'ACCEPTED', null )
+            .then( () => callback( null, { id: token, status: 'ACCEPTED' } ) )
+            .catch( err => callback( err, null ) );
     },
 
 
@@ -725,31 +656,9 @@ module.exports = Trait( 'TokenedService' )
      */
     'virtual protected completeToken': function( quote, token, data, callback )
     {
-        callback = callback || function() {};
-
-        this._dao.updateToken(
-            quote.getId(),
-            this._ns,
-            token.id,
-            'DONE',
-            data,
-            function( err )
-            {
-                if ( err )
-                {
-                    callback( err, null );
-                    return;
-                }
-
-                callback(
-                    null,
-                    {
-                        id:     token,
-                        status: 'DONE',
-                    }
-                );
-            }
-        );
+        this._dao.updateToken( quote.getId(), this._ns, token.id, 'DONE', data )
+            .then( () => callback( null, { id: token, status: 'DONE' } ) )
+            .catch( err => callback( err, null ) );
     },
 } );
 

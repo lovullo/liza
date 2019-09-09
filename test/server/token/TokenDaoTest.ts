@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { expect } from 'chai';
+import { expect, use as chai_use } from 'chai';
 
 import {
     TokenQueryResult,
@@ -28,12 +28,14 @@ import {
 
 import Sut = require( "../../../src/server/token/TokenDao" );
 
+chai_use( require( 'chai-as-promised' ) );
+
 
 describe( 'server.token.TokenDao', () =>
 {
     describe( '#updateToken', () =>
     {
-        it( 'updates token with given data', done =>
+        it( 'updates token with given data', () =>
         {
             const field    = 'foo_field';
             const qid      = 12345;
@@ -79,12 +81,12 @@ describe( 'server.token.TokenDao', () =>
                 findOne() {},
             };
 
-            new Sut( coll, field )
-                .updateToken( qid, ns, tok_id, tok_type, data, done );
+            return new Sut( coll, field )
+                .updateToken( qid, ns, tok_id, tok_type, data );
         } );
 
 
-        it( 'proxies error to callback', done =>
+        it( 'proxies error to callback', () =>
         {
             const expected_error = Error( "expected error" );
 
@@ -97,12 +99,9 @@ describe( 'server.token.TokenDao', () =>
                 findOne() {},
             };
 
-            new Sut( coll, 'foo' )
-                .updateToken( 0, 'ns', 'id', 'DONE', null, err =>
-                {
-                    expect( err ).to.equal( expected_error );
-                    done();
-                } );
+            return expect(
+                new Sut( coll, 'foo' ).updateToken( 0, 'ns', 'id', 'DONE', null )
+            ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );
 
@@ -194,7 +193,7 @@ describe( 'server.token.TokenDao', () =>
                 },
             ],
         ] ).forEach( ( [ label, tok_id, result, expected ] ) =>
-            it( label, done =>
+            it( label, () =>
             {
                 const coll: MongoCollection = {
                     findOne( _selector, _fields, callback )
@@ -205,19 +204,14 @@ describe( 'server.token.TokenDao', () =>
                     update() {},
                 };
 
-                new Sut( coll, field )
-                    .getToken( qid, ns, tok_id, ( err, data ) =>
-                    {
-                        expect( err ).to.equal( null );
-                        expect( data ).to.deep.equal( expected );
-
-                        done();
-                    } );
+                return expect(
+                    new Sut( coll, field ).getToken( qid, ns, tok_id )
+                ).to.eventually.deep.equal( expected );
             } )
         );
 
 
-        it( 'proxies error to callback', done =>
+        it( 'proxies error to callback', () =>
         {
             const expected_error = Error( "expected error" );
 
@@ -230,14 +224,9 @@ describe( 'server.token.TokenDao', () =>
                 update() {},
             };
 
-            new Sut( coll, 'foo' )
-                .getToken( 0, 'ns', 'id', ( err, data ) =>
-                {
-                    expect( err ).to.equal( expected_error );
-                    expect( data ).to.equal( null );
-
-                    done();
-                } );
+            return expect(
+                new Sut( coll, 'foo' ).getToken( 0, 'ns', 'id' )
+            ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );
 } );

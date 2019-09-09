@@ -79,9 +79,6 @@ export = class TokenDao
      * @param token    token value
      * @param data     token data, if any
      * @param status   arbitrary token type
-     * @param callback with error or null (success)
-     *
-     * @return self
      */
     updateToken(
         quote_id: number,
@@ -89,8 +86,7 @@ export = class TokenDao
         token:    string,
         type:     TokenType,
         data:     string | null,
-        callback: ( err: Error|null ) => void,
-    ): this
+    ): Promise<void>
     {
         const root = this._genRoot( ns ) + '.';
 
@@ -113,21 +109,28 @@ export = class TokenDao
             [ root + token + '.statusLog' ]: token_entry,
         };
 
-        this._collection.update(
-            { id: +quote_id },
-            {
-                $set: token_data,
-                $push: token_log
-            },
-            { upsert: true },
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection.update(
+                { id: +quote_id },
+                {
+                    $set: token_data,
+                    $push: token_log
+                },
+                { upsert: true },
 
-            function ( err: Error|null )
-            {
-                callback( err || null );
-            }
-        );
+                function ( err: Error|null )
+                {
+                    if ( err )
+                    {
+                        reject( err );
+                        return;
+                    }
 
-        return this;
+                    resolve();
+                }
+            );
+        } );
     }
 
 
@@ -141,16 +144,11 @@ export = class TokenDao
      * @param quote_id quote identifier
      * @param ns       token namespace
      * @param token_id token identifier (unique to NS)
-     * @param callback
      *
-     * @return self
+     * @return token data
      */
-    getToken(
-        quote_id: number,
-        ns:       string,
-        token_id: string,
-        callback: ( err: Error|null, data: TokenData|null ) => void,
-    ): this
+    getToken( quote_id: number, ns: string, token_id: string ):
+        Promise<TokenData|null>
     {
         const root        = this._genRoot( ns ) + '.';
         const fields: any = {};
@@ -164,37 +162,37 @@ export = class TokenDao
             fields[ root + token_id ] = 1;
         }
 
-        this._collection.findOne(
-            { id: +quote_id },
-            { fields: fields },
-            ( err: Error|null, data: TokenQueryResult ) =>
-            {
-                if ( err || !data )
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection.findOne(
+                { id: +quote_id },
+                { fields: fields },
+                ( err: Error|null, data: TokenQueryResult ) =>
                 {
-                    callback( err, null );
-                    return;
-                }
+                    if ( err || !data )
+                    {
+                        reject( err );
+                        return;
+                    }
 
-                const field = <TokenNamespaceResults>data[ this._rootField ] || {};
+                    const field = <TokenNamespaceResults>data[ this._rootField ]
+                        || {};
 
-                if ( !field[ ns ] )
-                {
-                    callback( null, null );
-                    return;
-                }
+                    if ( !field[ ns ] )
+                    {
+                        resolve( null );
+                        return;
+                    }
 
-                const ns_data = <TokenNamespaceData>field[ ns ];
+                    const ns_data = <TokenNamespaceData>field[ ns ];
 
-                callback(
-                    null,
-                    ( token_id )
+                    resolve( ( token_id )
                         ? this._getRequestedToken( token_id, ns_data )
                         : this._getLatestToken( ns_data )
-                );
-            }
-        );
-
-        return this;
+                    );
+                }
+            );
+        } );
     }
 
 
