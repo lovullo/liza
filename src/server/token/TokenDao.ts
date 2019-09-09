@@ -56,16 +56,30 @@ export default class TokenDao
      */
     private readonly _rootField: string;
 
+    /**
+     * Retrieve a Unix timestamp
+     *
+     * This is used for timestampping token updates.
+     */
+    private readonly _getTimestamp: () => number;
+
 
     /**
      * Initialize connection
      *
      * @param collection Mongo collection
+     * @param root_field topmost field in mongo document
+     * @param date_ctor  Date constructor
      */
-    constructor( collection: MongoCollection, root_field: string )
+    constructor(
+        collection:   MongoCollection,
+        root_field:   string,
+        getTimestamp: () => number,
+    )
     {
-        this._collection = collection;
-        this._rootField  = root_field;
+        this._collection   = collection;
+        this._rootField    = root_field;
+        this._getTimestamp = getTimestamp;
     }
 
 
@@ -91,12 +105,9 @@ export default class TokenDao
     {
         const root = this._genRoot( ns ) + '.';
 
-        // XXX: nondeterminism
-        const current_ts = Math.floor( ( new Date() ).getTime() / 1000 );
-
         const token_entry: TokenStatus = {
             type:      type,
-            timestamp: current_ts,
+            timestamp: this._getTimestamp(),
             data:      data,
         };
 

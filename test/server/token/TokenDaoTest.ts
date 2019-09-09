@@ -39,12 +39,13 @@ describe( 'server.token.TokenDao', () =>
     {
         it( 'updates token with given data', () =>
         {
-            const field    = 'foo_field';
-            const qid      = 12345;
-            const ns       = 'namespace';
-            const tok_id   = 'tok123';
-            const tok_type = 'DONE';
-            const data     = "some data";
+            const field     = 'foo_field';
+            const qid       = 12345;
+            const ns        = 'namespace';
+            const tok_id    = 'tok123';
+            const tok_type  = 'DONE';
+            const data      = "some data";
+            const timestamp = 12345;
 
             const root = field + '.' + ns;
 
@@ -54,10 +55,9 @@ describe( 'server.token.TokenDao', () =>
                     expect( given_data.$set[ `${root}.lastStatus` ].timestamp )
                         .to.be.greaterThan( 0 );
 
-                    // TODO: ts is nondeterministic; pass in
                     const expected_entry: TokenStatus = {
                         type:      tok_type,
-                        timestamp: given_data.$set[ `${root}.lastStatus` ].timestamp,
+                        timestamp: timestamp,
                         data:      data,
                     };
 
@@ -83,7 +83,7 @@ describe( 'server.token.TokenDao', () =>
                 findOne() {},
             };
 
-            return new Sut( coll, field )
+            return new Sut( coll, field, () => timestamp )
                 .updateToken( qid, ns, tok_id, tok_type, data );
         } );
 
@@ -102,7 +102,8 @@ describe( 'server.token.TokenDao', () =>
             };
 
             return expect(
-                new Sut( coll, 'foo' ).updateToken( 0, 'ns', 'id', 'DONE', null )
+                new Sut( coll, 'foo', () => 0 )
+                    .updateToken( 0, 'ns', 'id', 'DONE', null )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );
@@ -206,7 +207,7 @@ describe( 'server.token.TokenDao', () =>
                 };
 
                 return expect(
-                    new Sut( coll, field ).getToken( qid, ns, tok_id )
+                    new Sut( coll, field, () => 0 ).getToken( qid, ns, tok_id )
                 ).to.eventually.deep.equal( expected );
             } )
         );
@@ -226,7 +227,7 @@ describe( 'server.token.TokenDao', () =>
             };
 
             return expect(
-                new Sut( coll, 'foo' ).getToken( 0, 'ns', 'id' )
+                new Sut( coll, 'foo', () => 0 ).getToken( 0, 'ns', 'id' )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );

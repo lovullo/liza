@@ -246,7 +246,7 @@ function _initExportService( db, callback )
             ExportService
                 .use( TokenedService(
                     'c1import',
-                    new TokenDao( collection, "exports" ),
+                    new TokenDao( collection, "exports", getUnixTimestamp ),
                     function tokgen()
                     {
                         var shasum = crypto.createHash( 'sha1' );
@@ -265,6 +265,15 @@ function _initExportService( db, callback )
         );
 
     } );
+}
+
+
+/**
+ * Retrieve current date as a Unix timestamp
+ */
+function getUnixTimestamp()
+{
+    return Math.floor( ( new Date() ).getTime() / 1000 );
 }
 
 
