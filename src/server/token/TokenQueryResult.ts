@@ -27,6 +27,9 @@
  * compatibility with the existing data.
  */
 
+import { TokenId } from "./Token";
+
+
 /**
  * Token status types as stored in the database
  */
@@ -51,12 +54,6 @@ export interface TokenNamespaceResults
 {
     readonly [propName: string]: TokenNamespaceData | null,
 }
-
-
-/**
- * Token identifier (alias for clarity in interface definitions)
- */
-type TokenId = string;
 
 
 /**
@@ -128,7 +125,7 @@ export interface TokenStatus
     /**
      * Unix timestamp representing when the status change occurred
      */
-    readonly timestamp: number,
+    readonly timestamp: UnixTimestamp,
 
     /**
      * Arbitrary data associated with the status change

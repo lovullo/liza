@@ -28,13 +28,15 @@ import {
     TokenType,
 } from "./TokenQueryResult";
 
+import { TokenId, TokenNamespace } from "./Token";
+
 
 /**
  * Token information
  */
 export interface TokenData
 {
-    id:     string,
+    id:     TokenId,
     status: TokenStatus,
 }
 
@@ -61,7 +63,7 @@ export default class TokenDao
      *
      * This is used for timestampping token updates.
      */
-    private readonly _getTimestamp: () => number;
+    private readonly _getTimestamp: () => UnixTimestamp;
 
 
     /**
@@ -74,7 +76,7 @@ export default class TokenDao
     constructor(
         collection:   MongoCollection,
         root_field:   string,
-        getTimestamp: () => number,
+        getTimestamp: () => UnixTimestamp,
     )
     {
         this._collection   = collection;
@@ -97,8 +99,8 @@ export default class TokenDao
      */
     updateToken(
         quote_id: number,
-        ns:       string,
-        token:    string,
+        ns:       TokenNamespace,
+        token_id: TokenId,
         type:     TokenType,
         data:     string | null,
     ): Promise<void>
@@ -112,13 +114,13 @@ export default class TokenDao
         };
 
         const token_data = {
-            [ root + 'last' ]:            token,
-            [ root + 'lastStatus' ]:      token_entry,
-            [ root + token + '.status' ]: token_entry,
+            [ root + 'last' ]:               token_id,
+            [ root + 'lastStatus' ]:         token_entry,
+            [ root + token_id + '.status' ]: token_entry,
         };
 
         const token_log = {
-            [ root + token + '.statusLog' ]: token_entry,
+            [ root + token_id + '.statusLog' ]: token_entry,
         };
 
         return new Promise( ( resolve, reject ) =>
@@ -159,7 +161,7 @@ export default class TokenDao
      *
      * @return token data
      */
-    getToken( quote_id: number, ns: string, token_id: string ):
+    getToken( quote_id: number, ns: TokenNamespace, token_id: TokenId ):
         Promise<TokenData|null>
     {
         const root        = this._genRoot( ns ) + '.';
@@ -240,11 +242,11 @@ export default class TokenDao
      * @return data of requested token
      */
     private _getRequestedToken(
-        token_id: string,
+        token_id: TokenId,
         ns_data:  TokenNamespaceData
     ): TokenData | null
     {
-        const reqtok = <TokenEntry>ns_data[ token_id ];
+        const reqtok = <TokenEntry>ns_data[ <string>token_id ];
 
         if ( !reqtok )
         {
@@ -265,7 +267,7 @@ export default class TokenDao
      *
      * @return token root for namespace NS
      */
-    private _genRoot( ns: string ): string
+    private _genRoot( ns: TokenNamespace ): string
     {
         // XXX: injectable
         return this._rootField + '.' + ns;

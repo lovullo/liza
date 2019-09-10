@@ -29,6 +29,12 @@ import {
     TokenData,
 } from "../../../src/server/token/TokenDao";
 
+import {
+    TokenId,
+    TokenNamespace,
+} from "../../../src/server/token/Token";
+
+
 import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
 
@@ -41,20 +47,17 @@ describe( 'server.token.TokenDao', () =>
         {
             const field     = 'foo_field';
             const qid       = 12345;
-            const ns        = 'namespace';
-            const tok_id    = 'tok123';
+            const ns        = <TokenNamespace>'namespace';
+            const tok_id    = <TokenId>'tok123';
             const tok_type  = 'DONE';
             const data      = "some data";
-            const timestamp = 12345;
+            const timestamp = <UnixTimestamp>12345;
 
             const root = field + '.' + ns;
 
             const coll: MongoCollection = {
                 update( selector: any, given_data: any, options, callback )
                 {
-                    expect( given_data.$set[ `${root}.lastStatus` ].timestamp )
-                        .to.be.greaterThan( 0 );
-
                     const expected_entry: TokenStatus = {
                         type:      tok_type,
                         timestamp: timestamp,
@@ -102,8 +105,9 @@ describe( 'server.token.TokenDao', () =>
             };
 
             return expect(
-                new Sut( coll, 'foo', () => 0 )
-                    .updateToken( 0, 'ns', 'id', 'DONE', null )
+                new Sut( coll, 'foo', () => <UnixTimestamp>0 ).updateToken(
+                    0, <TokenNamespace>'ns', <TokenId>'id', 'DONE', null
+                )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );
@@ -113,22 +117,22 @@ describe( 'server.token.TokenDao', () =>
     {
         const field  = 'get_field';
         const qid    = 12345;
-        const ns     = 'get_ns';
+        const ns     = <TokenNamespace>'get_ns';
 
         const expected_status: TokenStatus = {
             type:      'ACTIVE',
-            timestamp: 0,
+            timestamp: <UnixTimestamp>0,
             data:      "",
         };
 
-        ( <[string, string, TokenQueryResult, TokenData][]>[
+        ( <[string, TokenId, TokenQueryResult, TokenData][]>[
             [
                 'retrieves token by id',
-                'tok123',
+                <TokenId>'tok123',
                 {
                     [field]: {
                         [ns]: {
-                            last:       'tok123',
+                            last:       <TokenId>'tok123',
                             lastStatus: expected_status,
 
                             tok123: {
@@ -139,18 +143,18 @@ describe( 'server.token.TokenDao', () =>
                     },
                 },
                 {
-                    id:     'tok123',
+                    id:     <TokenId>'tok123',
                     status: expected_status,
                 },
             ],
 
             [
                 'returns null for namespace if token is not found',
-                'tok123',
+                <TokenId>'tok123',
                 {
                     [field]: {
                         [ns]: {
-                            last:       'something',
+                            last:       <TokenId>'something',
                             lastStatus: expected_status,
 
                             // just to make sure we don't grab another tok
@@ -166,7 +170,7 @@ describe( 'server.token.TokenDao', () =>
 
             [
                 'returns null for field if namespace is not found',
-                'tok123',
+                <TokenId>'tok123',
                 {
                     [field]: {},
                 },
@@ -175,11 +179,11 @@ describe( 'server.token.TokenDao', () =>
 
             [
                 'returns lastest modified token given no token id',
-                '',
+                <TokenId>'',
                 {
                     [field]: {
                         [ns]: {
-                            last: 'toklast',
+                            last: <TokenId>'toklast',
                             lastStatus: expected_status,
 
                             toklast: {
@@ -190,7 +194,7 @@ describe( 'server.token.TokenDao', () =>
                     },
                 },
                 {
-                    id:     'toklast',
+                    id:     <TokenId>'toklast',
                     status: expected_status,
                 },
             ],
@@ -207,7 +211,8 @@ describe( 'server.token.TokenDao', () =>
                 };
 
                 return expect(
-                    new Sut( coll, field, () => 0 ).getToken( qid, ns, tok_id )
+                    new Sut( coll, field, () => <UnixTimestamp>0 )
+                        .getToken( qid, ns, tok_id )
                 ).to.eventually.deep.equal( expected );
             } )
         );
@@ -227,7 +232,8 @@ describe( 'server.token.TokenDao', () =>
             };
 
             return expect(
-                new Sut( coll, 'foo', () => 0 ).getToken( 0, 'ns', 'id' )
+                new Sut( coll, 'foo', () => <UnixTimestamp>0 )
+                    .getToken( 0, <TokenNamespace>'ns', <TokenId>'id' )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );
