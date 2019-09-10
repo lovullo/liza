@@ -34,6 +34,8 @@ import {
     TokenNamespace,
 } from "../../../src/server/token/Token";
 
+import { DocumentId } from "../../../src/document/Document";
+
 
 import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
@@ -46,7 +48,7 @@ describe( 'server.token.TokenDao', () =>
         it( 'updates token with given data', () =>
         {
             const field     = 'foo_field';
-            const qid       = 12345;
+            const did       = <DocumentId>12345;
             const ns        = <TokenNamespace>'namespace';
             const tok_id    = <TokenId>'tok123';
             const tok_type  = 'DONE';
@@ -64,7 +66,7 @@ describe( 'server.token.TokenDao', () =>
                         data:      data,
                     };
 
-                    expect( selector.id ).to.equal( qid );
+                    expect( selector.id ).to.equal( did );
 
                     expect( given_data ).to.deep.equal( {
                         $set:  {
@@ -87,7 +89,7 @@ describe( 'server.token.TokenDao', () =>
             };
 
             return new Sut( coll, field, () => timestamp )
-                .updateToken( qid, ns, tok_id, tok_type, data );
+                .updateToken( did, ns, tok_id, tok_type, data );
         } );
 
 
@@ -106,7 +108,11 @@ describe( 'server.token.TokenDao', () =>
 
             return expect(
                 new Sut( coll, 'foo', () => <UnixTimestamp>0 ).updateToken(
-                    0, <TokenNamespace>'ns', <TokenId>'id', 'DONE', null
+                    <DocumentId>0,
+                    <TokenNamespace>'ns',
+                    <TokenId>'id',
+                    'DONE',
+                    null
                 )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
@@ -116,7 +122,7 @@ describe( 'server.token.TokenDao', () =>
     describe( '#getToken', () =>
     {
         const field  = 'get_field';
-        const qid    = 12345;
+        const did    = <DocumentId>12345;
         const ns     = <TokenNamespace>'get_ns';
 
         const expected_status: TokenStatus = {
@@ -212,7 +218,7 @@ describe( 'server.token.TokenDao', () =>
 
                 return expect(
                     new Sut( coll, field, () => <UnixTimestamp>0 )
-                        .getToken( qid, ns, tok_id )
+                        .getToken( did, ns, tok_id )
                 ).to.eventually.deep.equal( expected );
             } )
         );
@@ -233,7 +239,7 @@ describe( 'server.token.TokenDao', () =>
 
             return expect(
                 new Sut( coll, 'foo', () => <UnixTimestamp>0 )
-                    .getToken( 0, <TokenNamespace>'ns', <TokenId>'id' )
+                    .getToken( <DocumentId>0, <TokenNamespace>'ns', <TokenId>'id' )
             ).to.eventually.be.rejectedWith( expected_error );
         } );
     } );

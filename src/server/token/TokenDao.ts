@@ -29,6 +29,7 @@ import {
 } from "./TokenQueryResult";
 
 import { TokenId, TokenNamespace } from "./Token";
+import { DocumentId } from "../../document/Document";
 
 
 /**
@@ -91,14 +92,14 @@ export default class TokenDao
      * The token entry is entered in the token log, and then the current
      * entry is updated to reflect the changes.  The operation is atomic.
      *
-     * @param quote_id unique quote identifier
+     * @param doc_id   unique document identifier
      * @param ns       token namespace
      * @param token    token value
      * @param data     token data, if any
      * @param status   arbitrary token type
      */
     updateToken(
-        quote_id: number,
+        doc_id:   DocumentId,
         ns:       TokenNamespace,
         token_id: TokenId,
         type:     TokenType,
@@ -126,7 +127,7 @@ export default class TokenDao
         return new Promise( ( resolve, reject ) =>
         {
             this._collection.update(
-                { id: +quote_id },
+                { id: +doc_id },
                 {
                     $set: token_data,
                     $push: token_log
@@ -149,19 +150,19 @@ export default class TokenDao
 
 
     /**
-     * Retrieve existing token under the namespace NS, if any, for the quote
-     * identified by QUOTE_ID
+     * Retrieve existing token under the namespace NS, if any, for the doc
+     * identified by DOC_ID
      *
      * If a TOKEN_ID is provided, only that token will be queried; otherwise,
      * the most recently created token will be the subject of the query.
      *
-     * @param quote_id quote identifier
+     * @param doc_id   document identifier
      * @param ns       token namespace
      * @param token_id token identifier (unique to NS)
      *
      * @return token data
      */
-    getToken( quote_id: number, ns: TokenNamespace, token_id: TokenId ):
+    getToken( doc_id: DocumentId, ns: TokenNamespace, token_id: TokenId ):
         Promise<TokenData|null>
     {
         const root        = this._genRoot( ns ) + '.';
@@ -179,7 +180,7 @@ export default class TokenDao
         return new Promise( ( resolve, reject ) =>
         {
             this._collection.findOne(
-                { id: +quote_id },
+                { id: +doc_id },
                 { fields: fields },
                 ( err: Error|null, data: TokenQueryResult ) =>
                 {
