@@ -65,7 +65,14 @@ module.exports = require( './PatternFormatter' )(
                 // Must be a valid hostname and may contain comments in
                 // parenthesis. IPs are technically allowed in brackets, but
                 // we're not going to support that crap.
-                '[a-zA-Z0-9-.()]+' +
+                // begins with a letter or a number
+                '[a-zA-Z0-9]+' +
+                // then can have any other acceptable chars
+                '[a-zA-Z0-9-]*' +
+                // and optional subdomains
+                '(?:\\.[a-zA-Z0-9-]+)*' +
+                // TLD
+                '\\.[a-zA-Z]{2,}' +
             '$'
         ),
 
