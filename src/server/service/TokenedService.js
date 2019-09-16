@@ -21,8 +21,7 @@
 
 var Trait    = require( 'easejs' ).Trait,
     Class    = require( 'easejs' ).Class,
-    Service  = require( './Service' ),
-    TokenDao = require( '../token/TokenDao' ).default;
+    Service  = require( './Service' );
 
 
 /**
@@ -96,11 +95,6 @@ module.exports = Trait( 'TokenedService' )
      */
     __mixin: function( namespace, dao, tokgen, capture_gen )
     {
-        if ( !Class.isA( TokenDao, dao ) )
-        {
-            throw TypeError( 'Instance of TokenDao expected' );
-        }
-
         if ( typeof tokgen !== 'function' )
         {
             throw TypeError( 'Token generator must be a function' );

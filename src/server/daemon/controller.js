@@ -90,8 +90,8 @@ const {
         },
 
         token: {
-            TokenDao: {
-                default: TokenDao,
+            MongoTokenDao: {
+                MongoTokenDao
             },
         },
 
@@ -246,7 +246,7 @@ function _initExportService( db, callback )
             ExportService
                 .use( TokenedService(
                     'c1import',
-                    new TokenDao( collection, "exports", getUnixTimestamp ),
+                    new MongoTokenDao( collection, "exports", getUnixTimestamp ),
                     function tokgen()
                     {
                         var shasum = crypto.createHash( 'sha1' );

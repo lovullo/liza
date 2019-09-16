@@ -20,14 +20,12 @@
  */
 
 import {
+    TokenData,
     TokenQueryResult,
     TokenStatus,
-} from "../../../src/server/token/TokenQueryResult";
-
-import {
-    default as Sut,
-    TokenData,
 } from "../../../src/server/token/TokenDao";
+
+import { MongoTokenDao as Sut } from "../../../src/server/token/MongoTokenDao";
 
 import {
     TokenId,
