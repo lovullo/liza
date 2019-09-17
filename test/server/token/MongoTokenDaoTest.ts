@@ -34,6 +34,7 @@ import {
 
 import { DocumentId } from "../../../src/document/Document";
 import { UnknownTokenError } from "../../../src/server/token/UnknownTokenError";
+import { hasContext } from "../../../src/error/ContextError";
 
 
 import { expect, use as chai_use } from 'chai';
@@ -130,7 +131,7 @@ describe( 'server.token.TokenDao', () =>
             data:      "",
         };
 
-        ( <[string, TokenId, TokenQueryResult, TokenData|null, any][]>[
+        ( <[string, TokenId, TokenQueryResult, TokenData|null, any, any][]>[
             [
                 'retrieves token by id',
                 <TokenId>'tok123',
@@ -151,6 +152,7 @@ describe( 'server.token.TokenDao', () =>
                     id:     <TokenId>'tok123',
                     status: expected_status,
                 },
+                null,
                 null,
             ],
 
@@ -173,6 +175,11 @@ describe( 'server.token.TokenDao', () =>
                 },
                 null,
                 `${ns}.tok123`,
+                {
+                    doc_id:   did,
+                    ns:       ns,
+                    token_id: 'tok123',
+                },
             ],
 
             [
@@ -183,6 +190,10 @@ describe( 'server.token.TokenDao', () =>
                 },
                 null,
                 ns,
+                {
+                    doc_id: did,
+                    ns:     ns,
+                },
             ],
 
             [
@@ -206,6 +217,7 @@ describe( 'server.token.TokenDao', () =>
                     status: expected_status,
                 },
                 null,
+                null,
             ],
 
             [
@@ -218,6 +230,10 @@ describe( 'server.token.TokenDao', () =>
                 },
                 null,
                 ns,
+                {
+                    doc_id: did,
+                    ns:     ns,
+                },
             ],
 
             [
@@ -228,8 +244,12 @@ describe( 'server.token.TokenDao', () =>
                 },
                 null,
                 ns,
+                {
+                    doc_id: did,
+                    ns:     ns,
+                },
             ],
-        ] ).forEach( ( [ label, tok_id, dbresult, expected, failure ] ) =>
+        ] ).forEach( ( [ label, tok_id, dbresult, expected, fmsg, fcontext ] ) =>
             it( label, () =>
             {
                 const coll: MongoCollection = {
@@ -244,14 +264,26 @@ describe( 'server.token.TokenDao', () =>
                 const result = new Sut( coll, field, () => <UnixTimestamp>0 )
                     .getToken( did, ns, tok_id );
 
-                return ( failure !== null )
+                return ( fmsg !== null )
                     ? Promise.all( [
                         expect( result ).to.eventually.be.rejectedWith(
-                            UnknownTokenError, failure
+                            UnknownTokenError, fmsg
                         ),
                         expect( result ).to.eventually.be.rejectedWith(
                             UnknownTokenError, ''+did
                         ),
+                        result.catch( e =>
+                        {
+                            if ( !hasContext( e ) )
+                            {
+                                // TS will soon have type assertions and
+                                // then this conditional and return can be
+                                // removed
+                                return expect.fail();
+                            }
+
+                            return expect( e.context ).to.deep.equal( fcontext );
+                        } ),
                     ] )
                     : expect( result ).to.eventually.deep.equal( expected );
             } )

@@ -33,6 +33,7 @@ import {
 import { DocumentId } from "../../document/Document";
 import { TokenId, TokenNamespace } from "./Token";
 import { UnknownTokenError } from "./UnknownTokenError";
+import { context } from "../../error/ContextError";
 
 
 /**
@@ -188,8 +189,14 @@ export class MongoTokenDao implements TokenDao
 
                     if ( !field[ ns ] )
                     {
-                        reject( new UnknownTokenError(
-                            `Unknown token namespace '${ns}' for document '${doc_id}`
+                        reject( context(
+                            new UnknownTokenError(
+                                `Unknown token namespace '${ns}' for document '${doc_id}`
+                            ),
+                            {
+                                doc_id: doc_id,
+                                ns:     ns,
+                            }
                         ) );
                         return;
                     }
@@ -227,9 +234,15 @@ export class MongoTokenDao implements TokenDao
 
         if ( !last )
         {
-            throw new UnknownTokenError(
-                `Failed to locate last token for namespace '${ns}'` +
-                    `on document '${doc_id}'`
+            throw context(
+                new UnknownTokenError(
+                    `Failed to locate last token for namespace '${ns}'` +
+                        `on document '${doc_id}'`
+                ),
+                {
+                    doc_id: doc_id,
+                    ns:     ns,
+                },
             );
         }
 
@@ -263,9 +276,16 @@ export class MongoTokenDao implements TokenDao
 
         if ( !reqtok )
         {
-            throw new UnknownTokenError(
-                `Missing data for requested token '${ns}.${token_id}'` +
-                    `for document '${doc_id}'`
+            throw context(
+                new UnknownTokenError(
+                    `Missing data for requested token '${ns}.${token_id}'` +
+                        `for document '${doc_id}'`
+                ),
+                {
+                    doc_id:   doc_id,
+                    ns:       ns,
+                    token_id: token_id,
+                },
             );
         }
 
