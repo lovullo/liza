@@ -47,7 +47,7 @@ export interface TokenDao
         doc_id:   DocumentId,
         ns:       TokenNamespace,
         token_id: TokenId
-    ): Promise<TokenData|null>;
+    ): Promise<TokenData>;
 }
 
 

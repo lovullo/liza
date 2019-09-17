@@ -33,6 +33,7 @@ import {
 } from "../../../src/server/token/Token";
 
 import { DocumentId } from "../../../src/document/Document";
+import { UnknownTokenError } from "../../../src/server/token/UnknownTokenError";
 
 
 import { expect, use as chai_use } from 'chai';
@@ -129,7 +130,7 @@ describe( 'server.token.TokenDao', () =>
             data:      "",
         };
 
-        ( <[string, TokenId, TokenQueryResult, TokenData][]>[
+        ( <[string, TokenId, TokenQueryResult, TokenData|null, any][]>[
             [
                 'retrieves token by id',
                 <TokenId>'tok123',
@@ -150,10 +151,11 @@ describe( 'server.token.TokenDao', () =>
                     id:     <TokenId>'tok123',
                     status: expected_status,
                 },
+                null,
             ],
 
             [
-                'returns null for namespace if token is not found',
+                'rejects for namespace if token is not found',
                 <TokenId>'tok123',
                 {
                     [field]: {
@@ -170,19 +172,21 @@ describe( 'server.token.TokenDao', () =>
                     },
                 },
                 null,
+                `${ns}.tok123`,
             ],
 
             [
-                'returns null for field if namespace is not found',
+                'rejects if namespace is not found',
                 <TokenId>'tok123',
                 {
                     [field]: {},
                 },
                 null,
+                ns,
             ],
 
             [
-                'returns lastest modified token given no token id',
+                'returns last modified token given no token id',
                 <TokenId>'',
                 {
                     [field]: {
@@ -201,23 +205,55 @@ describe( 'server.token.TokenDao', () =>
                     id:     <TokenId>'toklast',
                     status: expected_status,
                 },
+                null,
             ],
-        ] ).forEach( ( [ label, tok_id, result, expected ] ) =>
+
+            [
+                'rejects unknown last modified token given no token id',
+                <TokenId>'',
+                {
+                    [field]: {
+                        [ns]: {},
+                    },
+                },
+                null,
+                ns,
+            ],
+
+            [
+                'rejects unknown namespace token given no token id',
+                <TokenId>'',
+                {
+                    [field]: {},
+                },
+                null,
+                ns,
+            ],
+        ] ).forEach( ( [ label, tok_id, dbresult, expected, failure ] ) =>
             it( label, () =>
             {
                 const coll: MongoCollection = {
                     findOne( _selector, _fields, callback )
                     {
-                        callback( null, result );
+                        callback( null, dbresult );
                     },
 
                     update() {},
                 };
 
-                return expect(
-                    new Sut( coll, field, () => <UnixTimestamp>0 )
-                        .getToken( did, ns, tok_id )
-                ).to.eventually.deep.equal( expected );
+                const result = new Sut( coll, field, () => <UnixTimestamp>0 )
+                    .getToken( did, ns, tok_id );
+
+                return ( failure !== null )
+                    ? Promise.all( [
+                        expect( result ).to.eventually.be.rejectedWith(
+                            UnknownTokenError, failure
+                        ),
+                        expect( result ).to.eventually.be.rejectedWith(
+                            UnknownTokenError, ''+did
+                        ),
+                    ] )
+                    : expect( result ).to.eventually.deep.equal( expected );
             } )
         );
 

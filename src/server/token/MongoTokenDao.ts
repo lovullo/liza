@@ -30,8 +30,9 @@ import {
     TokenType,
 } from "./TokenDao";
 
-import { TokenId, TokenNamespace } from "./Token";
 import { DocumentId } from "../../document/Document";
+import { TokenId, TokenNamespace } from "./Token";
+import { UnknownTokenError } from "./UnknownTokenError";
 
 
 /**
@@ -155,7 +156,7 @@ export class MongoTokenDao implements TokenDao
      * @return token data
      */
     getToken( doc_id: DocumentId, ns: TokenNamespace, token_id: TokenId ):
-        Promise<TokenData|null>
+        Promise<TokenData>
     {
         const root        = this._genRoot( ns ) + '.';
         const fields: any = {};
@@ -187,15 +188,17 @@ export class MongoTokenDao implements TokenDao
 
                     if ( !field[ ns ] )
                     {
-                        resolve( null );
+                        reject( new UnknownTokenError(
+                            `Unknown token namespace '${ns}' for document '${doc_id}`
+                        ) );
                         return;
                     }
 
                     const ns_data = <TokenNamespaceData>field[ ns ];
 
                     resolve( ( token_id )
-                        ? this._getRequestedToken( token_id, ns_data )
-                        : this._getLatestToken( ns_data )
+                        ? this._getRequestedToken( doc_id, ns, token_id, ns_data )
+                        : this._getLatestToken( doc_id, ns, ns_data )
                     );
                 }
             );
@@ -204,19 +207,30 @@ export class MongoTokenDao implements TokenDao
 
 
     /**
-     * Retrieve latest token data, or `null` if none
+     * Retrieve latest token data
      *
+     * @param doc_id  document id
+     * @param ns      token namespace
      * @param ns_data namespace data
      *
      * @return data of latest token in namespace
+     *
+     * @throws UnknownTokenError if last token data is missing
      */
-    private _getLatestToken( ns_data: TokenNamespaceData ): TokenData | null
+    private _getLatestToken(
+        doc_id:  DocumentId,
+        ns:      TokenNamespace,
+        ns_data: TokenNamespaceData
+    ): TokenData
     {
         var last = ns_data.last;
 
         if ( !last )
         {
-            return null;
+            throw new UnknownTokenError(
+                `Failed to locate last token for namespace '${ns}'` +
+                    `on document '${doc_id}'`
+            );
         }
 
         return {
@@ -227,23 +241,32 @@ export class MongoTokenDao implements TokenDao
 
 
     /**
-     * Retrieve latest token data, or `null` if none
+     * Retrieve latest token data
      *
+     * @param doc_id   document id
+     * @param ns       token namespace
      * @param token_id token identifier for namespace associated with NS_DATA
      * @param ns_data  namespace data
      *
      * @return data of requested token
+     *
+     * @throws UnknownTokenError if token data is missing
      */
     private _getRequestedToken(
+        doc_id:   DocumentId,
+        ns:       TokenNamespace,
         token_id: TokenId,
         ns_data:  TokenNamespaceData
-    ): TokenData | null
+    ): TokenData
     {
         const reqtok = <TokenEntry>ns_data[ <string>token_id ];
 
         if ( !reqtok )
         {
-            return null;
+            throw new UnknownTokenError(
+                `Missing data for requested token '${ns}.${token_id}'` +
+                    `for document '${doc_id}'`
+            );
         }
 
         return {

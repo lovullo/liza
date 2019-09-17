@@ -237,20 +237,7 @@ module.exports = Trait( 'TokenedService' )
     'private _getQuoteToken': function( quote, tokid, callback )
     {
         this._dao.getToken( quote.getId(), this._ns, tokid )
-            .then( token =>
-            {
-                if ( tokid && !token )
-                {
-                    callback(
-                        Error( "Token not found: " + tokid ),
-                        null
-                    );
-
-                    return;
-                }
-
-                callback( null, token );
-            } )
+            .then( token => callback( null, token ) )
             .catch( err => callback( err, null ) );
     },
 
