@@ -29,7 +29,7 @@ declare module "mongodb";
 /**
  * Node-style callback for queries
  */
-type MongoCallback = ( err: Error|null, data: any ) => void;
+type MongoCallback = ( err: Error|null, data: { [P: string]: any } ) => void;
 
 
 /**
@@ -52,8 +52,47 @@ interface MongoQueryUpdateOptions
  */
 interface MongoFindOneOptions
 {
-    fields?: { [propName: string]: number },
+    fields?: MongoFieldSelector,
 }
+
+
+/**
+ * Options for `findAndModify` queries
+ *
+ * This is not at all comprehensive; it covers only the fields we actually
+ * make use of.
+ */
+interface MongoFindAndModifyOptions
+{
+    /** Whether to return new values instead of previous (default false) */
+    new?: boolean,
+
+    /** Field filter for query result */
+    fields?: MongoFieldSelector,
+
+    /** Whether to create if it does not already exist */
+    upsert?: boolean,
+}
+
+
+/** Mongo query selector */
+type MongoSelector = { [P: string]: any };
+
+
+/** Field selector */
+type MongoFieldSelector = { [P: string]: number };
+
+
+/** Mongo update clause */
+type MongoUpdate = MongoSelector;
+
+
+/** Sorting clause **/
+type MongoSortClause = Array<string | [ string, MongoSortDirection ]>;
+
+
+/** Sort direction */
+type MongoSortDirection = -1 | 1 | 'ascending' | 'descending' | 'asc' | 'desc';
 
 
 /**
@@ -80,8 +119,8 @@ declare interface MongoCollection
      * @return callback return value
      */
     update(
-        selector: object,
-        data:     object,
+        selector: MongoSelector,
+        data:     MongoUpdate,
         options:  MongoQueryUpdateOptions,
         callback: MongoCallback
     ): void;
@@ -98,8 +137,25 @@ declare interface MongoCollection
      * @param callback continuation on completion
      */
     findOne(
-        selector: object,
+        selector: MongoSelector,
         fields:   MongoFindOneOptions,
         callback: MongoCallback
+    ): void;
+
+
+    /**
+     * Execute an update and return query results
+     *
+     * Unless `options.new` is `true`, the results of the query _before_ the
+     * update are returned.
+     *
+     * @param query document query
+     */
+    findAndModify(
+        query:    MongoSelector,
+        sort:     MongoSortClause,
+        update:   MongoUpdate,
+        options:  MongoFindAndModifyOptions,
+        callback: MongoCallback,
     ): void;
 }
