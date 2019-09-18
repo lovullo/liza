@@ -88,8 +88,17 @@ describe( 'server.token.TokenDao', () =>
                 findOne() {},
             };
 
-            return new Sut( coll, field, () => timestamp )
-                .updateToken( did, ns, tok_id, tok_type, data );
+            return expect(
+                new Sut( coll, field, () => timestamp )
+                    .updateToken( did, ns, tok_id, tok_type, data )
+            ).to.eventually.deep.equal( {
+                id:     tok_id,
+                status: {
+                    type:      tok_type,
+                    timestamp: timestamp,
+                    data:      data,
+                },
+            } );
         } );
 
 

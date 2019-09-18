@@ -40,7 +40,7 @@ export interface TokenDao
         token_id: TokenId,
         type:     TokenType,
         data:     string | null,
-    ): Promise<void>;
+    ): Promise<TokenData>;
 
 
     getToken(

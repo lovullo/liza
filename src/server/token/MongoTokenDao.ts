@@ -91,6 +91,8 @@ export class MongoTokenDao implements TokenDao
      * @param token    token value
      * @param data     token data, if any
      * @param status   arbitrary token type
+     *
+     * @return token data
      */
     updateToken(
         doc_id:   DocumentId,
@@ -98,7 +100,7 @@ export class MongoTokenDao implements TokenDao
         token_id: TokenId,
         type:     TokenType,
         data:     string | null,
-    ): Promise<void>
+    ): Promise<TokenData>
     {
         const root = this._genRoot( ns ) + '.';
 
@@ -136,7 +138,10 @@ export class MongoTokenDao implements TokenDao
                         return;
                     }
 
-                    resolve();
+                    resolve( {
+                        id:     token_id,
+                        status: token_entry,
+                    } );
                 }
             );
         } );
