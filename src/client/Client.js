@@ -1877,12 +1877,15 @@ module.exports = Class( 'Client' )
             client._quote.visitData( function( bucket )
             {
                 client.program.beforeLoadStep( event.stepId, bucket,
-                    function( event_name )
+                    function( event_name, _, value )
                     {
                         event_count++;
 
                         client.handleEvent( event_name,
-                            { stepId: event.stepId },
+                            {
+                                stepId: event.stepId,
+                                value:  value,
+                            },
                             function()
                             {
                                 try_continue_nav();

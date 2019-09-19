@@ -80,6 +80,11 @@ module.exports = Class( 'RateEventHandler' )
      * argument will contain the result of the rate call. Note that the quote
      * will be automatically filled with the return data.
      *
+     * For use as a last resort, there's the ability to delay rating N
+     * seconds by passing a numeric value via `data`.  This is intended as a
+     * temporary workaround for slow supplier APIs until deferred rating can
+     * be properly implemented.
+     *
      * @param {string} type   event id; ignored
      *
      * @param {function(*,Object)} continuation to invoke on completion
@@ -88,9 +93,14 @@ module.exports = Class( 'RateEventHandler' )
      */
     'public handle': function( type, c, data )
     {
-        var _self = this,
-            quote = this._client.getQuote(),
-            qstep = quote.getCurrentStepId();
+        var _self = this;
+        var  quote = this._client.getQuote();
+        var qstep = quote.getCurrentStepId();
+
+        // arbitrary delay before rating (use as a last resort)
+        var delay = ( typeof +data.value === 'number' )
+            ? data.value * 1e3
+            : 0;
 
         // do not perform rating if quote is locked; use existing rates, if
         // available (stored in bucket)
@@ -118,7 +128,14 @@ module.exports = Class( 'RateEventHandler' )
 
         function dorate()
         {
-            _self._performRating( quote, c, data.indv, data.stepId );
+            _self._scheduleRating( delay, function( finish )
+            {
+                _self._performRating( quote, data.indv, data.stepId, function()
+                {
+                    finish();
+                    c.apply( null, arguments );
+                } );
+            } );
         }
 
         // perform rating immediately
@@ -128,14 +145,35 @@ module.exports = Class( 'RateEventHandler' )
     },
 
 
-    'private _performRating': function( quote, c, indv, dest_step_id )
+    /**
+     * Prepare to perform rating and schedule dialog to display
+     *
+     * If a delay is provided, then rating will be delayed by that number of
+     * milliseconds.  The dialog will be permitted to display during this
+     * delay period.
+     *
+     * @param {number}   delay    rating delay in milliseconds
+     * @param {Function} callback continuation after delay
+     */
+    'private _scheduleRating': function( delay, callback )
     {
-        var _self = this;
-
         // queue display of "rating in progress" dialog
         var dialog_close = this.queueProgressDialog(
             this.__self.$( '_DIALOG_DELAY_MS' )
         );
+
+        const delay_ms = Math.max( delay, 0 ) || 0;
+
+        setTimeout( function()
+        {
+            callback( dialog_close );
+        }, delay_ms );
+    },
+
+
+    'private _performRating': function( quote, indv, dest_step_id, c )
+    {
+        var _self = this;
 
         // grab the rates from the server for the already posted quote data
         this._dataProxy.get( this._genRateUrl( quote, indv ),
@@ -159,9 +197,6 @@ module.exports = Class( 'RateEventHandler' )
 
                 // let subtypes handle additional processing
                 _self.postRate( err, data, _self._client, quote );
-
-                // close rating dialog after rates are displayed
-                dialog_close();
 
                 // invalidate the step to force emptying of the bucket, ensuring
                 // that data is updated on the screen when it's re-rated (will
