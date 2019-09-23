@@ -27,7 +27,7 @@
  * compatibility with the existing data.
  */
 
-import { TokenId, TokenNamespace } from "./Token";
+import { TokenId, TokenNamespace, TokenState } from "./Token";
 import { DocumentId } from "../../document/Document";
 
 
@@ -38,7 +38,7 @@ export interface TokenDao
         doc_id:   DocumentId,
         ns:       TokenNamespace,
         token_id: TokenId,
-        type:     TokenType,
+        type:     TokenState,
         data:     string | null,
     ): Promise<TokenData>;
 
@@ -52,19 +52,13 @@ export interface TokenDao
 
 
 /**
- * Token status types as stored in the database
- */
-export type TokenType = 'ACTIVE' | 'DONE' | 'ACCEPTED' | 'DEAD';
-
-
-/**
  * Result of a Mongo query
  *
  * The returned property depends on the actual query.
  */
 export interface TokenQueryResult
 {
-    readonly [propName: string]: TokenNamespaceResults | null,
+    readonly [propName: string]: TokenNamespaceResults | undefined,
 }
 
 
@@ -73,7 +67,7 @@ export interface TokenQueryResult
  */
 export interface TokenNamespaceResults
 {
-    readonly [propName: string]: TokenNamespaceData | null,
+    readonly [propName: string]: TokenNamespaceData | undefined,
 }
 
 
@@ -104,7 +98,7 @@ export interface TokenNamespaceData
      * accommodate the above fields.  Anything using this should cast to
      * `TokenEntry`.
      */
-    readonly [propName: string]: TokenEntry | TokenStatus | TokenId | null,
+    readonly [propName: string]: TokenEntry | TokenStatus | TokenId | undefined,
 }
 
 
@@ -132,16 +126,13 @@ export interface TokenEntry
 
 /**
  * Status of the token (past or present)
- *
- * A status is a `TokenType`, along with a timestamp of occurrence and
- * optional data.
  */
 export interface TokenStatus
 {
     /**
      * State of the token
      */
-    readonly type: TokenType,
+    readonly type: TokenState,
 
     /**
      * Unix timestamp representing when the status change occurred
@@ -160,10 +151,38 @@ export interface TokenStatus
 
 
 /**
- * Token information
+ * Token information returned from database queries
+ *
+ * This attempts to provide raw data without making assumptions as to how it
+ * may be used.  For example, rather than returning whether the token was
+ * the last modified, it returns the last token before the database
+ * operation took place (`prev_last`).  Note that this interface is
+ * recursively defined, but will only be a maximum of two levels deep (there
+ * will be no `prev_last.prev_last !== null`).
  */
 export interface TokenData
 {
-    id:     TokenId,
+    /** Token identifier */
+    id: TokenId,
+
+    /** Status of token after the database operation */
     status: TokenStatus,
+
+    /**
+     * Status of token before the database operation
+     *
+     * If the operation is to retrieve a token (rather than to update it),
+     * then this status will be identical to `status`.
+     */
+    prev_status: TokenStatus | null,
+
+    /**
+     * Token data of the last updated token for this document id and
+     * namespace before the last database operation
+     *
+     * This is derived from the value of `TokenNamespaceData.last` and
+     * `TokenNamespaceData.lastStatus` prior to the most recent operation
+     * (e.g. Mongo's `findAndModify` with `new` set to `false`).
+     */
+    prev_last: TokenData | null,
 }

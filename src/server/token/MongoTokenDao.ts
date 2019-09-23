@@ -27,11 +27,10 @@ import {
     TokenNamespaceResults,
     TokenQueryResult,
     TokenStatus,
-    TokenType,
 } from "./TokenDao";
 
 import { DocumentId } from "../../document/Document";
-import { TokenId, TokenNamespace } from "./Token";
+import { TokenId, TokenNamespace, TokenState } from "./Token";
 import { UnknownTokenError } from "./UnknownTokenError";
 import { context } from "../../error/ContextError";
 
@@ -98,7 +97,7 @@ export class MongoTokenDao implements TokenDao
         doc_id:   DocumentId,
         ns:       TokenNamespace,
         token_id: TokenId,
-        type:     TokenType,
+        type:     TokenState,
         data:     string | null,
     ): Promise<TokenData>
     {
@@ -122,15 +121,24 @@ export class MongoTokenDao implements TokenDao
 
         return new Promise( ( resolve, reject ) =>
         {
-            this._collection.update(
+            this._collection.findAndModify(
                 { id: +doc_id },
+                [],
                 {
                     $set: token_data,
                     $push: token_log
                 },
-                { upsert: true },
+                {
+                    upsert: true,
+                    new:    false,
+                    fields: {
+                        [ root + 'last' ]:               1,
+                        [ root + 'lastStatus' ]:         1,
+                        [ root + token_id + '.status' ]: 1,
+                    },
+                },
 
-                function ( err: Error|null )
+                ( err: Error|null, prev_data ) =>
                 {
                     if ( err )
                     {
@@ -138,13 +146,71 @@ export class MongoTokenDao implements TokenDao
                         return;
                     }
 
+                    const prev_result = <TokenNamespaceResults>
+                        prev_data[ this._rootField ] || {};
+
+                    const prev_ns = prev_result[ ns ];
+
                     resolve( {
-                        id:     token_id,
-                        status: token_entry,
+                        id:          token_id,
+                        status:      token_entry,
+                        prev_status: this._getPrevStatus( prev_ns, token_id ),
+                        prev_last:   this._getPrevLast( prev_ns ),
                     } );
                 }
             );
         } );
+    }
+
+
+    /**
+     * Determine previous token status, or produce `null`
+     *
+     * @param prev_ns  previous namespace data
+     * @param token_id token identifier
+     *
+     * @return previous token status
+     */
+    private _getPrevStatus(
+        prev_ns: TokenNamespaceData | undefined,
+        token_id: TokenId
+    ): TokenStatus | null
+    {
+        if ( prev_ns === undefined )
+        {
+            return null;
+        }
+
+        const entry = <TokenEntry>( prev_ns[ token_id ] );
+
+        return ( entry === undefined )
+            ? null
+            : entry.status;
+    }
+
+
+    /**
+     * Determine previous last updated token for namespace, otherwise `null`
+     *
+     * @param prev_ns previous namespace data
+     *
+     * @return previous last token data
+     */
+    private _getPrevLast(
+        prev_ns: TokenNamespaceData | undefined
+    ): TokenData | null
+    {
+        if ( prev_ns === undefined || ( prev_ns || {} ).last === undefined )
+        {
+            return null;
+        }
+
+        return {
+            id:          prev_ns.last,
+            status:      prev_ns.lastStatus,
+            prev_status: null,
+            prev_last:   null,
+        };
     }
 
 
@@ -192,7 +258,9 @@ export class MongoTokenDao implements TokenDao
                     const field = <TokenNamespaceResults>data[ this._rootField ]
                         || {};
 
-                    if ( !field[ ns ] )
+                    const ns_data = field[ ns ];
+
+                    if ( !ns_data )
                     {
                         reject( context(
                             new UnknownTokenError(
@@ -203,10 +271,9 @@ export class MongoTokenDao implements TokenDao
                                 ns:     ns,
                             }
                         ) );
+
                         return;
                     }
-
-                    const ns_data = <TokenNamespaceData>field[ ns ];
 
                     resolve( ( token_id )
                         ? this._getRequestedToken( doc_id, ns, token_id, ns_data )
@@ -252,8 +319,10 @@ export class MongoTokenDao implements TokenDao
         }
 
         return {
-            id:     last,
-            status: ns_data.lastStatus,
+            id:          last,
+            status:      ns_data.lastStatus,
+            prev_status: ns_data.lastStatus,
+            prev_last:   this._getPrevLast( ns_data ),
         };
     }
 
@@ -295,8 +364,10 @@ export class MongoTokenDao implements TokenDao
         }
 
         return {
-            id:     token_id,
-            status: reqtok.status,
+            id:          token_id,
+            status:      reqtok.status,
+            prev_status: reqtok.status,
+            prev_last:   this._getPrevLast( ns_data ),
         };
     }
 

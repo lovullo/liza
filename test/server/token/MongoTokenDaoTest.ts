@@ -30,6 +30,7 @@ import { MongoTokenDao as Sut } from "../../../src/server/token/MongoTokenDao";
 import {
     TokenId,
     TokenNamespace,
+    TokenState,
 } from "../../../src/server/token/Token";
 
 import { DocumentId } from "../../../src/document/Document";
@@ -45,20 +46,159 @@ describe( 'server.token.TokenDao', () =>
 {
     describe( '#updateToken', () =>
     {
-        it( 'updates token with given data', () =>
+        const field     = 'foo_field';
+        const did       = <DocumentId>12345;
+        const ns        = <TokenNamespace>'namespace';
+        const tok_id    = <TokenId>'tok123';
+        const tok_type  = TokenState.DONE;
+        const data      = "some data";
+        const timestamp = <UnixTimestamp>12345;
+
+        const root = field + '.' + ns;
+
+        const last_tok_id = <TokenId>'last-tok';
+
+        const last: TokenStatus = {
+            type:      TokenState.DEAD,
+            timestamp: <UnixTimestamp>4567,
+            data:      "last token",
+        };
+
+        const prev: TokenStatus = {
+            type:      TokenState.ACTIVE,
+            timestamp: <UnixTimestamp>11111,
+            data:      "prev status",
+        };
+
+        ( <{ label: string, given: TokenQueryResult, expected: TokenData }[]>[
+            {
+                label: "updates token and returns previous data",
+
+                given: {
+                    [field]: {
+                        [ns]: {
+                            last:       last_tok_id,
+                            lastStatus: {
+                                type:      last.type,
+                                timestamp: last.timestamp,
+                                data:      last.data,
+                            },
+                            [tok_id]: {
+                                status: {
+                                    type:      prev.type,
+                                    timestamp: prev.timestamp,
+                                    data:      prev.data,
+                                },
+                            },
+                        },
+                    },
+                },
+                expected: {
+                    id:     tok_id,
+                    status: {
+                        type:      tok_type,
+                        timestamp: timestamp,
+                        data:      data,
+                    },
+                    prev_status: prev,
+                    prev_last:   {
+                        id:          last_tok_id,
+                        status:      last,
+                        prev_status: null,
+                        prev_last:   null,
+                    },
+                },
+            },
+
+            {
+                label: "returns null for prev status if missing data",
+
+                given: {
+                    [field]: {
+                        [ns]: {
+                            last:       last_tok_id,
+                            lastStatus: {
+                                type:      last.type,
+                                timestamp: last.timestamp,
+                                data:      last.data,
+                            },
+                        },
+                    },
+                },
+                expected: {
+                    id:     tok_id,
+                    status: {
+                        type:      tok_type,
+                        timestamp: timestamp,
+                        data:      data,
+                    },
+                    prev_status: null,
+                    prev_last:   {
+                        id:          last_tok_id,
+                        status:      last,
+                        prev_status: null,
+                        prev_last:   null,
+                    },
+                },
+            },
+
+            {
+                label: "returns null for missing namespace data",
+
+                given: {
+                    [field]: {
+                        [ns]: {},
+                    },
+                },
+                expected: {
+                    id:     tok_id,
+                    status: {
+                        type:      tok_type,
+                        timestamp: timestamp,
+                        data:      data,
+                    },
+                    prev_status: null,
+                    prev_last:   null,
+                },
+            },
+
+            {
+                label: "returns null for missing namespace",
+
+                given: {
+                    [field]: {},
+                },
+                expected: {
+                    id:     tok_id,
+                    status: {
+                        type:      tok_type,
+                        timestamp: timestamp,
+                        data:      data,
+                    },
+                    prev_status: null,
+                    prev_last:   null,
+                },
+            },
+
+            {
+                label: "returns null for missing root field",
+
+                given: {},
+                expected: {
+                    id:     tok_id,
+                    status: {
+                        type:      tok_type,
+                        timestamp: timestamp,
+                        data:      data,
+                    },
+                    prev_status: null,
+                    prev_last:   null,
+                },
+            },
+        ] ).forEach( ( { given, expected, label } ) => it( label, () =>
         {
-            const field     = 'foo_field';
-            const did       = <DocumentId>12345;
-            const ns        = <TokenNamespace>'namespace';
-            const tok_id    = <TokenId>'tok123';
-            const tok_type  = 'DONE';
-            const data      = "some data";
-            const timestamp = <UnixTimestamp>12345;
-
-            const root = field + '.' + ns;
-
             const coll: MongoCollection = {
-                update( selector: any, given_data: any, options, callback )
+                findAndModify( selector, _sort, given_data, options, callback )
                 {
                     const expected_entry: TokenStatus = {
                         type:      tok_type,
@@ -70,36 +210,37 @@ describe( 'server.token.TokenDao', () =>
 
                     expect( given_data ).to.deep.equal( {
                         $set:  {
-                            [`${root}.last`]:             tok_id,
-                            [`${root}.lastStatus`]:       expected_entry,
-                            [`${root}.${tok_id}.status`]: expected_entry,
+                            [ `${root}.last` ]:             tok_id,
+                            [ `${root}.lastStatus` ]:       expected_entry,
+                            [ `${root}.${tok_id}.status` ]: expected_entry,
                         },
                         $push: {
-                            [`${root}.${tok_id}.statusLog`]: expected_entry,
+                            [ `${root}.${tok_id}.statusLog` ]: expected_entry,
                         },
                     } );
 
-                    expect( ( <MongoQueryUpdateOptions>options ).upsert )
-                        .to.be.true;
+                    expect( options ).to.deep.equal( {
+                        upsert: true,
+                        new:    false,
+                        fields: {
+                            [ `${root}.last` ]:             1,
+                            [ `${root}.lastStatus` ]:       1,
+                            [ `${root}.${tok_id}.status` ]: 1,
+                        },
+                    } );
 
-                    callback( null, {} );
+                    callback( null, given );
                 },
 
+                update() {},
                 findOne() {},
             };
 
             return expect(
                 new Sut( coll, field, () => timestamp )
                     .updateToken( did, ns, tok_id, tok_type, data )
-            ).to.eventually.deep.equal( {
-                id:     tok_id,
-                status: {
-                    type:      tok_type,
-                    timestamp: timestamp,
-                    data:      data,
-                },
-            } );
-        } );
+            ).to.eventually.deep.equal( expected );
+        } ) );
 
 
         it( 'proxies error to callback', () =>
@@ -107,11 +248,12 @@ describe( 'server.token.TokenDao', () =>
             const expected_error = Error( "expected error" );
 
             const coll: MongoCollection = {
-                update( _selector, _data, _options, callback )
+                findAndModify( _selector, _sort, _update, _options, callback )
                 {
                     callback( expected_error, {} );
                 },
 
+                update() {},
                 findOne() {},
             };
 
@@ -120,7 +262,7 @@ describe( 'server.token.TokenDao', () =>
                     <DocumentId>0,
                     <TokenNamespace>'ns',
                     <TokenId>'id',
-                    'DONE',
+                    TokenState.DONE,
                     null
                 )
             ).to.eventually.be.rejectedWith( expected_error );
@@ -135,9 +277,17 @@ describe( 'server.token.TokenDao', () =>
         const ns     = <TokenNamespace>'get_ns';
 
         const expected_status: TokenStatus = {
-            type:      'ACTIVE',
+            type:      TokenState.ACTIVE,
             timestamp: <UnixTimestamp>0,
             data:      "",
+        };
+
+        const last_tok_id = <TokenId>'last-tok';
+
+        const last: TokenStatus = {
+            type:      TokenState.DEAD,
+            timestamp: <UnixTimestamp>4567,
+            data:      "last token",
         };
 
         ( <[string, TokenId, TokenQueryResult, TokenData|null, any, any][]>[
@@ -147,8 +297,8 @@ describe( 'server.token.TokenDao', () =>
                 {
                     [field]: {
                         [ns]: {
-                            last:       <TokenId>'tok123',
-                            lastStatus: expected_status,
+                            last:       last_tok_id,
+                            lastStatus: last,
 
                             tok123: {
                                 status:    expected_status,
@@ -158,8 +308,15 @@ describe( 'server.token.TokenDao', () =>
                     },
                 },
                 {
-                    id:     <TokenId>'tok123',
-                    status: expected_status,
+                    id:          <TokenId>'tok123',
+                    status:      expected_status,
+                    prev_status: expected_status,
+                    prev_last:   {
+                        id:          last_tok_id,
+                        status:      last,
+                        prev_status: null,
+                        prev_last:   null,
+                    }
                 },
                 null,
                 null,
@@ -171,8 +328,8 @@ describe( 'server.token.TokenDao', () =>
                 {
                     [field]: {
                         [ns]: {
-                            last:       <TokenId>'something',
-                            lastStatus: expected_status,
+                            last:       last_tok_id,
+                            lastStatus: last,
 
                             // just to make sure we don't grab another tok
                             othertok: {
@@ -211,10 +368,10 @@ describe( 'server.token.TokenDao', () =>
                 {
                     [field]: {
                         [ns]: {
-                            last: <TokenId>'toklast',
-                            lastStatus: expected_status,
+                            last:       last_tok_id,
+                            lastStatus: last,
 
-                            toklast: {
+                            [ last_tok_id ]: {
                                 status:    expected_status,
                                 statusLog: [ expected_status ],
                             },
@@ -222,8 +379,15 @@ describe( 'server.token.TokenDao', () =>
                     },
                 },
                 {
-                    id:     <TokenId>'toklast',
-                    status: expected_status,
+                    id:          last_tok_id,
+                    status:      last,
+                    prev_status: last,
+                    prev_last:   {
+                        id:          last_tok_id,
+                        status:      last,
+                        prev_status: null,
+                        prev_last:   null,
+                    }
                 },
                 null,
                 null,
@@ -262,12 +426,26 @@ describe( 'server.token.TokenDao', () =>
             it( label, () =>
             {
                 const coll: MongoCollection = {
-                    findOne( _selector, _fields, callback )
+                    findOne( selector, { fields }, callback )
                     {
+                        const expected_fields = {
+                            [ `${field}.${ns}.last` ]:       1,
+                            [ `${field}.${ns}.lastStatus` ]: 1,
+                        };
+
+                        if ( tok_id )
+                        {
+                            expected_fields[ `${field}.${ns}.${tok_id}` ] = 1;
+                        }
+
+                        expect( fields ).to.deep.equal( expected_fields );
+                        expect( selector ).to.deep.equal( { id: did } );
+
                         callback( null, dbresult );
                     },
 
                     update() {},
+                    findAndModify() {},
                 };
 
                 const result = new Sut( coll, field, () => <UnixTimestamp>0 )
@@ -310,6 +488,7 @@ describe( 'server.token.TokenDao', () =>
                 },
 
                 update() {},
+                findAndModify() {},
             };
 
             return expect(

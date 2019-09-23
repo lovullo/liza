@@ -20,7 +20,31 @@
  */
 
 
+/** Identifier unique to token namespace */
 export type TokenId = NominalType<string, 'TokenId'>;
 
+
+/** Token namespace for identifiers */
 export type TokenNamespace = NominalType<string, 'TokenNamespace'>;
+
+
+/**
+ * Token states
+ *
+ * States are listed as strings for ease of {de,}serialization for storage.
+ *
+ * - `ACTIVE` - an outstanding token that has not yet been processed.
+ * - `DONE` - a token has finished processing and result data may be
+ *   available.
+ * - `ACCEPTED` - a `DONE` token has been acknowledged by the requester.
+ * - `DEAD` - a token has been killed and should no longer be used.
+ *
+ * For valid state transitions, see `TokenTransition`.
+ */
+export enum TokenState {
+    ACTIVE   = "ACTIVE",
+    DONE     = "DONE",
+    ACCEPTED = "ACCEPTED",
+    DEAD     = "DEAD",
+};
 
