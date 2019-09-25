@@ -39,10 +39,10 @@ import { DocumentId } from "../../document/Document";
  * This store is used to create, read, and modify tokens.  Its API is
  * designed to constrain state transitions at compile-time.
  *
- * Stores are initialized with a given namespace, and DAOs are initialized
- * with a root field.  Tokens are collected in namespaces at the document
- * level.  Consequently, a new `TokenStore` must be created for each group
- * (namespace) of tokens that needs to be operated on.
+ * Stores are initialized with a given document id and namespace, and DAOs
+ * are initialized with a root field.  Consequently, a new `TokenStore` must
+ * be created for each group (namespace) of tokens that needs to be operated
+ * on per document.
  *
  * A nullary token id generator must be provided.  Given that it takes no
  * arguments, this means that it is nondeterministic.  This function must
@@ -86,6 +86,9 @@ export class TokenStore
     /** Data access layer for underlying token data */
     private readonly _dao: TokenDao;
 
+    /** Identifier of document to which store is constrained */
+    private readonly _doc_id: DocumentId;
+
     /** Token namespace used for grouping per document */
     private readonly _token_ns: TokenNamespace;
 
@@ -97,12 +100,19 @@ export class TokenStore
      * Initialize store
      *
      * @param dao      data access layer
+     * @param doc_id   constrain store to given document id
      * @param token_ns token namespace
      * @param idgen    token id generator
      */
-    constructor( dao: TokenDao, token_ns: TokenNamespace, idgen: () => TokenId )
+    constructor(
+        dao:      TokenDao,
+        doc_id:   DocumentId,
+        token_ns: TokenNamespace,
+        idgen:    () => TokenId
+    )
     {
         this._dao      = dao;
+        this._doc_id   = doc_id;
         this._token_ns = token_ns;
         this._idgen    = idgen;
     }
@@ -111,21 +121,19 @@ export class TokenStore
     /**
      * Look up an existing token by id
      *
-     * This looks up the given token id `token_id` for the document
-     * `doc_id`, constrained to this store's namespace.
+     * This looks up the given token id `token_id` for the document,
+     * constrained to this store's namespace and document id.
      *
      * The state of the returned token cannot be determined until runtime,
      * so the caller is responsible for further constraining the type.
      *
-     * @param doc_id   document id
      * @param token_id token id
      *
      * @return requested token, if it exists
      */
-    lookupToken( doc_id: DocumentId, token_id: TokenId ):
-        Promise<Token<TokenState>>
+    lookupToken( token_id: TokenId ): Promise<Token<TokenState>>
     {
-        return this._dao.getToken( doc_id, this._token_ns, token_id )
+        return this._dao.getToken( this._doc_id, this._token_ns, token_id )
             .then( data => this._tokenDataToToken( data, data.status.type ) );
     }
 
@@ -136,13 +144,11 @@ export class TokenStore
      *
      * The returned token will always be `ACTIVE` and will always have
      * `last_mistmatch` set.
-     *
-     * @param doc_id document id
      */
-    createToken( doc_id: DocumentId ): Promise<Token<TokenState.ACTIVE>>
+    createToken(): Promise<Token<TokenState.ACTIVE>>
     {
         return this._dao.updateToken(
-            doc_id, this._token_ns, this._idgen(), TokenState.ACTIVE, null
+            this._doc_id, this._token_ns, this._idgen(), TokenState.ACTIVE, null
         )
             .then( data => this._tokenDataToToken( data, TokenState.ACTIVE ) );
     }
@@ -200,20 +206,16 @@ export class TokenStore
      * and is waiting acknowledgement from the system responsible for
      * handling the response.
      *
-     * @param doc_id document id
-     * @param src    token to complete
-     * @param data   optional response data
+     * @param src  token to complete
+     * @param data optional response data
      *
      * @return token in `DONE` state
      */
-    completeToken(
-        doc_id: DocumentId,
-        src:    Token<TokenStateDoneable>,
-        data:   string | null
-    ): Promise<Token<TokenState.DONE>>
+    completeToken( src: Token<TokenStateDoneable>, data: string | null ):
+        Promise<Token<TokenState.DONE>>
     {
         return this._dao.updateToken(
-            doc_id, this._token_ns, src.id, TokenState.DONE, data
+            this._doc_id, this._token_ns, src.id, TokenState.DONE, data
         )
             .then( data => this._tokenDataToToken( data, TokenState.DONE ) );
     }
@@ -229,20 +231,16 @@ export class TokenStore
      * token has been acknowledged and all resources related to the
      * processing of the token can be freed.
      *
-     * @param doc_id document id
-     * @param src    token to accept
-     * @param data   optional accept reason
+     * @param src  token to accept
+     * @param data optional accept reason
      *
      * @return token in `ACCEPTED` state
      */
-    acceptToken(
-        doc_id: DocumentId,
-        src:    Token<TokenStateAcceptable>,
-        data:   string | null
-    ): Promise<Token<TokenState.ACCEPTED>>
+    acceptToken( src: Token<TokenStateAcceptable>, data: string | null ):
+        Promise<Token<TokenState.ACCEPTED>>
     {
         return this._dao.updateToken(
-            doc_id, this._token_ns, src.id, TokenState.ACCEPTED, data
+            this._doc_id, this._token_ns, src.id, TokenState.ACCEPTED, data
         )
             .then( data => this._tokenDataToToken( data, TokenState.ACCEPTED ) );
     }
@@ -257,20 +255,16 @@ export class TokenStore
      * A token that in a `DEAD` state means that any processing related to
      * that token should be aborted.
      *
-     * @param doc_id document id
-     * @param src    token to kill
-     * @param data   optional kill reason
+     * @param src  token to kill
+     * @param data optional kill reason
      *
      * @return token in `DEAD` state
      */
-    killToken(
-        doc_id: DocumentId,
-        src:    Token<TokenStateDeadable>,
-        data:   string | null
-    ): Promise<Token<TokenState.DEAD>>
+    killToken( src: Token<TokenStateDeadable>, data: string | null ):
+        Promise<Token<TokenState.DEAD>>
     {
         return this._dao.updateToken(
-            doc_id, this._token_ns, src.id, TokenState.DEAD, data
+            this._doc_id, this._token_ns, src.id, TokenState.DEAD, data
         )
             .then( data => this._tokenDataToToken( data, TokenState.DEAD ) );
     }

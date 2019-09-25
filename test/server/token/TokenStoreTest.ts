@@ -142,8 +142,8 @@ describe( 'TokenStore', () =>
             }();
 
             return expect(
-                new Sut( dao, ns, voidIdgen )
-                    .lookupToken( doc_id, token_id )
+                new Sut( dao, doc_id, ns, voidIdgen )
+                    .lookupToken( token_id )
             )
                 .to.eventually.deep.equal( expected );
         } ) );
@@ -171,8 +171,8 @@ describe( 'TokenStore', () =>
             }();
 
             return expect(
-                new Sut( dao, ns, voidIdgen )
-                    .lookupToken( doc_id, token_id )
+                new Sut( dao, doc_id, ns, voidIdgen )
+                    .lookupToken( token_id )
             ).to.eventually.be.rejectedWith( expected_e );
         } );
     } );
@@ -270,8 +270,8 @@ describe( 'TokenStore', () =>
             }();
 
             return expect(
-                new Sut( dao, ns, () => token_id )
-                    .createToken( doc_id )
+                new Sut( dao, doc_id, ns, () => token_id )
+                    .createToken()
             ).to.eventually.deep.equal( expected );
         } ) );
     } );
@@ -386,8 +386,8 @@ describe( 'TokenStore', () =>
             // dispatch, so it's not testing the state transition
             // restrictions that are enforced by the compiler
             return expect(
-                new Sut( dao, ns, voidIdgen )[ method ](
-                    doc_id, <any>token, data
+                new Sut( dao, doc_id, ns, voidIdgen )[ method ](
+                    <any>token, data
                 )
             ).to.eventually.deep.equal( expected );
         } );
