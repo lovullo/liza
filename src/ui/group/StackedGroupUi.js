@@ -114,9 +114,22 @@ module.exports = Class( 'StackedGroupUi' )
 
         if ( !this.hasVisibleField( index ) )
         {
-            const header = this._$container.find( 'dl' )[ index ];
+            // This possible effects of ignoring these errors has been
+            // deemed less severe than the current effects when it fails
+            // (i.e. showing all the questions).
+            // This will also eventually be changed to have the elements
+            // be hidden by default and show when appropriate. This will
+            // likely fix the current issue and reduce the chances of
+            // something like this happening.
+            try {
+                const header = this._$container.find( 'dl' )[ index ];
 
-            header.classList.add( 'hidden' );
+                header.classList.add( 'hidden' );
+            }
+            catch( e )
+            {
+                console.warn( e );
+            }
         }
     },
 
