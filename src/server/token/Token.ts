@@ -103,5 +103,13 @@ export interface Token<T extends TokenState>
      * that time.
      */
     readonly last_mismatch: boolean;
+
+    /**
+     * Whether this was the most recently created token
+     *
+     * This is true iff the last token to have been in the `ACTIVE` status
+     * is shares the same token id.
+     */
+    readonly last_created: boolean;
 }
 

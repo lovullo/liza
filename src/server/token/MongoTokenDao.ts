@@ -26,6 +26,7 @@ import {
     TokenNamespaceData,
     TokenNamespaceResults,
     TokenQueryResult,
+    TokenStateHistory,
     TokenStatus,
 } from "./TokenDao";
 
@@ -111,6 +112,7 @@ export class MongoTokenDao implements TokenDao
 
         const token_data = {
             [ root + 'last' ]:               token_id,
+            [ root + 'lastState.' + type ]:  token_id,
             [ root + 'lastStatus' ]:         token_entry,
             [ root + token_id + '.status' ]: token_entry,
         };
@@ -133,6 +135,7 @@ export class MongoTokenDao implements TokenDao
                     new:    false,
                     fields: {
                         [ root + 'last' ]:               1,
+                        [ root + 'lastState' ]:          1,
                         [ root + 'lastStatus' ]:         1,
                         [ root + token_id + '.status' ]: 1,
                     },
@@ -156,6 +159,7 @@ export class MongoTokenDao implements TokenDao
                         status:      token_entry,
                         prev_status: this._getPrevStatus( prev_ns, token_id ),
                         prev_last:   this._getPrevLast( prev_ns ),
+                        prev_state:  this._getPrevState( prev_ns ),
                     } );
                 }
             );
@@ -210,7 +214,28 @@ export class MongoTokenDao implements TokenDao
             status:      prev_ns.lastStatus,
             prev_status: null,
             prev_last:   null,
+            prev_state:  {},
         };
+    }
+
+
+    /**
+     * Retrieve previous token states
+     *
+     * If token state information is missing, an empty object will be
+     * returned.
+     *
+     * @param prev_ns previous namespace data
+     *
+     * @return previous token states
+     */
+    private _getPrevState(
+        prev_ns: TokenNamespaceData | undefined
+    ): TokenStateHistory
+    {
+        return ( !prev_ns || prev_ns.lastState === undefined )
+            ? {}
+            : prev_ns.lastState;
     }
 
 
@@ -233,7 +258,8 @@ export class MongoTokenDao implements TokenDao
         const root        = this._genRoot( ns ) + '.';
         const fields: any = {};
 
-        fields[ root + 'last' ] = 1;
+        fields[ root + 'last' ]       = 1;
+        fields[ root + 'lastState' ]  = 1;
         fields[ root + 'lastStatus' ] = 1;
 
         if ( token_id )
@@ -323,6 +349,7 @@ export class MongoTokenDao implements TokenDao
             status:      ns_data.lastStatus,
             prev_status: ns_data.lastStatus,
             prev_last:   this._getPrevLast( ns_data ),
+            prev_state:  this._getPrevState( ns_data ),
         };
     }
 
@@ -368,6 +395,7 @@ export class MongoTokenDao implements TokenDao
             status:      reqtok.status,
             prev_status: reqtok.status,
             prev_last:   this._getPrevLast( ns_data ),
+            prev_state:  this._getPrevState( ns_data ),
         };
     }
 

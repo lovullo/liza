@@ -82,6 +82,7 @@ describe( 'TokenStore', () =>
                     timestamp:     expected_ts,
                     data:          expected_data,
                     last_mismatch: false,
+                    last_created:  false,
                 },
             ],
 
@@ -116,6 +117,34 @@ describe( 'TokenStore', () =>
                     timestamp:     expected_ts,
                     data:          expected_data,
                     last_mismatch: true,
+                    last_created:  false,
+                },
+            ],
+
+            [
+                "returns existing token with set last created",
+                {
+                    id: token_id,
+
+                    status: {
+                        type:      TokenState.DEAD,
+                        timestamp: expected_ts,
+                        data:      expected_data,
+                    },
+
+                    prev_status: null,
+                    prev_last:   null,
+                    prev_state:  {
+                        [ TokenState.ACTIVE ]: token_id,
+                    },
+                },
+                {
+                    id:            token_id,
+                    state:         TokenState.DEAD,
+                    timestamp:     expected_ts,
+                    data:          expected_data,
+                    last_mismatch: true,
+                    last_created:  true,
                 },
             ],
         ] ).forEach( ( [ label, dbdata, expected ] ) => it( label, () =>
@@ -211,6 +240,8 @@ describe( 'TokenStore', () =>
                         prev_status: null,
                         prev_last:   null,
                     },
+
+                    prev_state: {},
                 },
                 {
                     id:            token_id,
@@ -218,6 +249,7 @@ describe( 'TokenStore', () =>
                     timestamp:     expected_ts,
                     data:          expected_data,
                     last_mismatch: true,
+                    last_created:  true,
                 },
             ],
 
@@ -233,6 +265,7 @@ describe( 'TokenStore', () =>
 
                     prev_status: null,
                     prev_last:   null,
+                    prev_state:  {},
                 },
                 {
                     id:            token_id,
@@ -240,6 +273,7 @@ describe( 'TokenStore', () =>
                     timestamp:     expected_ts,
                     data:          expected_data,
                     last_mismatch: true,
+                    last_created:  true,
                 },
             ],
         ] ).forEach( ( [ label, dbdata, expected ] ) => it( label, () =>
@@ -290,6 +324,7 @@ describe( 'TokenStore', () =>
                 timestamp:     <UnixTimestamp>0,
                 data:          "",
                 last_mismatch: true,
+                last_created:  true,
             },
             "complete-data",
             {
@@ -298,6 +333,7 @@ describe( 'TokenStore', () =>
                 timestamp:     expected_ts,
                 data:          "complete-data",
                 last_mismatch: true,
+                last_created:  true,
             },
         ],
 
@@ -309,6 +345,7 @@ describe( 'TokenStore', () =>
                 timestamp:     <UnixTimestamp>0,
                 data:          "accept",
                 last_mismatch: true,
+                last_created:  true,
             },
             "accept-data",
             {
@@ -317,6 +354,7 @@ describe( 'TokenStore', () =>
                 timestamp:     expected_ts,
                 data:          "accept-data",
                 last_mismatch: true,
+                last_created:  true,
             },
         ],
 
@@ -328,6 +366,7 @@ describe( 'TokenStore', () =>
                 timestamp:     <UnixTimestamp>0,
                 data:          "kill",
                 last_mismatch: true,
+                last_created:  true,
             },
             "kill-data",
             {
@@ -336,6 +375,7 @@ describe( 'TokenStore', () =>
                 timestamp:     expected_ts,
                 data:          "kill-data",
                 last_mismatch: true,
+                last_created:  true,
             },
         ],
     ] ).forEach( ( [ method, token, data, expected ] ) => describe( `#${method}`, () =>
@@ -378,6 +418,9 @@ describe( 'TokenStore', () =>
 
                         prev_status: null,
                         prev_last:   null,
+                        prev_state:  {
+                            [ TokenState.ACTIVE ]: token.id,
+                        },
                     } );
                 }
             }();

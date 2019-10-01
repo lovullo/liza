@@ -78,6 +78,9 @@ describe( 'server.token.TokenDao', () =>
                     [field]: {
                         [ns]: {
                             last:       last_tok_id,
+                            lastState: {
+                                [ prev.type ]: last_tok_id,
+                            },
                             lastStatus: {
                                 type:      last.type,
                                 timestamp: last.timestamp,
@@ -100,12 +103,16 @@ describe( 'server.token.TokenDao', () =>
                         timestamp: timestamp,
                         data:      data,
                     },
+                    prev_state: {
+                        [ prev.type ]: last_tok_id,
+                    },
                     prev_status: prev,
                     prev_last:   {
                         id:          last_tok_id,
                         status:      last,
                         prev_status: null,
                         prev_last:   null,
+                        prev_state:  {},
                     },
                 },
             },
@@ -133,11 +140,13 @@ describe( 'server.token.TokenDao', () =>
                         data:      data,
                     },
                     prev_status: null,
+                    prev_state: {},
                     prev_last:   {
                         id:          last_tok_id,
                         status:      last,
                         prev_status: null,
                         prev_last:   null,
+                        prev_state:  {},
                     },
                 },
             },
@@ -158,6 +167,7 @@ describe( 'server.token.TokenDao', () =>
                         data:      data,
                     },
                     prev_status: null,
+                    prev_state: {},
                     prev_last:   null,
                 },
             },
@@ -176,6 +186,7 @@ describe( 'server.token.TokenDao', () =>
                         data:      data,
                     },
                     prev_status: null,
+                    prev_state: {},
                     prev_last:   null,
                 },
             },
@@ -192,6 +203,7 @@ describe( 'server.token.TokenDao', () =>
                         data:      data,
                     },
                     prev_status: null,
+                    prev_state: {},
                     prev_last:   null,
                 },
             },
@@ -210,9 +222,10 @@ describe( 'server.token.TokenDao', () =>
 
                     expect( given_data ).to.deep.equal( {
                         $set:  {
-                            [ `${root}.last` ]:             tok_id,
-                            [ `${root}.lastStatus` ]:       expected_entry,
-                            [ `${root}.${tok_id}.status` ]: expected_entry,
+                            [ `${root}.last` ]:                  tok_id,
+                            [ `${root}.lastState.${tok_type}` ]: tok_id,
+                            [ `${root}.lastStatus` ]:            expected_entry,
+                            [ `${root}.${tok_id}.status` ]:      expected_entry,
                         },
                         $push: {
                             [ `${root}.${tok_id}.statusLog` ]: expected_entry,
@@ -224,6 +237,7 @@ describe( 'server.token.TokenDao', () =>
                         new:    false,
                         fields: {
                             [ `${root}.last` ]:             1,
+                            [ `${root}.lastState` ]:        1,
                             [ `${root}.lastStatus` ]:       1,
                             [ `${root}.${tok_id}.status` ]: 1,
                         },
@@ -298,6 +312,10 @@ describe( 'server.token.TokenDao', () =>
                     [field]: {
                         [ns]: {
                             last:       last_tok_id,
+                            lastState:  {
+                                [ TokenState.ACTIVE ]: last_tok_id,
+                                [ TokenState.DONE ]:   last_tok_id,
+                            },
                             lastStatus: last,
 
                             tok123: {
@@ -311,11 +329,16 @@ describe( 'server.token.TokenDao', () =>
                     id:          <TokenId>'tok123',
                     status:      expected_status,
                     prev_status: expected_status,
+                    prev_state:  {
+                        [ TokenState.ACTIVE ]: last_tok_id,
+                        [ TokenState.DONE ]:   last_tok_id,
+                    },
                     prev_last:   {
                         id:          last_tok_id,
                         status:      last,
                         prev_status: null,
                         prev_last:   null,
+                        prev_state:  {},
                     }
                 },
                 null,
@@ -369,6 +392,9 @@ describe( 'server.token.TokenDao', () =>
                     [field]: {
                         [ns]: {
                             last:       last_tok_id,
+                            lastState:  {
+                                [ TokenState.DEAD ]: last_tok_id,
+                            },
                             lastStatus: last,
 
                             [ last_tok_id ]: {
@@ -382,11 +408,15 @@ describe( 'server.token.TokenDao', () =>
                     id:          last_tok_id,
                     status:      last,
                     prev_status: last,
+                    prev_state: {
+                        [ TokenState.DEAD ]: last_tok_id,
+                    },
                     prev_last:   {
                         id:          last_tok_id,
                         status:      last,
                         prev_status: null,
                         prev_last:   null,
+                        prev_state:  {},
                     }
                 },
                 null,
@@ -430,6 +460,7 @@ describe( 'server.token.TokenDao', () =>
                     {
                         const expected_fields = {
                             [ `${field}.${ns}.last` ]:       1,
+                            [ `${field}.${ns}.lastState` ]:  1,
                             [ `${field}.${ns}.lastStatus` ]: 1,
                         };
 

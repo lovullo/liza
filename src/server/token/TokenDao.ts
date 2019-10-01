@@ -56,19 +56,15 @@ export interface TokenDao
  *
  * The returned property depends on the actual query.
  */
-export interface TokenQueryResult
-{
-    readonly [propName: string]: TokenNamespaceResults | undefined,
-}
+export type TokenQueryResult = { readonly [P: string]: TokenNamespaceResults | undefined };
 
 
-/**
- * Token data for requested namespaces
- */
-export interface TokenNamespaceResults
-{
-    readonly [propName: string]: TokenNamespaceData | undefined,
-}
+/** Token data for requested namespaces */
+export type TokenNamespaceResults = { readonly [P: string]: TokenNamespaceData | undefined };
+
+
+/** Last token touching various states */
+export type TokenStateHistory = { readonly [P in TokenState]?: TokenId };
 
 
 /**
@@ -85,6 +81,16 @@ export interface TokenNamespaceData
     readonly last: TokenId,
 
     /**
+     * Last token id to have touched each state
+     *
+     * A field representing the state will only exist if there is a token
+     * that last touched it.
+     *
+     * This value may not exist on older documents.
+     */
+    readonly lastState?: TokenStateHistory,
+
+    /**
      * Most recent token status
      *
      * This is a duplicate of the last entry in `TokenEntry#statusLog`.
@@ -98,7 +104,8 @@ export interface TokenNamespaceData
      * accommodate the above fields.  Anything using this should cast to
      * `TokenEntry`.
      */
-    readonly [propName: string]: TokenEntry | TokenStatus | TokenId | undefined,
+    readonly [P: string]:
+        TokenEntry | TokenStateHistory | TokenStatus | TokenId | undefined,
 }
 
 
@@ -185,4 +192,13 @@ export interface TokenData
      * (e.g. Mongo's `findAndModify` with `new` set to `false`).
      */
     prev_last: TokenData | null,
+
+    /**
+     * Last token id to have touched each state
+     *
+     * A field representing the state will only exist if there is a token
+     * that last touched it.  If there are no previous states, the result
+     * will be an empty object.
+     */
+    prev_state: { [P in TokenState]?: TokenId },
 }

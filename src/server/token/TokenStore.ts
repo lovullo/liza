@@ -51,33 +51,38 @@ import { DocumentId } from "../../document/Document";
  * The philosophy of this store is that any token within a given namespace
  * can be updated at any time, but each namespace has a unique "last" token
  * by document that represents the last token to have been updated within
- * that context.  When performing any operation on that namespace,
- * information regarding that "last" token will be provided so that the
- * caller can determine whether other tokens within that same context have
- * been modified since a given token was last updated, which may indicate
- * that a token has been superceded by another.
+ * that context.  Also stored is a list of tokens associated with the most
+ * recent transition to each state.  When performing any operation on that
+ * namespace, information regarding the last tokens will be provided so that
+ * the caller can determine whether other tokens within that same context
+ * have been modified since a given token was last updated, which may
+ * indicate that a token has been superceded by another.
  *
  * As an example, consider the following sequence of events within some
  * namespace "location" for some document 1000:
  *
  *   1. A token `A` is created for a request to a service.  `last` is updated
- *      to point to `A`.
+ *      to point to `A`.  The last `ACTIVE` token is `A`.
  *
  *   2. The user changes information about the location.
  *
  *   3. Another token `B` is created to request information for the new
- *      location data.  `last` is updated to point to `B`.
+ *      location data.  `last` is updated to point to `B`.  The last
+ *      `ACTIVE` token is `B`.
  *
- *   4. The response for token `A` returns and `A` is updated.
+ *   4. The response for token `A` returns and `A` is updated.  The last
+ *      token in the `DONE` state is `A`.
  *
- *   5. The caller for token `A` sees that `last` no longer points to `A` (by
- *      observing `last_mistmatch`), and so ignores the reply, understanding
- *      that `A` is now stale.
+ *   5. The caller for token `A` sees that the has `ACTIVE` token no longer
+ *      points to `A` (by observing `last_created`), and so ignores the
+ *      reply, understanding that `A` is now stale.
  *
- *   6. The response for  `B` returns and `B` is updated.
+ *   6. The response for  `B` returns and `B` is updated.  The last `DONE`
+ *      token is now `B`.
  *
- *   7. The caller notices that `last_mistmatch` is _not_ set, and so
- *      proceeds to continue processing token `B`.
+ *   7. The caller notices that `last_created` is _not_ set, and so
+ *      proceeds to continue processing token `B`.  The last token in the
+ *      `DONE` state is now `B`.
  *
  * For more information on tokens, see `Token`.
  */
@@ -150,7 +155,9 @@ export class TokenStore
         return this._dao.updateToken(
             this._doc_id, this._token_ns, this._idgen(), TokenState.ACTIVE, null
         )
-            .then( data => this._tokenDataToToken( data, TokenState.ACTIVE ) );
+            .then( data => this._tokenDataToToken(
+                data, TokenState.ACTIVE, true
+            ) );
     }
 
 
@@ -168,7 +175,11 @@ export class TokenStore
      *
      * @return new token
      */
-    private _tokenDataToToken<T extends TokenState>( data: TokenData, state: T ):
+    private _tokenDataToToken<T extends TokenState>(
+        data:    TokenData,
+        state:   T,
+        created: boolean = false
+    ):
         Token<T>
     {
         return {
@@ -177,6 +188,7 @@ export class TokenStore
             timestamp:     data.status.timestamp,
             data:          data.status.data,
             last_mismatch: this._isLastMistmatch( data ),
+            last_created:  created || this._isLastCreated( data ),
         };
     }
 
@@ -193,6 +205,20 @@ export class TokenStore
     {
         return ( data.prev_last === null )
             || ( data.id !== data.prev_last.id );
+    }
+
+
+    /**
+     * Whether the token represents the most recently created token
+     *
+     * @param data raw token data
+     *
+     * @return whether token was the most recently created
+     */
+    private _isLastCreated( data: TokenData ): boolean
+    {
+        return ( data.prev_state !== undefined )
+            && ( data.prev_state[ TokenState.ACTIVE ] === data.id );
     }
 
 
