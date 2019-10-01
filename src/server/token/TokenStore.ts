@@ -88,39 +88,20 @@ import { DocumentId } from "../../document/Document";
  */
 export class TokenStore
 {
-    /** Data access layer for underlying token data */
-    private readonly _dao: TokenDao;
-
-    /** Identifier of document to which store is constrained */
-    private readonly _doc_id: DocumentId;
-
-    /** Token namespace used for grouping per document */
-    private readonly _token_ns: TokenNamespace;
-
-    /** Token id generator (nullary, nondeterministic) */
-    private readonly _idgen: () => TokenId;
-
-
     /**
      * Initialize store
      *
-     * @param dao      data access layer
-     * @param doc_id   constrain store to given document id
-     * @param token_ns token namespace
-     * @param idgen    token id generator
+     * @param _dao      data access layer
+     * @param _doc_id   constrain store to given document id
+     * @param _token_ns token namespace
+     * @param _idgen    token id generator
      */
     constructor(
-        dao:      TokenDao,
-        doc_id:   DocumentId,
-        token_ns: TokenNamespace,
-        idgen:    () => TokenId
-    )
-    {
-        this._dao      = dao;
-        this._doc_id   = doc_id;
-        this._token_ns = token_ns;
-        this._idgen    = idgen;
-    }
+        private readonly _dao:      TokenDao,
+        private readonly _doc_id:   DocumentId,
+        private readonly _token_ns: TokenNamespace,
+        private readonly _idgen:    () => TokenId
+    ) {}
 
 
     /**

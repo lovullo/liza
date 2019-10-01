@@ -44,40 +44,17 @@ import { context } from "../../error/ContextError";
 export class MongoTokenDao implements TokenDao
 {
     /**
-     * Mongo database collection
-     */
-    private readonly _collection: MongoCollection;
-
-    /**
-     * Field storing token data, relative to document root
-     */
-    private readonly _rootField: string;
-
-    /**
-     * Retrieve a Unix timestamp
-     *
-     * This is used for timestampping token updates.
-     */
-    private readonly _getTimestamp: () => UnixTimestamp;
-
-
-    /**
      * Initialize connection
      *
-     * @param collection Mongo collection
-     * @param root_field topmost field in mongo document
-     * @param date_ctor  Date constructor
+     * @param _collection Mongo collection
+     * @param _root_field topmost field in mongo document
+     * @param _date_ctor  Date constructor
      */
     constructor(
-        collection:   MongoCollection,
-        root_field:   string,
-        getTimestamp: () => UnixTimestamp,
-    )
-    {
-        this._collection   = collection;
-        this._rootField    = root_field;
-        this._getTimestamp = getTimestamp;
-    }
+        private readonly _collection:   MongoCollection,
+        private readonly _root_field:   string,
+        private readonly _getTimestamp: () => UnixTimestamp,
+    ) {}
 
 
     /**
@@ -150,7 +127,7 @@ export class MongoTokenDao implements TokenDao
                     }
 
                     const prev_result = <TokenNamespaceResults>
-                        prev_data[ this._rootField ] || {};
+                        prev_data[ this._root_field ] || {};
 
                     const prev_ns = prev_result[ ns ];
 
@@ -281,7 +258,7 @@ export class MongoTokenDao implements TokenDao
                         return;
                     }
 
-                    const field = <TokenNamespaceResults>data[ this._rootField ]
+                    const field = <TokenNamespaceResults>data[ this._root_field ]
                         || {};
 
                     const ns_data = field[ ns ];
@@ -410,7 +387,7 @@ export class MongoTokenDao implements TokenDao
     private _genRoot( ns: TokenNamespace ): string
     {
         // XXX: injectable
-        return this._rootField + '.' + ns;
+        return this._root_field + '.' + ns;
     }
 };
 
