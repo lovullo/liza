@@ -79,7 +79,7 @@ export class TokenedDataApi implements DataApi
      */
     request(
         data:     DataApiInput,
-        callback: ( e: Error | null, data: DataApiResult | null ) => void,
+        callback: NodeCallback<DataApiResult>,
         id:       string
     ): this
     {
@@ -144,7 +144,7 @@ export class TokenedDataApi implements DataApi
     private _replyUnlessStale(
         newtok:    Token<TokenState.DONE>,
         resp_data: DataApiResult,
-        callback:  ( e: Error | null, data: DataApiResult | null ) => void,
+        callback:  NodeCallback<DataApiResult>,
         id:        string
     ): void
     {

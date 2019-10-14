@@ -44,3 +44,13 @@ type NominalType<K, T> = K & { __nominal_type__: T };
  * Number of seconds since the Unix epoch (1970-01-01 UTC).
  */
 type UnixTimestamp = NominalType<number, 'UnixTimestamp'>;
+
+
+/**
+ * Oldschool NodeJS callback
+ *
+ * We should migrate to promises over time.  The purpose of this type is to
+ * reduce the boilerplate of these function definitions, and to clearly
+ * document that this pattern is something that used to be done frequently.
+ */
+type NodeCallback<T, R = void> = ( e: Error | null, result: T | null ) => R;

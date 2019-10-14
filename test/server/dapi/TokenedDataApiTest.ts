@@ -121,9 +121,9 @@ describe( 'TokenedDataApi', () =>
         const mock_dapi = new class implements DataApi
         {
             request(
-                given_data:     DataApiInput,
-                callback: ( e: Error|null, data: DataApiResult|null ) => void,
-                given_id:       string
+                given_data: DataApiInput,
+                callback:   NodeCallback<DataApiResult>,
+                given_id:   string,
             ): this
             {
                 expect( given_data ).to.equal( expected_data );
@@ -141,7 +141,7 @@ describe( 'TokenedDataApi', () =>
             return mock_tstore;
         };
 
-        const callback = ( e: Error|null, data: DataApiResult|null ) =>
+        const callback: NodeCallback<DataApiResult> = ( e, data ) =>
         {
             expect( tok_completed ).to.be.true;
 
@@ -197,8 +197,8 @@ describe( 'TokenedDataApi', () =>
         const mock_dapi = new class implements DataApi
         {
             request(
-                _: any,
-                callback: ( e: Error|null, data: DataApiResult|null ) => void,
+                _:        any,
+                callback: NodeCallback<DataApiResult>,
             )
             {
                 callback( expected_err, null );
@@ -206,7 +206,7 @@ describe( 'TokenedDataApi', () =>
             }
         };
 
-        const callback = ( e: Error|null, data: DataApiResult|null ) =>
+        const callback: NodeCallback<DataApiResult> = ( e, data ) =>
         {
             expect( data ).to.equal( null );
             expect( e ).to.equal( expected_err );
