@@ -1,5 +1,5 @@
 /**
- * Tests token management
+ * Tests persistent token management
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -19,22 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { TokenStore as Sut } from "../../../src/server/token/TokenStore";
-import { TokenDao, TokenData } from "../../../src/server/token/TokenDao";
-import { DocumentId } from "../../../src/document/Document";
+import {
+    PersistentTokenStore as Sut
+} from "../../../../src/server/token/store/PersistentTokenStore";
+
+import { TokenDao, TokenData } from "../../../../src/server/token/TokenDao";
+import { DocumentId } from "../../../../src/document/Document";
 
 import {
     Token,
     TokenId,
     TokenNamespace,
     TokenState,
-} from "../../../src/server/token/Token";
+} from "../../../../src/server/token/Token";
 
 import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
 
 
-describe( 'TokenStore', () =>
+describe( 'PersistentTokenStore', () =>
 {
     // required via the ctor, but this name is just used to denote that it's
     // not used for a particular test

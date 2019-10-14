@@ -1,5 +1,5 @@
 /**
- * Token management
+ * Persistent token management
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -27,14 +27,15 @@ import {
     TokenStateAcceptable,
     TokenStateDeadable,
     TokenStateDoneable,
-} from "./Token";
+} from "../Token";
 
-import { TokenDao, TokenData } from "./TokenDao";
-import { DocumentId } from "../../document/Document";
+import { TokenStore } from "./TokenStore";
+import { TokenDao, TokenData } from "../TokenDao";
+import { DocumentId } from "../../../document/Document";
 
 
 /**
- * Token storage
+ * Persistent token storage
  *
  * This store is used to create, read, and modify tokens.  Its API is
  * designed to constrain state transitions at compile-time.
@@ -86,7 +87,7 @@ import { DocumentId } from "../../document/Document";
  *
  * For more information on tokens, see `Token`.
  */
-export class TokenStore
+export class PersistentTokenStore implements TokenStore
 {
     /**
      * Initialize store
