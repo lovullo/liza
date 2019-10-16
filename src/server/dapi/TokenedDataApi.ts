@@ -91,7 +91,9 @@ export class TokenedDataApi implements DataApi
             this._dapiRequest( data, id ).then( resp_data =>
                 store.completeToken( token, JSON.stringify( resp_data ) )
                     .then( newtok =>
-                        this._replyUnlessStale( newtok, resp_data, callback, id )
+                           this._replyUnlessStale(
+                               store, newtok, resp_data, callback, id
+                           )
                     )
                 )
             )
@@ -142,23 +144,25 @@ export class TokenedDataApi implements DataApi
      * @param id        - DataApi id
      */
     private _replyUnlessStale(
+        store:     TokenStore,
         newtok:    Token<TokenState.DONE>,
         resp_data: DataApiResult,
         callback:  NodeCallback<DataApiResult>,
         id:        string
-    ): void
+    ): Promise<void>
     {
         if ( newtok.last_created )
         {
-            return callback( null, resp_data );
+            return store.acceptToken( newtok, null )
+                .then( () => callback( null, resp_data ) );
         }
 
-        callback(
+        return store.killToken( newtok, null ).then( () => callback(
             context(
                 Error( "Request superceded" ),
                 { id: id },
             ),
             null
-        );
+        ) );
     }
 }

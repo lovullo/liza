@@ -76,6 +76,7 @@ describe( 'TokenedDataApi', () =>
             createStubToken( last_created );
 
         let tok_completed = false;
+        let tok_ackd      = false;
 
         const mock_tstore = new class implements TokenStore
         {
@@ -109,12 +110,20 @@ describe( 'TokenedDataApi', () =>
 
             acceptToken()
             {
-                return Promise.reject( Error( "not used" ) );
+                expect( tok_completed ).to.be.true;
+                expect( last_created ).to.be.true;
+
+                tok_ackd = true;
+                return Promise.resolve( Object.create( stub_tok ) );
             }
 
             killToken()
             {
-                return Promise.reject( Error( "not used" ) );
+                expect( tok_completed ).to.be.true;
+                expect( last_created ).to.be.false;
+
+                tok_ackd = true;
+                return Promise.resolve( Object.create( stub_tok ) );
             }
         }();
 
@@ -143,7 +152,7 @@ describe( 'TokenedDataApi', () =>
 
         const callback: NodeCallback<DataApiResult> = ( e, data ) =>
         {
-            expect( tok_completed ).to.be.true;
+            expect( tok_ackd ).to.be.true;
 
             expected_err( e );
 
