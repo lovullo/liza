@@ -101,7 +101,7 @@ module.exports = Class( 'RestrictedDataApi' )
         {
             callback.call( _self,
                 err,
-                _self._checkResponse( response, callback )
+                _self._checkResponse( err, response, callback )
             );
         }, id );
     },
@@ -180,12 +180,13 @@ module.exports = Class( 'RestrictedDataApi' )
      * any error events that may be emitted, allowing the handler to associate
      * it with the original request and invoke it manually if necessary.
      *
+     * @param {Error|null}     err      error, if any
      * @param {Array.<Object>} response response data
      * @param {Function}       callback callback to be called with response
      *
      * @return {Object} original object if validations passed; otherwise {}
      */
-    'private _checkResponse': function( response, callback )
+    'private _checkResponse': function( err, response, callback )
     {
         // the response should be an array; otherwise, we cannot process it to
         // see if the return data is valid (since it would not be in the
@@ -193,10 +194,10 @@ module.exports = Class( 'RestrictedDataApi' )
         // decorator should handle that job *before* the data gets to this one)
         //
         // since ES5 isn't an option, we'll stick with this dirty hack
-        if ( !response || !( response.slice ) )
+        if ( err || !response || !( response.slice ) )
         {
             this.emit( 'error',
-                TypeError( 'Response data is not an array' ),
+                err || TypeError( 'Response data is not an array' ),
                 callback,
                 response
             );
