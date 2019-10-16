@@ -63,7 +63,7 @@ export interface DataApi
 {
     request(
         data:     DataApiInput,
-        callback: ( e: Error | null, data: DataApiResult | null ) => void,
+        callback: NodeCallback<DataApiResult>,
         id:       string,
     ): this;
 }
@@ -94,8 +94,9 @@ module.exports = Interface( 'DataApi',
      *
      * @param {?Object<string,string>|string} data     params or post data
      * @param {function(?Error,*):string}     callback continuation upon reply
+     * @param {string}                        id       unique dapi identifier
      *
      * @return {DataApi} self
      */
-    'public request': [ 'data', 'callback' ]
+    'public request': [ 'data', 'callback', 'id' ]
 } );

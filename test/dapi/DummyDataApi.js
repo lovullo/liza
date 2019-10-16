@@ -59,9 +59,9 @@ module.exports = Class( 'DummyDataApi' )
      *
      * @return {DataApi} self
      */
-    'virtual public request'( data, callback )
+    'virtual public request'( data, callback, id )
     {
-        this._reqCallback( data, callback );
+        this._reqCallback( data, callback, id );
         return this;
     },
 } );

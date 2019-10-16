@@ -66,7 +66,7 @@ module.exports = Class( 'BucketDataApi' )
      *
      * @return {BucketDataApi} self
      */
-    'public request': function( data, callback )
+    'public request': function( data, callback, id )
     {
         var _self = this.__inst,
             rows  = [];

@@ -85,7 +85,7 @@ module.exports = Class( 'RestrictedDataApi' )
      *
      * @return {DataApi} self
      */
-    'virtual public request': function( data, callback )
+    'virtual public request': function( data, callback, id )
     {
         data     = data     || {};
         callback = callback || function() {};
@@ -103,7 +103,7 @@ module.exports = Class( 'RestrictedDataApi' )
                 err,
                 _self._checkResponse( response, callback )
             );
-        } );
+        }, id );
     },
 
 

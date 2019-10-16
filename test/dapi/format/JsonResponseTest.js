@@ -142,7 +142,7 @@ function _createStubbedDapi( err, resp )
     {
         given: null,
 
-        'virtual public request': function( data, callback )
+        'virtual public request': function( data, callback, id )
         {
             this.given = data;
             callback( err, resp );

@@ -20,6 +20,8 @@
  */
 
 const { Class } = require( 'easejs' );
+const crypto    = require( 'crypto' );
+
 const {
     dapi: {
         DataApiFactory,
@@ -30,6 +32,16 @@ const {
     },
     store: {
         StoreMissError,
+    },
+    server: {
+        dapi: {
+            TokenedDataApi: { TokenedDataApi },
+        },
+        token: {
+            store: {
+                PersistentTokenStore: { PersistentTokenStore },
+            },
+        },
     },
 } = require( '../..' );
 
@@ -58,12 +70,48 @@ module.exports = Class( 'ServerDataApiFactory' )
      */
     'private _conf': null,
 
+    /**
+     * Document (quote) id
+     * @type {DocumentId}
+     */
+    'private _doc_id': 0,
 
-    constructor( origin, session, conf )
+
+    constructor( origin, session, conf, doc_id, tokdao )
     {
         this._origin  = ''+origin;
         this._session = session;
         this._conf    = conf;
+        this._doc_id  = doc_id;
+        this._tokdao = tokdao;
+    },
+
+
+    'override protected createDataApi'( type, desc, bucket )
+    {
+        return new TokenedDataApi(
+            this.__super( type, desc, bucket ),
+            token_ns => new PersistentTokenStore(
+                this._tokdao,
+                this._doc_id,
+                token_ns,
+                () => this._generateTokenId()
+            )
+        );
+    },
+
+
+    /**
+     * Generate random token identifier
+     *
+     * @return {string} unique token identifier
+     */
+    'private _generateTokenId'()
+    {
+        var shasum = crypto.createHash( 'sha1' );
+        shasum.update( ''+Math.random() );
+
+        return shasum.digest( 'hex' );
     },
 
 

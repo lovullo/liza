@@ -282,7 +282,7 @@ function _createStub( err, resp )
         given:    null,
         requests: 0,
 
-        'virtual public request': function( data, callback )
+        'virtual public request': function( data, callback, id )
         {
             this.given = data;
             this.requests++;

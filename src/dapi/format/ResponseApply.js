@@ -65,12 +65,12 @@ module.exports = Trait( 'ResponseApply' )
      *
      * @return {DataApi} self
      */
-    'virtual abstract override public request'( data, callback )
+    'virtual abstract override public request'( data, callback, id )
     {
         this.__super( data, ( e, retdata ) =>
         {
             callback( e, this._dataf( retdata ) );
-        } );
+        }, id );
 
         return this;
     },

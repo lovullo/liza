@@ -127,47 +127,50 @@ exports.init = function( logger, enc_service, conf )
     var db = _createDB( logger );
     const dao = MongoServerDao( db );
 
-    _createDocumentServer( dao, logger, enc_service, conf ).then( srv =>
+    db.collection( 'quotes', function( err, collection )
     {
-        server = srv;
-
-        server_cache = _createCache( server );
-        server.init( server_cache, exports.rater );
-
-        // TODO: temporary proof-of-concept
-        rating_service = RatingService.use(
-            RatingServicePublish( amqplib, exports.post_rate_publish, logger )
-        )(
-            logger, dao, server, exports.rater
-        );
-
-        // TODO: exports.init needs to support callbacks; this will work, but
-        // only because it's unlikely that we'll get a request within
-        // milliseconds of coming online
-        _initExportService( db, function( service )
+        _createDocumentServer( dao, logger, enc_service, conf, collection ).then( srv =>
         {
-            c1_export_service = service;
-        } );
+            server = srv;
 
-        server.on( 'quotePverUpdate', function( quote, program, event )
-        {
-            // let them know that we're going to be a moment
-            var c = event.wait();
+            server_cache = _createCache( server );
+            server.init( server_cache, exports.rater );
 
-            getCleaner( program ).clean( quote, function( err )
+            // TODO: temporary proof-of-concept
+            rating_service = RatingService.use(
+                RatingServicePublish( amqplib, exports.post_rate_publish, logger )
+            )(
+                logger, dao, server, exports.rater
+            );
+
+            // TODO: exports.init needs to support callbacks; this will work, but
+            // only because it's unlikely that we'll get a request within
+            // milliseconds of coming online
+            _initExportService( collection, function( service )
             {
-                // report on our success/failure
-                if ( err )
-                {
-                    event.bad( err );
-                }
-                else
-                {
-                    event.good();
-                }
+                c1_export_service = service;
+            } );
 
-                // we're done
-                c();
+            server.on( 'quotePverUpdate', function( quote, program, event )
+            {
+                // let them know that we're going to be a moment
+                var c = event.wait();
+
+                getCleaner( program ).clean( quote, function( err )
+                {
+                    // report on our success/failure
+                    if ( err )
+                    {
+                        event.bad( err );
+                    }
+                    else
+                    {
+                        event.good();
+                    }
+
+                    // we're done
+                    c();
+                } );
             } );
         } );
     } );
@@ -203,7 +206,7 @@ function _createDB( logger )
     return db;
 }
 
-function _createDocumentServer( dao, logger, enc_service, conf )
+function _createDocumentServer( dao, logger, enc_service, conf, collection )
 {
     const origin_url = process.env.HTTP_ORIGIN_URL || '';
 
@@ -219,52 +222,43 @@ function _createDocumentServer( dao, logger, enc_service, conf )
     }
 
     return DocumentServer()
-        .create( dao, logger, enc_service, origin_url, conf );
+        .create( dao, logger, enc_service, origin_url, conf, collection );
 }
 
 
-function _initExportService( db, callback )
+function _initExportService( collection, callback )
 {
-    db.collection( 'quotes', function( err, collection )
-    {
-        if ( collection === null )
-        {
-            return;
-        }
+    var spoof_host = (
+        ''+(
+            process.env.C1_EXPORT_HOST
+                || process.env.LV_RATE_DOMAIN
+                || process.env.LV_RATE_HOST
+        ).trim()
+    );
 
-        var spoof_host = (
-            ''+(
-                process.env.C1_EXPORT_HOST
-                    || process.env.LV_RATE_DOMAIN
-                    || process.env.LV_RATE_HOST
-            ).trim()
-        );
+    var spoof =  SessionSpoofHttpClient( http, spoof_host );
 
-        var spoof =  SessionSpoofHttpClient( http, spoof_host );
+    callback(
+        ExportService
+            .use( TokenedService(
+                'c1import',
+                new MongoTokenDao( collection, "exports", getUnixTimestamp ),
+                function tokgen()
+                {
+                    var shasum = crypto.createHash( 'sha1' );
+                    shasum.update( ''+Math.random() );
 
-        callback(
-            ExportService
-                .use( TokenedService(
-                    'c1import',
-                    new MongoTokenDao( collection, "exports", getUnixTimestamp ),
-                    function tokgen()
-                    {
-                        var shasum = crypto.createHash( 'sha1' );
-                        shasum.update( ''+Math.random() );
-
-                        return shasum.digest( 'hex' );
-                    },
-                    function newcapturedResponse( request, callback )
-                    {
-                        return UserResponse
-                            .use( CapturedUserResponse( callback ) )
-                            ( request );
-                    }
-                ) )
-                ( spoof )
-        );
-
-    } );
+                    return shasum.digest( 'hex' );
+                },
+                function newcapturedResponse( request, callback )
+                {
+                    return UserResponse
+                        .use( CapturedUserResponse( callback ) )
+                        ( request );
+                }
+            ) )
+            ( spoof )
+    );
 }
 
 

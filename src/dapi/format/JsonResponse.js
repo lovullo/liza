@@ -47,14 +47,14 @@ module.exports = Trait( 'JsonResponse' )
      *
      * @return {DataApi} self
      */
-    'virtual abstract override public request': function( data, callback )
+    'virtual abstract override public request': function( data, callback, id )
     {
         var _self = this;
 
         this.__super( data, function( err, resp )
         {
             _self._tryParse( err, resp, callback );
-        } );
+        }, id );
 
         return this;
     },

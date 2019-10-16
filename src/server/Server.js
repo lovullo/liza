@@ -1148,7 +1148,7 @@ module.exports = Class( 'Server' )
 
                     const { filtered, dapis, meta_clear } =
                         server._dataProcessor.processDiff(
-                            parsed_data, request, program, bucket
+                            parsed_data, request, program, bucket, quote
                         );
 
                     server._monitorMetadataPromise( quote, dapis, meta_clear );

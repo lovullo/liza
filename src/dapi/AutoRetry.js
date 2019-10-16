@@ -121,9 +121,9 @@ module.exports = Trait( 'AutoRetry' )
      *
      * @return {DataApi} self
      */
-    'abstract override public request': function( input, callback )
+    'abstract override public request': function( input, callback, id )
     {
-        this._try( input, callback, this._tries );
+        this._try( input, callback, id, this._tries );
 
         return this;
     },
@@ -141,7 +141,7 @@ module.exports = Trait( 'AutoRetry' )
      *
      * @return {undefined}
      */
-    'private _try': function( input, callback, n )
+    'private _try': function( input, callback, id, n )
     {
         var _self = this;
 
@@ -178,10 +178,10 @@ module.exports = Trait( 'AutoRetry' )
                 ( n - 1 ),
                 function()
                 {
-                    _self._try( input, callback, ( n - 1 ) );
+                    _self._try( input, callback, id, ( n - 1 ) );
                 },
                 complete
             );
-        } );
+        }, id );
     }
 } );
