@@ -295,6 +295,9 @@ Therefore,
   the entire response is mapped into the parent field;
     defined return values are used only for filtering.
 
+When a DataAPI request is made,
+  it supercedes any previous requests that may still be pending for
+    that same index.
 
 
 @node Encryption Service
