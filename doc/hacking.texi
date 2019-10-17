@@ -50,6 +50,7 @@ References for these topics and others are provided in
 * Source Files::         Conventions for project files
 * Libraries::            The few libraries used by Liza
 * Developer Resources::  Where to look for more information
+* TypeScript Migration:: Information on migrating to TypeScript
 @end menu
 
 
@@ -183,6 +184,8 @@ They further introduce maintenance obligations for keeping up with
 
 @subsection System Libraries
 @dnindex GNU ease.js
+Liza was originally developed using JavaScript
+  (first ECMAScript@tie{}3, and then ECMAScript@tie{}5).
 JavaScript does not natively support the classical object-oriented
   model familiar to users of more traditional classical
   object-oriented languages like Java, C++, C#, and@tie{}PHP.
@@ -201,6 +204,14 @@ The @code{class} keyword introduced in ECMAScript@tie{} is largely
   primary concerns of ease.js,
     nor does it provide traits.
 
+@dnindex TypeScript
+@emph{The project is now migrating toward TypeScript},
+  so new code should not use ease.js unless required
+    and an effort should be made to move existing code away from
+      ease.js.
+For more information on this migration,
+  see @xref{TypeScript Migration}.
+
 
 @subsection Testing Libraries
 @dnindex Mocha
@@ -213,6 +224,9 @@ This differs from PHP development where a single system (PHPUnit)
 Chai offers a few different styles of assertions (``should'',
   ``expect'', and ``assert'');
       Liza uses @url{http://www.chaijs.com/guide/styles/#expect,``expect''}.
+
+@devnotice{A library to aid in mocking TypeScript classes needs to be
+             researched.}
 
 
 @subsection UI Libraries
@@ -253,6 +267,18 @@ All developers should familiarize themselves with the resources
   available on MDN so that they understand what type of information is
   readily accessible for future reference.
 
+@dnindex TypeScript
+An overview of TypeScript can be found in its
+  @url{https://www.typescriptlang.org/docs/handbook/basic-types.html,Handbook}.
+The language borrows concepts from a number of others,
+  so many concepts may be familiar to you.
+TypeScript uses structural typing (duck typing).
+In Liza,
+  we also choose to implement nominal typing using ``branding''
+    (@srcrefraw{src/types/misc.d.ts}).
+A @url{https://github.com/microsoft/TypeScript/blob/master/doc/spec.md,language specification}
+  is also available.
+
 @dnindex Node.js
 The Server (@pxref{Server}) uses Node.js.
 Although it's largely abstracted away,
@@ -285,3 +311,165 @@ Database operations in Liza are abstracted away,
 
 For information on specific libraries used by Liza,
   @pxref{Libraries}.
+
+
+@node TypeScript Migration
+@section TypeScript Migration
+@dnindex TypeScript
+@helpwanted{}
+
+This section contains notes regarding a migration to TypeScript.
+It is intended to serve as a guide@mdash{
+  }it is not prescriptive.
+
+
+@subsection Migrating Away From GNU ease.js
+Liza was originally written in @easejs.
+TypeScript now provides many features that ease.js was written to address,
+  though not all (most notably traits).
+
+Since ease.js was designed with JavaScript interoperability in mind,
+  and TypeScript generates prototypes from classes,
+  TypeScript classes serve as drop-in replacements under most
+    circumstances.
+However,
+  subtypes must be migrated at the same time as their parents,
+    otherwise type checking in TypeScript cannot properly be performed.
+If this is a concern,
+  @url{https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-guards-and-type-assertions,type assertions}
+  can potentially be used to coerce types during a transition period
+    in conjunction with ease.js'
+    @url{https://www.gnu.org/software/easejs/manual/easejs.html#Type-Checks-and-Polymorphism,@samp{Class.isA}}.
+
+Interfaces do not exist at runtime in TypeScript,
+  but they do in easejs.
+Consequently,
+  you can continue to export an ease.js interface while also exporting
+    a TypeScript interface.
+To do this,
+  continue to export using @samp{module.exports} rather than
+    TypeScript's @samp{export =}.
+
+ease.js implements stackable Scala-like traits.
+Traits are @emph{not} provided by TypeScript.
+Traits will therefore have to be refactored into,
+  for example,
+  decorators or strategies.
+
+
+@subsection Structural Typing
+@dnindex Typing, Duck
+@dnindex Typing, Structural
+TypeScript implements
+  @url{https://en.wikipedia.org/wiki/Structural_typing,structural typing},
+    also called duck typing.
+This means that any two types sharing the same ``shape'' are
+  compatible with one-another.
+
+For classes,
+  this can be mitigated by defining private members,
+    which then ensures that compatible types are indeed subtypes.
+
+Interfaces can be used in either the traditional OOP sense,
+  or as a means to define the shape of some arbitrary object.
+Since interfaces do not define implementation details,
+  the distinction isn't important@mdash{
+    }it does not matter if we receive an instance of an object
+      implementing an interface,
+        or some object arbitrary that just happens to adhere to it.
+
+In other instances where we want to distinguish between two values
+  with otherwise compatible APIs,
+    Nominal Typing below.
+
+
+@subsection Nominal Typing
+@dnindex Typing, Nominal
+It is sometimes desirable to distinguish between two otherwise
+  compatible types.
+Consider, for example, a user@tie{}id and a Unix timestamp.
+Both are of type @code{number},
+  but it's desirable to ensure that one is not used where another is
+    expected.
+
+TypeScript doesn't directly support
+  @url{https://en.wikipedia.org/wiki/Nominal_typing,nominal typing},
+    where compatibility of data types are determined by name.
+Liza uses a convention called ``branding'',
+  abstracted behind a @code{NominalType} generic
+    (defined in @srcrefraw{src/types/misc.d.ts}).
+
+@float Figure, f:nom-type
+@verbatim
+type UnixTimestamp = NominalType<number, 'UnixTimestamp'>;
+type Milliseconds  = NominalType<number, 'Milliseconds'>;
+
+function timeElapsed( start: UnixTimestamp, end: UnixTimestamp ): Milliseconds
+{
+    return end - start;
+}
+
+const start = <UnixTimestamp>1571325570000;
+const end   = <UnixTimestamp>1571514320000;
+
+// this is okay
+const elapsed = timeElapsed( start, end );
+
+// this is not, since elapsed is of type Milliseconds
+timeElapsed( start, elapsed );
+
+@end verbatim
+@caption{Example of nominal typing}
+@end float
+
+Consider the example in @ref{f:nom-type}.
+Both @code{UnixTimestamp} and @code{Milliseconds} are a @code{number} type,
+  but they have been defined in such a way that their names are part
+    of the type definition.
+Not only does the compiler prevent bugs caused from mixing data,
+  but nominal types also help to make the code self-documenting.
+
+If you want to have self-documenting types @emph{without} employing
+  nominal typing,
+    use type aliases.
+
+There are no prescriptive rules for whether a type should be defined
+  nominally.
+
+In some cases,
+  it's useful to use nominal types after having validated data,
+    so that the compiler can enforce that assumption from that point forward.
+This can be done using
+  @url{https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-guards-and-type-assertions,type assertions}.
+
+@float Figure, f:nom-assert
+@verbatim
+type PositiveInteger = NominalType<number, 'PositiveInteger'>;
+
+const isPositiveInteger = ( x: number ): n is PositiveInteger => n > 0;
+
+const lookupIndex<T>( arr: T[], i: PositiveInteger ): T => arr[ i ];
+
+// untrusted input from the user
+const user_input = readSomeValue();
+
+if ( isPositiveInteger( user_input ) )
+{
+    // user_input is now of type PositiveInteger
+    return lookupIndex( data, user_input );
+}
+@end verbatim
+@caption{Validating nominal types}
+@end float
+
+In @ref{f:nom-assert} above,
+  we only assume something to be a @code{PositiveInteger} after having
+    checked its value.
+After that point,
+  we can use TypeScript's type system to ensure at compile time that
+    we are only using positive integers in certain contexts.
+
+@devnotice{Never cast values
+             (e.g. using @samp{<PositiveInteger>user_input})
+             when type predicates are provided,
+               since that undermines type safety.}
