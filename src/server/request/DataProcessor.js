@@ -87,10 +87,10 @@ module.exports = Class( 'DataProcessor',
      *
      * @return {Object} processed diff
      */
-    'public processDiff'( data, request, program, bucket )
+    'public processDiff'( data, request, program, bucket, quote )
     {
         const filtered     = this.sanitizeDiff( data, request, program );
-        const dapi_manager = this._dapif( program.apis, request );
+        const dapi_manager = this._dapif( program.apis, request, quote );
         const staging      = this._stagingCtor( bucket );
 
         // forbidBypass will force diff generation on initQuote

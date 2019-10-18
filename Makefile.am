@@ -1,6 +1,6 @@
 ## liza Makefile.am for automake
 #
-#  Copyright (C) 2014 R-T Specialty, LLC.
+#  Copyright (C) 2010-2019 R-T Specialty, LLC.
 #
 #  This file is part of liza.
 #
@@ -24,6 +24,8 @@ path_test = $(top_builddir)/test
 namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
 
+tsout = tsconfig.tsbuildinfo
+
 SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 			 tools autogen.sh README.md $(path_test) \
@@ -35,12 +37,22 @@ all-am: modindex
 
 dist-hook: check
 
+# used to force typescript compilation (it handles its own incremental
+# compilation and dependency discovery)
+$(tsout): FORCE $(path_src)/.gitignore $(path_test)/.gitignore
+	node_modules/.bin/tsc
+
 modindex: $(nsindex)
-%/index.js: FORCE
+%/index.js: FORCE $(tsout)
 	./tools/gen-index "$*" > "$@"
 
+# ignore compiled JS files (this can be removed once all files are TS)
+%/.gitignore: FORCE
+	@echo "# THIS FILE IS GENERATED; DO NOT MODIFY!" > $@
+	( cd $*/ && find . -name '*.ts' -printf "%P\n" | sed 's/\.ts$$/.js/' ) >> $@
+
 test: check
-check:
+check: $(tsout)
 	PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
 		mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \

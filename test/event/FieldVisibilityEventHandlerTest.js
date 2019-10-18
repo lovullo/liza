@@ -141,6 +141,6 @@ function createMockStepUi( expected_name, showf, hidef )
 function createStubDataProvider( fail_callback )
 {
     return {
-        clearFailures: fail_callback || () => {},
+        clearFailures: fail_callback || ( () => {} ),
     };
 }

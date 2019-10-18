@@ -58,7 +58,7 @@ module.exports = Class( 'DataApiFactory',
             const nonempty    = !!descl.static_nonempty;
             const multiple    = !!descl.static_multiple;
 
-            const api = this._createDataApi( type, descl, bucket );
+            const api = this.createDataApi( type, descl, bucket );
 
             return RestrictedDataApi(
                 StaticAdditionDataApi( api, nonempty, multiple, static_data ),
@@ -93,7 +93,7 @@ module.exports = Class( 'DataApiFactory',
      *
      * @return {DataApi}
      */
-    'private _createDataApi'( type, desc, bucket )
+    'virtual protected createDataApi'( type, desc, bucket )
     {
         const source  = ( desc.source || '' );
         const method  = ( desc.method || '' );

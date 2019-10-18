@@ -77,7 +77,7 @@ module.exports = Class( 'QuoteDataApi' )
      *
      * @return {DataApi} self
      */
-    'public request'( data, callback )
+    'public request'( data, callback, id )
     {
         this._dapi.request( this.mapData( data ), callback );
     },

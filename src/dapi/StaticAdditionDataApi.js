@@ -66,13 +66,6 @@ module.exports = Class( 'StaticAdditionDataApi' )
      */
     __construct: function( data_api, nonempty, multiple, static_data )
     {
-        if ( !( Class.isA( DataApi, data_api ) ) )
-        {
-            throw Error(
-                'Expected object of type DataApi; given: ' + data_api
-            );
-        }
-
         this._api      = data_api;
         this._static   = static_data;
         this._nonempty = !!nonempty;
@@ -88,7 +81,7 @@ module.exports = Class( 'StaticAdditionDataApi' )
      *
      * @return {DataApi} self
      */
-    'public request': function( data, callback )
+    'public request': function( data, callback, id )
     {
         data     = data     || {};
         callback = callback || function() {};
@@ -110,7 +103,7 @@ module.exports = Class( 'StaticAdditionDataApi' )
                 err,
                 _self._unshiftData( response )
             );
-        } );
+        }, id );
     },
 
 

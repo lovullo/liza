@@ -202,7 +202,7 @@ module.exports = Class( 'DataApiManager' )
                     _self._pendingApiCall[ id ] = undefined;
                     _self.emit( 'fieldLoaded', name, +index );
                 }
-            } ) )
+            }, id ) )
                 .catch( e => fc( e ) );
         };
 

@@ -128,7 +128,7 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {TypeError} on validation failure
      */
-    'virtual public request': function( data, callback )
+    'virtual public request': function( data, callback, id )
     {
         // null is a good indicator of "I have no intent to send any data";
         // empty strings and objects are not, since those are valid data

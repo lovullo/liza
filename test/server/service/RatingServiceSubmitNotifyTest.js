@@ -127,7 +127,7 @@ describe( 'RatingServiceSubmitNotify', () =>
                     // warning: if an expectation fails, because of how
                     // RatingService handles errors, it will cause the test to
                     // _hang_ rather than throw the assertion error
-                    request( data, callback )
+                    request( data, callback, id )
                     {
                         expect( given_request ).to.equal( request );
                         expect( data ).to.deep.equal( { quote_id: quote_id } );

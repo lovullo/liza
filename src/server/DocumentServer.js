@@ -48,17 +48,40 @@ const {
             JsonServerResponse,
             ServerDataApiFactory,
         },
+
+        token: {
+            MongoTokenDao: { MongoTokenDao },
+        },
     },
 } = require( '../..' );
 
 
 /**
  * Vanilla document server
+ *
+ * XXX: This is a mess, and it's only getting worse with dependencies
+ * instantiated everywhere.  Everything should be instantiated in one place
+ * rather than part of them being passed in here.  See controller.js.
  */
 module.exports = Class( 'DocumentServer',
 {
-    'public create': ( dao, logger, enc_service, origin_url, conf ) =>
-        Promise.all( [
+    /**
+     * Create document server
+     *
+     * See above XXX.
+     *
+     * @param {MongoServerDao}    dao         server DAO
+     * @param {Logger}            logger      log manager
+     * @param {EncryptionService} enc_service encryption service
+     * @param {string}            origin_url  HTTP_ORIGIN_URL
+     * @param {ConfStore}         conf        configuration store
+     * @param {MongoConnection}   collection  database collection
+     *
+     * @return {Promise<Server>}
+     */
+    'public create'( dao, logger, enc_service, origin_url, conf, collection )
+    {
+        return Promise.all( [
             conf.get( 'dapi' ),
         ] ).then( ([ dapi_conf ]) => Server(
             new JsonServerResponse.create(),
@@ -68,17 +91,46 @@ module.exports = Class( 'DocumentServer',
 
             DataProcessor(
                 bucket_filter,
-                ( apis, request ) => DataApiManager(
-                    ServerDataApiFactory(
-                        origin_url || request.getOrigin(),
-                        request,
-                        dapi_conf
-                    ),
-                    apis
+                ( apis, request, quote ) => this._createDapiManager(
+                    apis, request, origin_url, dapi_conf, quote, collection
                 ),
                 DapiMetaSource( QuoteDataBucket ),
                 StagingBucket
             ),
             ProgramInit()
-        ) )
+        ) );
+    },
+
+
+    /**
+     * Create new DataApiManager
+     *
+     * See above XXX.
+     *
+     * @param {Object}          apis       API definitions
+     * @param {Request}         request    Node HTTP request
+     * @param {string}          origin_url HTTP_ORIGIN_URL
+     * @param {Object}          dapi_conf  dapi configuration
+     * @param {Quote}           quote      current quote for request
+     * @param {MongoConnection} collection database collection
+     */
+    'private _createDapiManager'(
+        apis, request, origin_url, dapi_conf, quote, collection
+    )
+    {
+        return DataApiManager(
+            ServerDataApiFactory(
+                origin_url || request.getOrigin(),
+                request,
+                dapi_conf,
+                quote.getId(),
+                new MongoTokenDao(
+                    collection,
+                    'dapitok',
+                    () => Math.floor( ( new Date() ).getTime() / 1000 )
+                )
+            ),
+            apis
+        );
+    },
 } );

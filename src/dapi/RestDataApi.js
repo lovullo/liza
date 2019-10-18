@@ -73,7 +73,7 @@ module.exports = Class( 'RestDataApi' )
      *
      * @return {RestDataApi} self
      */
-    'public request': function( data, callback )
+    'public request': function( data, callback, id )
     {
         var _self = this.__inst;
 
