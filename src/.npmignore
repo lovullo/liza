@@ -1,0 +1,2 @@
+# prevents .gitignore from taking effect, since we want to include
+# the compiled JS files
