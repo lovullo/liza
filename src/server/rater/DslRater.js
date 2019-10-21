@@ -20,7 +20,6 @@
  */
 
 var Class        = require( 'easejs' ).Class,
-    Rater        = require( './Rater' ),
     EventEmitter = require( 'events' ).EventEmitter,
 
     DslRaterContext = require( './DslRaterContext' );
