@@ -85,7 +85,6 @@ const {
 
             RatingService,
             RatingServicePublish,
-            RatingServiceSubmitNotify,
             TokenedService,
         },
 
