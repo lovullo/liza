@@ -38,12 +38,24 @@
 type NominalType<K, T> = K & { __nominal_type__: T };
 
 
+/** Unit of time in seconds */
+type Seconds = NominalType<number, 'Seconds'>;
+
+
 /**
  * Unix timestamp
  *
  * Number of seconds since the Unix epoch (1970-01-01 UTC).
  */
-type UnixTimestamp = NominalType<number, 'UnixTimestamp'>;
+type UnixTimestamp = NominalType<Seconds, 'UnixTimestamp'>;
+
+
+/** Unit of time in milliseconds */
+type Milliseconds = NominalType<number, 'Milliseconds'>;
+
+
+/** Unix timestamp represented in milliseconds */
+type UnixTimestampMillis = NominalType<Milliseconds, 'UnixTimestampMillis'>;
 
 
 /**
