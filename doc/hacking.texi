@@ -446,7 +446,7 @@ This can be done using
 @verbatim
 type PositiveInteger = NominalType<number, 'PositiveInteger'>;
 
-const isPositiveInteger = ( x: number ): n is PositiveInteger => n > 0;
+const isPositiveInteger = ( n: number ): n is PositiveInteger => n > 0;
 
 const lookupIndex<T>( arr: T[], i: PositiveInteger ): T => arr[ i ];
 
