@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict'
+import { expect } from 'chai';
+import { RatingService as Sut } from "../../../src/server/service/RatingService";
 
-const { expect }        = require( 'chai' );
-const Sut               = require( '../../../' ).server.service.RatingService;
 const RatingServiceStub = require( '../../../' ).test.server.service.RatingServiceStub;
 
 describe( 'RatingService', () =>
@@ -49,15 +48,13 @@ describe( 'RatingService', () =>
                 done();
             };
 
-            const sut = Sut.extend(
+            const sut = new class extends Sut
             {
-                'override postProcessRaterData'(
-                    request, data, actions, program, quote
-                )
+                postProcessRaterData()
                 {
                     processed = true;
                 }
-            } )( logger, dao, server, raters );
+            }( logger, dao, server, raters );
 
             sut.request( request, response, quote, 'something', () => {} );
         } );
@@ -87,9 +84,9 @@ describe( 'RatingService', () =>
 
             quote.getRatedDate = () => initial_date;
 
-            const sut = Sut( logger, dao, server, raters );
+            const sut = new Sut( logger, dao, server, raters );
 
-            server.sendResponse = ( request, quote, resp, actions ) =>
+            server.sendResponse = ( _request: any, _quote: any, resp: any, _actions: any ) =>
             {
                 expect( getLastPremiumDateCallCount ).to.equal( 2 );
                 expect( resp.initialRatedDate ).to.equal( initial_date );
@@ -98,7 +95,7 @@ describe( 'RatingService', () =>
                 done();
             };
 
-            sut.request( request, response, quote, null, () => {} );
+            sut.request( request, response, quote, "", () => {} );
         } );
 
     } );

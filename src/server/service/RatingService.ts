@@ -19,33 +19,60 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class  = require( 'easejs' ).Class;
+import { ClientActions } from "../../client/action/ClientAction";
+import { MongoServerDao } from "../db/MongoServerDao";
+import { PositiveInteger } from "../../numeric";
+import { PriorityLog } from "../log/PriorityLog";
+import { ProcessManager } from "../rater/ProcessManager";
+import { Program } from "../../program/Program";
+import { QuoteId } from "../../quote/Quote";
+import { ClassificationData, RateResult, WorksheetData } from "../rater/Rater";
+import { Server } from "../Server";
+import { ServerSideQuote } from "../quote/ServerSideQuote";
+import { UserRequest } from "../request/UserRequest";
+import { UserResponse } from "../request/UserResponse";
+
+type RequestCallback = () => void;
 
 
 /**
- * XXX: Half-assed, quick refactoring to extract from Server class; this is not
- * yet complete!
+ * Handle rating requests
+ *
+ * XXX: This class was extracted from Server and needs additional
+ * refactoring, testing, and cleanup.
  *
  * TODO: Logging should be implemented by observers
  */
-module.exports = Class( 'RatingService',
+export class RatingService
 {
-    logger: null,
+    /**
+     * Initialize rating service
+     *
+     * @param _logger        - logging system
+     * @param _dao           - database connection
+     * @param _server        - server actions
+     * @param _rater_manager - rating manager
+     */
+    constructor(
+        private readonly _logger:        PriorityLog,
+        private readonly _dao:           MongoServerDao,
+        private readonly _server:        Server,
+        private readonly _rater_manager: ProcessManager,
+    ) {}
 
-    dao: null,
 
-    _server: null,
-
-    _raters: null,
-
-
-    __construct: function( logger, dao, server, raters )
+    /**
+     * TODO: Remove once traits subtypes are converted to TS
+     *
+     * This works around an easejs bug where prototype constructors are not
+     * properly invoked.  Note that technically the constructor above is
+     * invoked twice by easejs: once with no arguments, and again when
+     * calling this method with the proper arguments.
+     */
+    __construct()
     {
-        this._logger = logger;
-        this._dao    = dao;
-        this._server = server;
-        this._raters = raters;
-    },
+        (<any>RatingService ).apply( this, arguments );
+    }
 
 
     /**
@@ -54,15 +81,21 @@ module.exports = Class( 'RatingService',
      * Note that the continuation will be called after all data saving is
      * complete; the request will be sent back to the client before then.
      *
-     * @param {UserRequest}  request  user request to satisfy
-     * @param {UserResponse} response pending response
-     * @param {Quote}        quote    quote to export
-     * @param {string}       cmd      applicable of command request
-     * @param {Function}     callback continuation after saving is complete
+     * @param request   - user request to satisfy
+     * @param _response - pending response
+     * @param quote     - quote to export
+     * @param cmd       - applicable of command request
+     * @param callback  - continuation after saving is complete
      *
      * @return Server self to allow for method chaining
      */
-    'public request': function( request, response, quote, cmd, callback )
+    request(
+        request:   UserRequest,
+        _response: UserResponse,
+        quote:     ServerSideQuote,
+        cmd:       string,
+        callback:  RequestCallback
+    )
     {
         // cmd represents a request for a single rater
         if ( !cmd && this._isQuoteValid( quote ) )
@@ -89,12 +122,12 @@ module.exports = Class( 'RatingService',
         }
 
         return this;
-    },
+    }
 
 
-    _getProgramRater: function( program, quote )
+    private _getProgramRater( program: Program, quote: ServerSideQuote )
     {
-        var rater = this._raters.byId( program.getId() );
+        var rater = this._rater_manager.byId( program.getId() );
 
         // if a rater could not be found, we can't do any rating
         if ( rater === null )
@@ -107,10 +140,20 @@ module.exports = Class( 'RatingService',
         }
 
         return rater;
-    },
+    }
 
 
-    _isQuoteValid: function( quote )
+    /**
+     * Whether quote is still valid
+     *
+     * TODO: This class shouldn't be making this determination, and this
+     * method is nondeterministic.
+     *
+     * @param quote - quote to check
+     *
+     * @return whether quote is still valid
+     */
+    private _isQuoteValid( quote: ServerSideQuote ): boolean
     {
         // quotes are valid for 30 days
         var re_date = Math.round( ( ( new Date() ).getTime() / 1000 ) -
@@ -129,14 +172,19 @@ module.exports = Class( 'RatingService',
         }
 
         return false;
-    },
+    }
 
 
-    _performRating: function( request, program, quote, indv, c )
+    private _performRating(
+        request: UserRequest,
+        program: Program,
+        quote:   ServerSideQuote,
+        indv:    string,
+        c:       RequestCallback,
+    )
     {
-        var _self = this;
+        var rater = this._getProgramRater( program, quote );
 
-        var rater = this._getProgramRater( program );
         if ( !rater )
         {
             this._server.sendError( request, 'Unable to perform rating.' );
@@ -150,49 +198,51 @@ module.exports = Class( 'RatingService',
         );
 
         rater.rate( quote, request.getSession(), indv,
-            function( rate_data, actions )
+            ( rate_data: RateResult, actions: ClientActions ) =>
             {
                 actions = actions || [];
 
-                _self.postProcessRaterData(
+                this.postProcessRaterData(
                     request, rate_data, actions, program, quote
                 );
 
                 const class_dest = {};
 
-                const cleaned = _self._cleanRateData(
+                const cleaned = this._cleanRateData(
                     rate_data,
                     class_dest
                 );
 
                 // TODO: move me during refactoring
-                _self._dao.saveQuoteClasses( quote, class_dest );
+                this._dao.saveQuoteClasses(
+                    quote, class_dest, () => {}, () => {}
+                );
 
                 // save all data server-side (important: do after
                 // post-processing); async
-                _self._saveRatingData( quote, rate_data, indv, function()
+                this._saveRatingData( quote, rate_data, indv, function()
                 {
                     // we're done
                     c();
                 } );
 
                 // no need to wait for the save; send the response
-                _self._server.sendResponse( request, quote, {
+                this._server.sendResponse( request, quote, {
                     data:             cleaned,
                     initialRatedDate: quote.getRatedDate(),
                     lastRatedDate:    quote.getLastPremiumDate()
                 }, actions );
             },
-            function( message )
+            ( message: string ) =>
             {
-                _self._sendRatingError( request, quote, program,
+                this._sendRatingError( request, quote, program,
                     Error( message )
                 );
 
                 c();
             }
         );
-    },
+    }
 
 
     /**
@@ -202,32 +252,32 @@ module.exports = Class( 'RatingService',
      * this is to allow us to reference the data (e.g. for reporting) even if
      * the client does not save it.
      *
-     * @param {Quote}  quote quote to save data to
-     * @param {Object} data  rating data
-     *
-     * @return {undefined}
+     * @param quote - quote to save data to
+     * @param data  - rating data
+     * @param indv  - individual supplier, or empty
+     * @param c     - callback
      */
-    _saveRatingData: function( quote, data, indv, c )
+    private _saveRatingData(
+        quote: ServerSideQuote,
+        data:  RateResult,
+        indv:  string,
+        c:     RequestCallback
+    ): void
     {
         // only update the last premium calc date on the initial request
         if ( !indv )
         {
-            var cur_date = Math.round(
+            var cur_date = <UnixTimestamp>Math.round(
                 ( new Date() ).getTime() / 1000
             );
 
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
 
-            function done()
-            {
-                c();
-            }
-
             // save the last prem status (we pass an empty object as the save
             // data argument to ensure that we do not save the actual bucket
             // data, which may cause a race condition with the below merge call)
-            this._dao.saveQuote( quote, done, done, {} );
+            this._dao.saveQuote( quote, c, c, {} );
         }
         else
         {
@@ -239,24 +289,26 @@ module.exports = Class( 'RatingService',
         // user a rate (if this save fails, it's likely we have bigger problems
         // anyway); this can also be done concurrently with the above request
         // since it only modifies a portion of the bucket
-        this._dao.mergeBucket( quote, data );
-    },
+        this._dao.mergeBucket( quote, data, () => {}, () => {} );
+    }
 
 
     /**
      * Process rater data returned from a rater
      *
-     * @param {UserRequest} request user request to satisfy
-     * @param {Object}      data    rating data returned
-     * @param {Array}       actions actions to send to client
-     * @param {Program}     program program used to perform rating
-     * @param {Quote}       quote   quote used for rating
-     *
-     * @return {undefined}
+     * @param _request - user request to satisfy
+     * @param data     - rating data returned
+     * @param actions  - actions to send to client
+     * @param program  - program used to perform rating
+     * @param quote    - quote used for rating
      */
-    'virtual protected postProcessRaterData': function(
-        request, data, actions, program, quote
-    )
+    protected postProcessRaterData(
+        _request: UserRequest,
+        data:     RateResult,
+        actions:  ClientActions,
+        program:  Program,
+        quote:    ServerSideQuote,
+    ): void
     {
         var meta = data._cmpdata || {};
 
@@ -284,18 +336,18 @@ module.exports = Class( 'RatingService',
             // have a race condition with async. rating (the /visit request may
             // be made while we're rating, and when we come back we would then
             // update the step id with a prior, incorrect step)
-            this._dao.saveQuoteLockState( quote );
+            this._dao.saveQuoteLockState( quote, () => {}, () => {} );
         }
 
         // if any have been deferred, instruct the client to request them
         // individually
         if ( Array.isArray( meta.deferred ) && ( meta.deferred.length > 0 ) )
         {
-            var torate = [];
+            var torate: string[] = [];
 
-            meta.deferred.forEach( function( alias )
+            meta.deferred.forEach( ( alias: string ) =>
             {
-                actions.push( { action: 'indvRate', id: alias } );
+                actions.push( { action: 'indvRate', after: alias } );
                 torate.push( alias );
             } );
 
@@ -308,17 +360,29 @@ module.exports = Class( 'RatingService',
                 torate.join( ',' )
             );
         }
-    },
+    }
 
 
-    _sendRatingError: function( request, quote, program, err )
+    /**
+     * Send rating error to user and log
+     *
+     * @param request - user request to satisfy
+     * @param quote   - problem quote
+     * @param err     - error
+     */
+    private _sendRatingError(
+        request: UserRequest,
+        quote:   ServerSideQuote,
+        program: Program,
+        err:     Error,
+    ): void
     {
         // well that's no good
         this._logger.log( this._logger.PRIORITY_ERROR,
             "Rating for quote %d (program %s) failed: %s",
             quote.getId(),
             program.getId(),
-            err.message + '\n-!' + err.stack.replace( /\n/g, '\n-!' )
+            err.message + '\n-!' + ( err.stack || "" ).replace( /\n/g, '\n-!' )
         );
 
         this._server.sendError( request,
@@ -328,18 +392,25 @@ module.exports = Class( 'RatingService',
             // show details for internal users
             ( ( request.getSession().isInternal() )
                 ? '<br /><br />[Internal] ' + err.message + '<br /><br />' +
-                    '<hr />' + err.stack.replace( /\n/g, '<br />' )
+                    '<hr />' + ( err.stack || "" ).replace( /\n/g, '<br />' )
                 : ''
             )
         );
-    },
+    }
 
 
-    _processWorksheetData: function( qid, data )
+    /**
+     * Process and save worksheet data from rating results
+     *
+     * @param qid  - quote id
+     * @param data - rating result
+     */
+    private _processWorksheetData( qid: QuoteId, data: RateResult ): void
     {
         // TODO: this should be done earlier on, so that this is not necessary
-        var wre        = /^(.+)___worksheet$/,
-            worksheets = {};
+        const wre = /^(.+)___worksheet$/;
+
+        const worksheets: Record<string, WorksheetData> = {};
 
         // extract worksheets for each supplier
         for ( var field in data )
@@ -354,33 +425,44 @@ module.exports = Class( 'RatingService',
             }
         }
 
-        var _self = this;
-        this._dao.setWorksheets( qid, worksheets, function( err )
+        this._dao.setWorksheets( qid, worksheets, ( err: Error | null ) =>
         {
             if ( err )
             {
-                _self._logger.log( this._logger.PRIORITY_ERROR,
+                this._logger.log( this._logger.PRIORITY_ERROR,
                     "Failed to save rating worksheets for quote %d",
-                    quote.getId(),
-                    err.message + '\n-!' + err.stack.replace( /\n/g, '\n-!' )
+                    qid,
+                    err.message + '\n-!' + ( err.stack || "" ).replace( /\n/g, '\n-!' )
                 );
             }
         } );
-    },
+    }
 
 
-    serveWorksheet: function( request, quote, supplier, index )
+    /**
+     * Serve worksheet data to user
+     *
+     * @param request  - user request to satisfy
+     * @param quote    - quote from which to look up worksheet data
+     * @param supplier - supplier name
+     * @param index    - worksheet index
+     */
+    serveWorksheet(
+        request:  UserRequest,
+        quote:    ServerSideQuote,
+        supplier: string,
+        index:    PositiveInteger,
+    ): void
     {
-        var qid   = quote.getId(),
-            _self = this;
+        var qid = quote.getId();
 
-        this._dao.getWorksheet( qid, supplier, index, function( data )
+        this._dao.getWorksheet( qid, supplier, index, data =>
         {
-            _self._server.sendResponse( request, quote, {
+            this._server.sendResponse( request, quote, {
                 data: data
             } );
         } );
-    },
+    }
 
 
     /**
@@ -389,15 +471,18 @@ module.exports = Class( 'RatingService',
      * There are certain data saved server-side that there is no use serving to
      * the client.
      *
-     * @param {Object} data rate data
+     * @param data    - rate data
+     * @param classes - classification data
      *
-     * @return {Object} modified rate data
+     * @return modified rate data
      */
-    'private _cleanRateData': function( data, classes )
+    private _cleanRateData(
+        data:    RateResult,
+        classes: ClassificationData
+    ): RateResult
     {
-        classes = classes || {};
-
-        var result = {};
+        // forceful cast because the below loop will copy everything
+        const result = <RateResult>{};
 
         // clear class data
         for ( var key in data )
@@ -415,6 +500,5 @@ module.exports = Class( 'RatingService',
         }
 
         return result;
-    },
-} );
-
+    }
+}

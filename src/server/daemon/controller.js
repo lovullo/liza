@@ -28,6 +28,8 @@ const {
     ReplSetServers: ReplSetServers,
 } = require( 'mongodb/lib/mongodb' );
 
+const easejs = require( 'easejs' );
+
 const regex_base = /^\/quote\/([a-z0-9-]+)\/?(?:\/(\d+)\/?(?:\/(.*))?|\/(program.js))?$/;
 const regex_step = /^step\/(\d+)\/?(?:\/(post|visit))?$/;
 
@@ -83,7 +85,7 @@ const {
                 ExportService,
             },
 
-            RatingService,
+            RatingService: { RatingService },
             RatingServicePublish,
             TokenedService,
         },
@@ -136,7 +138,7 @@ exports.init = function( logger, enc_service, conf )
             server.init( server_cache, exports.rater );
 
             // TODO: temporary proof-of-concept
-            rating_service = RatingService.use(
+            rating_service = easejs( RatingService ).use(
                 RatingServicePublish( amqplib, exports.post_rate_publish, logger )
             )(
                 logger, dao, server, exports.rater

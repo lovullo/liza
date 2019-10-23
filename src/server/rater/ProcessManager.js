@@ -69,6 +69,9 @@ const _signum = {
  *
  * Handles formatting and sending requests to the rating process; and
  * processing replies.
+ *
+ * TODO: Rename this class and provide a more generic interface.  The caller
+ * does not care that this sends data to another process for rating.
  */
 module.exports = Class( 'ProcessManager',
 {

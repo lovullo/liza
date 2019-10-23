@@ -21,8 +21,8 @@
 
 'use strict';
 
-const { Trait }     = require( 'easejs' );
-const RatingService = require( './RatingService' );
+const { Interface, Trait } = require( 'easejs' );
+const { RatingService }    = require( './RatingService' );
 
 
 /**
@@ -51,7 +51,8 @@ const RatingService = require( './RatingService' );
  * See the body of `#_sendMessage' for their values.
  */
 module.exports = Trait( 'RatingServicePublish' )
-    .extend( RatingService,
+    .implement( Interface( { 'postProcessRaterData': [] } ) )
+    .extend(
 {
     /**
      * AMQP library (amqplib API)
@@ -75,7 +76,7 @@ module.exports = Trait( 'RatingServicePublish' )
      *
      * @type {DebugLog}
      */
-    'private _logger': null,
+    'private _log': null,
 
 
     /**
@@ -87,9 +88,9 @@ module.exports = Trait( 'RatingServicePublish' )
      */
     __mixin( amqp, conf, logger )
     {
-        this._amqp   = amqp;
-        this._conf   = conf;
-        this._logger = logger;
+        this._amqp = amqp;
+        this._conf = conf;
+        this._log  = logger;
     },
 
 
@@ -104,7 +105,7 @@ module.exports = Trait( 'RatingServicePublish' )
      *
      * @return {undefined}
     */
-    'override protected postProcessRaterData'(
+    'abstract override postProcessRaterData'(
         request, data, actions, program, quote
     )
     {
@@ -127,13 +128,13 @@ module.exports = Trait( 'RatingServicePublish' )
                     quote
                 );
             } )
-            .then( () => this._logger.log(
-                this._logger.PRIORITY_INFO,
+            .then( () => this._log.log(
+                this._log.PRIORITY_INFO,
                 "Published quote " + quote.getId() +
                     " to post-rate exchange '" + exchange + "'"
             ) )
-            .catch( e => this._logger.log(
-                this._logger.PRIORITY_ERROR,
+            .catch( e => this._log.log(
+                this._log.PRIORITY_ERROR,
                 "Post-rate exchange publish failure for quote " +
                     quote.getId() + ": " + e.message
             ) );
