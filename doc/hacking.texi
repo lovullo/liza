@@ -341,14 +341,17 @@ If this is a concern,
     in conjunction with ease.js'
     @url{https://www.gnu.org/software/easejs/manual/easejs.html#Type-Checks-and-Polymorphism,@samp{Class.isA}}.
 
-Interfaces do not exist at runtime in TypeScript,
-  but they do in easejs.
-Consequently,
-  you can continue to export an ease.js interface while also exporting
-    a TypeScript interface.
+Often times you will need to reference a class or interface as a
+  dependency before it has been migrated away from ease.js.
 To do this,
-  continue to export using @samp{module.exports} rather than
-    TypeScript's @samp{export =}.
+  create a corresponding @code{.d.ts} file in the same directory
+    as the dependency.
+For example,
+  if a class @code{Foo} is contained in @file{Foo.js},
+    create a sibling @file{Foo.d.ts} file.
+For more information,
+  see @url{https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html,Declaration Files}
+  in the TypeScript handbook.
 
 ease.js implements stackable Scala-like traits.
 Traits are @emph{not} provided by TypeScript.
