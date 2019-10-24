@@ -277,7 +277,9 @@ export class RatingService
             // save the last prem status (we pass an empty object as the save
             // data argument to ensure that we do not save the actual bucket
             // data, which may cause a race condition with the below merge call)
-            this._dao.saveQuote( quote, c, c, {} );
+            this._dao.saveQuote( quote, c, c, {
+                ratedata: data,
+            } );
         }
         else
         {

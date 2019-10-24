@@ -29,15 +29,61 @@ import { Program } from "../../../src/program/Program";
 import { QuoteId } from "../../../src/quote/Quote";
 import { Rater, RateResult } from "../../../src/server/rater/Rater";
 import { Server } from "../../../src/server/Server";
-import { ServerDao } from "../../../src/server/db/ServerDao";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { UserResponse } from "../../../src/server/request/UserResponse";
 import { UserSession } from "../../../src/server/request/UserSession";
 
+import {
+    ServerDao,
+    Callback as ServerDaoCallback
+} from "../../../src/server/db/ServerDao";
+
 
 describe( 'RatingService', () =>
 {
+    it( "saves rate data to own field", done =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            stub_rate_data,
+        } = getStubs();
+
+        let saved_rates = false;
+
+        dao.saveQuote = (
+            quote:     ServerSideQuote,
+            success:   ServerDaoCallback,
+            _failure:  ServerDaoCallback,
+            save_data: Record<string, any>,
+        ) =>
+        {
+            expect( save_data ).to.deep.equal( {
+                ratedata: stub_rate_data,
+            } );
+
+            saved_rates = true;
+            success( quote );
+
+            return dao;
+        };
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        sut.request( request, response, quote, "", () =>
+        {
+            expect( saved_rates ).to.be.true;
+            done();
+        } );
+    } );
+
+
     describe( "protected API", () =>
     {
         it( "calls #postProcessRaterData after rating before save", done =>
@@ -171,8 +217,14 @@ function getStubs()
 
     const dao = new class implements ServerDao
     {
-        saveQuote(): this
+        saveQuote(
+            quote:      ServerSideQuote,
+            success:    ServerDaoCallback,
+            _failure:   ServerDaoCallback,
+            _save_data: Record<string, any>,
+        ): this
         {
+            success( quote );
             return this;
         }
 
