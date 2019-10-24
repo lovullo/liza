@@ -19,15 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { ClassificationData, RateResult, WorksheetData } from "../rater/Rater";
 import { ClientActions } from "../../client/action/ClientAction";
-import { MongoServerDao } from "../db/MongoServerDao";
 import { PositiveInteger } from "../../numeric";
 import { PriorityLog } from "../log/PriorityLog";
 import { ProcessManager } from "../rater/ProcessManager";
 import { Program } from "../../program/Program";
 import { QuoteId } from "../../quote/Quote";
-import { ClassificationData, RateResult, WorksheetData } from "../rater/Rater";
 import { Server } from "../Server";
+import { ServerDao } from "../db/ServerDao";
 import { ServerSideQuote } from "../quote/ServerSideQuote";
 import { UserRequest } from "../request/UserRequest";
 import { UserResponse } from "../request/UserResponse";
@@ -55,7 +55,7 @@ export class RatingService
      */
     constructor(
         private readonly _logger:        PriorityLog,
-        private readonly _dao:           MongoServerDao,
+        private readonly _dao:           ServerDao,
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
     ) {}

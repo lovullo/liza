@@ -1,5 +1,5 @@
 /**
- * Mongo DB DAO for program server
+ * General server database operations
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -17,20 +17,24 @@
  *
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * This interface was created to satisfy MongoServerDao and may not be
+ * sufficiently general for other database abstractions.
  */
-
-import { ServerDao, Callback } from "./ServerDao";
 
 import { ClassificationData, WorksheetData } from "../rater/Rater";
 import { PositiveInteger } from "../../numeric";
 import { QuoteId } from "../../document/Document";
 import { ServerSideQuote } from "../quote/ServerSideQuote";
 
+/** Success or failure callback */
+export type Callback = ( quote: ServerSideQuote ) => void;
+
 
 /**
- * MongoDB-backed data store
+ * Database abstraction
  */
-export declare class MongoServerDao implements ServerDao
+export interface ServerDao
 {
     /**
      * Saves a quote to the database
