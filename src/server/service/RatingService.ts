@@ -123,24 +123,6 @@ export class RatingService
     }
 
 
-    private _getProgramRater( program: Program, quote: ServerSideQuote )
-    {
-        var rater = this._rater_manager.byId( program.getId() );
-
-        // if a rater could not be found, we can't do any rating
-        if ( rater === null )
-        {
-            this._logger.log( this._logger.PRIORITY_ERROR,
-                "Rating for quote %d (program %s) failed; missing module",
-                quote.getId(),
-                program.getId()
-            );
-        }
-
-        return rater;
-    }
-
-
     /**
      * Whether quote is still valid
      *
@@ -181,13 +163,7 @@ export class RatingService
         c:       RequestCallback,
     )
     {
-        var rater = this._getProgramRater( program, quote );
-
-        if ( !rater )
-        {
-            this._server.sendError( request, 'Unable to perform rating.' );
-            c();
-        }
+        var rater = this._rater_manager.byId( program.getId() );
 
         this._logger.log( this._logger.PRIORITY_INFO,
             "Performing '%s' rating for quote #%s",
