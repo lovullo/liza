@@ -78,24 +78,22 @@ export class RatingService
     /**
      * Sends rates to the client
      *
-     * Note that the continuation will be called after all data saving is
+     * Note that the promise will be resolved after all data saving is
      * complete; the request will be sent back to the client before then.
      *
      * @param request   - user request to satisfy
      * @param _response - pending response
      * @param quote     - quote to export
      * @param cmd       - applicable of command request
-     * @param callback  - continuation after saving is complete
      *
-     * @return Server self to allow for method chaining
+     * @return result promise
      */
     request(
         request:   UserRequest,
         _response: UserResponse,
         quote:     ServerSideQuote,
         cmd:       string,
-        callback:  RequestCallback
-    )
+    ): Promise<void>
     {
         // cmd represents a request for a single rater
         if ( !cmd && this._isQuoteValid( quote ) )
@@ -105,23 +103,23 @@ export class RatingService
                 data: {},
             }, [] );
 
-            callback();
-            return this;
+            return Promise.resolve();
         }
 
         var program = quote.getProgram();
 
-        try
+        return new Promise( ( resolve, reject ) =>
         {
-            this._performRating( request, program, quote, cmd, callback );
-        }
-        catch ( err )
-        {
-            this._sendRatingError( request, quote, program, err );
-            callback();
-        }
-
-        return this;
+            try
+            {
+                this._performRating( request, program, quote, cmd, resolve );
+            }
+            catch ( err )
+            {
+                this._sendRatingError( request, quote, program, err );
+                reject( err );
+            }
+        } );
     }
 
 

@@ -536,11 +536,9 @@ function doRoute( program, request, data, resolve, reject )
             {
                 var response = UserResponse( request );
 
-                rating_service.request( request, response, quote, alias, function()
-                {
-                    // we're done; free the lock
-                    free();
-                } );
+                rating_service.request( request, response, quote, alias )
+                    .catch( () => {} )
+                    .then( () => free() );
             } );
         }, true );
     }

@@ -19,7 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { expect } from 'chai';
 import { RatingService as Sut } from "../../../src/server/service/RatingService";
 
 import { ClientActions } from "../../../src/client/action/ClientAction";
@@ -39,10 +38,13 @@ import {
     Callback as ServerDaoCallback
 } from "../../../src/server/db/ServerDao";
 
+import { expect, use as chai_use } from 'chai';
+chai_use( require( 'chai-as-promised' ) );
+
 
 describe( 'RatingService', () =>
 {
-    it( "saves rate data to own field", done =>
+    it( "saves rate data to own field", () =>
     {
         const {
             logger,
@@ -76,11 +78,35 @@ describe( 'RatingService', () =>
 
         const sut = new Sut( logger, dao, server, raters );
 
-        sut.request( request, response, quote, "", () =>
-        {
-            expect( saved_rates ).to.be.true;
-            done();
-        } );
+        return sut.request( request, response, quote, "" )
+            .then( () =>
+            {
+                expect( saved_rates ).to.be.true;
+            } );
+    } );
+
+
+    it( "rejects with error", () =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            rater,
+        } = getStubs();
+
+        const expected_error = new Error( "expected error" );
+
+        rater.rate = () => { throw expected_error; };
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        return expect( sut.request( request, response, quote, "" ) )
+            .to.eventually.rejectedWith( expected_error );
     } );
 
 
@@ -116,7 +142,7 @@ describe( 'RatingService', () =>
                 }
             }( logger, dao, server, raters );
 
-            sut.request( request, response, quote, 'something', () => {} );
+            return sut.request( request, response, quote, 'something' );
         } );
 
         it( "calls getLastPremiumDate during #_performRating", done =>
@@ -157,7 +183,7 @@ describe( 'RatingService', () =>
                 return server;
             };
 
-            sut.request( request, response, quote, "", () => {} );
+            return sut.request( request, response, quote, "" );
         } );
 
     } );
