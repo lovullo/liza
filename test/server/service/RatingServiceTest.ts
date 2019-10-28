@@ -44,6 +44,31 @@ chai_use( require( 'chai-as-promised' ) );
 
 describe( 'RatingService', () =>
 {
+    it( "returns rating results", () =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            stub_rate_data,
+        } = getStubs();
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        const expected = {
+            data:             stub_rate_data,
+            initialRatedDate: quote.getRatedDate(),
+            lastRatedDate:    quote.getLastPremiumDate(),
+        };
+
+        return expect( sut.request( request, response, quote, "" ) )
+            .to.eventually.deep.equal( expected );
+    } );
+
     it( "saves rate data to own field", () =>
     {
         const {
@@ -86,17 +111,18 @@ describe( 'RatingService', () =>
     } );
 
 
-    it( "rejects with error", () =>
+    it( "rejects and responds with error", () =>
     {
         const {
-            logger,
-            server,
-            raters,
             dao,
-            request,
-            response,
+            logger,
+            program,
             quote,
             rater,
+            raters,
+            request,
+            response,
+            server,
         } = getStubs();
 
         const expected_error = new Error( "expected error" );
@@ -105,8 +131,66 @@ describe( 'RatingService', () =>
 
         const sut = new Sut( logger, dao, server, raters );
 
+        let logged = false;
+
+        logger.log = function(
+            priority:   number,
+            _format:    string,
+            qid:        QuoteId,
+            program_id: string,
+            message:    string,
+        )
+        {
+            if ( typeof message === 'string' )
+            {
+                expect( priority ).to.equal( logger.PRIORITY_ERROR );
+                expect( qid ).to.equal( quote.getId() );
+                expect( program_id ).to.equal( program.getId() );
+                expect( message ).to.contain( expected_error.message );
+
+                logged = true;
+            }
+
+            return logger;
+        };
+
         return expect( sut.request( request, response, quote, "" ) )
-            .to.eventually.rejectedWith( expected_error );
+            .to.eventually.rejectedWith( expected_error )
+            .then( () => expect( logged ).to.be.true );
+    } );
+
+
+    it( "returns error message from rater", () =>
+    {
+        const {
+            dao,
+            logger,
+            quote,
+            rater,
+            raters,
+            request,
+            response,
+            server,
+        } = getStubs();
+
+        const expected_message = 'expected foo';
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        rater.rate = (
+            _quote:   ServerSideQuote,
+            _session: UserSession,
+            _indv:    string,
+            _success: ( data: RateResult, actions: ClientActions ) => void,
+            failure:  ( message: string ) => void,
+        ) =>
+        {
+            failure( expected_message );
+            return rater;
+        };
+
+        return expect( sut.request( request, response, quote, "" ) )
+            .to.eventually.rejectedWith( Error, expected_message );
     } );
 
 
@@ -142,7 +226,7 @@ describe( 'RatingService', () =>
                 }
             }( logger, dao, server, raters );
 
-            return sut.request( request, response, quote, 'something' );
+            sut.request( request, response, quote, 'something' );
         } );
 
         it( "calls getLastPremiumDate during #_performRating", done =>
@@ -183,9 +267,8 @@ describe( 'RatingService', () =>
                 return server;
             };
 
-            return sut.request( request, response, quote, "" );
+            sut.request( request, response, quote, "" );
         } );
-
     } );
 } );
 
@@ -211,9 +294,13 @@ function getStubs()
             _session: UserSession,
             _indv:    string,
             success:  ( data: RateResult, actions: ClientActions ) => void,
+            _failure: ( message: string ) => void,
         )
         {
-            success( stub_rate_data, [] );
+            // force to be async so that the tests resemble how the code
+            // actually runs
+            process.nextTick( () => success( stub_rate_data, [] ) );
+
             return this;
         }
     };
@@ -230,7 +317,7 @@ function getStubs()
         readonly PRIORITY_INFO: number      = 3;
         readonly PRIORITY_SOCKET: number    = 4;
 
-        log(): this
+        log( _priority: number, ..._args: Array<string|number> ): this
         {
             return this;
         }

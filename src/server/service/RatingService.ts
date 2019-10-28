@@ -34,6 +34,13 @@ import { UserResponse } from "../request/UserResponse";
 
 type RequestCallback = () => void;
 
+/** Result of rating */
+export type RateRequestResult = {
+    data:             RateResult,
+    initialRatedDate: UnixTimestamp,
+    lastRatedDate:    UnixTimestamp,
+};
+
 
 /**
  * Handle rating requests
@@ -93,32 +100,38 @@ export class RatingService
         _response: UserResponse,
         quote:     ServerSideQuote,
         cmd:       string,
-    ): Promise<void>
+    ): Promise<RateRequestResult>
     {
-        // cmd represents a request for a single rater
-        if ( !cmd && this._isQuoteValid( quote ) )
+        const program = quote.getProgram();
+
+        return new Promise<RateRequestResult>( resolve =>
         {
-            // send an empty reply (keeps what is currently in the bucket)
-            this._server.sendResponse( request, quote, {
-                data: {},
-            }, [] );
+            // cmd represents a request for a single rater
+            if ( !cmd && this._isQuoteValid( quote ) )
+            {
+                // send an empty reply (keeps what is currently in the
+                // bucket)
+                this._server.sendResponse( request, quote, {
+                    data: {},
+                }, [] );
 
-            return Promise.resolve();
-        }
+                // XXX: When this class is no longer responsible for
+                // sending the response to the server, this below data needs
+                // to represent the _current_ values, since as it is written
+                // now, it'll overwrite what is currently in the bucket
+                return resolve( {
+                    data:             { _unavailable_all: '0' },
+                    initialRatedDate: <UnixTimestamp>0,
+                    lastRatedDate:    <UnixTimestamp>0,
+                } );
+            }
 
-        var program = quote.getProgram();
-
-        return new Promise( ( resolve, reject ) =>
+            resolve( this._performRating( request, program, quote, cmd ) );
+        } )
+        .catch( err =>
         {
-            try
-            {
-                this._performRating( request, program, quote, cmd, resolve );
-            }
-            catch ( err )
-            {
-                this._sendRatingError( request, quote, program, err );
-                reject( err );
-            }
+            this._sendRatingError( request, quote, program, err );
+            throw err;
         } );
     }
 
@@ -155,67 +168,81 @@ export class RatingService
     }
 
 
+    /**
+     * Perform rating and process result
+     *
+     * @param request - user request to satisfy
+     * @param program - quote program
+     * @param quote   - quote to process
+     * @param indv    - individual supplier to rate (or empty)
+     *
+     * @return promise for results of rating
+     */
     private _performRating(
-        request: UserRequest,
-        program: Program,
-        quote:   ServerSideQuote,
-        indv:    string,
-        c:       RequestCallback,
-    )
+        request:  UserRequest,
+        program:  Program,
+        quote:    ServerSideQuote,
+        indv:     string,
+    ): Promise<RateRequestResult>
     {
-        var rater = this._rater_manager.byId( program.getId() );
+        return new Promise<RateRequestResult>( ( resolve, reject ) =>
+        {
+            var rater = this._rater_manager.byId( program.getId() );
 
-        this._logger.log( this._logger.PRIORITY_INFO,
-            "Performing '%s' rating for quote #%s",
-            quote.getProgramId(),
-            quote.getId()
-        );
+            this._logger.log( this._logger.PRIORITY_INFO,
+                "Performing '%s' rating for quote #%s",
+                quote.getProgramId(),
+                quote.getId()
+            );
 
-        rater.rate( quote, request.getSession(), indv,
-            ( rate_data: RateResult, actions: ClientActions ) =>
-            {
-                actions = actions || [];
-
-                this.postProcessRaterData(
-                    request, rate_data, actions, program, quote
-                );
-
-                const class_dest = {};
-
-                const cleaned = this._cleanRateData(
-                    rate_data,
-                    class_dest
-                );
-
-                // TODO: move me during refactoring
-                this._dao.saveQuoteClasses(
-                    quote, class_dest, () => {}, () => {}
-                );
-
-                // save all data server-side (important: do after
-                // post-processing); async
-                this._saveRatingData( quote, rate_data, indv, function()
+            rater.rate( quote, request.getSession(), indv,
+                ( rate_data: RateResult, actions: ClientActions ) =>
                 {
-                    // we're done
-                    c();
-                } );
+                    actions = actions || [];
 
-                // no need to wait for the save; send the response
-                this._server.sendResponse( request, quote, {
-                    data:             cleaned,
-                    initialRatedDate: quote.getRatedDate(),
-                    lastRatedDate:    quote.getLastPremiumDate()
-                }, actions );
-            },
-            ( message: string ) =>
-            {
-                this._sendRatingError( request, quote, program,
-                    Error( message )
-                );
+                    this.postProcessRaterData(
+                        request, rate_data, actions, program, quote
+                    );
 
-                c();
-            }
-        );
+                    const class_dest = {};
+
+                    const cleaned = this._cleanRateData(
+                        rate_data,
+                        class_dest
+                    );
+
+                    // TODO: move me during refactoring
+                    this._dao.saveQuoteClasses(
+                        quote, class_dest, () => {}, () => {}
+                    );
+
+                    const result = {
+                        data:             cleaned,
+                        initialRatedDate: quote.getRatedDate(),
+                        lastRatedDate:    quote.getLastPremiumDate()
+                    };
+
+                    // save all data server-side (important: do after
+                    // post-processing); async
+                    this._saveRatingData( quote, rate_data, indv, function()
+                    {
+                        // we're done
+                        resolve( result );
+                    } );
+
+                    // no need to wait for the save; send the response
+                    this._server.sendResponse( request, quote, result, actions );
+                },
+                ( message: string ) =>
+                {
+                    this._sendRatingError( request, quote, program,
+                        Error( message )
+                    );
+
+                    reject( Error( message ) );
+                }
+            );
+        } );
     }
 
 
