@@ -22,18 +22,14 @@
  *       "HttpRater"
  */
 
-var Class = require( 'easejs' ).Class,
-    Rater = require( './Rater' ),
-
-    querystring = require( 'querystring' )
-;
+var Class       = require( 'easejs' ).Class;
+var querystring = require( 'querystring' );
 
 
 /**
  * Rates using one of the PHP raters
  */
 module.exports = Class( 'HttpRater' )
-    .implement( Rater )
     .extend(
 {
     /**

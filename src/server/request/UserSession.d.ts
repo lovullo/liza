@@ -1,5 +1,5 @@
 /**
- * Contains Rater interface
+ * UserSession class
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -19,22 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
 
 /**
- * Represents a rater that will generate a quote from a given set of values
+ * Session management
  */
-module.exports = Interface( 'Rater',
+export declare class UserSession
 {
     /**
-     * Asynchronously performs rating using the data from the given bucket
+     * Whether the user is logged in as an internal user
      *
-     * @param {Quote}      quote to rate
-     * @param {function()} callback function to call when complete
-     *
-     * @return {Rater} self
+     * @return true if internal user, otherwise false
      */
-    'public rate': [ 'quote', 'args', 'callback' ],
-} );
-
+    isInternal(): boolean;
+}
