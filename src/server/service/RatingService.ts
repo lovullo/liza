@@ -102,8 +102,6 @@ export class RatingService
         cmd:       string,
     ): Promise<RateRequestResult>
     {
-        const program = quote.getProgram();
-
         return new Promise<RateRequestResult>( resolve =>
         {
             // cmd represents a request for a single rater
@@ -126,11 +124,11 @@ export class RatingService
                 } );
             }
 
-            resolve( this._performRating( request, program, quote, cmd ) );
+            resolve( this._performRating( request, quote, cmd ) );
         } )
         .catch( err =>
         {
-            this._sendRatingError( request, quote, program, err );
+            this._sendRatingError( request, quote, err );
             throw err;
         } );
     }
@@ -172,7 +170,6 @@ export class RatingService
      * Perform rating and process result
      *
      * @param request - user request to satisfy
-     * @param program - quote program
      * @param quote   - quote to process
      * @param indv    - individual supplier to rate (or empty)
      *
@@ -180,14 +177,13 @@ export class RatingService
      */
     private _performRating(
         request:  UserRequest,
-        program:  Program,
         quote:    ServerSideQuote,
         indv:     string,
     ): Promise<RateRequestResult>
     {
         return new Promise<RateRequestResult>( ( resolve, reject ) =>
         {
-            var rater = this._rater_manager.byId( program.getId() );
+            const rater = this._rater_manager.byId( quote.getProgramId() );
 
             this._logger.log( this._logger.PRIORITY_INFO,
                 "Performing '%s' rating for quote #%s",
@@ -201,7 +197,7 @@ export class RatingService
                     actions = actions || [];
 
                     this.postProcessRaterData(
-                        request, rate_data, actions, program, quote
+                        request, rate_data, actions, quote.getProgram(), quote
                     );
 
                     const class_dest = {};
@@ -235,7 +231,7 @@ export class RatingService
                 },
                 ( message: string ) =>
                 {
-                    this._sendRatingError( request, quote, program,
+                    this._sendRatingError( request, quote,
                         Error( message )
                     );
 
@@ -376,7 +372,6 @@ export class RatingService
     private _sendRatingError(
         request: UserRequest,
         quote:   ServerSideQuote,
-        program: Program,
         err:     Error,
     ): void
     {
@@ -384,7 +379,7 @@ export class RatingService
         this._logger.log( this._logger.PRIORITY_ERROR,
             "Rating for quote %d (program %s) failed: %s",
             quote.getId(),
-            program.getId(),
+            quote.getProgramId(),
             err.message + '\n-!' + ( err.stack || "" ).replace( /\n/g, '\n-!' )
         );
 
