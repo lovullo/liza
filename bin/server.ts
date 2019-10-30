@@ -83,7 +83,7 @@ function _resolvePath( conf_path: string, path: string ): string
  */
 function writePidFile( pid_path: string ): void
 {
-    fs.writeFile( pid_path, process.pid );
+    fs.writeFileSync( pid_path, process.pid );
 
     process.on( 'exit', () => fs.unlink( pid_path ) );
 }
