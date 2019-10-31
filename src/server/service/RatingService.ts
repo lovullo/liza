@@ -212,22 +212,22 @@ export class RatingService
                         quote, class_dest, () => {}, () => {}
                     );
 
-                    const result = {
-                        data:             cleaned,
-                        initialRatedDate: quote.getRatedDate(),
-                        lastRatedDate:    quote.getLastPremiumDate()
-                    };
-
                     // save all data server-side (important: do after
                     // post-processing); async
-                    this._saveRatingData( quote, rate_data, indv, function()
+                    this._saveRatingData( quote, rate_data, indv, () =>
                     {
-                        // we're done
+                        const result = {
+                            data:             cleaned,
+                            initialRatedDate: quote.getRatedDate(),
+                            lastRatedDate:    quote.getLastPremiumDate()
+                        };
+
+                        this._server.sendResponse(
+                            request, quote, result, actions
+                        );
+
                         resolve( result );
                     } );
-
-                    // no need to wait for the save; send the response
-                    this._server.sendResponse( request, quote, result, actions );
                 },
                 ( message: string ) =>
                 {

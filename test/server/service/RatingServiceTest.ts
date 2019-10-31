@@ -19,7 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { RatingService as Sut } from "../../../src/server/service/RatingService";
+import {
+    RatingService as Sut,
+    RateRequestResult
+} from "../../../src/server/service/RatingService";
 
 import { ClientActions } from "../../../src/client/action/ClientAction";
 import { PriorityLog } from "../../../src/server/log/PriorityLog";
@@ -67,6 +70,74 @@ describe( 'RatingService', () =>
 
         return expect( sut.request( request, response, quote, "" ) )
             .to.eventually.deep.equal( expected );
+    } );
+
+
+    it( "updates rating dates before serving to client", () =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            stub_rate_data,
+        } = getStubs();
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        let last_prem_called  = false;
+        let rated_date_called = false;
+
+        let stub_last_prem_ts  = <UnixTimestamp>12345;
+        let stub_rated_date_ts = <UnixTimestamp>23456;
+
+        let sent = false;
+
+        quote.setLastPremiumDate = () =>
+        {
+            last_prem_called = true;
+            return quote;
+        };
+
+        quote.setRatedDate = () =>
+        {
+            rated_date_called = true;
+            return quote;
+        };
+
+        quote.getLastPremiumDate = () => stub_last_prem_ts;
+        quote.getRatedDate       = () => stub_rated_date_ts;
+
+        server.sendResponse = (
+            _request: any,
+            _quote:   any,
+            resp:     RateRequestResult,
+            _actions: ClientActions
+        ) =>
+        {
+            expect( resp.initialRatedDate ).to.equal( stub_rated_date_ts );
+            expect( resp.lastRatedDate ).to.equal( stub_last_prem_ts );
+
+            expect( last_prem_called ).to.be.true;
+            expect( rated_date_called ).to.be.true;
+
+            sent = true;
+
+            return server;
+        };
+
+        const expected = {
+            data:             stub_rate_data,
+            initialRatedDate: stub_rated_date_ts,
+            lastRatedDate:    stub_last_prem_ts,
+        };
+
+        return expect( sut.request( request, response, quote, "" ) )
+            .to.eventually.deep.equal( expected )
+            .then( () => expect( sent ).to.be.true );
     } );
 
     it( "saves rate data to own field", () =>
