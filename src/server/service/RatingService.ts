@@ -346,7 +346,7 @@ export class RatingService
 
             meta.deferred.forEach( ( alias: string ) =>
             {
-                actions.push( { action: 'indvRate', after: alias } );
+                actions.push( { action: 'indvRate', id: alias } );
                 torate.push( alias );
             } );
 

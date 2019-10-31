@@ -194,6 +194,52 @@ describe( 'RatingService', () =>
     } );
 
 
+    // this means of deferred rating is deprecated and is being superceded
+    // in the near future by a better system; it will hopefully be removed
+    // at some point
+    it( "sends indvRate action for old-style deferred suppliers", () =>
+    {
+        const {
+            dao,
+            logger,
+            quote,
+            raters,
+            request,
+            response,
+            server,
+            stub_rate_data,
+        } = getStubs();
+
+        let sent = false;
+
+        stub_rate_data._cmpdata = {
+            deferred: [ 'supp1', 'supp2' ],
+        };
+
+        server.sendResponse = (
+            _request: any,
+            _quote: any,
+            _resp: any,
+            actions: ClientActions
+        ) =>
+        {
+            expect( actions ).to.deep.equal( [
+                { action: 'indvRate', id: 'supp1' },
+                { action: 'indvRate', id: 'supp2' },
+            ] );
+
+            sent = true;
+
+            return server;
+        };
+
+        const sut = new Sut( logger, dao, server, raters );
+
+        return sut.request( request, response, quote, "" )
+            .then( () => expect( sent ).to.be.true );
+    } );
+
+
     describe( "protected API", () =>
     {
         it( "calls #postProcessRaterData after rating before save", done =>
