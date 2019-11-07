@@ -20,7 +20,7 @@
  */
 
 const { Class }        = require( 'easejs' );
-const { EventEmitter } = require( 'events' );
+const { EventEmitter } = require( '../events' );
 const MissingDataError = require( './MissingDataError' );
 
 

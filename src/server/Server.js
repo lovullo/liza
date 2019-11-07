@@ -23,7 +23,7 @@
  */
 
 const { Class }        = require( 'easejs' );
-const { EventEmitter } = require( 'events' );
+const { EventEmitter } = require( '../events' );
 
 const fs   = require( 'fs' );
 const util = require( 'util' );

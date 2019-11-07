@@ -22,7 +22,7 @@
 var Class   = require( 'easejs' ).Class,
     DataApi = require( './DataApi' ),
 
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../events' ).EventEmitter;
 
 
 /**

@@ -24,7 +24,7 @@
 var Class        = require( 'easejs' ).Class,
     Quote        = require( './Quote' ),
     Program      = require( '../program/Program' ).Program,
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../events' ).EventEmitter;
 
 /**
  * Creates a new quote

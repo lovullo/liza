@@ -22,7 +22,7 @@
  */
 
 var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../../events' ).EventEmitter;
 
 
 module.exports = Class( 'Sidebar' )

@@ -22,7 +22,7 @@
  */
 
 var AbstractClass = require( 'easejs' ).AbstractClass
-    EventEmitter  = require( 'events' ).EventEmitter,
+    EventEmitter  = require( '../events' ).EventEmitter,
 
     // XXX coupling
     Failure       = require( '../validate/Failure' ),

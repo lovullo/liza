@@ -22,7 +22,7 @@
 "use strict";
 
 const Class        = require( 'easejs' ).Class;
-const EventEmitter = require( 'events' ).EventEmitter;
+const EventEmitter = require( '../events' ).EventEmitter;
 const Failure      = require( './Failure' );
 const Store        = require( '../store/Store' );
 

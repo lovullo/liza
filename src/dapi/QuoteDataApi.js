@@ -25,7 +25,7 @@
 
 const { Class }    = require( 'easejs' );
 const DataApi      = require( './DataApi' );
-const EventEmitter = require( 'events' ).EventEmitter;
+const EventEmitter = require( '../events' ).EventEmitter;
 
 
 /**

@@ -24,7 +24,7 @@
 
 const { Class }    = require( 'easejs' );
 const Bucket       = require( './Bucket' );
-const EventEmitter = require( 'events' ).EventEmitter;
+const EventEmitter = require( '../events' ).EventEmitter;
 
 
 /**

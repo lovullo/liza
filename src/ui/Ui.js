@@ -27,7 +27,7 @@
  */
 
 var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../events' ).EventEmitter;
 
 // XXX: decouple
 var DynamicContext = require( './context/DynamicContext' );
