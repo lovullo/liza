@@ -38,6 +38,11 @@ AC_CHECK_PROGS(NODE, [node nodejs])
 
 test -n "$NODE" || AC_MSG_ERROR([missing Node.js])
 
+AC_MSG_CHECKING([node version])
+node_version=$($NODE --version | sed 's/^v//')
+AC_SUBST([NODE_VERSION], [$node_version])
+AC_MSG_RESULT([$NODE_VERSION])
+
 # graphviz
 AC_ARG_VAR([TWOPI], [Graphviz twopi layout])
 AC_CHECK_PROGS(TWOPI, [twopi])

@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "typescript":              "~3.7",
-    "@types/node":             "~4.9",
+    "@types/node":             "@NODE_VERSION@",
     "chai":                    ">=1.9.1 < 4",
     "@types/chai":             ">=1.9.1 < 4",
     "chai-as-promised":        "7.1.0",
