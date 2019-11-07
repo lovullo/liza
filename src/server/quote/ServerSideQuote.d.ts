@@ -68,4 +68,20 @@ export declare class ServerSideQuote extends BaseQuote
      * @return rating data
      */
     getRatingData(): Record<string, any>;
+
+
+    /**
+     * Metadata bucket
+     *
+     * @return the metadata bucket
+     */
+    getMetabucket(): QuoteDataBucket;
+
+
+    /**
+     * Get the program version
+     *
+     * @return program version
+     */
+    getProgramVersion(): string;
 }

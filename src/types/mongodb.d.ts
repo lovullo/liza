@@ -23,13 +23,15 @@
  * front.
  */
 
+import { PositiveInteger } from "../numeric";
+
 declare module "mongodb";
 
 
 /**
  * Node-style callback for queries
  */
-type MongoCallback = ( err: Error|null, data: { [P: string]: any } ) => void;
+type MongoCallback = ( err: NullableError, data: { [P: string]: any } ) => void;
 
 
 /**
@@ -52,7 +54,21 @@ interface MongoQueryUpdateOptions
  */
 interface MongoFindOneOptions
 {
+    /** Fields to select */
     fields?: MongoFieldSelector,
+}
+
+
+/**
+ * Options for `find` queries
+ *
+ * This is not at all comprehensive; it covers only the fields we actually
+ * make use of.
+ */
+interface MongoFindOptions
+{
+    /** Limit results returned */
+    limit?: PositiveInteger,
 }
 
 
@@ -76,20 +92,25 @@ interface MongoFindAndModifyOptions
 
 
 /** Mongo query selector */
-type MongoSelector = { [P: string]: any };
-
+export type MongoSelector = { [P: string]: any };
 
 /** Field selector */
 type MongoFieldSelector = { [P: string]: number };
 
+/** Mongo index specification */
+type MongoIndexSpecification = Array< Array < string | number >>;
 
 /** Mongo update clause */
-type MongoUpdate = MongoSelector;
+export type MongoUpdate = MongoSelector;
 
+/** Mongo object */
+type MongoObject = { [P: string]: any };
+
+/** Mongo update clause */
+type MongoInsertSpecification = MongoObject | MongoObject[];
 
 /** Sorting clause **/
 type MongoSortClause = Array<string | [ string, MongoSortDirection ]>;
-
 
 /** Sort direction */
 type MongoSortDirection = -1 | 1 | 'ascending' | 'descending' | 'asc' | 'desc';
@@ -136,6 +157,23 @@ declare interface MongoCollection
      * @param fields   fields to return
      * @param callback continuation on completion
      */
+    find(
+        selector: MongoSelector,
+        fields:   MongoFindOptions,
+        callback: MongoCallback
+    ): void;
+
+
+    /**
+     * Execute a query and return the first result
+     *
+     * Unlike `update`, the callback return value is not propagated, and so
+     * the callback ought not return anything.
+     *
+     * @param selector document query
+     * @param fields   fields to return
+     * @param callback continuation on completion
+     */
     findOne(
         selector: MongoSelector,
         fields:   MongoFindOneOptions,
@@ -156,6 +194,25 @@ declare interface MongoCollection
         sort:     MongoSortClause,
         update:   MongoUpdate,
         options:  MongoFindAndModifyOptions,
+        callback: MongoCallback,
+    ): void;
+
+
+    /**
+     * Creates an index on the collection
+     */
+    createIndex(
+        fieldOrSpec: MongoIndexSpecification,
+        options:     boolean,
+        callback:    MongoCallback,
+    ): void;
+
+
+    /**
+     * Creates an index on the collection
+     */
+    insert(
+        docs:     MongoInsertSpecification,
         callback: MongoCallback,
     ): void;
 }

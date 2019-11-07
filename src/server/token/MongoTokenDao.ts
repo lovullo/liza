@@ -34,6 +34,8 @@ import { DocumentId } from "../../document/Document";
 import { TokenId, TokenNamespace, TokenState } from "./Token";
 import { UnknownTokenError } from "./UnknownTokenError";
 import { context } from "../../error/ContextError";
+import { MongoCollection } from "mongodb";
+
 
 
 /**
@@ -118,7 +120,7 @@ export class MongoTokenDao implements TokenDao
                     },
                 },
 
-                ( err: Error|null, prev_data ) =>
+                ( err: NullableError, prev_data ) =>
                 {
                     if ( err )
                     {
@@ -250,7 +252,7 @@ export class MongoTokenDao implements TokenDao
             this._collection.findOne(
                 { id: +doc_id },
                 { fields: fields },
-                ( err: Error|null, data: TokenQueryResult ) =>
+                ( err: NullableError, data: TokenQueryResult ) =>
                 {
                     if ( err || !data )
                     {
