@@ -18,7 +18,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import { StagingBucket, StagingBucketConstructor } from "../../bucket/StagingBucket";
 import { PositiveInteger } from "../../numeric";
+import { bucket_filter } from "../../bucket/bucket_filter";
 import { UserRequest } from "./UserRequest";
 
 /**
@@ -41,10 +43,10 @@ export class DataProcessor
      * @param staging_ctor - staging bucket constructor
      */
     constructor(
-        private readonly _filter:       any,
+        private readonly _filter:       bucket_filter.filter,
         private readonly _dapif:        any,
         private readonly _meta_source:  any,
-        private readonly _stagingCtor:  any,
+        private readonly _stagingCtor:  StagingBucketConstructor,
     ) {}
 
 
@@ -169,7 +171,7 @@ export class DataProcessor
         dapi_manager: any,
         program:      any,
         data:         Record<string, any>,
-        bucket:       any,
+        bucket:       StagingBucket,
     ): [ any, Record<string, any> ]
     {
         const {
@@ -292,7 +294,7 @@ export class DataProcessor
      */
     private _mapDapiData(
         dapi:      any,
-        bucket:    any,
+        bucket:    StagingBucket,
         index:     PositiveInteger,
         diff_data: Record<string, any>,
     ): Record<string, any>

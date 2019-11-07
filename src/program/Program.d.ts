@@ -19,9 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { StagingBucket } from "../bucket/StagingBucket";
+
 export declare abstract class Program
 {
     readonly ineligibleLockCount: number;
 
     getId(): string;
+
+    initQuote( bucket: StagingBucket, store_only: boolean ): void
 }

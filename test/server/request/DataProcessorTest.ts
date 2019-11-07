@@ -25,6 +25,7 @@ import { DocumentId } from "../../../src/document/Document";
 import { PositiveInteger } from "../../../src/numeric";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
+import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
 
 chai_use( require( 'chai-as-promised' ) );
 
@@ -711,7 +712,7 @@ function createStubQuote()
 
         getBucket()
         {
-            return;
+            return new QuoteDataBucket();
         }
     };
 }

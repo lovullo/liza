@@ -23,6 +23,7 @@
 
 import { Program } from "../../program/Program";
 import { BaseQuote } from "../../quote/BaseQuote";
+import { QuoteDataBucket } from "../../bucket/QuoteDataBucket";
 
 
 export declare class ServerSideQuote extends BaseQuote
@@ -43,4 +44,28 @@ export declare class ServerSideQuote extends BaseQuote
      * @return self
      */
     setRatedDate( timestamp: UnixTimestamp ): this;
+
+
+    /**
+     * Set rating bucket
+     *
+     * @param bucket - the data bucket
+     */
+    setRateBucket( bucket: QuoteDataBucket ): this;
+
+
+    /**
+     * Set rating data
+     *
+     * @param data - rating data
+     */
+    setRatingData( data: Record<string, any> ): this;
+
+
+    /**
+     * Get rating data
+     *
+     * @return rating data
+     */
+    getRatingData(): Record<string, any>;
 }

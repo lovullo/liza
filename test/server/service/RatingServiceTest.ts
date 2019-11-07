@@ -35,6 +35,7 @@ import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { UserResponse } from "../../../src/server/request/UserResponse";
 import { UserSession } from "../../../src/server/request/UserSession";
+import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
 
 import {
     ServerDao,
@@ -140,7 +141,7 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
-    it( "saves rate data to own field", () =>
+    it( "saves rate data to it's own field", () =>
     {
         const {
             logger,
@@ -510,6 +511,10 @@ function getStubs()
         getLastPremiumDate: () => <UnixTimestamp>0,
         getCurrentStepId:   () => 0,
         setExplicitLock:    () => quote,
+        setRateBucket:      () => quote,
+        setRatingData:      () => quote,
+        getRatingData:      () => stub_rate_data,
+        getBucket:          () => new QuoteDataBucket(),
     };
 
     return {
