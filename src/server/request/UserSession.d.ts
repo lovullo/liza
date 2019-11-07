@@ -20,6 +20,9 @@
  */
 
 
+import { PositiveInteger } from "../../numeric";
+
+
 /**
  * Session management
  */
@@ -31,4 +34,28 @@ export declare class UserSession
      * @return true if internal user, otherwise false
      */
     isInternal(): boolean;
+
+
+    /**
+     * Gets the agent id, if available
+     *
+     * @return agent id or undefined if unavailable
+     */
+    agentId(): PositiveInteger | undefined
+
+
+    /**
+     * Gets the broker entity id, if available
+     *
+     * @return agent entity id or undefined if unavailable
+     */
+    agentEntityId(): PositiveInteger | undefined
+
+
+    /**
+     * Gets the agent name, if available
+     *
+     * @return agent name or undefined if unavailable
+     */
+    agentName(): string | undefined
 }

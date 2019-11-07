@@ -503,7 +503,7 @@ function createStubs(
 
 function createStubUserRequest( internal: boolean )
 {
-    return {
+    return <UserRequest>{
         getSession: () => ( {
             isInternal: () => internal
         } )
