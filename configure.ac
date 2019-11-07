@@ -40,8 +40,10 @@ test -n "$NODE" || AC_MSG_ERROR([missing Node.js])
 
 AC_MSG_CHECKING([node version])
 node_version=$($NODE --version | sed 's/^v//')
-AC_SUBST([NODE_VERSION], [$node_version])
 AC_MSG_RESULT([$NODE_VERSION])
+
+AC_ARG_VAR([TS_NODE_VERSION], [Version to use for @types/node dependency])
+TS_NODE_VERSION=${TS_NODE_VERSION:-$node_version}
 
 # graphviz
 AC_ARG_VAR([TWOPI], [Graphviz twopi layout])
