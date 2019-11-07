@@ -647,13 +647,13 @@ function createStubQuote()
 {
     let quote_data: Record<string, any> = {};
 
-    return {
+    return <ServerSideQuote>{
         getRatedDate()
         {
-            return 1572292453;
+            return <UnixTimestamp>1572292453;
         },
 
-        setRatedDate( _timestamp: any )
+        setRatedDate( _timestamp: UnixTimestamp )
         {
             return this;
         },
@@ -683,14 +683,14 @@ function createStubQuote()
             return this;
         },
 
-        setLastPremiumDate( _timestamp: any )
+        setLastPremiumDate( _timestamp: UnixTimestamp )
         {
             return this;
         },
 
         getLastPremiumDate()
         {
-            return 1572292453;
+            return <UnixTimestamp>1572292453;
         },
 
         setRateBucket( _bucket: any )

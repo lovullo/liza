@@ -49,7 +49,7 @@ const {
 
     server: {
         request: {
-            DataProcessor,
+            DataProcessor: { DataProcessor },
         },
         encsvc: {
             QuoteDataBucketCipher,
@@ -366,6 +366,7 @@ module.exports = Class( 'Server' )
                     .setCreditScoreRef( quote_data.creditScoreRef || 0 )
                     .setLastPremiumDate( quote_data.lastPremDate || 0 )
                     .setRatedDate( quote_data.initialRatedDate || 0 )
+                    .setRatingData( quote_data.ratedata || {} )
                     .on( 'stepChange', function( step_id )
                     {
                         // save the quote state (we don't care if it succeeds or

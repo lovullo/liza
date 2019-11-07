@@ -652,9 +652,11 @@ function createQuote( quote_id, program, request, callback, error_callback )
 
     var bucket     = QuoteDataBucket(),
         metabucket = QuoteDataBucket(),
+        ratebucket = QuoteDataBucket(),
         quote      = Quote( quote_id, bucket );
 
     quote.setMetabucket( metabucket );
+    quote.setRateBucket( ratebucket );
 
     var controller = this;
     return server.initQuote( quote, program, request,
