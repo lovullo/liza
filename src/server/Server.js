@@ -1144,13 +1144,27 @@ module.exports = Class( 'Server' )
             {
                 try
                 {
+                    var rdelta_data;
                     var parsed_data = JSON.parse( post_data.data );
                     var bucket      = quote.getBucket();
 
-                    const { filtered, dapis, meta_clear } =
+                    const { filtered, dapis, meta_clear, rdiff } =
                         server._dataProcessor.processDiff(
                             parsed_data, request, program, bucket, quote
                         );
+
+                    // Leave rdelta_data undefined if rdiff is an empty object
+                    if ( Object.keys( rdiff ).length > 0 )
+                    {
+                        rdelta_data = {
+                            "rdelta.data": {
+                                data:      rdiff,
+                                timestamp: Math.round(
+                                    new Date().getTime() / 1000
+                                ),
+                            }
+                        };
+                    }
 
                     server._monitorMetadataPromise( quote, dapis, meta_clear );
                }
@@ -1173,7 +1187,7 @@ module.exports = Class( 'Server' )
             }
 
             // save the quote
-            server._doQuoteSave( step_id, request, quote, program );
+            server._doQuoteSave( step_id, request, quote, program, rdelta_data);
         });
 
         return this;
@@ -1205,7 +1219,14 @@ module.exports = Class( 'Server' )
     },
 
 
-    'private _doQuoteSave': function( step_id, request, quote, program, c )
+    'private _doQuoteSave': function(
+        step_id,
+        request,
+        quote,
+        program,
+        rdelta_data,
+        c
+    )
     {
         var server = this;
 
@@ -1258,7 +1279,9 @@ module.exports = Class( 'Server' )
                             );
 
                             c && c( false );
-                        }
+                        },
+                        undefined,
+                        rdelta_data
                     );
                 } );
             },

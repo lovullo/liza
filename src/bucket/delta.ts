@@ -161,9 +161,8 @@ function _deepEqual( a: any, b: any ): boolean
             return false;
         }
 
-        return a.map( ( item, i ) => _deepEqual( item, b[ i ] ) )
-            .every( res => res === true );
+        return a.every( ( item, i ) => _deepEqual( item, b[ i ] ) );
     }
 
-    return ''+a === ''+b;
+    return a === b;
 }
