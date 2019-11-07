@@ -41,12 +41,14 @@ export declare class MongoServerDao implements ServerDao
      * @param success   - function to call on success
      * @param failure   - function to call if save fails
      * @param save_data - quote data to save (optional)
+     * @param push_data - quote data to push (optional)
      */
     saveQuote(
         quote:     ServerSideQuote,
         success:   Callback,
         failure:   Callback,
         save_data: Record<string, any>,
+        push_data: Record<string, any>,
     ): this;
 
 

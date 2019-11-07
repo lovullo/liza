@@ -276,7 +276,7 @@ export class RatingService
             // data, which may cause a race condition with the below merge call)
             this._dao.saveQuote( quote, c, c, {
                 ratedata: data,
-            } );
+            }, {} );
         }
         else
         {

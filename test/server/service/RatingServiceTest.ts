@@ -157,15 +157,14 @@ describe( 'RatingService', () =>
         let saved_rates = false;
 
         dao.saveQuote = (
-            quote:     ServerSideQuote,
-            success:   ServerDaoCallback,
-            _failure:  ServerDaoCallback,
-            save_data: Record<string, any>,
+            quote:      ServerSideQuote,
+            success:    ServerDaoCallback,
+            _failure:   ServerDaoCallback,
+            save_data:  Record<string, any>,
+            _push_data: Record<string, any>,
         ) =>
         {
-            expect( save_data ).to.deep.equal( {
-                ratedata: stub_rate_data,
-            } );
+            expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
 
             saved_rates = true;
             success( quote );
@@ -453,6 +452,7 @@ function getStubs()
             success:    ServerDaoCallback,
             _failure:   ServerDaoCallback,
             _save_data: Record<string, any>,
+            _push_data: Record<string, any>,
         ): this
         {
             success( quote );
