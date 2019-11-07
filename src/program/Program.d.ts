@@ -20,10 +20,27 @@
  */
 
 import { StagingBucket } from "../bucket/StagingBucket";
+import { PositiveInteger } from "../numeric";
+
+export type DataApiDefinitions = any
 
 export declare abstract class Program
 {
     readonly ineligibleLockCount: number;
+
+    apis: DataApiDefinitions;
+
+    internal: Record<string, boolean>;
+
+    meta: {
+        arefs:  Record<string, string>,
+        fields: Record<string, any>,
+        groups: Record<string, { min: PositiveInteger, max: PositiveInteger }>,
+        qdata:  Record<string, Record<string, string>>,
+        qtypes: Record<string, { type: string, dim: PositiveInteger }>,
+    };
+
+    mapis: Record<string, string[]>;
 
     getId(): string;
 

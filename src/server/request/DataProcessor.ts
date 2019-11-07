@@ -19,9 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { StagingBucket, StagingBucketConstructor } from "../../bucket/StagingBucket";
+import { DapiMetaSource } from "../meta/DapiMetaSource";
 import { PositiveInteger } from "../../numeric";
 import { bucket_filter } from "../../bucket/bucket_filter";
 import { UserRequest } from "./UserRequest";
+import { DataApiManager, DataApiConstructor } from "../../dapi/DataApiManager";
 
 /**
  * Process data provided by the client
@@ -44,8 +46,8 @@ export class DataProcessor
      */
     constructor(
         private readonly _filter:       bucket_filter.filter,
-        private readonly _dapif:        any,
-        private readonly _meta_source:  any,
+        private readonly _dapif:        DataApiConstructor,
+        private readonly _meta_source:  DapiMetaSource,
         private readonly _stagingCtor:  StagingBucketConstructor,
     ) {}
 
@@ -168,7 +170,7 @@ export class DataProcessor
      * @return an array containing the dapis and cleared meta values
      */
     private _triggerDapis(
-        dapi_manager: any,
+        dapi_manager: DataApiManager,
         program:      any,
         data:         Record<string, any>,
         bucket:       StagingBucket,
