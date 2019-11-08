@@ -23,6 +23,7 @@
 
 import { Program } from "../program/Program";
 import { Quote, QuoteId } from "./Quote";
+import { QuoteDataBucket } from "../bucket/QuoteDataBucket";
 
 
 export declare class BaseQuote implements Quote
@@ -90,4 +91,12 @@ export declare class BaseQuote implements Quote
      * @return last calculated time or 0
      */
     getLastPremiumDate(): UnixTimestamp;
+
+
+    /**
+     * Returns the bucket used to store the quote form data
+     *
+     * @return the data bucket
+     */
+    getBucket(): QuoteDataBucket
 }

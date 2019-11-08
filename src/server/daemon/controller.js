@@ -43,6 +43,7 @@ var rating_service = null;
 const {
     bucket: {
         QuoteDataBucket,
+        delta
     },
 
     dapi: {
@@ -141,7 +142,7 @@ exports.init = function( logger, enc_service, conf )
             rating_service = easejs( RatingService ).use(
                 RatingServicePublish( amqplib, exports.post_rate_publish, logger )
             )(
-                logger, dao, server, exports.rater
+                logger, dao, server, exports.rater, delta.createDelta
             );
 
             // TODO: exports.init needs to support callbacks; this will work, but
@@ -652,9 +653,11 @@ function createQuote( quote_id, program, request, callback, error_callback )
 
     var bucket     = QuoteDataBucket(),
         metabucket = QuoteDataBucket(),
+        ratebucket = QuoteDataBucket(),
         quote      = Quote( quote_id, bucket );
 
     quote.setMetabucket( metabucket );
+    quote.setRateBucket( ratebucket );
 
     var controller = this;
     return server.initQuote( quote, program, request,

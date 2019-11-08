@@ -35,6 +35,8 @@ import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { UserResponse } from "../../../src/server/request/UserResponse";
 import { UserSession } from "../../../src/server/request/UserSession";
+import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
+import { Kv } from "../../../src/bucket/delta";
 
 import {
     ServerDao,
@@ -58,9 +60,10 @@ describe( 'RatingService', () =>
             response,
             quote,
             stub_rate_data,
+            createDelta,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta);
 
         const expected = {
             data:             stub_rate_data,
@@ -84,9 +87,10 @@ describe( 'RatingService', () =>
             response,
             quote,
             stub_rate_data,
+            createDelta,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta );
 
         let last_prem_called  = false;
         let rated_date_called = false;
@@ -140,7 +144,7 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
-    it( "saves rate data to own field", () =>
+    it( "saves rate data to it's own field", () =>
     {
         const {
             logger,
@@ -151,20 +155,20 @@ describe( 'RatingService', () =>
             response,
             quote,
             stub_rate_data,
+            createDelta,
         } = getStubs();
 
         let saved_rates = false;
 
         dao.saveQuote = (
-            quote:     ServerSideQuote,
-            success:   ServerDaoCallback,
-            _failure:  ServerDaoCallback,
-            save_data: Record<string, any>,
+            quote:      ServerSideQuote,
+            success:    ServerDaoCallback,
+            _failure:   ServerDaoCallback,
+            save_data:  Record<string, any>,
+            _push_data: Record<string, any>,
         ) =>
         {
-            expect( save_data ).to.deep.equal( {
-                ratedata: stub_rate_data,
-            } );
+            expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
 
             saved_rates = true;
             success( quote );
@@ -172,7 +176,7 @@ describe( 'RatingService', () =>
             return dao;
         };
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta );
 
         return sut.request( request, response, quote, "" )
             .then( () =>
@@ -180,6 +184,55 @@ describe( 'RatingService', () =>
                 expect( saved_rates ).to.be.true;
             } );
     } );
+
+
+    it( "saves delta to it's own field", () =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            stub_rate_delta,
+            createDelta,
+        } = getStubs();
+
+        let saved_quote = false;
+
+        let timestamp = 0;
+
+        quote.setLastPremiumDate = ( ts: UnixTimestamp ) =>
+        {
+            timestamp = ts;
+            return quote;
+        };
+
+        dao.saveQuote = (
+            quote:      ServerSideQuote,
+            success:    ServerDaoCallback,
+            _failure:   ServerDaoCallback,
+            _save_data: Record<string, any>,
+            push_data:  Record<string, any>,
+        ) =>
+        {
+            stub_rate_delta[ "rdelta.ratedata" ].timestamp = timestamp;
+            saved_quote                                    = true;
+
+            expect( push_data ).to.deep.equal( stub_rate_delta );
+            success( quote );
+
+            return dao;
+        };
+
+        const sut = new Sut( logger, dao, server, raters, createDelta );
+
+        return sut.request( request, response, quote, "" )
+            .then( () => { expect( saved_quote ).to.be.true; } );
+    } );
+
 
 
     it( "rejects and responds with error", () =>
@@ -194,13 +247,14 @@ describe( 'RatingService', () =>
             request,
             response,
             server,
+            createDelta,
         } = getStubs();
 
         const expected_error = new Error( "expected error" );
 
         rater.rate = () => { throw expected_error; };
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta );
 
         let logged = false;
 
@@ -242,11 +296,12 @@ describe( 'RatingService', () =>
             request,
             response,
             server,
+            createDelta,
         } = getStubs();
 
         const expected_message = 'expected foo';
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta );
 
         rater.rate = (
             _quote:   ServerSideQuote,
@@ -279,6 +334,7 @@ describe( 'RatingService', () =>
             response,
             server,
             stub_rate_data,
+            createDelta,
         } = getStubs();
 
         let sent = false;
@@ -304,7 +360,7 @@ describe( 'RatingService', () =>
             return server;
         };
 
-        const sut = new Sut( logger, dao, server, raters );
+        const sut = new Sut( logger, dao, server, raters, createDelta );
 
         return sut.request( request, response, quote, "" )
             .then( () => expect( sent ).to.be.true );
@@ -325,6 +381,7 @@ describe( 'RatingService', () =>
                 request,
                 response,
                 quote,
+                createDelta,
             } = getStubs();
 
             dao.mergeBucket = () =>
@@ -341,7 +398,7 @@ describe( 'RatingService', () =>
                 {
                     processed = true;
                 }
-            }( logger, dao, server, raters );
+            }( logger, dao, server, raters, createDelta );
 
             sut.request( request, response, quote, 'something' );
         } );
@@ -361,6 +418,7 @@ describe( 'RatingService', () =>
                 request,
                 response,
                 quote,
+                createDelta,
             } = getStubs();
 
             quote.getLastPremiumDate = () =>
@@ -371,7 +429,7 @@ describe( 'RatingService', () =>
 
             quote.getRatedDate = () => initial_date;
 
-            const sut = new Sut( logger, dao, server, raters );
+            const sut = new Sut( logger, dao, server, raters, createDelta );
 
             server.sendResponse = ( _request: any, _quote: any, resp: any, _actions: any ) =>
             {
@@ -402,6 +460,19 @@ function getStubs()
     // rate reply
     const stub_rate_data: RateResult = {
         _unavailable_all: '0',
+    };
+
+    const stub_rate_delta: any = {
+        "rdelta.ratedata": {
+            data:      {
+                _unavailable_all: [ undefined ]
+            },
+            timestamp: 123
+        }
+    };
+
+    const createDelta = ( _src: Kv, _dest: Kv ) => {
+        return stub_rate_delta[ "rdelta.ratedata" ][ "data" ];
     };
 
     const rater = new class implements Rater
@@ -452,6 +523,7 @@ function getStubs()
             success:    ServerDaoCallback,
             _failure:   ServerDaoCallback,
             _save_data: Record<string, any>,
+            _push_data: Record<string, any>,
         ): this
         {
             success( quote );
@@ -510,19 +582,25 @@ function getStubs()
         getLastPremiumDate: () => <UnixTimestamp>0,
         getCurrentStepId:   () => 0,
         setExplicitLock:    () => quote,
+        setRateBucket:      () => quote,
+        setRatingData:      () => quote,
+        getRatingData:      () => stub_rate_data,
+        getBucket:          () => new QuoteDataBucket(),
     };
 
     return {
-        program:        program,
-        stub_rate_data: stub_rate_data,
-        rater:          rater,
-        raters:         raters,
-        logger:         logger,
-        server:         server,
-        dao:            dao,
-        session:        session,
-        request:        request,
-        response:       response,
-        quote:          quote,
+        program:         program,
+        stub_rate_data:  stub_rate_data,
+        stub_rate_delta: stub_rate_delta,
+        createDelta:     createDelta,
+        rater:           rater,
+        raters:          raters,
+        logger:          logger,
+        server:          server,
+        dao:             dao,
+        session:         session,
+        request:         request,
+        response:        response,
+        quote:           quote,
     };
 };

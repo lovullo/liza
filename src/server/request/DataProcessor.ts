@@ -18,13 +18,12 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-'use strict';
-
-const { Class }   = require( 'easejs' );
-
-const { QuoteDataBucket, StagingBucket } = require( '../../' ).bucket;
-
+import { StagingBucket, StagingBucketConstructor } from "../../bucket/StagingBucket";
+import { DapiMetaSource } from "../meta/DapiMetaSource";
+import { PositiveInteger } from "../../numeric";
+import { bucket_filter } from "../../bucket/bucket_filter";
+import { UserRequest } from "./UserRequest";
+import { DataApiManager, DataApiConstructor } from "../../dapi/DataApiManager";
 
 /**
  * Process data provided by the client
@@ -32,45 +31,25 @@ const { QuoteDataBucket, StagingBucket } = require( '../../' ).bucket;
  * TOOD: This contains Data API and bucket merging logic that is better done
  * elsewhere.
  */
-module.exports = Class( 'DataProcessor',
+export class DataProcessor
 {
-    /**
-     * Bucket filter
-     * @type {Object}
-     */
-    'private _filter': null,
-
-    /**
-     * Construct Data API manager
-     * @type {function()}
-     */
-    'private _dapif': null,
-
-    /**
-     * Metadata source
-     * @type {DapiMetaSource}
-     */
-    'private _metaSource': null,
-
-
     /**
      * Initialize processor
      *
      * The staging bucket constructor will be used to wrap the bucket for
      * diff-related operations.
      *
-     * @param {Object}           filter       bucket filter
-     * @param {function()}       dapif        data API constructor
-     * @param {DapiMetaSource}   meta_source  metadata source
-     * @param {function(Bucket)} staging_ctor staging bucket constructor
+     * @param filter       - bucket filter
+     * @param dapif        - data API constructor
+     * @param meta_source  - metadata source
+     * @param staging_ctor - staging bucket constructor
      */
-    constructor( filter, dapif, meta_source, staging_ctor )
-    {
-        this._filter      = filter;
-        this._dapif       = dapif;
-        this._metaSource  = meta_source;
-        this._stagingCtor = staging_ctor;
-    },
+    constructor(
+        private readonly _filter:       bucket_filter.filter,
+        private readonly _dapif:        DataApiConstructor,
+        private readonly _meta_source:  DapiMetaSource,
+        private readonly _stagingCtor:  StagingBucketConstructor,
+    ) {}
 
 
     /**
@@ -81,28 +60,42 @@ module.exports = Class( 'DataProcessor',
      * bucket values, preventing users from using us as their own personal
      * database.
      *
-     * @param {Object}      data    bucket diff data
-     * @param {UserRequest} request submitting request
-     * @param {Program}     program active program
+     * @param data    - bucket diff data
+     * @param request - submitting request
+     * @param program - active program
      *
-     * @return {Object} processed diff
+     * @return processed diff
      */
-    'public processDiff'( data, request, program, bucket, quote )
+    processDiff(
+        data:    Record<string, any>,
+        request: UserRequest,
+        program: any,
+        bucket:  any,
+        quote:   any,
+    ): Record<string, any>
     {
         const filtered     = this.sanitizeDiff( data, request, program );
         const dapi_manager = this._dapif( program.apis, request, quote );
         const staging      = this._stagingCtor( bucket );
 
         // forbidBypass will force diff generation on initQuote
-        staging.setValues( filtered, true );
+        staging.setValues( filtered );
         staging.forbidBypass();
 
         program.initQuote( staging, true );
 
+        const diff                       = staging.getDiff();
+        const rdiff: Record<string, any> = {};
+
         // array of promises for any dapi requests
         const [ dapis, meta_clear ] = this._triggerDapis(
-            dapi_manager, program, staging.getDiff(), staging
+            dapi_manager, program, diff, staging
         );
+
+        for( let diff_key in diff )
+        {
+            rdiff[ diff_key ] = staging.getOriginalDataByName( diff_key );
+        }
 
         staging.commit();
 
@@ -110,8 +103,9 @@ module.exports = Class( 'DataProcessor',
             filtered:   filtered,
             dapis:      dapis,
             meta_clear: meta_clear,
+            rdiff:      rdiff,
         };
-    },
+    }
 
 
     /**
@@ -124,22 +118,25 @@ module.exports = Class( 'DataProcessor',
      * `permit_null` should be used only in the case of bucket diffs, which
      * contain nulls as terminators.
      *
-     * @param {Object}      data        client-provided data
-     * @param {UserRequest} request     client request
-     * @param {Program}     program     active program
+     * @param data    - client-provided data
+     * @param request - client request
+     * @param program - active program
      *
-     * @return {Object} filtered data
+     * @return filtered data
      */
-    'public sanitizeDiff'( data, request, program )
+    sanitizeDiff(
+        data:    Record<string, any>,
+        request: UserRequest,
+        program: any,
+    ): Record<string, any>
     {
         if ( !request.getSession().isInternal() )
         {
             this._cleanInternals( data, program );
         }
 
-        const types = program.meta.qtypes;
-        return this._filter.filter( data, types, {}, true );
-    },
+        return this._filter.filter( data, program.meta.qtypes, {}, true );
+    }
 
 
     /**
@@ -147,31 +144,37 @@ module.exports = Class( 'DataProcessor',
      *
      * Internal fields are defined by the program `program`.
      *
-     * @param {Object}  data    bucket diff data
-     * @param {Program} program active program
-     *
-     * @return {undefined}
+     * @param data    - bucket diff data
+     * @param program - active program
      */
-    'private _cleanInternals'( data, program )
+    private _cleanInternals(
+        data:    Record<string, any>,
+        program: any,
+    ): void
     {
         for ( let id in program.internal )
         {
             delete data[ id ];
         }
-    },
+    }
 
 
     /**
      * Trigger metadata Data API requests
      *
-     * @param {DataApiManager} dapi_manager dapi manager
-     * @param {Program}        program      active program
-     * @param {Object}         data         client-provided data
-     * @param {Bucket}         bucket       active bucket
+     * @param dapi_manager - dapi manager
+     * @param program      - active program
+     * @param data         - client-provided data
+     * @param bucket       - active bucket
      *
-     * @return {undefined}
+     * @return an array containing the dapis and cleared meta values
      */
-    'private _triggerDapis'( dapi_manager, program, data, bucket )
+    private _triggerDapis(
+        dapi_manager: DataApiManager,
+        program:      any,
+        data:         Record<string, any>,
+        bucket:       StagingBucket,
+    ): [ any, Record<string, any> ]
     {
         const {
             mapis = {},
@@ -188,8 +191,8 @@ module.exports = Class( 'DataProcessor',
             const { dapi } = fields[ field ];
             const indexes  = dapi_fields[ field ];
 
-            return indexes.map( i =>
-                this._metaSource.getFieldData(
+            return indexes.map( ( i: PositiveInteger ) =>
+                this._meta_source.getFieldData(
                     field,
                     i,
                     dapi_manager,
@@ -200,7 +203,7 @@ module.exports = Class( 'DataProcessor',
         } ).reduce( ( result, x ) => result.concat( x ), [] );
 
         return [ dapis, clear ];
-    },
+    }
 
 
     /**
@@ -211,15 +214,18 @@ module.exports = Class( 'DataProcessor',
      * lookup, it wouldn't be desirable to use an old rate even though data
      * used to retrieve it has since changed.
      *
-     * @param {Object.<string,Array>} fields field names and array of indexes
+     * @param fields - field names and array of indexes
      *
-     * @return {undefined}
+     * @return cleared values
      */
-    'private _genClearMetaValues'( fields )
+    private _genClearMetaValues(
+        fields: Record<string, any>
+    ): Record<string, any>
     {
-        return Object.keys( fields ).reduce( ( result, field ) =>
+        return Object.keys( fields ).reduce(
+            ( result: Record<string, any>, field: string ) =>
         {
-            result[ field ] = fields[ field ].reduce( ( values, i ) =>
+            result[ field ] = fields[ field ].reduce( ( values: any, i: any ) =>
             {
                 values[ i ] = "";
                 return values;
@@ -227,21 +233,24 @@ module.exports = Class( 'DataProcessor',
 
             return result;
         }, {} );
-    },
+    }
 
 
     /**
      * Determine which fields require a Data API to be triggered
      *
-     * @param {Object} mapis metadata dapi descriptors
-     * @param {Object} data  client-provided data
+     * @param mapis - metadata dapi descriptors
+     * @param data  - client-provided data
      *
-     * @return {Object} fields with indexes in need of dapi calls
+     * @return fields with indexes in need of dapi calls
      */
-    'private _determineDapiFields'( mapis, data )
+    private _determineDapiFields(
+        mapis: Record<string, string[]>,
+        data:  Record<string, any>
+    ): Record<string, any>
     {
         return Object.keys( mapis ).reduce(
-            ( result, src_field ) =>
+            ( result: any, src_field: string ) =>
             {
                 const fdata = data[ src_field ];
 
@@ -253,7 +262,7 @@ module.exports = Class( 'DataProcessor',
                 const fields = mapis[ src_field ];
 
                 // get each index that changed
-                fields.forEach( field =>
+                fields.forEach( (field: string) =>
                 {
                     result[ field ] = result[ field ] || [];
 
@@ -272,25 +281,30 @@ module.exports = Class( 'DataProcessor',
             },
             {}
         );
-    },
+    }
 
 
     /**
      * Map data from bucket to dapi inputs
      *
-     * @param {Object} dapi      Data API descriptor
-     * @param {Bucket} bucket    active (source) bucket
-     * @param {number} index     field index
-     * @param {Object} diff_data client-provided data
+     * @param dapi      - Data API descriptor
+     * @param bucket    - active (source) bucket
+     * @param index     - field index
+     * @param diff_data - client-provided data
      *
-     * @return {Object} key/value dapi input data
+     * @return key/value dapi input data
      */
-    'private _mapDapiData'( dapi, bucket, index, diff_data )
+    private _mapDapiData(
+        dapi:      any,
+        bucket:    StagingBucket,
+        index:     PositiveInteger,
+        diff_data: Record<string, any>,
+    ): Record<string, any>
     {
         const { mapsrc } = dapi;
 
         return Object.keys( mapsrc ).reduce(
-            ( result, srcid ) =>
+            ( result: any, srcid: any ) =>
             {
                 const bucketid = mapsrc[ srcid ];
 
@@ -314,5 +328,5 @@ module.exports = Class( 'DataProcessor',
             },
             {}
         );
-    },
-} );
+    }
+};

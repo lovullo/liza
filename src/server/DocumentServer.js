@@ -44,7 +44,7 @@ const {
         },
 
         request: {
-            DataProcessor,
+            DataProcessor: { DataProcessor },
             JsonServerResponse,
             ServerDataApiFactory,
         },
@@ -89,7 +89,7 @@ module.exports = Class( 'DocumentServer',
             logger,
             enc_service,
 
-            DataProcessor(
+            new DataProcessor(
                 bucket_filter,
                 ( apis, request, quote ) => this._createDapiManager(
                     apis, request, origin_url, dapi_conf, quote, collection

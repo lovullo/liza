@@ -21,8 +21,14 @@
 
 'use strict';
 
-const { expect } = require( 'chai' );
-const Sut        = require( '../../..' ).server.quote.ServerSideQuote;
+const root   = require( '../../..' );
+const Sut    = require( '../../..' ).server.quote.ServerSideQuote;
+const expect = require( 'chai' ).expect;
+const sinon  = require( 'sinon' );
+
+const {
+    QuoteDataBucket,
+} = root.bucket;
 
 describe( 'ServerSideQuote', () =>
 {
@@ -31,80 +37,85 @@ describe( 'ServerSideQuote', () =>
         [
             {
                 property: 'startDate',
-                default: 0,
-                value: 946684800
+                default:  0,
+                value:    946684800
             },
             {
                 property: 'initialRatedDate',
-                default: 0,
-                value: 946684800
+                default:  0,
+                value:    946684800
             },
             {
                 property: 'agentId',
-                default: 0,
-                value: 12345678
+                default:  0,
+                value:    12345678
             },
             {
                 property: 'agentEntityId',
-                default: 0,
-                value: 12345678
+                default:  0,
+                value:    12345678
             },
             {
                 property: 'agentName',
-                default: '',
-                value: 'name'
+                default:  '',
+                value:    'name'
             },
             {
                 property: 'imported',
-                default: false,
-                value: true,
+                default:  false,
+                value:    true,
                 accessor: 'is'
             },
             {
                 property: 'bound',
-                default: false,
-                value: true,
+                default:  false,
+                value:    true,
                 accessor: 'is'
             },
             {
                 property: 'currentStepId',
-                default: 1,
-                value: 2
+                default:  1,
+                value:    2
             },
             {
                 property: 'topVisitedStepId',
-                default: 1,
-                value: 2
+                default:  1,
+                value:    2
             },
             {
                 property: 'topSavedStepId',
-                value: 1
+                value:    1
             },
             {
                 property: 'error',
-                default: '',
-                value: 'ERROR'
+                default:  '',
+                value:    'ERROR'
             },
             {
                 property: 'programVersion',
-                default: '',
-                value: '1.0.0'
+                default:  '',
+                value:    '1.0.0'
             },
             {
                 property: 'creditScoreRef',
-                default: 0,
-                value: 800
+                default:  0,
+                value:    800
             },
             {
                 property: 'lastPremiumDate',
-                default: 0,
-                value: 946684800
+                default:  0,
+                value:    946684800
             },
             {
                 property: 'ratedDate',
-                default: 0,
-                value: 946684800
-            }
+                default:  0,
+                value:    946684800
+            },
+            {
+                property: 'rateBucket',
+                default:  null,
+                value:    QuoteDataBucket()
+            },
 
         ].forEach( testCase =>
         {
@@ -120,6 +131,46 @@ describe( 'ServerSideQuote', () =>
                 quote[setter].call( quote, testCase.value );
                 expect( quote[getter].call( quote ) ).to.equal( testCase.value );
             } );
+        } );
+    } );
+
+    describe( 'rating data', () =>
+    {
+        it( `#setRatingData throws an error if no bucket is set`, () =>
+        {
+            const data = { foo: 'bar' };
+            const sut  = Sut();
+
+            expect( function() { sut.setRatingData( data ); } )
+                .to.throw( Error );
+        } );
+
+        it( `Bucket values setters/getters work correctly`, () =>
+        {
+            const data        = { foo: 'bar' };
+            let   bucket_data = null;
+            const sut         = Sut();
+            var   called      = false;
+
+            const bucket = {
+                setValues( gdata )
+                {
+                    expect( gdata ).to.deep.equal( data );
+
+                    bucket_data = gdata;
+                    called      = true;
+                },
+
+                getData()
+                {
+                    return bucket_data;
+                },
+            };
+
+            sut.setRateBucket( bucket );
+            sut.setRatingData( data );
+
+            expect( called ).to.equal( true );
         } );
     } );
 } );

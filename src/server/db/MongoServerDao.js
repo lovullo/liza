@@ -280,11 +280,12 @@ module.exports = Class( 'MongoServerDao' )
      * @param Function success_callback function to call on success
      * @param Function failure_callback function to call if save fails
      * @param Object   save_data        quote data to save (optional)
+     * @param Object   push_data        quote data to push (optional)
      *
      * @return MongoServerDao self to allow for method chaining
      */
     'public saveQuote': function(
-        quote, success_callback, failure_callback, save_data
+        quote, success_callback, failure_callback, save_data, push_data
     )
     {
         var dao  = this;
@@ -341,10 +342,15 @@ module.exports = Class( 'MongoServerDao' )
             key => save_data[ 'meta.' + key ] = meta[ key ]
         );
 
+        // do not push empty objects
+        const document = ( !push_data || !Object.keys( push_data ).length )
+            ? { '$set': save_data }
+            : { '$set': save_data, '$push': push_data };
+
         // update the quote data if it already exists (same id), otherwise
         // insert it
         this._collection.update( { id: id },
-            { '$set': save_data },
+            document,
 
             // create record if it does not yet exist
             { upsert: true },

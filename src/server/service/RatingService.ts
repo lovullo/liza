@@ -31,6 +31,7 @@ import { ServerDao } from "../db/ServerDao";
 import { ServerSideQuote } from "../quote/ServerSideQuote";
 import { UserRequest } from "../request/UserRequest";
 import { UserResponse } from "../request/UserResponse";
+import { DeltaConstructor } from "../../bucket/delta";
 
 type RequestCallback = () => void;
 
@@ -59,12 +60,14 @@ export class RatingService
      * @param _dao           - database connection
      * @param _server        - server actions
      * @param _rater_manager - rating manager
+     * @param _createDelta   - delta constructor
      */
     constructor(
         private readonly _logger:        PriorityLog,
         private readonly _dao:           ServerDao,
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
+        private readonly _createDelta:   DeltaConstructor<number>,
     ) {}
 
 
@@ -271,12 +274,19 @@ export class RatingService
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
 
+            const quote_data  = quote.getRatingData();
+            const save_data   = { ratedata: data };
+            const rdelta_data = {
+                "rdelta.ratedata": {
+                    data:      this._createDelta( data, quote_data ),
+                    timestamp: cur_date
+                },
+            };
+
             // save the last prem status (we pass an empty object as the save
             // data argument to ensure that we do not save the actual bucket
             // data, which may cause a race condition with the below merge call)
-            this._dao.saveQuote( quote, c, c, {
-                ratedata: data,
-            } );
+            this._dao.saveQuote( quote, c, c, save_data, rdelta_data );
         }
         else
         {

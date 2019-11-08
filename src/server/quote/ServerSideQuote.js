@@ -40,7 +40,6 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'private _creditScoreRef': 0,
 
-
     /**
      * Unix timestamp containing date of first premium calculation
      * @type {number}
@@ -52,6 +51,12 @@ module.exports = Class( 'ServerSideQuote' )
      * @type {Bucket}
      */
     'private _metabucket': null,
+
+    /**
+     * Rating Data Bucket
+     * @type {Bucket}
+     */
+    'private _rate_bucket': null,
 
 
     'public setProgramVersion': function( version )
@@ -148,6 +153,64 @@ module.exports = Class( 'ServerSideQuote' )
 
         this._metabucket.setValues( data );
         return this;
-    }
+    },
+
+
+    /**
+     * Set rating bucket
+     *
+     * @param {Bucket} bucket the rate bucket to set
+     */
+    'public setRateBucket': function( bucket )
+    {
+        this._rate_bucket = bucket;
+
+        return this;
+    },
+
+
+    /**
+     * Get rating bucket
+     *
+     * @return {Bucket}
+     */
+    'public getRateBucket': function()
+    {
+        return this._rate_bucket;
+    },
+
+
+    /**
+     * Set rating data
+     *
+     * @param {Object.<string,Array>} data rating data
+     */
+    'public setRatingData': function( data )
+    {
+        if ( !this._rate_bucket )
+        {
+            throw Error( "No rating bucket available for #setRatingData" );
+        }
+
+        this._rate_bucket.setValues( data );
+
+        return this;
+    },
+
+
+    /**
+     * Get rating data
+     *
+     * @return {Object.<string,Array>} rating data
+     */
+    'public getRatingData': function()
+    {
+        if ( !this._rate_bucket )
+        {
+            throw Error( "No rating bucket available for #setRatingData" );
+        }
+
+        return this._rate_bucket.getData();
+    },
 } );
 

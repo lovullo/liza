@@ -30,7 +30,7 @@ describe( 'MongoServerDao', () =>
 {
     describe( '#saveQuote', () =>
     {
-        describe( "with no save data", () =>
+        describe( "with no save data or push data", () =>
         {
             it( "saves entire metabucket record individually", done =>
             {
@@ -51,12 +51,79 @@ describe( 'MongoServerDao', () =>
                         expect( data.$set[ 'meta.bar' ] )
                             .to.deep.equal( metadata.bar );
 
+
+                        expect( data.$push ).to.equal( undefined );
+
                         done();
                     }
                 ) );
 
                 sut.init( () =>
                     sut.saveQuote( quote, () => {}, () => {} )
+                );
+            } );
+        } );
+
+        describe( "with push data", () =>
+        {
+            it( "adds push data to the collection", done =>
+            {
+                const push_data = {
+                    foo: [ 'bar', 'baz' ],
+                    bar: [ { quux: 'quuux' } ],
+                };
+
+                const quote = createStubQuote( {} );
+
+                const sut = Sut( createMockDb(
+                    // update
+                    ( selector, data ) =>
+                    {
+                        expect( data.$push[ 'foo' ] )
+                            .to.deep.equal( push_data.foo );
+
+                        expect( data.$push[ 'bar' ] )
+                            .to.deep.equal( push_data.bar );
+
+                        done();
+                    }
+                ) );
+
+                sut.init( () =>
+                    sut.saveQuote(
+                        quote,
+                        () => {},
+                        () => {},
+                        undefined,
+                        push_data
+                    )
+                );
+            } );
+
+            it( "skips push data when it is an empty object", done =>
+            {
+                const push_data = {};
+
+                const quote = createStubQuote( {} );
+
+                const sut = Sut( createMockDb(
+                    // update
+                    ( selector, data ) =>
+                    {
+                        expect( data.$push ).to.equal( undefined );
+
+                        done();
+                    }
+                ) );
+
+                sut.init( () =>
+                    sut.saveQuote(
+                        quote,
+                        () => {},
+                        () => {},
+                        undefined,
+                        push_data
+                    )
                 );
             } );
         } );
