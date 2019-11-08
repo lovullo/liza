@@ -51,8 +51,21 @@ modindex: $(nsindex)
 	@echo "# THIS FILE IS GENERATED; DO NOT MODIFY!" > $@
 	( cd $*/ && find . -name '*.ts' -printf "%P\n" | sed 's/\.ts$$/.js/' ) >> $@
 
+# tsc handles its own incremental builds, and in the past has gotten into
+# states where it did not recognize missing files as needing to be
+# built.  Since those files are not part of _our_ dependency graph here, we
+# need to double-check.
+check-ts-out:
+	find $(path_src) $(path_test) -name '*.ts' -a ! -name '*.d.ts' \
+	  | while read f; do \
+	      test -f "$${f%%.ts}.js" || { \
+	        echo "error: missing tsc output for $$f" >&2; \
+	        exit 1; \
+	      }; \
+	    done
+
 test: check
-check: $(tsout)
+check: $(tsout) check-ts-out
 	PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
 		mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \
