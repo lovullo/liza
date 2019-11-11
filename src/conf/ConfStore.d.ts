@@ -19,14 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
-
-const {
-    AutoObjectStore,
-    DelimitedKey,
-    MemoryStore,
-} = require( '../' ).store;
-
+import { Store } from "../store/Store";
 
 /**
  * A store that recursively instantiates itself
@@ -36,9 +29,4 @@ const {
  * retrieved by delimiting the key with `.` (e.g. `foo.bar.baz`); see
  * trait `DelimitedKey` for more information and examples.
  */
-exports.ConfStore = function ConfStore()
-{
-    return MemoryStore
-        .use( AutoObjectStore( ConfStore ) )
-        .use( DelimitedKey( '.' ) )();
-};
+export declare function ConfStore(): Store;

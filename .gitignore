@@ -29,6 +29,6 @@ src/**/index.js
 node_modules
 
 # typescript output
-bin/delta-processor.js
+bin/*.js
 tsconfig.tsbuildinfo
 
