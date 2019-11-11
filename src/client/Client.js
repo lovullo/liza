@@ -20,7 +20,7 @@
  */
 
 const Class                 = require( 'easejs' ).Class;
-const EventEmitter          = require( 'events' ).EventEmitter;
+const EventEmitter          = require( '../events' ).EventEmitter;
 const DomFieldNotFoundError = require( '../ui/field/DomFieldNotFoundError' );
 const UnknownEventError     = require( './event/UnknownEventError' );
 const system                = require( '../system/client' );

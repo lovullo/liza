@@ -21,7 +21,7 @@
 
 var Class        = require( 'easejs' ).Class,
     Bucket       = require( './Bucket' ),
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../events' ).EventEmitter;
 
 /**
  * General key/value store for document

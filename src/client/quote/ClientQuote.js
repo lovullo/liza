@@ -21,7 +21,7 @@
 
 var Class        = require( 'easejs' ).Class,
     Quote        = require( '../../quote/Quote' ),
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../../events' ).EventEmitter;
 
 
 /**

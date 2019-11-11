@@ -28,7 +28,7 @@ var Class = require( 'easejs' ).Class;
  * This class doesn't really add any new functionality. It just makes working
  * with requests and responses a bit easier.
  */
-module.exports = Class.extend( require( 'events' ).EventEmitter,
+module.exports = Class.extend( require( '../../events' ).EventEmitter,
 {
     /**
      * Request timeout in seconds

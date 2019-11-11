@@ -22,7 +22,7 @@
 var Class   = require( 'easejs' ).Class,
     Context = require( './Context' ),
 
-    EventEmitter = require( 'events' ).EventEmitter;
+    EventEmitter = require( '../../events' ).EventEmitter;
 
 
 /**

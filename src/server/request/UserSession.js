@@ -29,7 +29,7 @@ var php   = require( 'php' ),
 /**
  * Stores/retrieves user PHP session data from memcached
  */
-module.exports = Class.extend( require( 'events' ).EventEmitter,
+module.exports = Class.extend( require( '../../events' ).EventEmitter,
 {
     /**
      * Session id
