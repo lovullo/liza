@@ -69,6 +69,9 @@ interface MongoFindOptions
 {
     /** Limit results returned */
     limit?: PositiveInteger,
+
+    /** Whether to project only id's */
+    id?: number,
 }
 
 
@@ -148,7 +151,7 @@ declare interface MongoCollection
 
 
     /**
-     * Execute a query and return the first result
+     * Execute a query and return the results
      *
      * Unlike `update`, the callback return value is not propagated, and so
      * the callback ought not return anything.
