@@ -168,4 +168,26 @@ export class DeltaProcessor
 
         return 0;
     }
+
+
+    /**
+     * Generate amqp config from environment variables
+     *
+     * @returns the amqp configuration
+     */
+    // generateConfigFromEnv(): AmqpConfig
+    // {
+    //     return <AmqpConfig>{
+    //         "protocol":  "amqp",
+    //         "hostname":  process.env.hostname,
+    //         "port":      process.env.port,
+    //         "username":  process.env.username,
+    //         "password":  process.env.password,
+    //         "locale":    "en_US",
+    //         "frameMax":  0,
+    //         "heartbeat": 0,
+    //         "vhost":     process.env.vhost,
+    //         "exchange":  process.env.exchange,
+    //     };
+    // }
 }

@@ -1,0 +1,161 @@
+{
+    "type": "record",
+    "name": "update",
+    "fields": [
+        {
+            "name": "event",
+            "type": {
+                "type": "record",
+                "name": "Event",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": {
+                            "name":    "EventId",
+                            "type":    "enum",
+                            "symbols": [
+                                "STEP_SAVE",
+                                "RATE"
+                            ]
+                        }
+                    },
+                    {
+                        "name":        "ts",
+                        "type":        "long",
+                        "logicalType": "timestamp-millis"
+                    },
+                    {
+                        "name": "actor",
+                        "type": {
+                            "type":    "enum",
+                            "name":    "EventActor",
+                            "symbols": [ "USER", "CLIENT", "SERVER" ]
+                        }
+                    },
+                    {
+                        "name": "step",
+                        "type": {
+                            "type": "record",
+                            "name": "EventStep",
+                            "fields": [
+                                {
+                                    "name": "transition",
+                                    "type": {
+                                        "type": "enum",
+                                        "name": "EventStepTransition",
+                                        "symbols": [ "BACK", "FORWARD", "END" ]
+                                    }
+                                },
+                                {
+                                    "name": "src",
+                                    "type": "string"
+                                },
+                                {
+                                    "name": "dest",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "document",
+            "type": {
+                "type": "record",
+                "name": "Document",
+                "doc":  "Source document (quote)",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "int"
+                    },
+                    {
+                        "name":        "created",
+                        "type":        "long",
+                        "logicalType": "timestamp-millis"
+                    },
+                    {
+                        "name":        "modified",
+                        "type":        "long",
+                        "logicalType": "timestamp-millis"
+                    },
+                    {
+                        "name": "top_visited_step",
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "session",
+            "type": {
+                "type": "record",
+                "name": "Session",
+                "fields": [
+                    {
+                        "name": "entity_name",
+                        "type": "string"
+                    },
+                    {
+                        "name": "entity_id",
+                        "type": "int"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "data",
+            "type": [
+                "null",
+                {
+                    "type": "record",
+                    "name": "Data",
+                    "fields": [
+                        {
+                            "name": "bucket",
+                            "type": {
+                                "type":   "map",
+                                "values": {
+                                    "type" : "array",
+                                    "items" : "string"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "delta",
+            "type": [
+                "null",
+                "Data"
+            ]
+        },
+        {
+            "name": "program",
+            "type": [
+                "null",
+                {
+                    "type": "record",
+                    "name": "Program",
+                    "fields": [
+                        {
+                            "type": "string",
+                            "name": "id",
+                            "doc":  "Program id"
+                        },
+                        {
+                            "type": "string",
+                            "name": "version",
+                            "doc":  "Program version"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

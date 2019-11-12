@@ -34,7 +34,7 @@ export declare class BaseQuote implements Quote
      *
      * @return quote program
      */
-    getProgram(): Program
+    getProgram(): Program;
 
 
     /**
@@ -42,7 +42,7 @@ export declare class BaseQuote implements Quote
      *
      * @return program id
      */
-    getProgramId(): string
+    getProgramId(): string;
 
 
     /**
@@ -54,7 +54,7 @@ export declare class BaseQuote implements Quote
      *
      * @return quote id
      */
-    getId(): QuoteId
+    getId(): QuoteId;
 
 
     /**
@@ -62,7 +62,7 @@ export declare class BaseQuote implements Quote
      *
      * @return id of current step
      */
-    getCurrentStepId(): number
+    getCurrentStepId(): number;
 
 
     /**
@@ -73,7 +73,7 @@ export declare class BaseQuote implements Quote
      *
      * @return self
      */
-    setExplicitLock( reason: string, step: number ): this
+    setExplicitLock( reason: string, step: number ): this;
 
 
     /**
@@ -83,7 +83,7 @@ export declare class BaseQuote implements Quote
      *
      * @return self
      */
-    setLastPremiumDate( timestamp: UnixTimestamp ): this
+    setLastPremiumDate( timestamp: UnixTimestamp ): this;
 
 
     /**
@@ -91,7 +91,7 @@ export declare class BaseQuote implements Quote
      *
      * @return last calculated time or 0
      */
-    getLastPremiumDate(): UnixTimestamp
+    getLastPremiumDate(): UnixTimestamp;
 
 
     /**
@@ -99,7 +99,7 @@ export declare class BaseQuote implements Quote
      *
      * @return the data bucket
      */
-    getBucket(): QuoteDataBucket
+    getBucket(): QuoteDataBucket;
 
 
     /**
@@ -107,7 +107,7 @@ export declare class BaseQuote implements Quote
      *
      * @return lock reason
      */
-    getExplicitLockReason(): string
+    getExplicitLockReason(): string;
 
 
     /**
@@ -117,7 +117,7 @@ export declare class BaseQuote implements Quote
      *
      * @return {number} locked max step or 0 if not applicable
      */
-    getExplicitLockStep(): PositiveInteger
+    getExplicitLockStep(): PositiveInteger;
 
 
     /**
@@ -125,7 +125,7 @@ export declare class BaseQuote implements Quote
      *
      * @return true if imported, otherwise false
      */
-    isImported(): boolean
+    isImported(): boolean;
 
 
     /**
@@ -133,7 +133,7 @@ export declare class BaseQuote implements Quote
      *
      * @return true if bound, otherwise false
      */
-    isBound(): boolean
+    isBound(): boolean;
 
 
     /**
@@ -141,7 +141,7 @@ export declare class BaseQuote implements Quote
      *
      * @return top visited step id
      */
-    getTopVisitedStepId(): PositiveInteger
+    getTopVisitedStepId(): PositiveInteger;
 
 
     /**
@@ -149,5 +149,5 @@ export declare class BaseQuote implements Quote
      *
      * @return top saved step id
      */
-    getTopSavedStepId(): PositiveInteger
+    getTopSavedStepId(): PositiveInteger;
 }

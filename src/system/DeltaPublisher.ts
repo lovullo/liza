@@ -29,6 +29,8 @@ import {
     Channel
 } from 'amqplib';
 
+const avro = require( 'avro-js' );
+
 
 export interface AmqpConfig extends Options.Connect {
     /** The name of a queue or exchange to publish to */
@@ -38,6 +40,9 @@ export interface AmqpConfig extends Options.Connect {
 
 export class DeltaPublisher implements AmqpPublisher
 {
+    /** The path to the avro schema */
+    readonly SCHEMA_PATH = './avro/schema.avsc';
+
     /** A mapping of which delta type translated to which avro event */
     readonly DELTA_MAP: Record<string, string> = {
         data:     'rate',
@@ -48,8 +53,8 @@ export class DeltaPublisher implements AmqpPublisher
     /**
      * Initialize trait
      *
-     * @param {Object}   conf   AMQP configuration
-     * @param {DebugLog} logger logger instance
+     * @param _conf   - amqp configuration
+     * @param _logger - logger instance
      */
     constructor(
         private readonly _conf:   AmqpConfig,
@@ -115,10 +120,12 @@ export class DeltaPublisher implements AmqpPublisher
 
         const event_id = this.DELTA_MAP[ delta.type ];
 
-        const data = new Buffer( JSON.stringify( {
+        const data = {
             delta: delta,
             event: event_id,
-        } ) );
+        };
+
+        const avro_buffer = this._avroEncode( data );
 
         // we don't use a routing key; fanout exchange
         const routing_key = '';
@@ -126,8 +133,25 @@ export class DeltaPublisher implements AmqpPublisher
         return channel.publish(
             exchange,
             routing_key,
-            data,
+            avro_buffer,
             { headers: headers },
         );
+    }
+
+
+    /**
+     * Encode the data in an avro buffer
+     *
+     * @param data - the data to encode
+     *
+     * @return the avro buffer
+     */
+    _avroEncode( data: Record<string, any> ): Buffer
+    {
+        const type = avro.parse( this.SCHEMA_PATH );
+
+        const buffer = type.toBuffer( data );
+
+        return buffer;
     }
 }
