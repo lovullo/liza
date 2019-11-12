@@ -23,6 +23,7 @@ import { DeltaDao } from "../system/db/DeltaDao";
 import { MongoDeltaType } from "../system/db/MongoDeltaDao";
 import { DeltaResult } from "../bucket/delta";
 import { DocumentId } from "../document/Document";
+import { AmqpPublisher } from "./AmqpPublisher";
 
 
 /**
@@ -36,12 +37,6 @@ export class DeltaProcessor
     /** The data delta type */
     readonly DELTA_DATA: MongoDeltaType = 'data';
 
-    /** A mapping of which delta type translated to which avro event */
-    readonly DELTA_MAP: Record<string, string> = {
-        DELTA_RATEDATA: 'rate',
-        DELTA_DATA:     'update',
-    };
-
 
     /**
      * Initialize processor
@@ -49,7 +44,8 @@ export class DeltaProcessor
      * @param _collection Mongo collection
      */
     constructor(
-        private readonly _dao: DeltaDao,
+        private readonly _dao:       DeltaDao,
+        private readonly _publisher: AmqpPublisher,
     ) {}
 
 
@@ -68,9 +64,7 @@ export class DeltaProcessor
 
                 deltas.forEach( delta => {
 
-                    // TODO: publish delta
-                    // publisher.publish( delta, self.DELTA_MAP[ delta.type ] )
-                    console.log( delta, self.DELTA_MAP[ delta.type ] );
+                    self._publisher.publish( delta );
 
                 });
 

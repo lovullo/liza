@@ -38,7 +38,8 @@
     "mocha":                   "5.2.0",
     "@types/mocha":            "5.2.0",
     "sinon":                   ">=1.17.4",
-    "es6-promise":             "~3"
+    "es6-promise":             "~3",
+    "@types/amqplib":          "0.5.13"
   },
 
   "licenses": [

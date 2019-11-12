@@ -20,6 +20,7 @@
  */
 
 import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
+import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
 import { MongoDeltaType } from '../../src/system/db/MongoDeltaDao';
 
@@ -163,7 +164,11 @@ describe( 'system.DeltaProcessor', () =>
             },
         ] ).forEach( ( { given, expected, label } ) => it( label, () =>
         {
-            const sut = new Sut( createMockDeltaDao() );
+            const sut = new Sut(
+                createMockDeltaDao(),
+                createMockDeltaPublisher()
+            );
+
             const actual = sut.getTimestampSortedDeltas( given );
 
             expect( actual ).to.deep.equal( expected );
@@ -280,7 +285,11 @@ describe( 'system.DeltaProcessor', () =>
             },
         ] ).forEach( ( { type, given, expected, label } ) => it( label, () =>
         {
-            const sut = new Sut( createMockDeltaDao() );
+            const sut = new Sut(
+                createMockDeltaDao(),
+                createMockDeltaPublisher()
+            );
+
             const actual = sut.getDeltas( given, type );
 
             expect( actual ).to.deep.equal( expected );
@@ -295,5 +304,13 @@ function createMockDeltaDao(): DeltaDao
         getUnprocessedDocuments() { return this },
         advanceDeltaIndexByType() { return this },
         markDocumentAsProcessed() { return this },
+    };
+}
+
+
+function createMockDeltaPublisher(): AmqpPublisher
+{
+    return <AmqpPublisher>{
+        publish() {},
     };
 }
