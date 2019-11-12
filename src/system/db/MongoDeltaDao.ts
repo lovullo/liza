@@ -56,7 +56,7 @@ export class MongoDeltaDao implements DeltaDao
      * @return documents in need of processing
      */
     getUnprocessedDocuments(
-        callback: ( data: Record<string, any> | null ) => void,
+        callback: ( data: Record<string, any>[] ) => void,
     ): this
     {
         var self = this;
@@ -71,7 +71,7 @@ export class MongoDeltaDao implements DeltaDao
                     // was the quote found?
                     if ( data.length == 0 )
                     {
-                        callback.call( self, null );
+                        callback.call( self, [] );
 
                         return;
                     }

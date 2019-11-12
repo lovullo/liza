@@ -40,7 +40,7 @@ export interface DeltaDao
      * @return documents in need of processing
      */
     getUnprocessedDocuments(
-        callback: ( data: Record<string, any> | null ) => void
+        callback: ( data: Record<string, any>[] ) => void,
     ): this;
 
 

@@ -81,7 +81,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      *
      * @return MongoServerDao self to allow for method chaining
      */
-    init( callback: () => {} ): this
+    init( callback: () => void ): this
     {
         var dao = this;
 
@@ -109,7 +109,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      *
      * @return MongoServerDao self to allow for method chaining
      */
-    connect( callback: () => {} ): this
+    connect( callback: () => void ): this
     {
         var dao = this;
 
