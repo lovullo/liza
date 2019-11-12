@@ -85,7 +85,7 @@ function writePidFile( pid_path: string ): void
 {
     fs.writeFileSync( pid_path, process.pid );
 
-    process.on( 'exit', () => fs.unlink( pid_path ) );
+    process.on( 'exit', () => fs.unlink( pid_path, () => {} ) );
 }
 
 
