@@ -306,6 +306,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.id                 = id;
         save_data.pver               = quote.getProgramVersion();
         save_data.importDirty        = 1;
+        save_data.published          = 0;
         save_data.lastPremDate       = quote.getLastPremiumDate();
         save_data.initialRatedDate   = quote.getRatedDate();
         save_data.explicitLock       = quote.getExplicitLockReason();

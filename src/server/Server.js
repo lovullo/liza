@@ -340,6 +340,7 @@ module.exports = Class( 'Server' )
                     .setImported( quote_data.importedInd || false )
                     .setBound( quote_data.boundInd || false )
                     .needsImport( quote_data.importDirty || false )
+                    .needsDeltaProcessing( quote_data.processed || true )
                     .setCurrentStepId(
                         quote_data.currentStepId
                         || quote_program.getFirstStepId()
@@ -392,6 +393,7 @@ module.exports = Class( 'Server' )
                         importedInd:      ( quote.isImported() ) ? 1 : 0,
                         boundInd:         ( quote.isBound() ) ? 1 : 0,
                         importDirty:      0,
+                        published:        1,
                         syncInd:          0,
                         boundInd:         0,
                         notifyInd:        0,
