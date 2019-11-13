@@ -28,7 +28,6 @@
  */
 
 import { DocumentId } from "../../document/Document";
-import { PositiveInteger } from "../../numeric";
 
 
 /** Manage deltas */
@@ -39,23 +38,21 @@ export interface DeltaDao
      *
      * @return documents in need of processing
      */
-    getUnprocessedDocuments(
-        callback: ( data: Record<string, any>[] ) => void,
-    ): this;
+    getUnprocessedDocuments(): Promise<Record<string, any>[]>
 
 
     /**
      * Set the document's processed index
      *
-     * @param doc_id - The document whose index will be set
-     * @param index  - The index to set
+     * @param doc_id - Document whose index will be set
+     * @param type   - Delta type
+     *
+     * @return any errors that occured
      */
-    advanceDeltaIndexByType(
+    advanceDeltaIndex(
         doc_id:   DocumentId,
         type:     string,
-        index:    PositiveInteger,
-        callback: ( err: NullableError, indexHasAdvanced: boolean ) => void,
-    ): this;
+    ): Promise<NullableError>
 
 
     /**
@@ -68,9 +65,8 @@ export interface DeltaDao
      * @return true if the document was successfully marked as processed
      */
     markDocumentAsProcessed(
-        doc_id:         DocumentId,
-        last_update_ts: UnixTimestamp,
-        callback: ( err: NullableError, markedSuccessfully: boolean ) => void,
-    ): this;
+        doc_id:          DocumentId,
+        last_update_ts:  UnixTimestamp,
+    ): Promise<NullableError>
 }
 

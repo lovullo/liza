@@ -28,6 +28,32 @@ import { PositiveInteger } from "../numeric";
 declare module "mongodb";
 
 
+export interface MongoDbConfig extends Record<string, any> {
+    /** Host */
+    host?: string;
+
+    /** Port number */
+    port?: number;
+
+    /** High availability */
+    ha: boolean;
+}
+
+
+/**
+ * Interface for the mongo database
+ */
+export interface MongoDb
+{
+    /**
+     * Initialize the database connection
+     *
+     * @param callback continuation on completion
+     */
+    open( callback: MongoCallback ): void;
+}
+
+
 /**
  * Node-style callback for queries
  */
@@ -139,8 +165,6 @@ declare interface MongoCollection
      * @param data     update data
      * @param options  query options
      * @param callback continuation on completion
-     *
-     * @return callback return value
      */
     update(
         selector: MongoSelector,

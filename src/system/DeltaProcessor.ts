@@ -24,7 +24,7 @@ import { MongoDeltaType } from "../system/db/MongoDeltaDao";
 import { DeltaResult } from "../bucket/delta";
 import { DocumentId } from "../document/Document";
 import { AmqpPublisher } from "./AmqpPublisher";
-
+import { EventDispatcher } from "./event/EventDispatcher";
 
 /**
  * Process deltas for a quote and publish to a queue
@@ -41,11 +41,14 @@ export class DeltaProcessor
     /**
      * Initialize processor
      *
-     * @param _collection Mongo collection
+     * @param _dao        - Mongo collection
+     * @param _publisher  - Amqp Publisher
+     * @param _dispatcher - Event dispatcher instance
      */
     constructor(
-        private readonly _dao:       DeltaDao,
-        private readonly _publisher: AmqpPublisher,
+        private readonly _dao:        DeltaDao,
+        private readonly _publisher:  AmqpPublisher,
+        private readonly _dispatcher: EventDispatcher
     ) {}
 
 
@@ -56,31 +59,48 @@ export class DeltaProcessor
     {
         let self = this;
 
-        this._dao.getUnprocessedDocuments( function( docs )
+        this._dao.getUnprocessedDocuments()
+        .then( docs =>
         {
-            docs.forEach( doc => {
+            docs.forEach( doc =>
+            {
+                const deltas             = self.getTimestampSortedDeltas( doc );
+                const doc_id: DocumentId = doc.id;
+                const last_updated_ts    = doc.lastUpdate;
 
-                const deltas = self.getTimestampSortedDeltas( doc );
-
-                deltas.forEach( delta => {
-
-                    self._publisher.publish( delta );
-
+                deltas.forEach( delta =>
+                {
+                    self._publisher.publish( delta )
+                    .then( _ =>
+                    {
+                        self._dao.advanceDeltaIndex( doc_id, delta.type );
+                    } )
+                    .catch( _ =>
+                    {
+                        // TODO: blow up?
+                    } );
                 });
 
-                const last_updated_ts    = doc.lastUpdated;
-                const doc_id: DocumentId = doc.id;
-
-                self._dao.markDocumentAsProcessed(
-                    doc_id,
-                    last_updated_ts,
-                    function( err, markedSuccessfully )
-                    {
-                        console.log( err, markedSuccessfully );
-                    },
-                );
+                self._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
+                .then( _ =>
+                {
+                    this._dispatcher.dispatch(
+                        'document-processed',
+                        'Deltas on document ' + doc_id + ' processed '
+                            + 'successfully. Document has been marked as '
+                            + 'completely processed.'
+                    );
+                } )
+                .catch( err =>
+                {
+                    this._dispatcher.dispatch( 'mongodb-err', err );
+                } );
             });
-        });
+        } )
+        .catch( err =>
+        {
+            this._dispatcher.dispatch( 'mongodb-err', err );
+        } );
     }
 
 
@@ -91,9 +111,7 @@ export class DeltaProcessor
      *
      * @return a list of deltas sorted by timestamp
      */
-    getTimestampSortedDeltas(
-        doc: any,
-    ): DeltaResult<any>[]
+    getTimestampSortedDeltas( doc: any ): DeltaResult<any>[]
     {
         const data_deltas     = this.getDeltas( doc, this.DELTA_RATEDATA );
         const ratedata_deltas = this.getDeltas( doc, this.DELTA_DATA );
@@ -113,32 +131,26 @@ export class DeltaProcessor
      *
      * @return a trimmed list of deltas
      */
-    getDeltas(
-        doc: any,
-        type: MongoDeltaType,
-    ): DeltaResult<any>[]
+    getDeltas( doc: any, type: MongoDeltaType ): DeltaResult<any>[]
     {
-        // Get objects so we can get the index by type
-        const deltas_obj = doc.rdelta || {};
+        const deltas_obj                 = doc.rdelta || {};
+        const deltas: DeltaResult<any>[] = deltas_obj[ type ] || [];
 
-        // Get type specific deltas
+        // Get type specific delta index
         let last_published_index = 0;
         if ( doc.lastPublishDelta )
         {
-            const last_published_indexes = doc.lastPublishDelta;
-
-            last_published_index = last_published_indexes[ type ] || 0;
+            last_published_index = doc.lastPublishDelta[ type ] || 0;
         }
-
-        const deltas: DeltaResult<any>[] = deltas_obj[ type ] || [];
 
         // Only return the unprocessed deltas
         const deltas_trimmed = deltas.slice( last_published_index );
 
         // Mark each delta with its type
-        deltas_trimmed.forEach( delta => {
+        deltas_trimmed.forEach( delta =>
+        {
             delta.type = type;
-        });
+        } );
 
         return deltas_trimmed;
     }
@@ -148,14 +160,11 @@ export class DeltaProcessor
      * Sort an array of deltas by timestamp
      *
      * @param a - The first delta to compare
-     * @param a - The second delta to compare
+     * @param b - The second delta to compare
      *
      * @return a sort value
      */
-    private _sortByTimestamp(
-        a: DeltaResult<any>,
-        b: DeltaResult<any>,
-    ): number
+    private _sortByTimestamp( a: DeltaResult<any>, b: DeltaResult<any> ): number
     {
         if ( a.timestamp < b.timestamp )
         {
@@ -168,26 +177,4 @@ export class DeltaProcessor
 
         return 0;
     }
-
-
-    /**
-     * Generate amqp config from environment variables
-     *
-     * @returns the amqp configuration
-     */
-    // generateConfigFromEnv(): AmqpConfig
-    // {
-    //     return <AmqpConfig>{
-    //         "protocol":  "amqp",
-    //         "hostname":  process.env.hostname,
-    //         "port":      process.env.port,
-    //         "username":  process.env.username,
-    //         "password":  process.env.password,
-    //         "locale":    "en_US",
-    //         "frameMax":  0,
-    //         "heartbeat": 0,
-    //         "vhost":     process.env.vhost,
-    //         "exchange":  process.env.exchange,
-    //     };
-    // }
 }

@@ -34,28 +34,31 @@
                     },
                     {
                         "name": "step",
-                        "type": {
-                            "type": "record",
-                            "name": "EventStep",
-                            "fields": [
-                                {
-                                    "name": "transition",
-                                    "type": {
-                                        "type": "enum",
-                                        "name": "EventStepTransition",
-                                        "symbols": [ "BACK", "FORWARD", "END" ]
+                        "type":[
+                            "null",
+                            {
+                                "type": "record",
+                                "name": "EventStep",
+                                "fields": [
+                                    {
+                                        "name": "transition",
+                                        "type": {
+                                            "type": "enum",
+                                            "name": "EventStepTransition",
+                                            "symbols": [ "BACK", "FORWARD", "END" ]
+                                        }
+                                    },
+                                    {
+                                        "name": "src",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "name": "dest",
+                                        "type": "string"
                                     }
-                                },
-                                {
-                                    "name": "src",
-                                    "type": "string"
-                                },
-                                {
-                                    "name": "dest",
-                                    "type": "string"
-                                }
-                            ]
-                        }
+                                ]
+                            }
+                        ]
                     }
                 ]
             }
@@ -70,20 +73,6 @@
                     {
                         "name": "id",
                         "type": "int"
-                    },
-                    {
-                        "name":        "created",
-                        "type":        "long",
-                        "logicalType": "timestamp-millis"
-                    },
-                    {
-                        "name":        "modified",
-                        "type":        "long",
-                        "logicalType": "timestamp-millis"
-                    },
-                    {
-                        "name": "top_visited_step",
-                        "type": "string"
                     }
                 ]
             }
@@ -115,12 +104,56 @@
                     "fields": [
                         {
                             "name": "bucket",
-                            "type": {
+                            "type":{
                                 "type":   "map",
-                                "values": {
-                                    "type" : "array",
-                                    "items" : "string"
-                                }
+                                "values": [
+                                    "null",
+                                    {
+                                        "type": "array",
+                                        "items": [
+                                            "null",
+                                            "boolean",
+                                            "double",
+                                            "string",
+                                            {
+                                                "type": "array",
+                                                "items": [
+                                                    "null",
+                                                    "boolean",
+                                                    "double",
+                                                    "string",
+                                                    {
+                                                        "type": "array",
+                                                        "items": [
+                                                            "null",
+                                                            "boolean",
+                                                            "double",
+                                                            "string"
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "map",
+                                                "values": [
+                                                    "null",
+                                                    "boolean",
+                                                    "double",
+                                                    "string",
+                                                    {
+                                                        "type": "map",
+                                                        "values": [
+                                                            "null",
+                                                            "boolean",
+                                                            "double",
+                                                            "string"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     ]

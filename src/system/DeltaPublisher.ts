@@ -21,8 +21,9 @@
  * Publish delta message to a queue
  */
 
-import { AmqpPublisher } from "./AmqpPublisher";
-import { DeltaResult } from "../bucket/delta";
+import { AmqpPublisher } from './AmqpPublisher';
+import { DeltaResult } from '../bucket/delta';
+import { EventDispatcher } from './event/EventDispatcher';
 import {
     connect as amqpConnect,
     Options,
@@ -30,7 +31,6 @@ import {
 } from 'amqplib';
 
 const avro = require( 'avro-js' );
-
 
 export interface AmqpConfig extends Options.Connect {
     /** The name of a queue or exchange to publish to */
@@ -41,24 +41,26 @@ export interface AmqpConfig extends Options.Connect {
 export class DeltaPublisher implements AmqpPublisher
 {
     /** The path to the avro schema */
-    readonly SCHEMA_PATH = './avro/schema.avsc';
+    readonly SCHEMA_PATH = __dirname + '/avro/schema.avsc';
 
     /** A mapping of which delta type translated to which avro event */
     readonly DELTA_MAP: Record<string, string> = {
-        data:     'rate',
-        ratedata: 'update',
+        data:     'STEP_SAVE',
+        ratedata: 'RATE',
     };
 
 
     /**
-     * Initialize trait
+     * Initialize publisher
      *
-     * @param _conf   - amqp configuration
-     * @param _logger - logger instance
+     * @param _conf    - amqp configuration
+     * @param _emitter - event emitter instance
+     * @param _ts_ctr  - a timestamp constructor
      */
     constructor(
-        private readonly _conf:   AmqpConfig,
-        private readonly _logger: any
+        private readonly _conf:       AmqpConfig,
+        private readonly _dispatcher: EventDispatcher,
+        private readonly _ts_ctr    : () => UnixTimestamp,
     ) {}
 
 
@@ -66,35 +68,65 @@ export class DeltaPublisher implements AmqpPublisher
      * Publish quote message to exchange post-rating
      *
      * @param delta - The delta to publish
+     *
+     * @return whether the message was published successfully
     */
-    publish( delta: DeltaResult<any> ): void
+    publish( delta: DeltaResult<any> ): Promise<null>
     {
-        // check both as we transition from one to the other
         const exchange = this._conf.exchange;
 
-        amqpConnect( this._conf )
+        return new Promise<null>( ( resolve, reject ) =>
+        {
+            amqpConnect( this._conf )
             .then( conn =>
             {
                 setTimeout( () => conn.close(), 10000 );
                 return conn.createChannel();
             } )
-            .then( ch => {
+            .then( ch =>
+            {
                 ch.assertExchange( exchange, 'fanout', { durable: true } );
 
-                return this._sendMessage( ch, exchange, delta );
+                return this.sendMessage( ch, exchange, delta );
             } )
-            .then( () => this._logger.log(
-                this._logger.PRIORITY_INFO,
-                "Published " + delta.type + " delta with timestamp '" +
-                    delta.timestamp + "' to quote-update exchange '"+
-                    exchange + "'"
-            ) )
-            .catch( e => this._logger.log(
-                this._logger.PRIORITY_ERROR,
-                "Error publishing " + delta.type + " delta with timestamp '" +
-                    delta.timestamp + "' to quote-update exchange '"+
-                    exchange + "'" + ": " + e
-            ) );
+            .then( sentSuccessfully =>
+            {
+                console.log('sentSuccessfully', sentSuccessfully);
+                if ( sentSuccessfully )
+                {
+                    this._dispatcher.dispatch(
+                        'delta-publish',
+                        "Published " + delta.type + " delta with ts '"
+                            + delta.timestamp + "' to '" + exchange
+                            + '" exchange',
+                    );
+
+                    resolve();
+                }
+                else
+                {
+                    this._dispatcher.dispatch(
+                        'publish-err',
+                        "Error publishing " + delta.type + " delta with ts '"
+                            + delta.timestamp + "' to '" + exchange
+                            + "' exchange",
+                    );
+
+                    reject();
+                }
+            } )
+            .catch( e =>
+            {
+                this._dispatcher.dispatch(
+                    'publish-err',
+                    "Error publishing " + delta.type + " delta with ts '"
+                        + delta.timestamp + '" to "' + exchange + "' exchange '"
+                        + e,
+                )
+
+                reject();
+            } );
+        } );
     }
 
 
@@ -107,7 +139,7 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @return whether publish was successful
      */
-    _sendMessage(
+    sendMessage(
         channel:  Channel,
         exchange: string,
         delta:    DeltaResult<any>,
@@ -118,14 +150,48 @@ export class DeltaPublisher implements AmqpPublisher
             created: Date.now(),
         };
 
-        const event_id = this.DELTA_MAP[ delta.type ];
+        // Convert all delta datums to string for avro
+        const delta_data = this.avroFormat( delta.data );
+        const event_id   = this.DELTA_MAP[ delta.type ];
 
         const data = {
-            delta: delta,
-            event: event_id,
+            event: {
+                id:    event_id,
+                ts:    this._ts_ctr(),
+                actor: 'SERVER',
+                step:  null,
+            },
+            document: {
+                id:       123123, // Fix
+            },
+            session: {
+                entity_name: 'Foobar', // Fix
+                entity_id:   123123, // Fix
+            },
+            data: {
+                Data: {
+                    bucket: delta_data,
+                },
+            },
+            delta: {
+                Data: {
+                    bucket: delta_data,
+                },
+            },
+            program: {
+                Program: {
+                    id:      'quote_server',
+                    version: 'dadaddwafdwa', // Fix
+                },
+            },
         };
 
-        const avro_buffer = this._avroEncode( data );
+        const avro_buffer = this.avroEncode( data );
+
+        if ( !avro_buffer )
+        {
+            return false;
+        }
 
         // we don't use a routing key; fanout exchange
         const routing_key = '';
@@ -144,14 +210,91 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @param data - the data to encode
      *
-     * @return the avro buffer
+     * @return the avro buffer or null if there is an error
      */
-    _avroEncode( data: Record<string, any> ): Buffer
+    avroEncode( data: Record<string, any> ): Buffer | null
     {
-        const type = avro.parse( this.SCHEMA_PATH );
+        let buffer = null;
 
-        const buffer = type.toBuffer( data );
+        try
+        {
+            const type   = avro.parse( this.SCHEMA_PATH );
+                  buffer = type.toBuffer( data );
+        }
+        catch( e )
+        {
+            this._dispatcher.dispatch(
+                'avro-parse-err',
+                'Error encoding data to avro: ' + e,
+            );
+        }
 
         return buffer;
+    }
+
+
+    /**
+     * Format the data for avro by add type specifications to the data
+     *
+     * @param data - the data to format
+     *
+     * @return the formatted data
+     */
+    avroFormat( data: any, top_level: boolean = true ): any
+    {
+        let data_formatted: any = {};
+
+        switch( typeof( data ) )
+        {
+            case 'object': // Typescript treats arrays as objects
+                if ( data == null )
+                {
+                    return null;
+                }
+                else if ( Array.isArray( data ) )
+                {
+                    let arr: any[] = [];
+
+                    data.forEach( ( datum ) =>
+                    {
+                        arr.push( this.avroFormat( datum, false ) );
+                    } );
+
+                    data_formatted = ( top_level )
+                        ? arr
+                        : { 'array': arr };
+                }
+                else
+                {
+                    let datum_formatted: any = {};
+
+                    Object.keys( data).forEach( ( key: string ) =>
+                    {
+                        const datum = this.avroFormat( data[ key ], false );
+
+                        datum_formatted[ key ] = datum;
+
+                    } );
+
+                    data_formatted = ( top_level )
+                        ? datum_formatted
+                        : { "map": datum_formatted };
+                }
+                break;
+
+            case 'boolean':
+                return { 'boolean': data };
+
+            case 'number':
+                return { 'double': data };
+
+            case 'string':
+                return { 'string': data };
+
+            case 'undefined':
+                return null;
+        }
+
+        return data_formatted;
     }
 }

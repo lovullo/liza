@@ -23,9 +23,11 @@ import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
 import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
 import { MongoDeltaType } from '../../src/system/db/MongoDeltaDao';
+import { EventDispatcher } from '../../src/system/event/EventDispatcher';
 
 
 import { expect, use as chai_use } from 'chai';
+import { EventEmitter } from 'events';
 chai_use( require( 'chai-as-promised' ) );
 
 
@@ -166,7 +168,8 @@ describe( 'system.DeltaProcessor', () =>
         {
             const sut = new Sut(
                 createMockDeltaDao(),
-                createMockDeltaPublisher()
+                createMockDeltaPublisher(),
+                new EventDispatcher( new EventEmitter() ),
             );
 
             const actual = sut.getTimestampSortedDeltas( given );
@@ -287,7 +290,8 @@ describe( 'system.DeltaProcessor', () =>
         {
             const sut = new Sut(
                 createMockDeltaDao(),
-                createMockDeltaPublisher()
+                createMockDeltaPublisher(),
+                new EventDispatcher( new EventEmitter() ),
             );
 
             const actual = sut.getDeltas( given, type );
@@ -301,9 +305,9 @@ describe( 'system.DeltaProcessor', () =>
 function createMockDeltaDao(): DeltaDao
 {
     return <DeltaDao>{
-        getUnprocessedDocuments() { return this },
-        advanceDeltaIndexByType() { return this },
-        markDocumentAsProcessed() { return this },
+        getUnprocessedDocuments() { return Promise.resolve( [] ); },
+        advanceDeltaIndex()       { return Promise.resolve( null ); },
+        markDocumentAsProcessed() { return Promise.resolve( null ); },
     };
 }
 
@@ -311,6 +315,6 @@ function createMockDeltaDao(): DeltaDao
 function createMockDeltaPublisher(): AmqpPublisher
 {
     return <AmqpPublisher>{
-        publish() {},
+        publish() { return Promise.resolve( null ); },
     };
 }

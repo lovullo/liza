@@ -1,5 +1,5 @@
 /**
- * Amqp Publisher
+ * Event Dispatcher
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -18,25 +18,27 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Publish Amqp message to a queue
+ * Dispatch events
  */
 
-import { DeltaResult } from "../bucket/delta";
-import { Options } from 'amqplib';
+import { EventEmitter } from "events";
 
-
-export interface AmqpConfig extends Options.Connect {
-    /** The name of a queue or exchange to publish to */
-    exchange: string;
-}
-
-
-export interface AmqpPublisher
+export class EventDispatcher extends EventEmitter
 {
     /**
-     * Publish quote message to exchange post-rating
+     * Initialize dispatcher
      *
-     * @param delta - The delta to publish
-    */
-    publish( delta: DeltaResult<any> ): Promise<null>;
+     * @param _emitter - the event emitter
+     */
+    constructor(
+        private readonly _emitter: EventEmitter
+    ) {
+        super();
+    }
+
+
+    dispatch( event_id: string, arg: any ): void
+    {
+        this._emitter.emit( event_id, arg );
+    }
 }

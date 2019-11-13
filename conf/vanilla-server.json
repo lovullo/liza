@@ -51,17 +51,18 @@
         "domain": ""
       },
       "postRatePublish": {
-        "protocol":  "amqp",
-        "hostname":  "localhost",
-        "port":      5672,
-        "username":  "",
-        "password":  "",
-        "locale":    "en_US",
-        "frameMax":  0,
-        "heartbeat": 0,
-        "vhost":     "/",
-        "exchange":  "postrate"
+        "protocol":   "amqp",
+        "hostname":   "localhost",
+        "port":       5672,
+        "username":   "",
+        "password":   "",
+        "locale":     "en_US",
+        "frameMax":   0,
+        "heartbeat":  0,
+        "vhost":      "/",
+        "queueName":  "postrate"
       }
+
     },
     "c1export": {
       "host":   "localhost",
