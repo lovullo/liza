@@ -55,7 +55,9 @@ export class DeltaLogger
         private readonly _env:        string,
         private readonly _subscriber: EventSubscriber,
         private readonly _ts_ctr    : () => UnixTimestamp,
-    ) {}
+    ) {
+        this.init();
+    }
 
 
     /**
@@ -65,7 +67,7 @@ export class DeltaLogger
     {
         this._registerEvent( 'document-processed', LogLevel.NOTICE );
         this._registerEvent( 'delta-publish',      LogLevel.NOTICE );
-        this._registerEvent( 'avro-parse-err',     LogLevel.ERROR );
+        this._registerEvent( 'avro-err',           LogLevel.ERROR );
         this._registerEvent( 'mongodb-err',        LogLevel.ERROR );
         this._registerEvent( 'publish-err',        LogLevel.ERROR );
     }

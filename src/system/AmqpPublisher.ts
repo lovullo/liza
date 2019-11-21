@@ -38,5 +38,5 @@ export interface AmqpPublisher
      *
      * @param delta - The delta to publish
     */
-    publish( delta: DeltaResult<any> ): Promise<null>;
+    publish( delta: DeltaResult<any> ): Promise<NullableError>;
 }

@@ -241,7 +241,7 @@ describe( 'system.DeltaProcessor', () =>
                             },
                         ],
                     },
-                    lastPublishDelta: {
+                    totalPublishDelta: {
                         data: 0,
                     },
                 },
@@ -274,7 +274,7 @@ describe( 'system.DeltaProcessor', () =>
                             },
                         ],
                     },
-                    lastPublishDelta: {
+                    totalPublishDelta: {
                         data: 1,
                     },
                 },
@@ -308,6 +308,8 @@ function createMockDeltaDao(): DeltaDao
         getUnprocessedDocuments() { return Promise.resolve( [] ); },
         advanceDeltaIndex()       { return Promise.resolve( null ); },
         markDocumentAsProcessed() { return Promise.resolve( null ); },
+        setErrorFlag()            { return Promise.resolve( null ); },
+        getErrorCount()           { return Promise.resolve( 0 ); },
     };
 }
 

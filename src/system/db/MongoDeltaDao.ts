@@ -59,7 +59,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * connectError event will be emitted on failure.
      *
-     * @return any errors that occured
+     * @return any errors that occurred
      */
     init(): Promise<NullableError>
     {
@@ -73,14 +73,18 @@ export class MongoDeltaDao implements DeltaDao
                 // if there was an error, don't bother with anything else
                 if ( err )
                 {
-                    // in some circumstances, it may just be telling us that we're
-                    // already connected (even though the connection may have been
-                    // broken)
+                    // in some circumstances, it may just be telling us that
+                    // we're already connected (even though the connection may
+                    // have been broken)
                     if ( err.errno !== undefined )
                     {
                         reject( 'Error opening mongo connection: ' + err );
                         return;
                     }
+                } else if ( db == null )
+                {
+                    reject( 'No database connection' );
+                    return;
                 }
 
                 // quotes collection
@@ -116,7 +120,7 @@ export class MongoDeltaDao implements DeltaDao
                         );
                     }
                 );
-            });
+            } );
         } );
     }
 
@@ -165,8 +169,10 @@ export class MongoDeltaDao implements DeltaDao
     /**
      * Set the document's processed index
      *
-     * @param doc_id   - Document whose index will be set
-     * @param type     - Delta type
+     * @param doc_id - Document whose index will be set
+     * @param type   - Delta type
+     *
+     * @return any errors that occurred
      */
     advanceDeltaIndex(
         doc_id:   DocumentId,
@@ -177,7 +183,7 @@ export class MongoDeltaDao implements DeltaDao
         {
             const inc_data: Record<string, any> = {};
 
-            inc_data[ 'lastPublishDelta.' + type ] = 1;
+            inc_data[ 'totalPublishDelta.' + type ] = 1;
 
             this._collection!.update(
                 { id: doc_id },
@@ -206,7 +212,7 @@ export class MongoDeltaDao implements DeltaDao
      * @param doc_id         - The document to mark
      * @param last_update_ts - The last time this document was updated
      *
-     * @return true if the document was successfully marked as processed
+     * @return any errors that occurred
      */
     markDocumentAsProcessed(
         doc_id:         DocumentId,
@@ -231,7 +237,74 @@ export class MongoDeltaDao implements DeltaDao
                     return;
                 }
             );
+        } );
+    }
 
+
+    /**
+     * Flag the document as being in an error state
+     *
+     * @param doc_id - The document to flag
+     *
+     * @return any errors that occurred
+     */
+    setErrorFlag( doc_id: DocumentId ): Promise<NullableError>
+    {
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection!.update(
+                { id: doc_id },
+                { $set: { deltaError: true } },
+                { upsert: false },
+                function( err )
+                {
+                    if ( err )
+                    {
+                        reject( "Failed setting error flag: " + err );
+                        return;
+                    }
+
+                    resolve();
+                    return;
+                }
+            );
+        } );
+    }
+
+
+    /**
+     * Get a count of documents in an error state
+     *
+     * @return a count of the documents in an error state
+     */
+    getErrorCount(): Promise<number | Error>
+    {
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection!.find(
+                { deltaError: true },
+                {},
+                function( err, cursor )
+                {
+                    if ( err )
+                    {
+                        reject( err );
+                        return;
+                    }
+
+                    cursor.toArray( function( err: NullableError, data: any[] )
+                    {
+                        if ( err )
+                        {
+                            reject( err );
+                            return;
+                        }
+
+                        // return the count
+                        resolve( data.length );
+                    });
+                }
+            )
         } );
     }
 }

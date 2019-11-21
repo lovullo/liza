@@ -18,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import fs   = require( 'fs' );
 
 import { AmqpConfig } from "../src/system/AmqpPublisher";
 import { MongoDeltaDao } from "../src/system/db/MongoDeltaDao";
@@ -28,27 +29,32 @@ import { DeltaLogger } from "../src/system/DeltaLogger";
 import { EventEmitter } from "events";
 import { EventDispatcher } from "../src/system/event/EventDispatcher";
 import { EventSubscriber } from "../src/system/event/EventSubscriber";
-// import { MetricsCollector } from "../src/system/MetricsCollector";
+import {
+    MetricsCollector,
+    PrometheusConfig,
+} from "../src/system/MetricsCollector";
 
 const {
     Db:          MongoDb,
     Server:      MongoServer,
-    Connection:  MongoConnection,
     ReplServers: ReplSetServers,
-} = require( 'mongodb/lib/mongodb' );
+} = require( 'mongodb' );
 
 // TODO: fix this
-process.env.hostname = 'localhost';
-process.env.port     = '5672';
-process.env.username = 'quote_referral';
-process.env.password = 'Et7iojahwo4aePie9Cahng7Chu5eim4E';
-process.env.vhost    = 'quote';
-process.env.exchange = 'quoteupdate';
-
+process.env.NODE_ENV      = 'dev';
+process.env.amqp_hostname = 'localhost';
+process.env.amqp_port     = '5672';
+process.env.amqp_username = 'quote_referral';
+process.env.amqp_password = 'Et7iojahwo4aePie9Cahng7Chu5eim4E';
+process.env.amqp_vhost    = 'quote';
+process.env.amqp_exchange = 'quoteupdate';
+process.env.prom_hostname = 'dmz2docker01.rsgcorp.local';
+process.env.prom_port     = '9091';
 
 // Environment variables
 const amqp_conf = _getAmqpConfig( process.env );
 const db_conf   = _getMongoConfig( process.env );
+const prom_conf = _getPrometheusConfig( process.env );
 const env       = process.env.NODE_ENV || 'Unknown Environment';
 
 // Event handling
@@ -57,8 +63,8 @@ const event_dispatcher = new EventDispatcher( event_emitter );
 const event_subscriber = new EventSubscriber( event_emitter );
 
 // Event subscribers
-new DeltaLogger( env, event_subscriber, ts_ctr ).init();
-// new MetricsCollector( env, event_subscriber );
+new DeltaLogger( env, event_subscriber, ts_ctr );
+const metrics = new MetricsCollector( prom_conf, event_subscriber );
 
 // Instantiate classes for processor
 const db        = _createDB( db_conf );
@@ -69,9 +75,102 @@ const processor = new DeltaProcessor( dao, publisher, event_dispatcher );
 // If the dao intializes successfully then process on a two second interval
 const interval_ms = 2000;
 
+let process_interval: NodeJS.Timer;
+
 dao.init()
-.then( _ => { setInterval( () => { processor.process(); }, interval_ms ); } )
+.then( _ =>
+{
+    publisher.connect();
+} )
+.then( _ =>
+{
+    const pidPath =  __dirname + '/../conf/.delta_processor.pid';
+
+    writePidFile(pidPath );
+    greet( 'Liza Delta Processor', pidPath );
+
+    process_interval = setInterval(
+        () =>
+        {
+            processor.process();
+            metrics.checkForErrors( dao );
+        },
+        interval_ms,
+    );
+} )
 .catch( err => { console.error( 'Mongo Error: ' + err ); } );
+
+
+/**
+ * Output greeting
+ *
+ * The greeting contains the program name and PID file path.
+ *
+ * @param name     - program name
+ * @param pid_path - path to PID file
+ */
+function greet( name: string, pid_path: string ): void
+{
+    console.log( `${name}`);
+    console.log( `PID file: ${pid_path}` );
+}
+
+
+/**
+ * Write process id (PID) file
+ *
+ * @param pid_path - path to pid file
+ */
+function writePidFile( pid_path: string ): void
+{
+    fs.writeFileSync( pid_path, process.pid );
+
+    process.on( 'SIGINT', function()
+    {
+        shutdown( 'SIGINT' );
+    } )
+    .on( 'SIGTERM', function()
+    {
+        shutdown( 'SIGTERM' );
+    } )
+    .on( 'exit', () =>
+    {
+        fs.unlink( pid_path, () => {} );
+    } );
+}
+
+
+/**
+ * Perform a graceful shutdown
+ *
+ * @param signal - the signal that caused the shutdown
+ */
+function shutdown( signal: string ): void
+{
+    console.log( "Received " + signal + ". Beginning graceful shutdown:" );
+
+    console.log( "...Stopping processing interval" );
+
+    clearInterval( process_interval );
+
+    console.log( "...Closing MongoDb connection" );
+
+    db.close( ( err, _data ) =>
+    {
+        if ( err )
+        {
+            console.error( "    Error closing connection: " + err );
+        }
+    } );
+
+    console.log( "...Closing AMQP connection..." );
+
+    publisher.close();
+
+    console.log( "Shutdown complete. Exiting." );
+
+    process.exit();
+}
 
 
 /** Timestamp constructor
@@ -95,7 +194,7 @@ function _createDB( conf: MongoDbConfig ): MongoDb
 {
     if( conf.ha )
     {
-        var mongodbPort = conf.port || MongoConnection.DEFAULT_PORT;
+        var mongodbPort = conf.port || 27017;
         var mongodbReplSet = conf.replset || 'rs0';
         var dbServers = new ReplSetServers(
             [
@@ -109,7 +208,7 @@ function _createDB( conf: MongoDbConfig ): MongoDb
     {
         var dbServers = new MongoServer(
             conf.host || '127.0.0.1',
-            conf.port || MongoConnection.DEFAULT_PORT,
+            conf.port || 27017,
             {auto_reconnect: true}
         );
     }
@@ -155,14 +254,31 @@ function _getAmqpConfig( env: any ): AmqpConfig
 {
     return <AmqpConfig>{
         "protocol":  "amqp",
-        "hostname":  env.hostname,
-        "port":      +( env.port || 0 ),
-        "username":  env.username,
-        "password":  env.password,
+        "hostname":  env.amqp_hostname,
+        "port":      +( env.amqp_port || 0 ),
+        "username":  env.amqp_username,
+        "password":  env.amqp_password,
         "locale":    "en_US",
         "frameMax":  0,
         "heartbeat": 0,
-        "vhost":     env.vhost,
-        "exchange":  env.exchange,
+        "vhost":     env.amqp_vhost,
+        "exchange":  env.amqp_exchange,
+    };
+}
+
+
+/**
+ * Create a prometheus configuration from the environment
+ *
+ * @param env - the environment variables
+ *
+ * @return the prometheus configuration
+ */
+function _getPrometheusConfig( env: any ): PrometheusConfig
+{
+    return <PrometheusConfig>{
+        "hostname": env.prom_hostname,
+        "port":     +( env.prom_port || 0 ),
+        "env":      process.env.NODE_ENV,
     };
 }

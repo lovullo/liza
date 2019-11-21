@@ -51,6 +51,14 @@ export interface MongoDb
      * @param callback continuation on completion
      */
     open( callback: MongoCallback ): void;
+
+
+    /**
+     * Close the database connection
+     *
+     * @param callback continuation on completion
+     */
+    close( callback: MongoCallback ): void;
 }
 
 

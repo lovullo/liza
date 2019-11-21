@@ -59,7 +59,7 @@ export class DeltaProcessor
     {
         let self = this;
 
-        this._dao.getUnprocessedDocuments()
+        self._dao.getUnprocessedDocuments()
         .then( docs =>
         {
             docs.forEach( doc =>
@@ -68,23 +68,50 @@ export class DeltaProcessor
                 const doc_id: DocumentId = doc.id;
                 const last_updated_ts    = doc.lastUpdate;
 
-                deltas.forEach( delta =>
+                for ( let i = 0; i < deltas.length; i++ )
                 {
+                    const delta     = deltas[ i ];
+                    const startTime = process.hrtime();
+                    let   error     = null;
+
                     self._publisher.publish( delta )
                     .then( _ =>
                     {
                         self._dao.advanceDeltaIndex( doc_id, delta.type );
                     } )
-                    .catch( _ =>
+                    .catch( err =>
                     {
-                        // TODO: blow up?
+                        self._dao.setErrorFlag( doc_id );
+
+                        error = err;
                     } );
-                });
+
+                    // Do not process any more deltas for
+                    // this document if there was an error
+                    if ( error )
+                    {
+                        self._dispatcher.dispatch(
+                            'delta-process-error',
+                            error
+                        );
+
+                        return;
+                    }
+                    else
+                    {
+                        const elapsedTime = process.hrtime( startTime );
+
+                        self._dispatcher.dispatch(
+                            'delta-process-complete',
+                            elapsedTime[ 1 ] / 10000
+                        );
+                    }
+                };
 
                 self._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
                 .then( _ =>
                 {
-                    this._dispatcher.dispatch(
+                    self._dispatcher.dispatch(
                         'document-processed',
                         'Deltas on document ' + doc_id + ' processed '
                             + 'successfully. Document has been marked as '
@@ -93,13 +120,13 @@ export class DeltaProcessor
                 } )
                 .catch( err =>
                 {
-                    this._dispatcher.dispatch( 'mongodb-err', err );
+                    self._dispatcher.dispatch( 'mongodb-err', err );
                 } );
-            });
+            } );
         } )
         .catch( err =>
         {
-            this._dispatcher.dispatch( 'mongodb-err', err );
+            self._dispatcher.dispatch( 'mongodb-err', err );
         } );
     }
 
@@ -137,14 +164,15 @@ export class DeltaProcessor
         const deltas: DeltaResult<any>[] = deltas_obj[ type ] || [];
 
         // Get type specific delta index
-        let last_published_index = 0;
-        if ( doc.lastPublishDelta )
+        let published_count = 0;
+        if ( doc.totalPublishDelta )
         {
-            last_published_index = doc.lastPublishDelta[ type ] || 0;
+            published_count = doc.totalPublishDelta[ type ] || 0;
         }
 
         // Only return the unprocessed deltas
-        const deltas_trimmed = deltas.slice( last_published_index );
+        console.log( published_count );
+        const deltas_trimmed = deltas.slice( published_count );
 
         // Mark each delta with its type
         deltas_trimmed.forEach( delta =>

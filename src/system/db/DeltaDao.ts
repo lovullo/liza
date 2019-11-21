@@ -47,7 +47,7 @@ export interface DeltaDao
      * @param doc_id - Document whose index will be set
      * @param type   - Delta type
      *
-     * @return any errors that occured
+     * @return any errors that occurred
      */
     advanceDeltaIndex(
         doc_id:   DocumentId,
@@ -62,11 +62,29 @@ export interface DeltaDao
      * @param doc_id         - The document to mark
      * @param last_update_ts - The last time this document was updated
      *
-     * @return true if the document was successfully marked as processed
+     * @return any errors that occurred
      */
     markDocumentAsProcessed(
         doc_id:          DocumentId,
         last_update_ts:  UnixTimestamp,
     ): Promise<NullableError>
+
+
+    /**
+     * Flag the document as being in an error state
+     *
+     * @param doc_id - The document to flag
+     *
+     * @return any errors that occurred
+     */
+    setErrorFlag( doc_id: DocumentId ): Promise<NullableError>
+
+
+    /**
+     * Get a count of documents in an error state
+     *
+     * @return a count of the documents in an error state
+     */
+    getErrorCount(): Promise<number | Error>
 }
 

@@ -27,7 +27,8 @@ import { EventDispatcher } from './event/EventDispatcher';
 import {
     connect as amqpConnect,
     Options,
-    Channel
+    Channel,
+    Connection,
 } from 'amqplib';
 
 const avro = require( 'avro-js' );
@@ -38,8 +39,23 @@ export interface AmqpConfig extends Options.Connect {
 }
 
 
+export interface AvroSchema {
+    /** Write data to a buffer */
+    toBuffer( data: Record<string, any> ): Buffer | null;
+}
+
+
 export class DeltaPublisher implements AmqpPublisher
 {
+    /** The amqp connection */
+    private _conn?: Connection;
+
+    /** The amqp channel */
+    private _channel?: Channel;
+
+    /** The avro schema */
+    private _type?: AvroSchema;
+
     /** The path to the avro schema */
     readonly SCHEMA_PATH = __dirname + '/avro/schema.avsc';
 
@@ -51,7 +67,7 @@ export class DeltaPublisher implements AmqpPublisher
 
 
     /**
-     * Initialize publisher
+     * Delta publisher
      *
      * @param _conf    - amqp configuration
      * @param _emitter - event emitter instance
@@ -61,7 +77,57 @@ export class DeltaPublisher implements AmqpPublisher
         private readonly _conf:       AmqpConfig,
         private readonly _dispatcher: EventDispatcher,
         private readonly _ts_ctr    : () => UnixTimestamp,
-    ) {}
+    ) {
+        this._type = avro.parse( this.SCHEMA_PATH );
+    }
+
+
+    /**
+     * Initialize connection
+     */
+    connect(): Promise<NullableError>
+    {
+        return new Promise<null>( ( resolve, reject ) =>
+        {
+            amqpConnect( this._conf )
+            .then( conn =>
+            {
+                this._conn = conn;
+
+                return this._conn.createChannel();
+            } )
+            .then( ( ch: Channel ) =>
+            {
+                this._channel = ch;
+
+                this._channel.assertExchange(
+                    this._conf.exchange,
+                    'fanout',
+                    { durable: true }
+                );
+
+                resolve();
+                return;
+            } )
+            .catch( e =>
+            {
+                reject( e );
+                return;
+            } );
+        } );
+    }
+
+
+    /**
+     * Close the amqp conenction
+     */
+    close(): void
+    {
+        if ( this._conn )
+        {
+            this._conn.close.bind(this._conn);
+        }
+    }
 
 
     /**
@@ -71,57 +137,34 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @return whether the message was published successfully
     */
-    publish( delta: DeltaResult<any> ): Promise<null>
+    publish( delta: DeltaResult<any> ): Promise<NullableError>
     {
-        const exchange = this._conf.exchange;
-
-        return new Promise<null>( ( resolve, reject ) =>
+        return new Promise<NullableError>( ( resolve, reject ) =>
         {
-            amqpConnect( this._conf )
-            .then( conn =>
-            {
-                setTimeout( () => conn.close(), 10000 );
-                return conn.createChannel();
-            } )
-            .then( ch =>
-            {
-                ch.assertExchange( exchange, 'fanout', { durable: true } );
+            const startTime = process.hrtime();
 
-                return this.sendMessage( ch, exchange, delta );
-            } )
-            .then( sentSuccessfully =>
+            this.sendMessage( delta )
+            .then( _ =>
             {
-                console.log('sentSuccessfully', sentSuccessfully);
-                if ( sentSuccessfully )
-                {
-                    this._dispatcher.dispatch(
-                        'delta-publish',
-                        "Published " + delta.type + " delta with ts '"
-                            + delta.timestamp + "' to '" + exchange
-                            + '" exchange',
-                    );
+                this._dispatcher.dispatch(
+                    'delta-publish',
+                    "Published " + delta.type + " delta with ts '"
+                        + delta.timestamp + "' to '" + this._conf.exchange
+                        + '" exchange',
+                );
 
-                    resolve();
-                }
-                else
-                {
-                    this._dispatcher.dispatch(
-                        'publish-err',
-                        "Error publishing " + delta.type + " delta with ts '"
-                            + delta.timestamp + "' to '" + exchange
-                            + "' exchange",
-                    );
-
-                    reject();
-                }
+                console.log('#publish: '
+                    + process.hrtime( startTime )[0] / 10000 );
+                resolve();
+                return;
             } )
             .catch( e =>
             {
                 this._dispatcher.dispatch(
                     'publish-err',
                     "Error publishing " + delta.type + " delta with ts '"
-                        + delta.timestamp + '" to "' + exchange + "' exchange '"
-                        + e,
+                        + delta.timestamp + '" to "' + this._conf.exchange
+                        + "' exchange: '" + e,
                 )
 
                 reject();
@@ -133,75 +176,92 @@ export class DeltaPublisher implements AmqpPublisher
     /**
      * Send message to exchange
      *
-     * @param channel  - AMQP channel
-     * @param exchange - exchange name
-     * @param delta    - The delta to publish
+     * @param delta - The delta to publish
      *
      * @return whether publish was successful
      */
-    sendMessage(
-        channel:  Channel,
-        exchange: string,
-        delta:    DeltaResult<any>,
-    ): boolean
+    sendMessage( delta: DeltaResult<any> ): Promise<NullableError>
     {
-        const headers = {
-            version: 1,
-            created: Date.now(),
-        };
-
-        // Convert all delta datums to string for avro
-        const delta_data = this.avroFormat( delta.data );
-        const event_id   = this.DELTA_MAP[ delta.type ];
-
-        const data = {
-            event: {
-                id:    event_id,
-                ts:    this._ts_ctr(),
-                actor: 'SERVER',
-                step:  null,
-            },
-            document: {
-                id:       123123, // Fix
-            },
-            session: {
-                entity_name: 'Foobar', // Fix
-                entity_id:   123123, // Fix
-            },
-            data: {
-                Data: {
-                    bucket: delta_data,
-                },
-            },
-            delta: {
-                Data: {
-                    bucket: delta_data,
-                },
-            },
-            program: {
-                Program: {
-                    id:      'quote_server',
-                    version: 'dadaddwafdwa', // Fix
-                },
-            },
-        };
-
-        const avro_buffer = this.avroEncode( data );
-
-        if ( !avro_buffer )
+        return new Promise<NullableError>( ( resolve, reject ) =>
         {
-            return false;
-        }
+            const startTime = process.hrtime();
 
-        // we don't use a routing key; fanout exchange
-        const routing_key = '';
+            const ts          = this._ts_ctr();
+            const headers     = { version: 1, created: ts };
+            const delta_data  = this.avroFormat( delta.data );
+            console.log('#sendmessage 1: '
+                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
+            const event_id    = this.DELTA_MAP[ delta.type ];
+            const avro_buffer = this.avroEncode( {
+                event: {
+                    id:    event_id,
+                    ts:    ts,
+                    actor: 'SERVER',
+                    step:  null,
+                },
+                document: {
+                    id:       123123, // Fix
+                },
+                session: {
+                    entity_name: 'Foobar', // Fix
+                    entity_id:   123123, // Fix
+                },
+                data: {
+                    Data: {
+                        bucket: delta_data,
+                    },
+                },
+                delta: {
+                    Data: {
+                        bucket: delta_data,
+                    },
+                },
+                program: {
+                    Program: {
+                        id:      'quote_server',
+                        version: 'dadaddwafdwa', // Fix
+                    },
+                },
+            } );
+            console.log('#sendmessage 2: '
+                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
 
-        return channel.publish(
-            exchange,
-            routing_key,
-            avro_buffer,
-            { headers: headers },
-        );
+            if ( !this._conn )
+            {
+                reject( 'Error sending message: No connection' );
+                return;
+            }
+            else if ( !this._channel )
+            {
+                reject( 'Error sending message: No channel' );
+                return;
+            }
+            else if ( !avro_buffer )
+            {
+                reject( 'Error sending message: No avro buffer' );
+                return;
+            }
+            console.log('#sendmessage 3: '
+                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
+
+            // we don't use a routing key; fanout exchange
+            const published_successfully = this._channel.publish(
+                this._conf.exchange,
+                '',
+                avro_buffer,
+                { headers: headers },
+            );
+
+            if ( published_successfully )
+            {
+                console.log('#sendmessage 4: '
+                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
+                resolve();
+                return;
+            }
+
+            reject( 'Error sending message: publishing failed' );
+        } );
     }
 
 
@@ -218,13 +278,22 @@ export class DeltaPublisher implements AmqpPublisher
 
         try
         {
-            const type   = avro.parse( this.SCHEMA_PATH );
-                  buffer = type.toBuffer( data );
+            if ( !this._type )
+            {
+                this._dispatcher.dispatch(
+                    'avro-err',
+                    'No avro scheama found',
+                );
+
+                return null;
+            }
+
+            buffer = this._type.toBuffer( data );
         }
         catch( e )
         {
             this._dispatcher.dispatch(
-                'avro-parse-err',
+                'avro-err',
                 'Error encoding data to avro: ' + e,
             );
         }

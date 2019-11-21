@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "typescript":              "~3.7",
-    "@types/node":             "@TS_NODE_VERSION@",
+    "@types/node":             "12.12.11",
     "chai":                    ">=1.9.1 < 4",
     "@types/chai":             ">=1.9.1 < 4",
     "chai-as-promised":        "7.1.0",
@@ -40,7 +40,8 @@
     "sinon":                   ">=1.17.4",
     "es6-promise":             "~3",
     "@types/amqplib":          "0.5.13",
-    "avro-js":                 "1.9.1"
+    "avro-js":                 "1.9.1",
+    "prom-client":             "11.0.0"
   },
 
   "licenses": [
