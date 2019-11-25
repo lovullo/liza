@@ -21,9 +21,11 @@
  * Get deltas from the mongo document in order to process and publish them
  */
 
-import { DocumentId } from "../../document/Document";
-import { DeltaDao } from "./DeltaDao";
-import { MongoCollection } from "mongodb";
+import { DocumentId } from '../../document/Document';
+import { DeltaDao } from './DeltaDao';
+import { MongoCollection } from 'mongodb';
+import { context } from '../../error/ContextError';
+import { MongoError } from './MongoError';
 
 export type MongoDeltaType = 'ratedata' | 'data';
 
@@ -31,17 +33,11 @@ export type MongoDeltaType = 'ratedata' | 'data';
 /** Manage deltas */
 export class MongoDeltaDao implements DeltaDao
 {
-    /** Collection used to store quotes */
-    readonly COLLECTION: string = 'quotes';
-
     /** The ratedata delta type */
     static readonly DELTA_RATEDATA: string = 'ratedata';
 
     /** The data delta type */
     static readonly DELTA_DATA: string = 'data';
-
-    /** The mongo quotes collection */
-    private _collection?: MongoCollection | null;
 
 
     /**
@@ -50,79 +46,8 @@ export class MongoDeltaDao implements DeltaDao
      * @param _db Mongo db
      */
     constructor(
-        private readonly _db: any,
+        private readonly _collection: MongoCollection,
     ) {}
-
-
-    /**
-     * Attempts to connect to the database
-     *
-     * connectError event will be emitted on failure.
-     *
-     * @return any errors that occurred
-     */
-    init(): Promise<null>
-    {
-        var dao = this;
-
-        return new Promise( ( resolve, reject ) =>
-        {
-            // attempt to connect to the database
-            this._db.open( function( err: any, db: any )
-            {
-                // if there was an error, don't bother with anything else
-                if ( err )
-                {
-                    // in some circumstances, it may just be telling us that
-                    // we're already connected (even though the connection may
-                    // have been broken)
-                    if ( err.errno !== undefined )
-                    {
-                        reject( 'Error opening mongo connection: ' + err );
-                        return;
-                    }
-                } else if ( db == null )
-                {
-                    reject( 'No database connection' );
-                    return;
-                }
-
-                // quotes collection
-                db.collection(
-                    dao.COLLECTION,
-                    function(
-                        _err:       any,
-                        collection: MongoCollection,
-                    ) {
-                        // for some reason this gets called more than once
-                        if ( collection == null )
-                        {
-                            return;
-                        }
-
-                        // initialize indexes
-                        collection.createIndex(
-                            [ ['id', 1] ],
-                            true,
-                            function( err: any, _index: { [P: string]: any } )
-                            {
-                                if ( err )
-                                {
-                                    reject( 'Error creating index: ' + err );
-                                    return;
-                                }
-
-                                // mark the DAO as ready to be used
-                                dao._collection = collection;
-                                resolve();
-                                return;
-                            }
-                        );
-                    }
-                );
-            } );
-        } );
-    }
 
 
     /**
@@ -132,34 +57,37 @@ export class MongoDeltaDao implements DeltaDao
      */
     getUnprocessedDocuments(): Promise<Record<string, any>[]>
     {
-        var self = this;
-
         return new Promise( ( resolve, reject ) =>
         {
-            if ( !self._collection )
-            {
-                reject( 'Database not ready' );
-                return;
-            }
-
-
-            this._collection!.find(
+            this._collection.find(
                 { published: false },
                 {},
-                function( _err, cursor )
+                ( e, cursor ) =>
                 {
-                    cursor.toArray( function( _err: NullableError, data: any[] )
+                    if ( e )
                     {
-                        // was the quote found?
-                        if ( data.length == 0 )
+                        reject(
+                            new MongoError(
+                                'Error fetching unprocessed documents: ' + e
+                            )
+                        );
+                        return
+                    }
+
+                    cursor.toArray( ( e: Error, data: any[] ) =>
+                    {
+                        if ( e )
                         {
-                            resolve( [] );
+                            reject(
+                                new MongoError(
+                                    'Error fetching array from cursor: ' + e
+                                )
+                            );
                             return;
                         }
 
-                        // return the quote data
                         resolve( data );
-                    });
+                    } );
                 }
             )
         } );
@@ -185,20 +113,27 @@ export class MongoDeltaDao implements DeltaDao
 
             inc_data[ 'totalPublishDelta.' + type ] = 1;
 
-            this._collection!.update(
+            this._collection.update(
                 { id: doc_id },
                 { $inc: inc_data },
                 { upsert: false },
-                function( err )
+                e =>
                 {
-                    if ( err )
+                    if ( e )
                     {
-                        reject( 'Error advancing delta index: ' + err )
+                        reject( context(
+                            new MongoError(
+                                'Error advancing delta index: ' + e
+                            ),
+                            {
+                                doc_id: doc_id,
+                                type:   type,
+                            }
+                        ) );
                         return;
                     }
 
                     resolve();
-                    return;
                 }
             );
         } );
@@ -206,7 +141,9 @@ export class MongoDeltaDao implements DeltaDao
 
 
     /**
-     * Mark a given document as processed. First does a check to make sure that
+     * Mark a given document as processed.
+     *
+     * First does a check to make sure that
      * the document does not have a newer update timestamp than the provided one
      *
      * @param doc_id         - The document to mark
@@ -221,15 +158,23 @@ export class MongoDeltaDao implements DeltaDao
     {
         return new Promise( ( resolve, reject ) =>
         {
-            this._collection!.update(
+            this._collection.update(
                 { id: doc_id, lastUpdate: { $lte: last_update_ts } },
                 { $set: { published: true } },
                 { upsert: false },
-                function( err )
+                e =>
                 {
-                    if ( err )
+                    if ( e )
                     {
-                        reject( "Error marking document as processed: " + err );
+                        reject( context(
+                            new MongoError(
+                                'Error marking document as processed: ' + e
+                            ),
+                            {
+                                doc_id:         doc_id,
+                                last_update_ts: last_update_ts,
+                            }
+                        ) );
                         return;
                     }
 
@@ -252,15 +197,22 @@ export class MongoDeltaDao implements DeltaDao
     {
         return new Promise( ( resolve, reject ) =>
         {
-            this._collection!.update(
+            this._collection.update(
                 { id: doc_id },
                 { $set: { deltaError: true } },
                 { upsert: false },
-                function( err )
+                e =>
                 {
-                    if ( err )
+                    if ( e )
                     {
-                        reject( "Failed setting error flag: " + err );
+                        reject( context(
+                            new MongoError(
+                                'Failed setting error flag: ' + e
+                            ),
+                            {
+                                doc_id: doc_id,
+                            }
+                        ) );
                         return;
                     }
 
@@ -281,26 +233,36 @@ export class MongoDeltaDao implements DeltaDao
     {
         return new Promise( ( resolve, reject ) =>
         {
-            this._collection!.find(
+            this._collection.find(
                 { deltaError: true },
                 {},
-                function( err, cursor )
+                ( e, cursor ) =>
                 {
-                    if ( err )
+                    if ( e )
                     {
-                        reject( err );
+                        reject(
+                            new Error(
+                                'Failed getting error count: ' + e
+                            )
+                        );
                         return;
                     }
 
-                    cursor.toArray( function( err: NullableError, data: any[] )
+                    cursor.toArray( ( e: NullableError, data: any[] ) =>
                     {
-                        if ( err )
+                        if ( e )
                         {
-                            reject( err );
+                            reject( context(
+                                new MongoError(
+                                    'Failed getting error count: ' + e
+                                ),
+                                {
+                                    cursor: cursor,
+                                }
+                            ) );
                             return;
                         }
 
-                        // return the count
                         resolve( data.length );
                     });
                 }

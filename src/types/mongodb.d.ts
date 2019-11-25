@@ -37,6 +37,9 @@ export interface MongoDbConfig extends Record<string, any> {
 
     /** High availability */
     ha: boolean;
+
+    /** The mongodb collection to read from */
+    collection: string;
 }
 
 
@@ -62,9 +65,7 @@ export interface MongoDb
 }
 
 
-/**
- * Node-style callback for queries
- */
+/** Node-style callback for queries */
 type MongoCallback = ( err: NullableError, data: { [P: string]: any } ) => void;
 
 

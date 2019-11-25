@@ -1,5 +1,5 @@
 /**
- * Delta logger
+ * Event logger
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Logger for delta events
+ * PSR-12 style logger based on node events
  */
 
 import { EventEmitter } from "events";
@@ -42,19 +42,20 @@ declare type StructuredLog = {
     severity:  string;
 }
 
-export class DeltaLogger
+export class EventLogger
 {
     /**
-     * Initialize delta logger
+     * Initialize logger
      *
      * @param _env     - The environment ( dev, test, demo, live )
      * @param _emitter - An event emitter
      * @param _ts_ctr  - a timestamp constructor
      */
     constructor(
-        private readonly _env:        string,
+        private readonly _console: Console,
+        private readonly _env:     string,
         private readonly _emitter: EventEmitter,
-        private readonly _ts_ctr    : () => UnixTimestamp,
+        private readonly _ts_ctr:  () => UnixTimestamp,
     ) {
         this.init();
     }
@@ -73,6 +74,16 @@ export class DeltaLogger
         this._registerEvent( 'avro-err',            LogLevel.ERROR );
         this._registerEvent( 'mongodb-err',         LogLevel.ERROR );
         this._registerEvent( 'publish-err',         LogLevel.ERROR );
+
+        // this._registerEvent( 'log', LogLevel.INFO );
+        // this._registerEvent( 'debug', LogLevel.DEBUG );
+        // this._registerEvent( 'info', LogLevel.INFO );
+        // this._registerEvent( 'notice', LogLevel.NOTICE );
+        // this._registerEvent( 'warning', LogLevel.WARNING );
+        // this._registerEvent( 'error', LogLevel.ERROR );
+        // this._registerEvent( 'critical', LogLevel.CRITICAL );
+        // this._registerEvent( 'alert', LogLevel.ALERT );
+        // this._registerEvent( 'emergency', LogLevel.EMERGENCY );
     }
 
 
@@ -103,18 +114,18 @@ export class DeltaLogger
         {
             case LogLevel.DEBUG:
             case LogLevel.INFO:
-                return ( _ ) => console.info( this._formatLog( _, level ) );
+                return ( str ) => this._console.info( this._format( str, level ) );
             case LogLevel.NOTICE:
-                return ( _ ) => console.log( this._formatLog( _, level ) );
+                return ( str ) => this._console.log( this._format( str, level ) );
             case LogLevel.WARNING:
-                return ( _ ) => console.warn( this._formatLog( _, level ) );
+                return ( str ) => this._console.warn( this._format( str, level ) );
             case LogLevel.ERROR:
             case LogLevel.CRITICAL:
             case LogLevel.ALERT:
             case LogLevel.EMERGENCY:
-                return ( _ ) => console.error( this._formatLog( _, level ) );
+                return ( str ) => this._console.error( this._format( str, level ) );
             default:
-                return ( _ ) => console.log( "UNKNOWN LOG LEVEL: " + _ );
+                return ( str ) => this._console.log( "UNKNOWN LOG LEVEL: " + str );
         }
     }
 
@@ -127,7 +138,7 @@ export class DeltaLogger
      *
      * @returns a structured logging object
      */
-    private _formatLog( str: string, level: LogLevel ): StructuredLog
+    private _format( str: string, level: LogLevel ): StructuredLog
     {
         return <StructuredLog>{
             message:   str,

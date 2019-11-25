@@ -22,12 +22,11 @@
  */
 
 import { DeltaDao } from "./db/DeltaDao";
-import { PositiveInteger } from "../numeric";
 import { Histogram, Pushgateway, Counter, Gauge } from 'prom-client';
 import { EventEmitter } from "events";
+import { PrometheusFactory } from './PrometheusFactory';
 
-const client = require( 'prom-client' );
-
+const client = require( 'prom-client' )
 
 export declare type PrometheusConfig = {
     /** The hostname to connect to */
@@ -38,6 +37,9 @@ export declare type PrometheusConfig = {
 
     /** The environment ( dev, test, demo, live ) */
     env: string;
+
+    /** The rate (in milliseconds) at which metrics are pushed */
+    push_interval_ms: number;
 }
 
 
@@ -46,41 +48,38 @@ export class MetricsCollector
     /** The prometheus PushGateway */
     private _gateway: Pushgateway;
 
-    /** Metric push interval */
-    private _push_interval_ms: PositiveInteger = <PositiveInteger>5000;
-
     /** Delta processed time histogram */
-    private _process_time_hist:   Histogram;
-    private _process_time_params: Pushgateway.Parameters = {
-        jobName: 'liza_delta_process_time'
-    };
+    private _process_time:      Histogram;
+    private _process_time_name: string = 'liza_delta_process_time';
+    private _process_time_help: string = 'Delta process time in ms';
 
     /** Delta error counter */
-    private _process_error_count:  Counter;
-    private _process_error_params: Pushgateway.Parameters = {
-        jobName: 'liza_delta_error'
-    };
+    private _total_error:      Counter;
+    private _total_error_name: string = 'liza_delta_error';
+    private _total_error_help: string = 'Total errors from delta processing';
 
     /** Delta current error gauge */
-    private _current_error_gauge:  Gauge;
-    private _current_error_params: Pushgateway.Parameters = {
-        jobName: 'liza_delta_current_error'
-    };
+    private _current_error:      Gauge;
+    private _current_error_name: string = 'liza_delta_current_error';
+    private _current_error_help: string =
+        'The current number of documents in an error state';
 
     /** Delta error counter */
-    private _process_delta_count:  Counter;
-    private _process_delta_params: Pushgateway.Parameters = {
-        jobName: 'liza_delta_success'
-    };
+    private _total_processed:      Counter;
+    private _total_processed_name: string = 'liza_delta_success';
+    private _total_processed_help: string =
+        'Total deltas successfully processed';
 
     /**
      * Initialize delta logger
      *
-     * @param _conf       - the prometheus configuration
-     * @param _emitter - the event emitr
+     * @param _factory - A factory to create prometheus components
+     * @param _conf    - Prometheus configuration
+     * @param _emitter - Event emitter
      */
     constructor(
-        private readonly _conf:       PrometheusConfig,
+        private readonly _factory: PrometheusFactory,
+        private readonly _conf:    PrometheusConfig,
         private readonly _emitter: EventEmitter,
     ) {
         // Set labels
@@ -89,68 +88,72 @@ export class MetricsCollector
             service: 'delta_processor',
         } );
 
-        // Create gateway
-        const url     = 'http://' + this._conf.hostname + ':' + this._conf.port;
-        this._gateway = new client.Pushgateway( url );
-
         // Create metrics
-        this._process_time_hist = new client.Histogram( {
-            name:       this._process_time_params.jobName,
-            help:       'Time in ms for deltas to be processed',
-            labelNames: [ 'env', 'service' ],
-            buckets:    client.linearBuckets(0, 10, 10),
-        } );
+        this._gateway = this._factory.createGateway(
+            client,
+            this._conf.hostname,
+            this._conf.port,
+        );
 
-        this._process_error_count = new client.Counter( {
-            name:       this._process_error_params.jobName,
-            help:       'Error count for deltas being processed',
-            labelNames: [ 'env', 'service' ],
-        } );
+        this._process_time = this._factory.createHistogram(
+            client,
+            this._process_time_name,
+            this._process_time_help,
+            0,
+            10,
+            10,
+        );
 
-        this._current_error_gauge = new client.Gauge( {
-            name:       this._current_error_params.jobName,
-            help:       'The current number of documents in an error state',
-            labelNames: [ 'env', 'service' ],
-        } );
+        this._total_error = this._factory.createCounter(
+            client,
+            this._total_error_name,
+            this._total_error_help,
+        );
 
-        this._process_delta_count = new client.Counter( {
-            name:       this._process_delta_params.jobName,
-            help:       'Count of deltas successfully processed',
-            labelNames: [ 'env', 'service' ],
-        } );
+        this._current_error = this._factory.createGauge(
+            client,
+            this._current_error_name,
+            this._current_error_help,
+        );
 
-        // Push metrics on a specific intervals
+        this._total_processed = this._factory.createCounter(
+            client,
+            this._total_processed_name,
+            this._total_processed_help,
+        );
+
+        // Push metrics on a specific interval
         setInterval(
             () =>
             {
                 this._gateway.pushAdd(
                     { jobName: 'liza_delta_metrics' }, this.pushCallback
                 );
-            }, this._push_interval_ms
+            }, this._conf.push_interval_ms
         );
 
         // Subsribe metrics to events
-        this.emitMetrics();
+        this.hookMetrics();
     }
 
 
     /**
-     * emit metrics
+     * List to events to update metrics
      */
-    private emitMetrics()
+    private hookMetrics()
     {
         this._emitter.on(
             'delta-process-complete',
             ( val: any ) =>
             {
-                this._process_time_hist.observe( val );
-                this._process_delta_count.inc();
+                this._process_time.observe( val );
+                this._total_processed.inc();
             }
         );
 
         this._emitter.on(
             'delta-process-error',
-            ( _ ) => this._process_error_count.inc()
+            ( _ ) => this._total_error.inc()
         );
     }
 
@@ -182,15 +185,8 @@ export class MetricsCollector
     checkForErrors( dao: DeltaDao ): NullableError
     {
         dao.getErrorCount()
-        .then( count =>
-        {
-            // console.log( 'Error count: ', count );
-            this._current_error_gauge.set( +count );
-        } )
-        .catch( err =>
-        {
-            return err;
-        } );
+        .then( count => { this._current_error.set( +count ); } )
+        .catch( err => { return err; } );
 
         return null;
     }

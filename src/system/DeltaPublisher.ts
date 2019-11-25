@@ -79,7 +79,7 @@ export class DeltaPublisher implements AmqpPublisher
     /**
      * Initialize connection
      */
-    connect(): Promise<NullableError>
+    connect(): Promise<null>
     {
         return new Promise<null>( ( resolve, reject ) =>
         {
@@ -181,9 +181,9 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @return whether the message was published successfully
     */
-    publish( delta: DeltaResult<any> ): Promise<NullableError>
+    publish( delta: DeltaResult<any> ): Promise<null>
     {
-        return new Promise<NullableError>( ( resolve, reject ) =>
+        return new Promise<null>( ( resolve, reject ) =>
         {
             this.sendMessage( delta )
             .then( _ =>
@@ -220,9 +220,9 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @return whether publish was successful
      */
-    sendMessage( delta: DeltaResult<any> ): Promise<NullableError>
+    sendMessage( delta: DeltaResult<any> ): Promise<null>
     {
-        return new Promise<NullableError>( ( resolve, reject ) =>
+        return new Promise<null>( ( resolve, reject ) =>
         {
             const ts          = this._ts_ctr();
             const headers     = { version: 1, created: ts };
