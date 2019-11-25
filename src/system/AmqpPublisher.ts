@@ -26,8 +26,41 @@ import { Options } from 'amqplib';
 
 
 export interface AmqpConfig extends Options.Connect {
+    /** The protocol to connect with (should always be "amqp") */
+    protocol: string;
+
+    /** The hostname to connect to */
+    hostname: string;
+
+    /** The port to connect to */
+    port: number;
+
+    /** A username if one if required */
+    username?: string;
+
+    /** A password if one if required */
+    password?: string;
+
+    /** Locale (should always be "en_US") */
+    locale: string;
+
+    /** The size in bytes of the maximum frame allowed */
+    frameMax: number;
+
+    /** How often to check for a live connection */
+    heartBeat: number;
+
+    /** The virtual host we are on (e.g. live, demo, test) */
+    vhost?: string;
+
     /** The name of a queue or exchange to publish to */
     exchange: string;
+
+    /** The number of times to retry connecting */
+    retries: number;
+
+    /** The time to wait in between retries */
+    retry_wait: number;
 }
 
 

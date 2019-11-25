@@ -65,11 +65,14 @@ export class DeltaLogger
      */
     init(): void
     {
-        this._registerEvent( 'document-processed', LogLevel.NOTICE );
-        this._registerEvent( 'delta-publish',      LogLevel.NOTICE );
-        this._registerEvent( 'avro-err',           LogLevel.ERROR );
-        this._registerEvent( 'mongodb-err',        LogLevel.ERROR );
-        this._registerEvent( 'publish-err',        LogLevel.ERROR );
+        this._registerEvent( 'document-processed',  LogLevel.NOTICE );
+        this._registerEvent( 'delta-publish',       LogLevel.NOTICE );
+        this._registerEvent( 'amqp-conn-error',     LogLevel.WARNING );
+        this._registerEvent( 'amqp-reconnect',      LogLevel.WARNING );
+        this._registerEvent( 'amqp-reconnect-fail', LogLevel.ERROR );
+        this._registerEvent( 'avro-err',            LogLevel.ERROR );
+        this._registerEvent( 'mongodb-err',         LogLevel.ERROR );
+        this._registerEvent( 'publish-err',         LogLevel.ERROR );
     }
 
 

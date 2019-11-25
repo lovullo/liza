@@ -21,22 +21,16 @@
  * Publish delta message to a queue
  */
 
-import { AmqpPublisher } from './AmqpPublisher';
+import { AmqpPublisher, AmqpConfig } from './AmqpPublisher';
 import { DeltaResult } from '../bucket/delta';
 import { EventDispatcher } from './event/EventDispatcher';
 import {
     connect as amqpConnect,
-    Options,
     Channel,
     Connection,
 } from 'amqplib';
 
 const avro = require( 'avro-js' );
-
-export interface AmqpConfig extends Options.Connect {
-    /** The name of a queue or exchange to publish to */
-    exchange: string;
-}
 
 
 export interface AvroSchema {
@@ -94,6 +88,56 @@ export class DeltaPublisher implements AmqpPublisher
             {
                 this._conn = conn;
 
+                // If there is an error, attemp to reconnect
+                this._conn.on( 'error', e =>
+                {
+                    this._dispatcher.dispatch( 'amqp-conn-error', e );
+
+                    let reconnect_interval: NodeJS.Timer;
+
+                    let retry_count = 0;
+
+                    const reconnect = () =>
+                    {
+                        if ( ++retry_count >= this._conf.retries )
+                        {
+                            clearInterval( reconnect_interval );
+
+                            this._dispatcher.dispatch(
+                                'amqp-reconnect-fail',
+                                'Could not re-establish AMQP connection.'
+                            );
+
+                            return;
+                        }
+
+                        this._dispatcher.dispatch(
+                            'amqp-reconnect',
+                            '...attempting to re-establish AMQP connection'
+                        );
+
+                        this.connect()
+                        .then( _ =>
+                        {
+                            clearInterval( reconnect_interval );
+
+                            this._dispatcher.dispatch(
+                                'amqp-reconnect',
+                                'AMQP re-connected'
+                            );
+                        } )
+                        .catch( e =>
+                        {
+                            this._dispatcher.dispatch( 'amqp-conn-error', e );
+                        } );
+                    }
+
+                    reconnect_interval = setInterval(
+                        reconnect,
+                        ( this._conf.retry_wait * 1000 )
+                    );
+                } );
+
                 return this._conn.createChannel();
             } )
             .then( ( ch: Channel ) =>
@@ -141,8 +185,6 @@ export class DeltaPublisher implements AmqpPublisher
     {
         return new Promise<NullableError>( ( resolve, reject ) =>
         {
-            const startTime = process.hrtime();
-
             this.sendMessage( delta )
             .then( _ =>
             {
@@ -153,8 +195,6 @@ export class DeltaPublisher implements AmqpPublisher
                         + '" exchange',
                 );
 
-                console.log('#publish: '
-                    + process.hrtime( startTime )[0] / 10000 );
                 resolve();
                 return;
             } )
@@ -184,13 +224,9 @@ export class DeltaPublisher implements AmqpPublisher
     {
         return new Promise<NullableError>( ( resolve, reject ) =>
         {
-            const startTime = process.hrtime();
-
             const ts          = this._ts_ctr();
             const headers     = { version: 1, created: ts };
             const delta_data  = this.avroFormat( delta.data );
-            console.log('#sendmessage 1: '
-                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
             const event_id    = this.DELTA_MAP[ delta.type ];
             const avro_buffer = this.avroEncode( {
                 event: {
@@ -223,8 +259,6 @@ export class DeltaPublisher implements AmqpPublisher
                     },
                 },
             } );
-            console.log('#sendmessage 2: '
-                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
 
             if ( !this._conn )
             {
@@ -241,8 +275,6 @@ export class DeltaPublisher implements AmqpPublisher
                 reject( 'Error sending message: No avro buffer' );
                 return;
             }
-            console.log('#sendmessage 3: '
-                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
 
             // we don't use a routing key; fanout exchange
             const published_successfully = this._channel.publish(
@@ -254,8 +286,6 @@ export class DeltaPublisher implements AmqpPublisher
 
             if ( published_successfully )
             {
-                console.log('#sendmessage 4: '
-                    + (process.hrtime( startTime )[ 1 ] / 10000) + 'ms');
                 resolve();
                 return;
             }

@@ -130,7 +130,14 @@ export class MetricsCollector
         } );
 
         // Push metrics on a specific intervals
-        setInterval( () => { this.pushMetrics(); }, this._push_interval_ms );
+        setInterval(
+            () =>
+            {
+                this._gateway.pushAdd(
+                    { jobName: 'liza_delta_metrics' }, this.pushCallback
+                );
+            }, this._push_interval_ms
+        );
 
         // Subsribe metrics to events
         this.subscribeMetrics();
@@ -146,7 +153,6 @@ export class MetricsCollector
             'delta-process-complete',
             ( val ) =>
             {
-                console.log( 'Got time: ' + val + 'ms' );
                 this._process_time_hist.observe( val );
                 this._process_delta_count.inc();
             }
@@ -155,25 +161,6 @@ export class MetricsCollector
         this._subscriber.subscribe(
             'delta-process-error',
             ( _ ) => this._process_error_count.inc()
-        );
-    }
-
-
-    /**
-     * Push metrics to Prometheus PushGateway
-     */
-    private pushMetrics(): void
-    {
-        // this._gateway.pushAdd( this._process_time_params, this.pushCallback );
-        // this._gateway.pushAdd( this._process_error_params, this.pushCallback );
-        // this._gateway.pushAdd( this._current_error_params, this.pushCallback );
-        // this._gateway.pushAdd( this._process_delta_params, this.pushCallback );
-
-        this._gateway.pushAdd(
-            {
-                jobName: 'liza_delta_metrics'
-            },
-            this.pushCallback
         );
     }
 

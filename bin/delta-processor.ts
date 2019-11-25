@@ -41,15 +41,19 @@ const {
 } = require( 'mongodb' );
 
 // TODO: fix this
-process.env.NODE_ENV      = 'dev';
-process.env.amqp_hostname = 'localhost';
-process.env.amqp_port     = '5672';
-process.env.amqp_username = 'quote_referral';
-process.env.amqp_password = 'Et7iojahwo4aePie9Cahng7Chu5eim4E';
-process.env.amqp_vhost    = 'quote';
-process.env.amqp_exchange = 'quoteupdate';
-process.env.prom_hostname = 'dmz2docker01.rsgcorp.local';
-process.env.prom_port     = '9091';
+process.env.NODE_ENV        = 'dev';
+process.env.amqp_hostname   = 'localhost';
+process.env.amqp_port       = '5672';
+process.env.amqp_username   = 'quote_referral';
+process.env.amqp_password   = 'Et7iojahwo4aePie9Cahng7Chu5eim4E';
+process.env.amqp_frameMax   = '0';
+process.env.amqp_heartbeat  = '2';
+process.env.amqp_vhost      = 'quote';
+process.env.amqp_exchange   = 'quoteupdate';
+process.env.amqp_retries    = '30';
+process.env.amqp_retry_wait = '1';
+process.env.prom_hostname   = 'dmz2docker01.rsgcorp.local';
+process.env.prom_port       = '9091';
 
 // Environment variables
 const amqp_conf = _getAmqpConfig( process.env );
@@ -58,19 +62,19 @@ const prom_conf = _getPrometheusConfig( process.env );
 const env       = process.env.NODE_ENV || 'Unknown Environment';
 
 // Event handling
-const event_emitter    = new EventEmitter();
-const event_dispatcher = new EventDispatcher( event_emitter );
-const event_subscriber = new EventSubscriber( event_emitter );
+const emitter    = new EventEmitter();
+const dispatcher = new EventDispatcher( emitter );
+const subscriber = new EventSubscriber( emitter );
 
 // Event subscribers
-new DeltaLogger( env, event_subscriber, ts_ctr );
-const metrics = new MetricsCollector( prom_conf, event_subscriber );
+new DeltaLogger( env, subscriber, ts_ctr );
+const metrics = new MetricsCollector( prom_conf, subscriber );
 
 // Instantiate classes for processor
 const db        = _createDB( db_conf );
 const dao       = new MongoDeltaDao( db );
-const publisher = new DeltaPublisher( amqp_conf, event_dispatcher, ts_ctr );
-const processor = new DeltaProcessor( dao, publisher, event_dispatcher );
+const publisher = new DeltaPublisher( amqp_conf, dispatcher, ts_ctr );
+const processor = new DeltaProcessor( dao, publisher, dispatcher );
 
 // If the dao intializes successfully then process on a two second interval
 const interval_ms = 2000;
@@ -80,7 +84,11 @@ let process_interval: NodeJS.Timer;
 dao.init()
 .then( _ =>
 {
-    publisher.connect();
+    publisher.connect()
+    .catch( e =>
+    {
+        console.error( 'AMQP connection error: ' + e );
+    } );
 } )
 .then( _ =>
 {
@@ -98,7 +106,7 @@ dao.init()
         interval_ms,
     );
 } )
-.catch( err => { console.error( 'Mongo Error: ' + err ); } );
+.catch( err => { console.error( 'Error: ' + err ); } );
 
 
 /**
@@ -253,16 +261,18 @@ function _getMongoConfig( env: any ): MongoDbConfig
 function _getAmqpConfig( env: any ): AmqpConfig
 {
     return <AmqpConfig>{
-        "protocol":  "amqp",
-        "hostname":  env.amqp_hostname,
-        "port":      +( env.amqp_port || 0 ),
-        "username":  env.amqp_username,
-        "password":  env.amqp_password,
-        "locale":    "en_US",
-        "frameMax":  0,
-        "heartbeat": 0,
-        "vhost":     env.amqp_vhost,
-        "exchange":  env.amqp_exchange,
+        "protocol":   "amqp",
+        "hostname":   env.amqp_hostname,
+        "port":       +( env.amqp_port || 0 ),
+        "username":   env.amqp_username,
+        "password":   env.amqp_password,
+        "locale":     "en_US",
+        "frameMax":   env.amqp_frameMax,
+        "heartbeat":  env.amqp_heartbeat,
+        "vhost":      env.amqp_vhost,
+        "exchange":   env.amqp_exchange,
+        "retries":    env.amqp_retries || 30,
+        "retry_wait": env.amqp_retry_wait || 1,
     };
 }
 

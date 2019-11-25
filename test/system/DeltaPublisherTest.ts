@@ -20,10 +20,8 @@
  */
 
 import { EventDispatcher } from '../../src/system/event/EventDispatcher';
-import {
-    DeltaPublisher as Sut,
-    AmqpConfig
-} from "../../src/system/DeltaPublisher";
+import { DeltaPublisher as Sut } from '../../src/system/DeltaPublisher';
+import { AmqpConfig } from '../../src/system/AmqpPublisher';
 
 import { expect, use as chai_use } from 'chai';
 import { EventEmitter } from "events";
