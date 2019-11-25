@@ -19,12 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { EventDispatcher } from '../../src/system/event/EventDispatcher';
 import { DeltaPublisher as Sut } from '../../src/system/DeltaPublisher';
 import { AmqpConfig } from '../../src/system/AmqpPublisher';
+import { EventEmitter } from "events";
 
 import { expect, use as chai_use } from 'chai';
-import { EventEmitter } from "events";
 chai_use( require( 'chai-as-promised' ) );
 
 
@@ -34,10 +33,10 @@ describe( 'server.DeltaPublisher', () =>
     {
         it( 'sends a message', () =>
         {
-            const conf       = createMockConf();
-            const dispatcher = new EventDispatcher( new EventEmitter() );
+            const conf    = createMockConf();
+            const emitter = new EventEmitter();
 
-            console.log( new Sut( conf, dispatcher, ts_ctr ) );
+            console.log( new Sut( conf, emitter, ts_ctr ) );
             expect( true ).to.be.true
         } );
     } );
@@ -46,10 +45,10 @@ describe( 'server.DeltaPublisher', () =>
     {
         it( 'sends a message', () =>
         {
-            const conf       = createMockConf();
-            const dispatcher = new EventDispatcher( new EventEmitter() );
+            const conf    = createMockConf();
+            const emitter = new EventEmitter();
 
-            console.log( new Sut( conf, dispatcher, ts_ctr ) );
+            console.log( new Sut( conf, emitter, ts_ctr ) );
             expect( true ).to.be.true
         } );
     } );
@@ -140,8 +139,8 @@ describe( 'server.DeltaPublisher', () =>
             {
                 let errorCalled = false;
 
-                const dispatcher = <EventDispatcher>{
-                    dispatch( _event_id, _err )
+                const emitter = <EventEmitter>{
+                    emit( _event_id, _err )
                     {
                         errorCalled = true;
 
@@ -151,7 +150,7 @@ describe( 'server.DeltaPublisher', () =>
 
                 const conf   = createMockConf();
                 const data   = createMockData( delta_data );
-                const sut    = new Sut( conf, dispatcher, ts_ctr );
+                const sut    = new Sut( conf, emitter, ts_ctr );
                 const buffer = sut.avroEncode( data );
 
                 if ( valid )
@@ -302,10 +301,10 @@ describe( 'server.DeltaPublisher', () =>
         {
             it( label, () =>
             {
-                const dispatcher = <EventDispatcher>{}
-                const conf       = createMockConf();
-                const sut        = new Sut( conf, dispatcher, ts_ctr );
-                const actual     = sut.avroFormat( delta_data );
+                const emitter = <EventEmitter>{}
+                const conf    = createMockConf();
+                const sut     = new Sut( conf, emitter, ts_ctr );
+                const actual  = sut.avroFormat( delta_data );
 
                 expect( actual ).to.deep.equal( expected );
             } );

@@ -24,7 +24,7 @@ import { MongoDeltaType } from "../system/db/MongoDeltaDao";
 import { DeltaResult } from "../bucket/delta";
 import { DocumentId } from "../document/Document";
 import { AmqpPublisher } from "./AmqpPublisher";
-import { EventDispatcher } from "./event/EventDispatcher";
+import { EventEmitter } from "events";
 
 /**
  * Process deltas for a quote and publish to a queue
@@ -41,14 +41,14 @@ export class DeltaProcessor
     /**
      * Initialize processor
      *
-     * @param _dao        - Mongo collection
-     * @param _publisher  - Amqp Publisher
-     * @param _dispatcher - Event dispatcher instance
+     * @param _dao       - Mongo collection
+     * @param _publisher - Amqp Publisher
+     * @param _emitter   - Event emiter instance
      */
     constructor(
-        private readonly _dao:        DeltaDao,
-        private readonly _publisher:  AmqpPublisher,
-        private readonly _dispatcher: EventDispatcher
+        private readonly _dao:       DeltaDao,
+        private readonly _publisher: AmqpPublisher,
+        private readonly _emitter:   EventEmitter
     ) {}
 
 
@@ -90,7 +90,7 @@ export class DeltaProcessor
                     // this document if there was an error
                     if ( error )
                     {
-                        self._dispatcher.dispatch(
+                        self._emitter.emit(
                             'delta-process-error',
                             error
                         );
@@ -101,7 +101,7 @@ export class DeltaProcessor
                     {
                         const elapsedTime = process.hrtime( startTime );
 
-                        self._dispatcher.dispatch(
+                        self._emitter.emit(
                             'delta-process-complete',
                             elapsedTime[ 1 ] / 10000
                         );
@@ -111,7 +111,7 @@ export class DeltaProcessor
                 self._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
                 .then( _ =>
                 {
-                    self._dispatcher.dispatch(
+                    self._emitter.emit(
                         'document-processed',
                         'Deltas on document ' + doc_id + ' processed '
                             + 'successfully. Document has been marked as '
@@ -120,13 +120,13 @@ export class DeltaProcessor
                 } )
                 .catch( err =>
                 {
-                    self._dispatcher.dispatch( 'mongodb-err', err );
+                    self._emitter.emit( 'mongodb-err', err );
                 } );
             } );
         } )
         .catch( err =>
         {
-            self._dispatcher.dispatch( 'mongodb-err', err );
+            self._emitter.emit( 'mongodb-err', err );
         } );
     }
 

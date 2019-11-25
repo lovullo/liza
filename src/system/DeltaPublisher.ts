@@ -23,7 +23,7 @@
 
 import { AmqpPublisher, AmqpConfig } from './AmqpPublisher';
 import { DeltaResult } from '../bucket/delta';
-import { EventDispatcher } from './event/EventDispatcher';
+import { EventEmitter } from "events";
 import {
     connect as amqpConnect,
     Channel,
@@ -68,9 +68,9 @@ export class DeltaPublisher implements AmqpPublisher
      * @param _ts_ctr  - a timestamp constructor
      */
     constructor(
-        private readonly _conf:       AmqpConfig,
-        private readonly _dispatcher: EventDispatcher,
-        private readonly _ts_ctr    : () => UnixTimestamp,
+        private readonly _conf:    AmqpConfig,
+        private readonly _emitter: EventEmitter,
+        private readonly _ts_ctr:  () => UnixTimestamp,
     ) {
         this._type = avro.parse( this.SCHEMA_PATH );
     }
@@ -91,7 +91,7 @@ export class DeltaPublisher implements AmqpPublisher
                 // If there is an error, attemp to reconnect
                 this._conn.on( 'error', e =>
                 {
-                    this._dispatcher.dispatch( 'amqp-conn-error', e );
+                    this._emitter.emit( 'amqp-conn-error', e );
 
                     let reconnect_interval: NodeJS.Timer;
 
@@ -103,7 +103,7 @@ export class DeltaPublisher implements AmqpPublisher
                         {
                             clearInterval( reconnect_interval );
 
-                            this._dispatcher.dispatch(
+                            this._emitter.emit(
                                 'amqp-reconnect-fail',
                                 'Could not re-establish AMQP connection.'
                             );
@@ -111,7 +111,7 @@ export class DeltaPublisher implements AmqpPublisher
                             return;
                         }
 
-                        this._dispatcher.dispatch(
+                        this._emitter.emit(
                             'amqp-reconnect',
                             '...attempting to re-establish AMQP connection'
                         );
@@ -121,14 +121,14 @@ export class DeltaPublisher implements AmqpPublisher
                         {
                             clearInterval( reconnect_interval );
 
-                            this._dispatcher.dispatch(
+                            this._emitter.emit(
                                 'amqp-reconnect',
                                 'AMQP re-connected'
                             );
                         } )
                         .catch( e =>
                         {
-                            this._dispatcher.dispatch( 'amqp-conn-error', e );
+                            this._emitter.emit( 'amqp-conn-error', e );
                         } );
                     }
 
@@ -188,7 +188,7 @@ export class DeltaPublisher implements AmqpPublisher
             this.sendMessage( delta )
             .then( _ =>
             {
-                this._dispatcher.dispatch(
+                this._emitter.emit(
                     'delta-publish',
                     "Published " + delta.type + " delta with ts '"
                         + delta.timestamp + "' to '" + this._conf.exchange
@@ -200,7 +200,7 @@ export class DeltaPublisher implements AmqpPublisher
             } )
             .catch( e =>
             {
-                this._dispatcher.dispatch(
+                this._emitter.emit(
                     'publish-err',
                     "Error publishing " + delta.type + " delta with ts '"
                         + delta.timestamp + '" to "' + this._conf.exchange
@@ -310,7 +310,7 @@ export class DeltaPublisher implements AmqpPublisher
         {
             if ( !this._type )
             {
-                this._dispatcher.dispatch(
+                this._emitter.emit(
                     'avro-err',
                     'No avro scheama found',
                 );
@@ -322,7 +322,7 @@ export class DeltaPublisher implements AmqpPublisher
         }
         catch( e )
         {
-            this._dispatcher.dispatch(
+            this._emitter.emit(
                 'avro-err',
                 'Error encoding data to avro: ' + e,
             );

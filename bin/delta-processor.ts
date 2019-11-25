@@ -27,8 +27,6 @@ import { DeltaPublisher } from "../src/system/DeltaPublisher";
 import { MongoDb, MongoDbConfig } from "../src/types/mongodb";
 import { DeltaLogger } from "../src/system/DeltaLogger";
 import { EventEmitter } from "events";
-import { EventDispatcher } from "../src/system/event/EventDispatcher";
-import { EventSubscriber } from "../src/system/event/EventSubscriber";
 import {
     MetricsCollector,
     PrometheusConfig,
@@ -63,18 +61,16 @@ const env       = process.env.NODE_ENV || 'Unknown Environment';
 
 // Event handling
 const emitter    = new EventEmitter();
-const dispatcher = new EventDispatcher( emitter );
-const subscriber = new EventSubscriber( emitter );
 
 // Event subscribers
-new DeltaLogger( env, subscriber, ts_ctr );
-const metrics = new MetricsCollector( prom_conf, subscriber );
+new DeltaLogger( env, emitter, ts_ctr );
+const metrics = new MetricsCollector( prom_conf, emitter );
 
 // Instantiate classes for processor
 const db        = _createDB( db_conf );
 const dao       = new MongoDeltaDao( db );
-const publisher = new DeltaPublisher( amqp_conf, dispatcher, ts_ctr );
-const processor = new DeltaProcessor( dao, publisher, dispatcher );
+const publisher = new DeltaPublisher( amqp_conf, emitter, ts_ctr );
+const processor = new DeltaProcessor( dao, publisher, emitter );
 
 // If the dao intializes successfully then process on a two second interval
 const interval_ms = 2000;

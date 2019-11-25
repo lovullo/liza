@@ -61,7 +61,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @return any errors that occurred
      */
-    init(): Promise<NullableError>
+    init(): Promise<null>
     {
         var dao = this;
 
@@ -177,7 +177,7 @@ export class MongoDeltaDao implements DeltaDao
     advanceDeltaIndex(
         doc_id:   DocumentId,
         type:     MongoDeltaType,
-    ): Promise<NullableError>
+    ): Promise<null>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -217,7 +217,7 @@ export class MongoDeltaDao implements DeltaDao
     markDocumentAsProcessed(
         doc_id:         DocumentId,
         last_update_ts: UnixTimestamp,
-    ): Promise<NullableError>
+    ): Promise<null>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -248,7 +248,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @return any errors that occurred
      */
-    setErrorFlag( doc_id: DocumentId ): Promise<NullableError>
+    setErrorFlag( doc_id: DocumentId ): Promise<null>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -277,7 +277,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @return a count of the documents in an error state
      */
-    getErrorCount(): Promise<number | Error>
+    getErrorCount(): Promise<number>
     {
         return new Promise( ( resolve, reject ) =>
         {

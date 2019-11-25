@@ -21,7 +21,7 @@
  * Logger for delta events
  */
 
-import { EventSubscriber } from "./event/EventSubscriber";
+import { EventEmitter } from "events";
 
 enum LogLevel {
     DEBUG,
@@ -47,13 +47,13 @@ export class DeltaLogger
     /**
      * Initialize delta logger
      *
-     * @param _env        - The environment ( dev, test, demo, live )
-     * @param _subscriber - An event subscriber
-     * @param _ts_ctr     - a timestamp constructor
+     * @param _env     - The environment ( dev, test, demo, live )
+     * @param _emitter - An event emitter
+     * @param _ts_ctr  - a timestamp constructor
      */
     constructor(
         private readonly _env:        string,
-        private readonly _subscriber: EventSubscriber,
+        private readonly _emitter: EventEmitter,
         private readonly _ts_ctr    : () => UnixTimestamp,
     ) {
         this.init();
@@ -86,7 +86,7 @@ export class DeltaLogger
     {
         const logF = this._getLogLevelFunction( level )
 
-        this._subscriber.subscribe( event_id, logF );
+        this._emitter.on( event_id, logF );
     }
 
 

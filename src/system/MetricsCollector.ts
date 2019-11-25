@@ -21,20 +21,12 @@
  * Collect Metrics for Prometheus
  */
 
-import { EventSubscriber } from "./event/EventSubscriber";
 import { DeltaDao } from "./db/DeltaDao";
 import { PositiveInteger } from "../numeric";
 import { Histogram, Pushgateway, Counter, Gauge } from 'prom-client';
+import { EventEmitter } from "events";
 
 const client = require( 'prom-client' );
-
-
-// declare type MetricStructure = {
-//     path:    string;
-//     code:    number;
-//     service: string;
-//     env:     string;
-// }
 
 
 export declare type PrometheusConfig = {
@@ -85,19 +77,17 @@ export class MetricsCollector
      * Initialize delta logger
      *
      * @param _conf       - the prometheus configuration
-     * @param _subscriber - the event subscriber
+     * @param _emitter - the event emitr
      */
     constructor(
         private readonly _conf:       PrometheusConfig,
-        private readonly _subscriber: EventSubscriber,
+        private readonly _emitter: EventEmitter,
     ) {
         // Set labels
-        const default_labels = {
+        client.register.setDefaultLabels( {
             env:     this._conf.env,
             service: 'delta_processor',
-        };
-
-        client.register.setDefaultLabels( default_labels );
+        } );
 
         // Create gateway
         const url     = 'http://' + this._conf.hostname + ':' + this._conf.port;
@@ -140,25 +130,25 @@ export class MetricsCollector
         );
 
         // Subsribe metrics to events
-        this.subscribeMetrics();
+        this.emitMetrics();
     }
 
 
     /**
-     * Subscribe metrics
+     * emit metrics
      */
-    private subscribeMetrics()
+    private emitMetrics()
     {
-        this._subscriber.subscribe(
+        this._emitter.on(
             'delta-process-complete',
-            ( val ) =>
+            ( val: any ) =>
             {
                 this._process_time_hist.observe( val );
                 this._process_delta_count.inc();
             }
         );
 
-        this._subscriber.subscribe(
+        this._emitter.on(
             'delta-process-error',
             ( _ ) => this._process_error_count.inc()
         );
@@ -178,28 +168,10 @@ export class MetricsCollector
         _body?:     any
     ): void
     {
-        // console.log( 'Push callback' );
-        // console.error( error, response, body );
+        console.log( 'Push callback' );
+        console.error( _error );
     }
 
-
-    /**
-     * Get structured metric object
-     *
-     * @param path - the endpoint being hit
-     * @param code - the response code
-     *
-     * @returns a structured logging object
-     */
-    // private _formatMetricVal( label: string, val: any ): MetricStructure
-    // {
-    //     return <MetricStructure>{
-    //         path:    path,
-    //         code:    code,
-    //         service: 'quote-server',
-    //         env:     this._conf.env,
-    //     };
-    // }
 
 
     /**
