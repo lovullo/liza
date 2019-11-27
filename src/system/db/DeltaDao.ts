@@ -52,7 +52,7 @@ export interface DeltaDao
     advanceDeltaIndex(
         doc_id:   DocumentId,
         type:     string,
-    ): Promise<null>
+    ): Promise<void>
 
 
     /**
@@ -67,7 +67,7 @@ export interface DeltaDao
     markDocumentAsProcessed(
         doc_id:          DocumentId,
         last_update_ts:  UnixTimestamp,
-    ): Promise<null>
+    ): Promise<void>
 
 
     /**
@@ -77,7 +77,7 @@ export interface DeltaDao
      *
      * @return any errors that occurred
      */
-    setErrorFlag( doc_id: DocumentId ): Promise<null>
+    setErrorFlag( doc_id: DocumentId ): Promise<void>
 
 
     /**

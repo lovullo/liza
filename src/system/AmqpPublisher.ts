@@ -22,6 +22,7 @@
  */
 
 import { DeltaResult } from "../bucket/delta";
+import { DocumentId } from '../document/Document';
 import { Options } from 'amqplib';
 
 
@@ -69,7 +70,13 @@ export interface AmqpPublisher
     /**
      * Publish quote message to exchange post-rating
      *
-     * @param delta - The delta to publish
+     * @param delta  - The delta
+     * @param bucket - The bucket
+     * @param doc_id - The doc_id
     */
-    publish( delta: DeltaResult<any> ): Promise<NullableError>;
+    publish(
+        delta:  DeltaResult<any>,
+        bucket: Record<string, any>,
+        doc_id: DocumentId,
+    ): Promise<void>
 }

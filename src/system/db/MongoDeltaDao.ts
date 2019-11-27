@@ -25,10 +25,8 @@ import { DocumentId } from '../../document/Document';
 import { DeltaDao } from './DeltaDao';
 import { MongoCollection } from 'mongodb';
 import { context } from '../../error/ContextError';
-import { MongoError } from './MongoError';
-
-export type MongoDeltaType = 'ratedata' | 'data';
-
+import { DaoError } from '../../error/DaoError';
+import { DeltaType } from '../../bucket/delta';
 
 /** Manage deltas */
 export class MongoDeltaDao implements DeltaDao
@@ -60,14 +58,17 @@ export class MongoDeltaDao implements DeltaDao
         return new Promise( ( resolve, reject ) =>
         {
             this._collection.find(
-                { published: false },
+                {
+                    published:  false,
+                    deltaError: false,
+                },
                 {},
                 ( e, cursor ) =>
                 {
                     if ( e )
                     {
                         reject(
-                            new MongoError(
+                            new DaoError(
                                 'Error fetching unprocessed documents: ' + e
                             )
                         );
@@ -79,7 +80,7 @@ export class MongoDeltaDao implements DeltaDao
                         if ( e )
                         {
                             reject(
-                                new MongoError(
+                                new DaoError(
                                     'Error fetching array from cursor: ' + e
                                 )
                             );
@@ -104,8 +105,8 @@ export class MongoDeltaDao implements DeltaDao
      */
     advanceDeltaIndex(
         doc_id:   DocumentId,
-        type:     MongoDeltaType,
-    ): Promise<null>
+        type:     DeltaType,
+    ): Promise<void>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -122,7 +123,7 @@ export class MongoDeltaDao implements DeltaDao
                     if ( e )
                     {
                         reject( context(
-                            new MongoError(
+                            new DaoError(
                                 'Error advancing delta index: ' + e
                             ),
                             {
@@ -154,7 +155,7 @@ export class MongoDeltaDao implements DeltaDao
     markDocumentAsProcessed(
         doc_id:         DocumentId,
         last_update_ts: UnixTimestamp,
-    ): Promise<null>
+    ): Promise<void>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -167,7 +168,7 @@ export class MongoDeltaDao implements DeltaDao
                     if ( e )
                     {
                         reject( context(
-                            new MongoError(
+                            new DaoError(
                                 'Error marking document as processed: ' + e
                             ),
                             {
@@ -193,7 +194,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @return any errors that occurred
      */
-    setErrorFlag( doc_id: DocumentId ): Promise<null>
+    setErrorFlag( doc_id: DocumentId ): Promise<void>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -206,7 +207,7 @@ export class MongoDeltaDao implements DeltaDao
                     if ( e )
                     {
                         reject( context(
-                            new MongoError(
+                            new DaoError(
                                 'Failed setting error flag: ' + e
                             ),
                             {
@@ -253,7 +254,7 @@ export class MongoDeltaDao implements DeltaDao
                         if ( e )
                         {
                             reject( context(
-                                new MongoError(
+                                new DaoError(
                                     'Failed getting error count: ' + e
                                 ),
                                 {

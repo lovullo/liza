@@ -72,7 +72,7 @@ export class EventLogger
         this._registerEvent( 'amqp-reconnect',      LogLevel.WARNING );
         this._registerEvent( 'amqp-reconnect-fail', LogLevel.ERROR );
         this._registerEvent( 'avro-err',            LogLevel.ERROR );
-        this._registerEvent( 'mongodb-err',         LogLevel.ERROR );
+        this._registerEvent( 'dao-err',             LogLevel.ERROR );
         this._registerEvent( 'publish-err',         LogLevel.ERROR );
 
         // this._registerEvent( 'log', LogLevel.INFO );

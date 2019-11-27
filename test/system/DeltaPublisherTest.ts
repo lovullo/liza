@@ -168,7 +168,7 @@ describe( 'server.DeltaPublisher', () =>
     } );
 
 
-    describe( '#avroFormat formats', () =>
+    describe( '#setDataTypes annotates', () =>
     {
         [
             {
@@ -304,7 +304,7 @@ describe( 'server.DeltaPublisher', () =>
                 const emitter = <EventEmitter>{}
                 const conf    = createMockConf();
                 const sut     = new Sut( conf, emitter, ts_ctr );
-                const actual  = sut.avroFormat( delta_data );
+                const actual  = sut.setDataTypes( delta_data );
 
                 expect( actual ).to.deep.equal( expected );
             } );

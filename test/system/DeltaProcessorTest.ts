@@ -22,7 +22,7 @@
 import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
 import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
-import { MongoDeltaType } from '../../src/system/db/MongoDeltaDao';
+import { DeltaType } from "../../src/bucket/delta";
 import { EventEmitter } from 'events';
 
 import { expect, use as chai_use } from 'chai';
@@ -40,21 +40,21 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                         ],
                         ratedata: [
                             {
-                                data:      { foo: 'third_bar' },
+                                data:      { foo: [ 'third_bar' ] },
                                 timestamp: 345,
                             },
                             {
-                                data:      { foo: 'fourth_bar' },
+                                data:      { foo: [ 'fourth_bar' ] },
                                 timestamp: 456,
                             },
                         ]
@@ -62,22 +62,22 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'first_bar' },
+                        data:      { foo: [ 'first_bar' ] },
                         timestamp: 123,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'third_bar' },
+                        data:      { foo: [ 'third_bar' ] },
                         timestamp: 345,
                         type:      'ratedata',
                     },
                     {
-                        data:      { foo: 'fourth_bar' },
+                        data:      { foo: [ 'fourth_bar' ] },
                         timestamp: 456,
                         type:      'ratedata',
                     },
@@ -89,11 +89,11 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                         ],
@@ -102,12 +102,12 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'first_bar' },
+                        data:      { foo: [ 'first_bar' ] },
                         timestamp: 123,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
@@ -119,21 +119,21 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                             {
-                                data:      { foo: 'fourth_bar' },
+                                data:      { foo: [ 'fourth_bar' ] },
                                 timestamp: 456,
                             },
                         ],
                         ratedata: [
                             {
-                                data:      { foo: 'third_bar' },
+                                data:      { foo: [ 'third_bar' ] },
                                 timestamp: 345,
                             },
                         ],
@@ -141,22 +141,22 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'first_bar' },
+                        data:      { foo: [ 'first_bar' ] },
                         timestamp: 123,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'third_bar' },
+                        data:      { foo: [ 'third_bar' ] },
                         timestamp: 345,
                         type:      'ratedata',
                     },
                     {
-                        data:      { foo: 'fourth_bar' },
+                        data:      { foo: [ 'fourth_bar' ] },
                         timestamp: 456,
                         type:      'data',
                     },
@@ -181,7 +181,7 @@ describe( 'system.DeltaProcessor', () =>
     {
         ( <{
             label:    string,
-            type:     MongoDeltaType,
+            type:     DeltaType,
             given:    any,
             expected: any
         }[]>[
@@ -200,11 +200,11 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                         ],
@@ -212,12 +212,12 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'first_bar' },
+                        data:      { foo: [ 'first_bar' ] },
                         timestamp: 123,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
@@ -230,11 +230,11 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                         ],
@@ -245,12 +245,12 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'first_bar' },
+                        data:      { foo: [ 'first_bar' ] },
                         timestamp: 123,
                         type:      'data',
                     },
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
@@ -263,11 +263,11 @@ describe( 'system.DeltaProcessor', () =>
                     rdelta: {
                         data: [
                             {
-                                data:      { foo: 'first_bar' },
+                                data:      { foo: [ 'first_bar' ] },
                                 timestamp: 123,
                             },
                             {
-                                data:      { foo: 'second_bar' },
+                                data:      { foo: [ 'second_bar' ] },
                                 timestamp: 234,
                             },
                         ],
@@ -278,7 +278,7 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 expected: [
                     {
-                        data:      { foo: 'second_bar' },
+                        data:      { foo: [ 'second_bar' ] },
                         timestamp: 234,
                         type:      'data',
                     },
@@ -297,6 +297,188 @@ describe( 'system.DeltaProcessor', () =>
             expect( actual ).to.deep.equal( expected );
         } ) );
     } );
+
+
+    describe( '#process', () =>
+    {
+        ( <{
+            label:    string,
+            given:    any[],
+            expected: any
+        }[]>[
+            {
+                label: 'No deltas are processed',
+                docs: [
+                    {
+                        id:         123,
+                        lastUpdate: 123123123,
+                        bucket:     {},
+                        rdelta:     {},
+                    },
+                ],
+                expected: [],
+            },
+            {
+                label: 'Publishes deltas in order',
+                given: [
+                    {
+                        id:         123,
+                        lastUpdate: 123123123,
+                        bucket:     { foo: [ 'start_bar' ] },
+                        rdelta:     {
+                            data: [
+                                {
+                                    data:      { foo: [ 'first_bar' ] },
+                                    timestamp: 123123,
+                                },
+                                {
+                                    data:      { foo: [ 'second_bar' ] },
+                                    timestamp: 234123,
+                                },
+                            ],
+                        },
+                    },
+                ],
+                expected: [
+                    {
+                        delta:  { foo: [ 'first_bar' ] },
+                        bucket: { foo: [ 'first_bar' ] },
+                        doc_id: 123,
+                    },
+                    {
+                        delta:  { foo: [ 'second_bar' ] },
+                        bucket: { foo: [ 'second_bar' ] },
+                        doc_id: 123,
+                    },
+                ],
+            },
+            {
+                label: 'Publishes deltas in order for multiple documents',
+                given: [
+                    {
+                        id:         123,
+                        lastUpdate: 123123123,
+                        bucket:     { foo: 'start_bar' },
+                        rdelta:     {
+                            data: [
+                                {
+                                    data:      { foo: [ 'second_bar' ] },
+                                    timestamp: 234,
+                                },
+                            ],
+                            ratedata: [
+                                {
+                                    data:      { foo: [ 'first_bar' ] },
+                                    timestamp: 123,
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        id:         234,
+                        lastUpdate: 123123123,
+                        bucket:     { foo: 'start_bar' },
+                        rdelta:     {
+                            data: [
+                                {
+                                    data:      { foo: [ 'first_bar' ] },
+                                    timestamp: 123,
+                                },
+                                {
+                                    data:      { foo: [ 'second_bar' ] },
+                                    timestamp: 234,
+                                },
+                                {
+                                    data:      { foo: [ 'third_bar' ] },
+                                    timestamp: 345,
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        id:         345,
+                        lastUpdate: 123123123,
+                        bucket:     { foo: 'start_bar' },
+                        rdelta:     {
+                            ratedata: [
+                                {
+                                    data:      { foo: [ 'first_bar' ] },
+                                    timestamp: 123,
+                                },
+                                {
+                                    data:      { foo: [ 'second_bar' ] },
+                                    timestamp: 234,
+                                },
+                            ],
+                        },
+                    },
+                ],
+                expected: [
+                    {
+                        delta:  { foo: [ 'first_bar' ] },
+                        bucket: { foo: [ 'first_bar' ] },
+                        doc_id: 123,
+                    },
+                    {
+                        delta:  { foo: [ 'second_bar' ] },
+                        bucket: { foo: [ 'second_bar' ] },
+                        doc_id: 123,
+                    },
+                    {
+                        delta:  { foo: [ 'first_bar' ] },
+                        bucket: { foo: [ 'first_bar' ] },
+                        doc_id: 234,
+                    },
+                    {
+                        delta:  { foo: [ 'second_bar' ] },
+                        bucket: { foo: [ 'second_bar' ] },
+                        doc_id: 234,
+                    },
+                    {
+                        delta:  { foo: [ 'third_bar' ] },
+                        bucket: { foo: [ 'third_bar' ] },
+                        doc_id: 234,
+                    },
+                    {
+                        delta:  { foo: [ 'first_bar' ] },
+                        bucket: { foo: [ 'first_bar' ] },
+                        doc_id: 345,
+                    },
+                    {
+                        delta:  { foo: [ 'second_bar' ] },
+                        bucket: { foo: [ 'second_bar' ] },
+                        doc_id: 345,
+                    },
+                ],
+            },
+        ] ).forEach( ( { given, expected, label } ) => it( label, () =>
+        {
+            let   published: any = [];
+            const dao            = createMockDeltaDao();
+            const publisher      = createMockDeltaPublisher();
+            const emitter        = new EventEmitter();
+
+            dao.getUnprocessedDocuments = (): Promise<Record<string, any>[]> =>
+            {
+                return Promise.resolve( given );
+            }
+
+            publisher.publish = ( delta, bucket, doc_id ): Promise<void> =>
+            {
+                published.push( {
+                    delta:  delta.data,
+                    bucket: bucket,
+                    doc_id: doc_id,
+                } );
+
+                return Promise.resolve();
+            }
+
+            return expect( new Sut( dao, publisher, emitter ).process() )
+                .to.eventually.deep.equal( undefined )
+                .then( _ => expect( published ).to.deep.equal( expected ) );
+        } ) );
+    } );
 } );
 
 
@@ -304,9 +486,9 @@ function createMockDeltaDao(): DeltaDao
 {
     return <DeltaDao>{
         getUnprocessedDocuments() { return Promise.resolve( [] ); },
-        advanceDeltaIndex()       { return Promise.resolve( null ); },
-        markDocumentAsProcessed() { return Promise.resolve( null ); },
-        setErrorFlag()            { return Promise.resolve( null ); },
+        advanceDeltaIndex()       { return Promise.resolve(); },
+        markDocumentAsProcessed() { return Promise.resolve(); },
+        setErrorFlag()            { return Promise.resolve(); },
         getErrorCount()           { return Promise.resolve( 0 ); },
     };
 }
@@ -315,6 +497,6 @@ function createMockDeltaDao(): DeltaDao
 function createMockDeltaPublisher(): AmqpPublisher
 {
     return <AmqpPublisher>{
-        publish() { return Promise.resolve( null ); },
+        publish() { return Promise.resolve(); },
     };
 }

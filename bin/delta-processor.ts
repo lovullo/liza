@@ -49,7 +49,12 @@ const db                  = _createDB( db_conf );
 
 // Prometheus Metrics
 const prom_factory = new PrometheusFactory();
-const metrics      = new MetricsCollector( prom_factory, prom_conf, emitter );
+const metrics      = new MetricsCollector(
+    prom_factory,
+    prom_conf,
+    emitter,
+    process.hrtime,
+);
 
 // Structured logging
 new EventLogger( console, env, emitter, ts_ctr );
@@ -60,37 +65,30 @@ let publisher: DeltaPublisher;
 let processor: DeltaProcessor;
 
 _getMongoCollection( db, db_conf )
-.then( ( conn: MongoCollection ) =>
-{
-    return new MongoDeltaDao( conn );
-} )
-.then( ( mongoDao: MongoDeltaDao ) =>
-{
-    dao       = mongoDao;
-    publisher = new DeltaPublisher( amqp_conf, emitter, ts_ctr );
-    processor = new DeltaProcessor( mongoDao, publisher, emitter );
-} )
-.then( _ =>
-{
-    publisher.connect();
-} )
-.then( _ =>
-{
-    const pidPath =  __dirname + '/../conf/.delta_processor.pid';
+    .then( ( conn: MongoCollection ) => { return new MongoDeltaDao( conn ); } )
+    .then( ( mongoDao: MongoDeltaDao ) =>
+    {
+        dao       = mongoDao;
+        publisher = new DeltaPublisher( amqp_conf, emitter, ts_ctr );
+        processor = new DeltaProcessor( mongoDao, publisher, emitter );
+    } )
+    .then( _ => publisher.connect() )
+    .then( _ =>
+    {
+        const pidPath =  __dirname + '/../conf/.delta_processor.pid';
 
-    writePidFile(pidPath );
-    greet( 'Liza Delta Processor', pidPath );
+        writePidFile(pidPath );
+        greet( 'Liza Delta Processor', pidPath );
 
-    process_interval = setInterval(
-        () =>
-        {
-            processor.process();
-            metrics.checkForErrors( dao );
-        },
-        process_interval_ms,
-    );
-} )
-.catch( e => { console.error( 'Error: ' + e ); } );
+        process_interval = setInterval( () =>
+            {
+                processor.process();
+                metrics.checkForErrors( dao );
+            },
+            process_interval_ms,
+        );
+    } )
+    .catch( e => { console.error( 'Error: ' + e ); } );
 
 
 /**
@@ -117,18 +115,9 @@ function writePidFile( pid_path: string ): void
 {
     fs.writeFileSync( pid_path, process.pid );
 
-    process.on( 'SIGINT', function()
-    {
-        shutdown( 'SIGINT' );
-    } )
-    .on( 'SIGTERM', function()
-    {
-        shutdown( 'SIGTERM' );
-    } )
-    .on( 'exit', () =>
-    {
-        fs.unlink( pid_path, () => {} );
-    } );
+    process.on( 'SIGINT', () => { shutdown( 'SIGINT' ); } )
+        .on( 'SIGTERM', () => { shutdown( 'SIGTERM' ); } )
+        .on( 'exit', () => { fs.unlink( pid_path, () => {} ); } );
 }
 
 
@@ -327,7 +316,7 @@ function _getAmqpConfig( env: any ): AmqpConfig
         'vhost':      env.amqp_vhost,
         'exchange':   env.amqp_exchange,
         'retries':    env.amqp_retries || 30,
-        'retry_wait': env.amqp_retry_wait || 1,
+        'retry_wait': env.amqp_retry_wait || 1000,
     };
 }
 

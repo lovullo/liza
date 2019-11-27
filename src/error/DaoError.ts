@@ -1,5 +1,5 @@
 /**
- * Mongodb error
+ * Dao error
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -24,4 +24,4 @@
 
 const { Class } = require( 'easejs' );
 
-export const MongoError = Class( 'MongoError' ).extend( Error, {} );
+export const DaoError = Class( 'DaoError' ).extend( Error, {} );

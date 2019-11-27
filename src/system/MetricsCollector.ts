@@ -43,6 +43,11 @@ export declare type PrometheusConfig = {
 }
 
 
+export type MetricTimer = (
+    _start_time?: [ number, number ]
+) => [ number, number ];
+
+
 export class MetricsCollector
 {
     /** The prometheus PushGateway */
@@ -70,6 +75,10 @@ export class MetricsCollector
     private _total_processed_help: string =
         'Total deltas successfully processed';
 
+    /** Timing map */
+    private _timing_map: Record<string, [ number, number ]> = {};
+
+
     /**
      * Initialize delta logger
      *
@@ -81,6 +90,7 @@ export class MetricsCollector
         private readonly _factory: PrometheusFactory,
         private readonly _conf:    PrometheusConfig,
         private readonly _emitter: EventEmitter,
+        private readonly _timer:   MetricTimer,
     ) {
         // Set labels
         client.register.setDefaultLabels( {
@@ -143,10 +153,22 @@ export class MetricsCollector
     private hookMetrics()
     {
         this._emitter.on(
-            'delta-process-complete',
-            ( val: any ) =>
+            'delta-process-start',
+            ( uid: string ) =>
             {
-                this._process_time.observe( val );
+                this._timing_map[ uid ] = this._timer();
+            }
+        );
+
+        this._emitter.on(
+            'delta-process-end',
+            ( uid: string ) =>
+            {
+                const start_time_ms = this._timing_map[ uid ] || [ -1, -1 ];
+                const t             = this._timer( start_time_ms );
+                const total_time_ms = ( ( t[ 0 ] * 1000 ) + ( t[ 1 ] / 1000 ) );
+
+                this._process_time.observe( total_time_ms );
                 this._total_processed.inc();
             }
         );
@@ -176,7 +198,6 @@ export class MetricsCollector
     }
 
 
-
     /**
      * Look for mongodb delta errors and update metrics if found
      *
@@ -185,8 +206,8 @@ export class MetricsCollector
     checkForErrors( dao: DeltaDao ): NullableError
     {
         dao.getErrorCount()
-        .then( count => { this._current_error.set( +count ); } )
-        .catch( err => { return err; } );
+            .then( count => { this._current_error.set( +count ); } )
+            .catch( err => { return err; } );
 
         return null;
     }

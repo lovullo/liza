@@ -25,6 +25,8 @@ export type Kv<T = any> = Record<string, T[]>;
 /** Possible delta values for Kv array indexes */
 export type DeltaDatum<T> = T | null | undefined;
 
+/** Possible delta types */
+export type DeltaType = 'ratedata' | 'data';
 
 /**
  * The constructor type for a delta generating function
@@ -44,7 +46,7 @@ export type DeltaConstructor<T = any, U extends Kv<T> = Kv<T>, V extends Kv<T> =
 export type DeltaResult<T> = { [K in keyof T]: DeltaDatum<T[K]> | null };
 
 
- /**
+/**
  * Create delta to transform from src into dest
  *
  * @param src  - the source data set
@@ -98,12 +100,114 @@ export function createDelta<T, U extends Kv<T>, V extends Kv<T>>(
 
 
 /**
+ * Apply a delta to a bucket
+ *
+ * @param bucket - The bucket data
+ * @param delta  - The delta to apply
+ *
+ * @return the delta
+ */
+export function applyDelta<T, U extends Kv<T>, V extends Kv<T>>(
+    bucket: U = <U>{},
+    delta:  DeltaResult<U & V>,
+): U
+{
+    const appliedDelta: DeltaResult<any> = {};
+
+    if( !delta )
+    {
+        return bucket;
+    }
+
+    // Loop through all keys
+    const key_set = new Set(
+        Object.keys( bucket ).concat( Object.keys( delta ) ) );
+
+    key_set.forEach( key =>
+    {
+        const bucket_data = bucket[ key ];
+        const delta_data  = delta[ key ];
+
+        // If bucket does not contain the key, use entire delta data
+        if ( !bucket_data || !bucket_data.length )
+        {
+            appliedDelta[ key ] = delta_data;
+
+            return;
+        }
+
+        // If delta does not contain the key then retain bucket data
+        if ( delta_data === null )
+        {
+            return;
+        }
+
+        // If delta does not contain the key then retain bucket data
+        if ( delta_data === undefined )
+        {
+            appliedDelta[ key ] = bucket_data;
+
+            return;
+        }
+
+        // If neither condition above is true then create the key iteratively
+        appliedDelta[ key ] = _applyDeltaKey( bucket_data, delta_data );
+    } );
+
+    return <U>appliedDelta;
+}
+
+
+/**
+ * Apply the delta key iteratively
+ *
+ * @param bucket - The bucket data array
+ * @param delta  - The delta data array
+ *
+ * @return an object with an changed flag and a data array
+ */
+function _applyDeltaKey<T>(
+    bucket: T[],
+    delta:  T[],
+): DeltaDatum<T>[]
+{
+    const data     = [];
+    const max_size = Math.max( delta.length, bucket.length );
+
+    for ( let i = 0; i < max_size; i++ )
+    {
+        const delta_datum  = delta[ i ];
+        const bucket_datum = bucket[ i ];
+
+        if ( delta_datum === null )
+        {
+            break;
+        }
+        else if ( delta_datum === undefined )
+        {
+            data[ i ] = bucket_datum;
+        }
+        else if ( _deepEqual( delta_datum, bucket_datum ) )
+        {
+            data[ i ] = bucket_datum;
+        }
+        else
+        {
+            data[ i ] = delta_datum;
+        }
+    }
+
+    return data;
+}
+
+
+/**
  * Build the delta key iteratively
  *
  * @param src  - the source data array
  * @param dest - the destination data array
  *
- * @return an object with an identical flag and a data array
+ * @return an object with an changed flag and a data array
  */
 function _createDeltaKey<T>(
     src:  T[],

@@ -20,11 +20,11 @@
  */
 
 import { DeltaDao } from "../system/db/DeltaDao";
-import { MongoDeltaType } from "../system/db/MongoDeltaDao";
-import { DeltaResult } from "../bucket/delta";
+import { DeltaResult, DeltaType, applyDelta } from "../bucket/delta";
 import { DocumentId } from "../document/Document";
 import { AmqpPublisher } from "./AmqpPublisher";
 import { EventEmitter } from "events";
+
 
 /**
  * Process deltas for a quote and publish to a queue
@@ -32,102 +32,109 @@ import { EventEmitter } from "events";
 export class DeltaProcessor
 {
     /** The ratedata delta type */
-    readonly DELTA_RATEDATA: MongoDeltaType = 'ratedata';
+    readonly DELTA_RATEDATA: DeltaType = 'ratedata';
 
     /** The data delta type */
-    readonly DELTA_DATA: MongoDeltaType = 'data';
+    readonly DELTA_DATA: DeltaType = 'data';
 
 
     /**
      * Initialize processor
      *
-     * @param _dao       - Mongo collection
+     * @param _dao       - Delta dao
      * @param _publisher - Amqp Publisher
      * @param _emitter   - Event emiter instance
      */
     constructor(
         private readonly _dao:       DeltaDao,
         private readonly _publisher: AmqpPublisher,
-        private readonly _emitter:   EventEmitter
+        private readonly _emitter:   EventEmitter,
     ) {}
 
 
     /**
      * Process unpublished deltas
      */
-    process(): void
+    process(): Promise<void>
     {
-        this._dao.getUnprocessedDocuments()
-        .then( docs =>
-        {
-            docs.forEach( doc =>
-            {
-                const deltas             = this.getTimestampSortedDeltas( doc );
-                const doc_id: DocumentId = doc.id;
-                const last_updated_ts    = doc.lastUpdate;
-
-                for ( let i = 0; i < deltas.length; i++ )
-                {
-                    const delta     = deltas[ i ];
-                    const startTime = process.hrtime();
-                    let   error     = null;
-
-                    this._publisher.publish( delta )
-                    .then( _ =>
-                    {
-                        this._dao.advanceDeltaIndex( doc_id, delta.type );
-                    } )
-                    .catch( err =>
-                    {
-                        this._dao.setErrorFlag( doc_id );
-
-                        error = err;
-                    } );
-
-                    // Do not process any more deltas for
-                    // this document if there was an error
-                    if ( error )
-                    {
-                        this._emitter.emit(
-                            'delta-process-error',
-                            error,
-                            doc_id + delta.timestamp + delta.type
-                        );
-
-                        return;
-                    }
-                    else
-                    {
-                        const elapsedTime = process.hrtime( startTime );
-
-                        this._emitter.emit(
-                            'delta-process-complete',
-                            elapsedTime[ 1 ] / 10000
-                        );
-                    }
-                };
-
-                this._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
-                .then( _ =>
-                {
-                    this._emitter.emit(
-                        'document-processed',
-                        'Deltas on document ' + doc_id + ' processed '
-                            + 'successfully. Document has been marked as '
-                            + 'completely processed.'
-                    );
-                } )
-                .catch( err =>
-                {
-                    this._emitter.emit( 'mongodb-err', err );
-                } );
-            } );
-        } )
-        .catch( err =>
-        {
-            this._emitter.emit( 'mongodb-err', err );
-        } );
+        return this._dao.getUnprocessedDocuments()
+            .then( docs => this._processNext( docs ) )
+            .catch( err => { this._emitter.emit( 'dao-err', err ) } );
     }
+
+
+    private _processNext( docs: any ): Promise<void>
+    {
+        if ( docs.length === 0 )
+        {
+            return Promise.resolve();
+        }
+
+        const doc = docs.shift();
+
+        return this._processDocument( doc )
+            .then( _ => this._processNext( docs ) );
+    }
+
+
+    private _processDocument( doc: Record<string, any> ): Promise<void>
+    {
+        const deltas             = this.getTimestampSortedDeltas( doc );
+        const doc_id: DocumentId = doc.id;
+        const bucket             = doc.data;
+        const last_updated_ts    = doc.lastUpdate;
+
+        return this._processNextDelta( deltas, bucket, doc_id )
+            .then( _ =>
+                this._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
+            )
+            .then( _ =>
+            {
+                this._emitter.emit(
+                'document-processed',
+                'Deltas on document ' + doc_id + ' processed '
+                    + 'successfully. Document has been marked as '
+                    + 'completely processed.'
+                );
+            } )
+            .catch( e =>
+            {
+                this._emitter.emit( 'delta-err', e );
+                this._dao.setErrorFlag( doc_id );
+            } );
+    }
+
+
+    private _processNextDelta(
+        deltas: DeltaResult<any>[],
+        bucket: Record<string, any>,
+        doc_id: DocumentId,
+    ): Promise<void>
+    {
+        if ( deltas.length === 0 )
+        {
+            return Promise.resolve();
+        }
+
+        const delta = deltas.shift();
+
+        if ( !delta )
+        {
+            return Promise.reject( new Error( 'Undefined delta' ) );
+        }
+
+        const delta_uid = doc_id + '_' + delta.timestamp + '_' + delta.type;
+
+        this._emitter.emit( 'delta-process-start', delta_uid );
+
+        const new_bucket = applyDelta( bucket, delta.data );
+
+        return this._publisher.publish( delta, new_bucket, doc_id )
+            .then( _ => this._dao.advanceDeltaIndex( doc_id, delta.type ) )
+            .then( _ => this._emitter.emit( 'delta-process-end', delta_uid ) )
+            .then( _ => this._processNextDelta( deltas, new_bucket, doc_id ) );
+    }
+
 
 
     /**
@@ -157,7 +164,7 @@ export class DeltaProcessor
      *
      * @return a trimmed list of deltas
      */
-    getDeltas( doc: any, type: MongoDeltaType ): DeltaResult<any>[]
+    getDeltas( doc: any, type: DeltaType ): DeltaResult<any>[]
     {
         const deltas_obj                 = doc.rdelta || {};
         const deltas: DeltaResult<any>[] = deltas_obj[ type ] || [];
