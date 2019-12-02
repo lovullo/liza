@@ -28,6 +28,7 @@
  */
 
 import { DocumentId } from "../../document/Document";
+import { DeltaDocument } from "../../bucket/delta";
 
 
 /** Manage deltas */
@@ -38,7 +39,7 @@ export interface DeltaDao
      *
      * @return documents in need of processing
      */
-    getUnprocessedDocuments(): Promise<Record<string, any>[]>
+    getUnprocessedDocuments(): Promise<DeltaDocument[]>
 
 
     /**
@@ -46,8 +47,6 @@ export interface DeltaDao
      *
      * @param doc_id - Document whose index will be set
      * @param type   - Delta type
-     *
-     * @return any errors that occurred
      */
     advanceDeltaIndex(
         doc_id:   DocumentId,
@@ -61,8 +60,6 @@ export interface DeltaDao
      *
      * @param doc_id         - The document to mark
      * @param last_update_ts - The last time this document was updated
-     *
-     * @return any errors that occurred
      */
     markDocumentAsProcessed(
         doc_id:          DocumentId,

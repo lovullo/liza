@@ -26,7 +26,7 @@ import { DeltaDao } from './DeltaDao';
 import { MongoCollection } from 'mongodb';
 import { context } from '../../error/ContextError';
 import { DaoError } from '../../error/DaoError';
-import { DeltaType } from '../../bucket/delta';
+import { DeltaType, DeltaDocument } from '../../bucket/delta';
 
 /** Manage deltas */
 export class MongoDeltaDao implements DeltaDao
@@ -37,11 +37,21 @@ export class MongoDeltaDao implements DeltaDao
     /** The data delta type */
     static readonly DELTA_DATA: string = 'data';
 
+    /** The document fields to read */
+    readonly RESULT_FIELDS: Record<string, number> = {
+        id:                1,
+        lastUpdate:        1,
+        data:              1,
+        ratedata:          1,
+        rdelta:            1,
+        totalPublishDelta: 1,
+    };
+
 
     /**
      * Initialize connection
      *
-     * @param _db Mongo db
+     * @param _collection - Mongo db collection
      */
     constructor(
         private readonly _collection: MongoCollection,
@@ -53,7 +63,7 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @return documents in need of processing
      */
-    getUnprocessedDocuments(): Promise<Record<string, any>[]>
+    getUnprocessedDocuments(): Promise<DeltaDocument[]>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -62,7 +72,7 @@ export class MongoDeltaDao implements DeltaDao
                     published:  false,
                     deltaError: false,
                 },
-                {},
+                { fields: this.RESULT_FIELDS },
                 ( e, cursor ) =>
                 {
                     if ( e )
@@ -75,7 +85,7 @@ export class MongoDeltaDao implements DeltaDao
                         return
                     }
 
-                    cursor.toArray( ( e: Error, data: any[] ) =>
+                    cursor.toArray( ( e: Error, data: DeltaDocument[] ) =>
                     {
                         if ( e )
                         {
@@ -100,13 +110,8 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @param doc_id - Document whose index will be set
      * @param type   - Delta type
-     *
-     * @return any errors that occurred
      */
-    advanceDeltaIndex(
-        doc_id:   DocumentId,
-        type:     DeltaType,
-    ): Promise<void>
+    advanceDeltaIndex( doc_id: DocumentId, type: DeltaType ): Promise<void>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -123,9 +128,7 @@ export class MongoDeltaDao implements DeltaDao
                     if ( e )
                     {
                         reject( context(
-                            new DaoError(
-                                'Error advancing delta index: ' + e
-                            ),
+                            new DaoError( 'Error advancing delta index: ' + e ),
                             {
                                 doc_id: doc_id,
                                 type:   type,
@@ -149,8 +152,6 @@ export class MongoDeltaDao implements DeltaDao
      *
      * @param doc_id         - The document to mark
      * @param last_update_ts - The last time this document was updated
-     *
-     * @return any errors that occurred
      */
     markDocumentAsProcessed(
         doc_id:         DocumentId,

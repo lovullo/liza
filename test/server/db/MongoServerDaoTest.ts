@@ -22,7 +22,7 @@
 'use strict';
 
 import { MongoServerDao as Sut } from "../../../src/server/db/MongoServerDao";
-import { MongoSelector, MongoUpdate } from "mongodb";
+import { MongoSelector, MongoUpdate, MongoDb } from "mongodb";
 import { expect, use as chai_use } from 'chai';
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { PositiveInteger } from "../../../src/numeric";
@@ -139,7 +139,7 @@ describe( 'MongoServerDao', () =>
 } );
 
 
-function createMockDb( on_update: any )
+function createMockDb( on_update: any ): MongoDb
 {
     const collection_quotes = {
         update: on_update,
@@ -166,8 +166,9 @@ function createMockDb( on_update: any )
         },
     };
 
-    const driver = {
+    const driver = <MongoDb>{
         open: ( c: any ) => c( null, db ),
+        close: () => {},
         on:   () => {},
     };
 

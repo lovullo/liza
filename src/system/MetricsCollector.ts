@@ -21,26 +21,11 @@
  * Collect Metrics for Prometheus
  */
 
-import { DeltaDao } from "./db/DeltaDao";
 import { Histogram, Pushgateway, Counter, Gauge } from 'prom-client';
 import { EventEmitter } from "events";
-import { PrometheusFactory } from './PrometheusFactory';
+import { PrometheusFactory, PrometheusConfig } from './PrometheusFactory';
 
 const client = require( 'prom-client' )
-
-export declare type PrometheusConfig = {
-    /** The hostname to connect to */
-    hostname: string;
-
-    /** The port to connect to */
-    port: number;
-
-    /** The environment ( dev, test, demo, live ) */
-    env: string;
-
-    /** The rate (in milliseconds) at which metrics are pushed */
-    push_interval_ms: number;
-}
 
 
 export type MetricTimer = (
@@ -77,6 +62,8 @@ export class MetricsCollector
 
     /** Timing map */
     private _timing_map: Record<string, [ number, number ]> = {};
+
+    private _push_interval: NodeJS.Timer;
 
 
     /**
@@ -133,8 +120,7 @@ export class MetricsCollector
         );
 
         // Push metrics on a specific interval
-        setInterval(
-            () =>
+        this._push_interval = setInterval( () =>
             {
                 this._gateway.pushAdd(
                     { jobName: 'liza_delta_metrics' }, this.pushCallback
@@ -148,16 +134,22 @@ export class MetricsCollector
 
 
     /**
+     * Stop the push interval
+     */
+    stop(): void
+    {
+        clearInterval( this._push_interval );
+    }
+
+
+    /**
      * List to events to update metrics
      */
     private hookMetrics()
     {
         this._emitter.on(
             'delta-process-start',
-            ( uid: string ) =>
-            {
-                this._timing_map[ uid ] = this._timer();
-            }
+            ( uid: string ) => { this._timing_map[ uid ] = this._timer(); }
         );
 
         this._emitter.on(
@@ -166,7 +158,7 @@ export class MetricsCollector
             {
                 const start_time_ms = this._timing_map[ uid ] || [ -1, -1 ];
                 const t             = this._timer( start_time_ms );
-                const total_time_ms = ( ( t[ 0 ] * 1000 ) + ( t[ 1 ] / 1000 ) );
+                const total_time_ms = t[ 0 ] * 1000 + t[ 1 ] / 1000000;
 
                 this._process_time.observe( total_time_ms );
                 this._total_processed.inc();
@@ -188,27 +180,23 @@ export class MetricsCollector
      * @param body     - The resposne body
      */
     private pushCallback(
-        _error?:    Error | undefined,
+        error?:    Error | undefined,
         _response?: any,
         _body?:     any
     ): void
     {
-        console.log( 'Push callback' );
-        console.error( _error );
+        if ( error )
+        {
+            this._emitter.emit( 'error', error );
+        }
     }
 
 
     /**
-     * Look for mongodb delta errors and update metrics if found
-     *
-     * @return any errors the occurred
+     * Update metrics with current error count
      */
-    checkForErrors( dao: DeltaDao ): NullableError
+    updateErrorCount( count: number ): void
     {
-        dao.getErrorCount()
-            .then( count => { this._current_error.set( +count ); } )
-            .catch( err => { return err; } );
-
-        return null;
+        this._current_error.set( +count );
     }
 }

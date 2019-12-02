@@ -26,6 +26,32 @@ import { DocumentId } from '../document/Document';
 import { Options } from 'amqplib';
 
 
+/**
+ * Create an amqp configuration from the environment
+ *
+ * @param env - the environment variables
+ *
+ * @return the amqp configuration
+ */
+export function createAmqpConfig( env: NodeJS.ProcessEnv ): AmqpConfig
+{
+    return <AmqpConfig>{
+        protocol:   'amqp',
+        hostname:   env.amqp_hostname,
+        port:       +( env.amqp_port || 0 ),
+        username:   env.amqp_username,
+        password:   env.amqp_password,
+        locale:     'en_US',
+        frameMax:   +( env.amqp_frameMax || 0 ),
+        heartbeat:  +( env.amqp_heartbeat || 0 ),
+        vhost:      env.amqp_vhost,
+        exchange:   env.amqp_exchange,
+        retries:    env.amqp_retries || 30,
+        retry_wait: env.amqp_retry_wait || 1000,
+    };
+}
+
+
 export interface AmqpConfig extends Options.Connect {
     /** The protocol to connect with (should always be "amqp") */
     protocol: string;
@@ -49,7 +75,7 @@ export interface AmqpConfig extends Options.Connect {
     frameMax: number;
 
     /** How often to check for a live connection */
-    heartBeat: number;
+    heartbeat: number;
 
     /** The virtual host we are on (e.g. live, demo, test) */
     vhost?: string;
@@ -70,13 +96,15 @@ export interface AmqpPublisher
     /**
      * Publish quote message to exchange post-rating
      *
-     * @param delta  - The delta
-     * @param bucket - The bucket
-     * @param doc_id - The doc_id
+     * @param doc_id   - The doc_id
+     * @param delta    - The delta
+     * @param bucket   - The bucket
+     * @param ratedata - The rate data bucket
     */
     publish(
-        delta:  DeltaResult<any>,
-        bucket: Record<string, any>,
-        doc_id: DocumentId,
+        doc_id:    DocumentId,
+        delta:     DeltaResult<any>,
+        bucket:    Record<string, any>,
+        ratedata?: Record<string, any>,
     ): Promise<void>
 }

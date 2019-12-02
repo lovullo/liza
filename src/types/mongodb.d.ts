@@ -62,6 +62,15 @@ export interface MongoDb
      * @param callback continuation on completion
      */
     close( callback: MongoCallback ): void;
+
+
+    /**
+     * Hook events
+     *
+     * @param event_id - the event to hook
+     * @param callback - a function to call in response to the event
+     */
+    on( event_id: string, callback: ( err: Error ) => void ): void;
 }
 
 
@@ -107,6 +116,9 @@ interface MongoFindOptions
 
     /** Whether to project only id's */
     id?: number,
+
+    /** Which fields to include in the result set */
+    fields?: Record<string, number>,
 }
 
 
@@ -236,6 +248,10 @@ declare interface MongoCollection
 
     /**
      * Creates an index on the collection
+     *
+     * @param fieldOrSpec - indexes to create
+     * @param options     - mongo options
+     * @param callback    - continuation on completion
      */
     createIndex(
         fieldOrSpec: MongoIndexSpecification,
@@ -246,6 +262,9 @@ declare interface MongoCollection
 
     /**
      * Creates an index on the collection
+     *
+     * @param docs     - documents to insert
+     * @param callback - continuation on completion
      */
     insert(
         docs:     MongoInsertSpecification,

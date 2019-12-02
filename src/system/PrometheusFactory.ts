@@ -22,6 +22,42 @@
  */
 import { Pushgateway, Histogram, Counter, Gauge } from 'prom-client';
 
+
+export declare type PrometheusConfig = {
+    /** The hostname to connect to */
+    hostname: string;
+
+    /** The port to connect to */
+    port: number;
+
+    /** The environment ( dev, test, demo, live ) */
+    env: string;
+
+    /** The rate (in milliseconds) at which metrics are pushed */
+    push_interval_ms: number;
+}
+
+
+/**
+ * Create a prometheus configuration from the environment
+ *
+ * @param env - the environment variables
+ *
+ * @return the prometheus configuration
+ */
+export function createPrometheusConfig(
+    env: NodeJS.ProcessEnv
+): PrometheusConfig
+{
+    return <PrometheusConfig>{
+        'hostname':         env.prom_hostname,
+        'port':             +( env.prom_port || 0 ),
+        'env':              process.env.NODE_ENV,
+        'push_interval_ms': +( process.env.prom_push_interval_ms || 5000 ),
+    };
+}
+
+
 export class PrometheusFactory
 {
     /**

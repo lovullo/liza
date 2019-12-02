@@ -20,7 +20,7 @@
  */
 
 import { ServerDao, Callback } from "./ServerDao";
-import { MongoCollection, MongoUpdate } from "mongodb";
+import { MongoCollection, MongoUpdate, MongoDb } from "mongodb";
 import { PositiveInteger } from "../../numeric";
 import { ServerSideQuote } from "../quote/ServerSideQuote";
 import { QuoteId } from "../../document/Document";
@@ -64,7 +64,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param {Mongo.Db} db mongo database connection
      */
     constructor(
-        private readonly _db: any
+        private readonly _db: MongoDb
     )
     {
         super();
@@ -86,7 +86,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         var dao = this;
 
         // map db error event (on connection error) to our connectError event
-        this._db.on( 'error', function( err: any )
+        this._db.on( 'error', function( err: Error )
         {
             dao._ready      = false;
             dao._collection = null;
@@ -165,7 +165,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                     collection.createIndex(
                         [ ['id', 1] ],
                         true,
-                        function( _err: any, _index: { [P: string]: any } )
+                        function(
+                            _err: NullableError,
+                            _index: { [P: string]: any,
+                        } )
                         {
                             // mark the DAO as ready to be used
                             dao._collection = collection;
@@ -179,7 +182,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             db.collection(
                 dao.COLLECTION_SEQ,
                 function(
-                    err:        any,
+                    err:        Error,
                     collection: MongoCollection,
                 ) {
                     if ( err )
@@ -199,7 +202,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                     collection.find(
                         { _id: dao.SEQ_QUOTE_ID },
                         { limit: <PositiveInteger>1 },
-                        function( err: any, cursor )
+                        function( err: NullableError, cursor )
                         {
                             if ( err )
                             {
@@ -207,7 +210,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                                 return;
                             }
 
-                            cursor.toArray( function( _err: any, data: any[] )
+                            cursor.toArray( function( _err: Error, data: any[] )
                             {
                                 if ( data.length == 0 )
                                 {
@@ -236,7 +239,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 _id: this.SEQ_QUOTE_ID,
                 val: this.SEQ_QUOTE_ID_DEFAULT,
             },
-            function( err: any, _docs: any )
+            function( err: NullableError, _docs: any )
             {
                 if ( err )
                 {
@@ -467,8 +470,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      */
     saveQuoteState(
         quote:            ServerSideQuote,
-        success_callback: any,
-        failure_callback: any,
+        success_callback: Callback,
+        failure_callback: Callback,
     )
     {
         var update = {
@@ -486,8 +489,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     saveQuoteClasses(
         quote:   ServerSideQuote,
         classes: any,
-        success: any,
-        failure: any,
+        success: Callback,
+        failure: Callback,
     )
     {
         return this.mergeData(

@@ -78,23 +78,6 @@
             }
         },
         {
-            "name": "session",
-            "type": {
-                "type": "record",
-                "name": "Session",
-                "fields": [
-                    {
-                        "name": "entity_name",
-                        "type": "string"
-                    },
-                    {
-                        "name": "entity_id",
-                        "type": "int"
-                    }
-                ]
-            }
-        },
-        {
             "name": "data",
             "type": [
                 "null",
@@ -161,6 +144,13 @@
             ]
         },
         {
+            "name": "ratedata",
+            "type": [
+                "null",
+                "Data"
+            ]
+        },
+        {
             "name": "delta",
             "type": [
                 "null",
@@ -191,4 +181,3 @@
         }
     ]
 }
-

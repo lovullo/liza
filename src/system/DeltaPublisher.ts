@@ -21,37 +21,22 @@
  * Publish delta message to a queue
  */
 
-import { AmqpPublisher, AmqpConfig } from './AmqpPublisher';
-import { DeltaResult } from '../bucket/delta';
+import { AmqpPublisher } from './AmqpPublisher';
+import { Delta } from '../bucket/delta';
 import { EventEmitter } from "events";
 import { DocumentId } from '../document/Document';
 import { context } from '../error/ContextError';
 import { AmqpError } from '../error/AmqpError';
-import {
-    connect as amqpConnect,
-    Channel,
-    Connection,
-} from 'amqplib';
+import { AvroSchema, AvroEncoderCtr } from './avro/AvroFactory';
+import { AmqpConnection } from './amqp/AmqpConnection';
+
 
 const avro = require( 'avro-js' );
 
-
-export interface AvroSchema {
-    /** Write data to a buffer */
-    toBuffer( data: Record<string, any> ): Buffer | null;
-}
-
-
 export class DeltaPublisher implements AmqpPublisher
 {
-    /** The amqp connection */
-    private _conn?: Connection;
-
-    /** The amqp channel */
-    private _channel?: Channel;
-
     /** The avro schema */
-    private _type?: AvroSchema;
+    private _schema: AvroSchema;
 
     /** The path to the avro schema */
     readonly SCHEMA_PATH = __dirname + '/avro/schema.avsc';
@@ -66,122 +51,45 @@ export class DeltaPublisher implements AmqpPublisher
     /**
      * Delta publisher
      *
-     * @param _conf    - amqp configuration
-     * @param _emitter - event emitter instance
-     * @param _ts_ctr  - a timestamp constructor
+     * @param _emitter     - event emitter instance
+     * @param _ts_ctr      - a timestamp constructor
+     * @param _encoder_ctr - a factory function to create an avro encoder
+     * @param _conn        - the amqp connection
      */
     constructor(
-        private readonly _conf:    AmqpConfig,
-        private readonly _emitter: EventEmitter,
-        private readonly _ts_ctr:  () => UnixTimestamp,
+        private readonly _emitter:     EventEmitter,
+        private readonly _ts_ctr:      () => UnixTimestamp,
+        private readonly _encoder_ctr: AvroEncoderCtr,
+        private readonly _conn:        AmqpConnection,
     ) {
-        this._type = avro.parse( this.SCHEMA_PATH );
-    }
-
-
-    /**
-     * Initialize connection
-     */
-    connect(): Promise<void>
-    {
-        return amqpConnect( this._conf )
-            .then( conn =>
-            {
-                this._conn = conn;
-
-                // If there is an error, attempt to reconnect
-                this._conn.on( 'error', e =>
-                {
-                    this._emitter.emit( 'amqp-conn-error', e );
-                    this._reconnect();
-                } );
-
-                return this._conn.createChannel();
-            } )
-            .then( ( ch: Channel ) =>
-            {
-                this._channel = ch;
-
-                this._channel.assertExchange(
-                    this._conf.exchange,
-                    'fanout',
-                    { durable: true }
-                );
-            } );
-    }
-
-
-    /**
-     * Attempt to re-establish the connection
-     *
-     * @return Whether reconnecting was successful
-     */
-    private _reconnect( retry_count: number = 0 ): void
-    {
-        if ( retry_count >= this._conf.retries )
-        {
-            this._emitter.emit(
-                'amqp-reconnect-fail',
-                'Could not re-establish AMQP connection.'
-            );
-
-            return;
-        }
-
-        this._emitter.emit(
-            'amqp-reconnect',
-            '...attempting to re-establish AMQP connection'
-        );
-
-        this.connect()
-            .then( _ =>
-            {
-                this._emitter.emit(
-                    'amqp-reconnect',
-                    'AMQP re-connected'
-                );
-            } )
-            .catch( _ =>
-            {
-                const wait_ms = this._conf.retry_wait;
-                setTimeout( () => this._reconnect( ++retry_count ), wait_ms );
-            } );
-    }
-
-
-    /**
-     * Close the amqp conenction
-     */
-    close(): void
-    {
-        if ( this._conn )
-        {
-            this._conn.close.bind(this._conn);
-        }
+        this._schema = avro.parse( this.SCHEMA_PATH );
     }
 
 
     /**
      * Publish quote message to exchange post-rating
      *
-     * @param delta  - The delta
-     * @param bucket - The bucket
-     * @param doc_id - The doc_id
+     * @param doc_id   - The doc_id
+     * @param delta    - The delta
+     * @param bucket   - The bucket
+     * @param ratedata - The ratedata bucket
     */
-    publish(
-        delta:  DeltaResult<any>,
-        bucket: Record<string, any>,
-        doc_id: DocumentId,
+   publish(
+        doc_id:   DocumentId,
+        delta:    Delta<any>,
+        bucket:   Record<string, any>,
+        ratedata: Record<string, any> = {},
     ): Promise<void>
     {
-        return this.sendMessage( delta, bucket, doc_id )
+        return this._sendMessage( doc_id, delta, bucket, ratedata )
             .then( _ =>
             {
                 this._emitter.emit(
                     'delta-publish',
-                    "Published " + delta.type + " delta with ts '"
-                        + delta.timestamp + "' to '" + this._conf.exchange
-                        + '" exchange',
+                    {
+                        delta: delta,
+                        exchange: this._conn.getExchangeName(),
+                    }
                 );
             } );
     }
@@ -190,130 +98,154 @@ export class DeltaPublisher implements AmqpPublisher
     /**
      * Send message to exchange
      *
-     * @param delta  - The delta to publish
-     * @param bucket - The bucket
-     * @param doc_id - The doc_id
+     * @param doc_id   - The doc_id
+     * @param delta    - The delta to publish
+     * @param bucket   - The bucket
+     * @param ratedata - The ratedata bucket
      *
      * @return whether publish was successful
      */
-    sendMessage(
-        delta:   DeltaResult<any>,
-        bucket: Record<string, any>,
-        doc_id:  DocumentId,
+    private _sendMessage(
+        doc_id:   DocumentId,
+        delta:    Delta<any>,
+        bucket:   Record<string, any>,
+        ratedata: Record<string, any>,
     ): Promise<void>
     {
-        return new Promise<void>( ( resolve, reject ) =>
-        {
-            const ts          = this._ts_ctr();
-            const headers     = { version: 1, created: ts };
-            const avro_object = this.avroFormat( delta, bucket, doc_id, ts );
-            const avro_buffer = this.avroEncode( avro_object );
+        const ts          = this._ts_ctr();
+        const headers     = { version: 1, created: ts };
+        const avro_object = this._avroFormat(
+            ts,
+            doc_id,
+            delta,
+            bucket,
+            ratedata,
+        );
 
-            if ( !this._conn )
+        return this.avroEncode( avro_object )
+            .then( ( avro_buffer ) =>
             {
-                reject( context (
-                    new AmqpError( 'Error sending message: No connection' ),
-                    {
-                        doc_id:     doc_id,
-                        delta_type: delta.type,
-                        delta_ts:   delta.ts,
-                    },
-                ) );
-                return;
-            }
-            else if ( !this._channel )
-            {
-                reject( context (
-                    new AmqpError( 'Error sending message: No channel' ),
-                    {
-                        doc_id:     doc_id,
-                        delta_type: delta.type,
-                        delta_ts:   delta.ts,
-                    },
-                ) );
-                return;
-            }
-            else if ( !avro_buffer )
-            {
-                reject( context (
-                    new Error( 'Error sending message: No avro buffer' ),
-                    {
-                        doc_id:     doc_id,
-                        delta_type: delta.type,
-                        delta_ts:   delta.ts,
-                    },
-                ) );
-                return;
-            }
+                const channel = this._conn.getAmqpChannel();
 
-            // we don't use a routing key; fanout exchange
-            const published_successfully = this._channel.publish(
-                this._conf.exchange,
-                '',
-                avro_buffer,
-                { headers: headers },
-            );
-
-            if ( published_successfully )
-            {
-                resolve();
-                return;
-            }
-
-            reject( context(
-                new Error ( 'Error sending message: publishing failed' ),
+                if ( !channel )
                 {
-                    doc_id:     doc_id,
-                    delta_type: delta.type,
-                    delta_ts:   delta.ts,
+                    return Promise.reject( context (
+                        new AmqpError( 'Error sending message: No channel' ),
+                        {
+                            doc_id:     doc_id,
+                            delta_type: delta.type,
+                            delta_ts:   delta.timestamp,
+                        },
+                    ) );
                 }
-            ) );
-        } );
+
+                // we don't use a routing key; fanout exchange
+                const published_successfully = channel.publish(
+                    this._conn.getExchangeName(),
+                    '',
+                    avro_buffer,
+                    { headers: headers },
+                );
+
+                if ( !published_successfully )
+                {
+                    return Promise.reject( context(
+                        new Error ( 'Delta publish failed' ),
+                        {
+                            doc_id:     doc_id,
+                            delta_type: delta.type,
+                            delta_ts:   delta.timestamp,
+                        }
+                    ) );
+                }
+
+                return Promise.resolve();
+            } );
     }
 
 
-    avroFormat(
-        delta:   DeltaResult<any>,
-        _bucket: Record<string, any>,
-        doc_id:  DocumentId,
-        ts:      UnixTimestamp,
+    /**
+     * Throw an error with specific information if the schema is invalid
+     *
+     * @param schema - Avro schema
+     * @param data   - Data to encode
+     */
+    private _assertValidAvro(
+        schema: AvroSchema,
+        data: Record<string, any>,
+    ): void
+    {
+        schema.isValid( data, { errorHook: hook } );
+
+        function hook( keys: any, vals: any) {
+            throw context( new Error( 'Invalid Avro Schema' ),
+                {
+                    invalid_paths: keys,
+                    invalid_data:  vals,
+                }
+            );
+        }
+    }
+
+
+    /**
+     * Format the avro data with data type labels
+     *
+     * @param ts       - a timestamp
+     * @param doc_id   - the document id
+     * @param delta    - the current delta
+     * @param bucket   - the data bucket
+     * @param ratedata - the ratedata bucket
+     *
+     * @return the formatted data
+     */
+    private _avroFormat(
+        ts:       UnixTimestamp,
+        doc_id:   DocumentId,
+        delta:    Delta<any>,
+        bucket:   Record<string, any>,
+        ratedata: Record<string, any>,
     ): any
     {
-        const delta_data = this.setDataTypes( delta.data );
-        const event_id   = this.DELTA_MAP[ delta.type ];
+        const delta_formatted    = this.setDataTypes( delta.data );
+        const bucket_formatted   = this.setDataTypes( bucket );
+        const ratedata_formatted = this.setDataTypes( ratedata );
+        const event_id           = this.DELTA_MAP[ delta.type ];
 
         return {
             event: {
-                id:     event_id,
-                ts:     ts,
+                id:    event_id,
+                ts:    ts,
                 actor: 'SERVER',
-                step:   null,
+                step:  null,
             },
             document: {
-                id:       doc_id
-            },
-            session: {
-                entity_name: 'Foobar', // Fix
-                entity_id:   123123, // Fix
+                id: doc_id
             },
             data: {
                 Data: {
-                    bucket: _bucket,
+                    bucket: bucket_formatted,
+                },
+            },
+            ratedata: {
+                Data: {
+                    bucket: ratedata_formatted,
                 },
             },
             delta: {
                 Data: {
-                    bucket: delta_data,
+                    bucket: delta_formatted,
                 },
             },
             program: {
                 Program: {
                     id:      'quote_server',
-                    version: 'dadaddwafdwa', // Fix
+                    version: '',
                 },
             },
         }
     }
+
 
     /**
      * Encode the data in an avro buffer
@@ -322,33 +254,28 @@ export class DeltaPublisher implements AmqpPublisher
      *
      * @return the avro buffer or null if there is an error
      */
-    avroEncode( data: Record<string, any> ): Buffer | null
+    avroEncode( data: Record<string, any> ): Promise<Buffer>
     {
-        let buffer = null;
-
-        try
+        return new Promise<Buffer>( ( resolve, reject ) =>
         {
-            if ( !this._type )
+            const bufs: Buffer[] = [];
+
+            try
             {
-                this._emitter.emit(
-                    'avro-err',
-                    'No avro scheama found',
-                );
+                this._assertValidAvro( this._schema, data )
 
-                return null;
+                const encoder = this._encoder_ctr( this._schema )
+
+                encoder.on('data', ( buf: Buffer ) => { bufs.push( buf ) } )
+                encoder.on('error', ( err: Error ) => { reject( err ); } )
+                encoder.on('end', () => { resolve( Buffer.concat( bufs ) ) } )
+                encoder.end( data );
             }
-
-            buffer = this._type.toBuffer( data );
-        }
-        catch( e )
-        {
-            this._emitter.emit(
-                'avro-err',
-                'Error encoding data to avro: ' + e,
-            );
-        }
-
-        return buffer;
+            catch ( e )
+            {
+                reject( e );
+            }
+        } );
     }
 
 
@@ -365,7 +292,7 @@ export class DeltaPublisher implements AmqpPublisher
 
         switch( typeof( data ) )
         {
-            case 'object': // Typescript treats arrays as objects
+            case 'object':
                 if ( data == null )
                 {
                     return null;

@@ -18,15 +18,20 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import { DocumentId } from '../document/Document';
+
 
 /** The data structure expected for a document's internal key/value store */
 export type Kv<T = any> = Record<string, T[]>;
 
+
 /** Possible delta values for Kv array indexes */
 export type DeltaDatum<T> = T | null | undefined;
 
+
 /** Possible delta types */
 export type DeltaType = 'ratedata' | 'data';
+
 
 /**
  * The constructor type for a delta generating function
@@ -44,6 +49,53 @@ export type DeltaConstructor<T = any, U extends Kv<T> = Kv<T>, V extends Kv<T> =
 
 /** Transform type T to hold possible delta values */
 export type DeltaResult<T> = { [K in keyof T]: DeltaDatum<T[K]> | null };
+
+
+/** Complete delta type */
+export type Delta<T> = {
+    type:      DeltaType,
+    timestamp: UnixTimestamp,
+    data:      DeltaResult<T>,
+}
+
+
+/** Reverse delta type */
+export type ReverseDelta<T> = {
+    data:     Delta<T>[],
+    ratedata: Delta<T>[],
+}
+
+
+/** Structure for Published delta count */
+export type PublishDeltaCount = {
+    data?:     number,
+    ratedata?: number,
+}
+
+
+/**
+ * Document structure
+ */
+export interface DeltaDocument
+{
+    /** The document id */
+    id: DocumentId,
+
+    /** The time the document was updated */
+    lastUpdate: UnixTimestamp,
+
+    /** The data bucket */
+    data: Record<string, any>,
+
+    /** The rate data bucket */
+    ratedata?: Record<string, any>,
+
+    /** The calculated reverse deltas */
+    rdelta?: ReverseDelta<any>,
+
+    /** A count of how many of each delta type have been processed */
+    totalPublishDelta?: PublishDeltaCount,
+};
 
 
 /**
@@ -105,7 +157,7 @@ export function createDelta<T, U extends Kv<T>, V extends Kv<T>>(
  * @param bucket - The bucket data
  * @param delta  - The delta to apply
  *
- * @return the delta
+ * @return the bucket with the delta applied
  */
 export function applyDelta<T, U extends Kv<T>, V extends Kv<T>>(
     bucket: U = <U>{},
@@ -164,7 +216,7 @@ export function applyDelta<T, U extends Kv<T>, V extends Kv<T>>(
  * @param bucket - The bucket data array
  * @param delta  - The delta data array
  *
- * @return an object with an changed flag and a data array
+ * @return the applied delta
  */
 function _applyDeltaKey<T>(
     bucket: T[],
