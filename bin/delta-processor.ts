@@ -98,7 +98,7 @@ getMongoCollection( db, db_conf )
     } )
     .catch( e =>
     {
-        log.error( e );
+        emitter.emit( 'error', e );
         process.exit( 1 );
     } );
 
