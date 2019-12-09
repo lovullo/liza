@@ -70,8 +70,8 @@ export class EventMediator
 
     private _handleError( e: any ): void
     {
-        let msg: string = '';
-        let context     = {};
+        let msg: string                  = '';
+        let context: Record<string, any> = {};
 
         if ( e instanceof( Error ) )
         {
@@ -81,6 +81,8 @@ export class EventMediator
             {
                 context = e.context;
             }
+
+            context.stack = e.stack;
         }
 
         this._log.error( msg, context );

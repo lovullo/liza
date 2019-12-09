@@ -96,27 +96,33 @@ describe( 'system.EventLogger captures and logs events', () =>
         expect( method_called ).to.be.true;
     } );
 
-    it( 'context is retrieved from error', () =>
+    it( 'context and stack are retrieved from error', () =>
     {
         let method_called = false;
 
         const event_id    = 'error';
         const err_msg     = 'Foo';
+        const stub_err    = new Error( err_msg );
         const emitter     = new EventEmitter();
         const log         = createMockLogger();
         const err_context = { bar: 'baz' };
 
+        const expected_context = {
+            bar:   err_context.bar,
+            stack: stub_err.stack,
+        };
+
         log.error = ( str: string, context: any ) =>
         {
-            method_called = true;
-
             expect( str ).to.equal( err_msg );
-            expect( context ).to.equal( err_context );
+            expect( context ).to.deep.equal( expected_context );
+
+            method_called = true;
         };
 
         new Sut( log, emitter );
 
-        emitter.emit( event_id, context( new Error( err_msg ), err_context ) );
+        emitter.emit( event_id, context( stub_err, err_context ) );
 
         expect( method_called ).to.be.true;
     } );
