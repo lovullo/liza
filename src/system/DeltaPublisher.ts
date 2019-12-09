@@ -121,14 +121,14 @@ export class DeltaPublisher implements AmqpPublisher
 
                 if ( !channel )
                 {
-                    return Promise.reject( context (
+                    throw context(
                         new AmqpError( 'Error sending message: No channel' ),
                         {
                             doc_id:     doc_id,
                             delta_type: delta.type,
                             delta_ts:   delta.timestamp,
                         },
-                    ) );
+                    );
                 }
 
                 // we don't use a routing key; fanout exchange
@@ -141,17 +141,15 @@ export class DeltaPublisher implements AmqpPublisher
 
                 if ( !published_successfully )
                 {
-                    return Promise.reject( context(
+                    throw context(
                         new Error ( 'Delta publish failed' ),
                         {
                             doc_id:     doc_id,
                             delta_type: delta.type,
                             delta_ts:   delta.timestamp,
                         }
-                    ) );
+                    );
                 }
-
-                return Promise.resolve();
             } );
     }
 
