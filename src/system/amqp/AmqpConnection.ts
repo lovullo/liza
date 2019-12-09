@@ -17,25 +17,23 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Amqp Connection
  */
 import { AmqpConfig } from '../AmqpPublisher';
 import { EventEmitter } from "events";
-import {
-    connect as AmqpConnect,
-    Channel,
-    Connection,
-} from 'amqplib';
+import * as amqplib from "amqplib";
 
-
+/**
+ * Connection to AMQP exchange
+ *
+ * XXX: Needs tests!
+ */
 export class AmqpConnection
 {
     /** The amqp connection */
-    private _conn?: Connection;
+    private _conn?: amqplib.Connection;
 
     /** The amqp channel */
-    private _channel?: Channel;
+    private _channel?: amqplib.Channel;
 
 
     /**
@@ -45,6 +43,7 @@ export class AmqpConnection
      * @param _emitter - event emitter instance
      */
     constructor(
+        private readonly _amqp:    typeof amqplib,
         private readonly _conf:    AmqpConfig,
         private readonly _emitter: EventEmitter,
     ) {}
@@ -55,7 +54,7 @@ export class AmqpConnection
      */
     connect(): Promise<void>
     {
-        return AmqpConnect( this._conf )
+        return this._amqp.connect( this._conf )
             .then( conn =>
             {
                 this._conn = conn;
@@ -72,16 +71,17 @@ export class AmqpConnection
 
                 return this._conn.createChannel();
             } )
-            .then( ( ch: Channel ) =>
+            .then( ( ch: amqplib.Channel ) =>
             {
                 this._channel = ch;
 
-                this._channel.assertExchange(
+                return this._channel.assertExchange(
                     this._conf.exchange,
                     'fanout',
                     { durable: true }
                 );
-            } );
+            } )
+            .then( _ => {} );
     }
 
 
@@ -130,7 +130,7 @@ export class AmqpConnection
      *
      * @return exchange name
      */
-    getAmqpChannel(): Channel | undefined
+    getAmqpChannel(): amqplib.Channel | undefined
     {
         if ( !this._channel )
         {

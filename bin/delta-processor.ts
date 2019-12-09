@@ -18,6 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import * as amqplib from "amqplib";
 import { createAmqpConfig } from '../src/system/AmqpPublisher';
 import { MongoDeltaDao } from '../src/system/db/MongoDeltaDao';
 import { DeltaProcessor } from '../src/system/DeltaProcessor';
@@ -48,7 +49,7 @@ const process_interval_ms = +( process.env.process_interval_ms || 2000 );
 const env                 = process.env.NODE_ENV || 'Unknown Environment';
 const emitter             = new EventEmitter();
 const log                 = new StandardLogger( console, ts_ctr, env );
-const amqp_connection     = new AmqpConnection( amqp_conf, emitter );
+const amqp_connection     = new AmqpConnection( amqplib, amqp_conf, emitter );
 const publisher           = new DeltaPublisher(
     emitter,
     ts_ctr,
