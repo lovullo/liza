@@ -27,11 +27,10 @@ import { EventEmitter } from "events";
 import { DocumentId } from '../document/Document';
 import { context } from '../error/ContextError';
 import { AmqpError } from '../error/AmqpError';
-import { AvroSchema, AvroEncoderCtr } from './avro/AvroFactory';
+import { AvroEncoderCtr } from './avro/AvroFactory';
 import { AmqpConnection } from './amqp/AmqpConnection';
 
-
-const avro = require( 'avro-js' );
+import { AvroSchema, parse } from "avro-js";
 
 export class DeltaPublisher implements AmqpPublisher
 {
@@ -62,7 +61,7 @@ export class DeltaPublisher implements AmqpPublisher
         private readonly _encoder_ctr: AvroEncoderCtr,
         private readonly _conn:        AmqpConnection,
     ) {
-        this._schema = avro.parse( this.SCHEMA_PATH );
+        this._schema = parse( this.SCHEMA_PATH );
     }
 
 

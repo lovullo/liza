@@ -31,8 +31,9 @@ import { Channel } from 'amqplib';
 import {
     createAvroEncoder,
     AvroEncoderCtr,
-    AvroSchema,
 } from '../../src/system/avro/AvroFactory';
+
+import { AvroSchema } from "avro-js";
 
 import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
