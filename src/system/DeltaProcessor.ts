@@ -84,7 +84,7 @@ export class DeltaProcessor
 
     private _processDocument( doc: DeltaDocument ): Promise<void>
     {
-        const deltas          = this.getTimestampSortedDeltas( doc );
+        const deltas          = this._getTimestampSortedDeltas( doc );
         const doc_id          = doc.id;
         const bucket          = doc.data;
         const ratedata        = doc.ratedata;
@@ -153,7 +153,7 @@ export class DeltaProcessor
      *
      * @return a list of deltas sorted by timestamp
      */
-    getTimestampSortedDeltas( doc: DeltaDocument ): Delta<any>[]
+    private _getTimestampSortedDeltas( doc: DeltaDocument ): Delta<any>[]
     {
         const data_deltas     = this.getDeltas( doc, this.DELTA_RATEDATA );
         const ratedata_deltas = this.getDeltas( doc, this.DELTA_DATA );
