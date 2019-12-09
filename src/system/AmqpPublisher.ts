@@ -37,17 +37,17 @@ export function createAmqpConfig( env: NodeJS.ProcessEnv ): AmqpConfig
 {
     return <AmqpConfig>{
         protocol:   'amqp',
-        hostname:   env.amqp_hostname,
-        port:       +( env.amqp_port || 0 ),
-        username:   env.amqp_username,
-        password:   env.amqp_password,
+        hostname:   env.AMQP_HOSTNAME,
+        port:       +( env.AMQP_PORT || 0 ),
+        username:   env.AMQP_USERNAME,
+        password:   env.AMQP_PASSWORD,
         locale:     'en_US',
-        frameMax:   +( env.amqp_frameMax || 0 ),
-        heartbeat:  +( env.amqp_heartbeat || 0 ),
-        vhost:      env.amqp_vhost,
-        exchange:   env.amqp_exchange,
-        retries:    env.amqp_retries || 30,
-        retry_wait: env.amqp_retry_wait || 1000,
+        frameMax:   +( env.AMQP_FRAMEMAX || 0 ),
+        heartbeat:  +( env.AMQP_HEARTBEAT || 0 ),
+        vhost:      env.AMQP_VHOST,
+        exchange:   env.AMQP_EXCHANGE,
+        retries:    env.AMQP_RETRIES || 30,
+        retry_wait: env.AMQP_RETRY_WAIT || 1000,
     };
 }
 
