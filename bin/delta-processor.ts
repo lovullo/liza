@@ -79,22 +79,31 @@ getMongoCollection( db, db_conf )
     .then( ( mongoDao: MongoDeltaDao ) => { dao = mongoDao; } )
     .then( _ => amqp_connection.connect() )
     .then( _ =>
+    {
+        log.info( 'Liza Delta Processor' );
+
+        handleShutdown();
+
+        const processor = new DeltaProcessor( dao, publisher, emitter );
+
+        return new Promise( ( _resolve, reject ) =>
         {
-            log.info( 'Liza Delta Processor' );
-
-            handleShutdown();
-
-            const processor = new DeltaProcessor( dao, publisher, emitter );
-
             process_interval = setInterval( () =>
             {
-                processor.process();
+                try
+                {
+                    processor.process()
+                        .catch( err => reject( err ) );
+                }
+                catch ( err )
+                {
+                    reject( err );
+                }
 
                 dao.getErrorCount()
                     .then( count => { metrics.updateErrorCount( count ) } );
-            },
-            process_interval_ms,
-        );
+            }, process_interval_ms );
+        } );
     } )
     .catch( e =>
     {
