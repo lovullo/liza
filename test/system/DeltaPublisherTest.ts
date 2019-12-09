@@ -28,10 +28,7 @@ import { EventEmitter } from "events";
 import { hasContext } from '../../src/error/ContextError';
 import { AmqpError } from '../../src/error/AmqpError';
 import { Channel } from 'amqplib';
-import {
-    createAvroEncoder,
-    AvroEncoderCtr,
-} from '../../src/system/avro/AvroFactory';
+import { AvroEncoderCtr } from '../../src/system/avro/AvroFactory';
 
 import { AvroSchema } from "avro-js";
 
@@ -66,7 +63,20 @@ describe( 'server.DeltaPublisher', () =>
                 };
             };
 
-            const sut = new Sut( emitter, ts_ctr, createAvroEncoder, conn );
+            const stub_schema = <AvroSchema>(<unknown>{
+                isValid()
+                {
+                    // TODO: test me
+                },
+            } );
+
+            const sut = new Sut(
+                emitter,
+                ts_ctr,
+                createMockEncoderCtor( stub_schema ),
+                conn,
+                stub_schema,
+            );
 
             return expect(
                     sut.publish( <DocumentId>123, delta, bucket, ratedata )
@@ -118,8 +128,20 @@ describe( 'server.DeltaPublisher', () =>
 
             conn.getAmqpChannel = getChannelF;
 
-            const result = new Sut( emitter, ts_ctr, createAvroEncoder, conn )
-                                .publish( doc_id, delta, bucket, ratedata );
+            const stub_schema = <AvroSchema>(<unknown>{
+                isValid()
+                {
+                    // TODO: test me
+                },
+            } );
+
+            const result = new Sut(
+                emitter,
+                ts_ctr,
+                createMockEncoderCtor( stub_schema ),
+                conn,
+                stub_schema,
+            ).publish( doc_id, delta, bucket, ratedata );
 
             return Promise.all( [
                 expect( result ).to.eventually.be.rejectedWith(
@@ -225,11 +247,20 @@ describe( 'server.DeltaPublisher', () =>
                 const emitter = createMockEventEmitter();
                 const conn    = createMockAmqpConnection();
                 const data    = createMockData( delta_data );
-                const sut     = new Sut(
+
+                const stub_schema = <AvroSchema>(<unknown>{
+                    isValid()
+                    {
+                        // TODO: test me
+                    },
+                } );
+
+                const sut = new Sut(
                     emitter,
                     ts_ctr,
-                    createAvroEncoder,
+                    createMockEncoderCtor( stub_schema ),
                     conn,
+                    stub_schema
                 );
 
                 sut.avroEncode( data )
@@ -384,11 +415,13 @@ describe( 'server.DeltaPublisher', () =>
                 const emitter        = createMockEventEmitter();
                 const conn           = createMockAmqpConnection();
                 const avroEncoderCtr = createMockEncoder( encoded );
+                const stub_schema    = <AvroSchema>{};
                 const sut            = new Sut(
                     emitter,
                     ts_ctr,
                     avroEncoderCtr,
                     conn,
+                    stub_schema,
                 );
                 const actual  = sut.setDataTypes( delta_data );
 
@@ -482,4 +515,29 @@ function createMockDelta(): Delta<any>
         timestamp: <UnixTimestamp>123123123,
         data:      <DeltaResult<any>>{},
     }
+}
+
+
+function createMockEncoderCtor( stub_schema: AvroSchema ):
+    ( schema: AvroSchema ) => Duplex
+{
+    const events = <Record<string, () => void>>{};
+
+    const mock_duplex   = <Duplex>(<unknown>{
+        on( event_name: string, callback: () => void )
+        {
+            events[ event_name ] = callback;
+        },
+
+        end()
+        {
+            events.end();
+        },
+    } );
+
+    return ( schema: AvroSchema ): Duplex =>
+    {
+        expect( schema ).to.equal( stub_schema );
+        return mock_duplex;
+    };
 }

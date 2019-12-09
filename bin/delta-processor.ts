@@ -39,6 +39,7 @@ import {
     createPrometheusConfig,
 } from '../src/system/PrometheusFactory';
 import { AmqpConnection } from '../src/system/amqp/AmqpConnection';
+import { parse as avro_parse } from "avro-js";
 
 
 const amqp_conf           = createAmqpConfig( process.env );
@@ -55,6 +56,7 @@ const publisher           = new DeltaPublisher(
     ts_ctr,
     createAvroEncoder,
     amqp_connection,
+    avro_parse( __dirname + '/../src/system/avro/schema.avsc' ),
 );
 
 // Prometheus Metrics

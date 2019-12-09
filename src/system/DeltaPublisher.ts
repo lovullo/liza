@@ -30,16 +30,10 @@ import { AmqpError } from '../error/AmqpError';
 import { AvroEncoderCtr } from './avro/AvroFactory';
 import { AmqpConnection } from './amqp/AmqpConnection';
 
-import { AvroSchema, parse } from "avro-js";
+import { AvroSchema } from "avro-js";
 
 export class DeltaPublisher implements AmqpPublisher
 {
-    /** The avro schema */
-    private _schema: AvroSchema;
-
-    /** The path to the avro schema */
-    readonly SCHEMA_PATH = __dirname + '/avro/schema.avsc';
-
     /** A mapping of which delta type translated to which avro event */
     readonly DELTA_MAP: Record<string, string> = {
         data:     'STEP_SAVE',
@@ -58,11 +52,10 @@ export class DeltaPublisher implements AmqpPublisher
     constructor(
         private readonly _emitter:     EventEmitter,
         private readonly _ts_ctr:      () => UnixTimestamp,
-        private readonly _encoder_ctr: AvroEncoderCtr,
+        private readonly _encoder_ctor: AvroEncoderCtr,
         private readonly _conn:        AmqpConnection,
-    ) {
-        this._schema = parse( this.SCHEMA_PATH );
-    }
+        private readonly _schema:      AvroSchema,
+    ) {}
 
 
     /**
@@ -263,7 +256,7 @@ export class DeltaPublisher implements AmqpPublisher
             {
                 this._assertValidAvro( this._schema, data )
 
-                const encoder = this._encoder_ctr( this._schema )
+                const encoder = this._encoder_ctor( this._schema )
 
                 encoder.on('data', ( buf: Buffer ) => { bufs.push( buf ) } )
                 encoder.on('error', ( err: Error ) => { reject( err ); } )
