@@ -155,8 +155,8 @@ export class DeltaProcessor
      */
     private _getTimestampSortedDeltas( doc: DeltaDocument ): Delta<any>[]
     {
-        const data_deltas     = this.getDeltas( doc, this.DELTA_RATEDATA );
-        const ratedata_deltas = this.getDeltas( doc, this.DELTA_DATA );
+        const data_deltas     = this._getDeltas( doc, this.DELTA_RATEDATA );
+        const ratedata_deltas = this._getDeltas( doc, this.DELTA_DATA );
         const deltas          = data_deltas.concat( ratedata_deltas );
 
         deltas.sort( this._sortByTimestamp );
@@ -173,7 +173,7 @@ export class DeltaProcessor
      *
      * @return a trimmed list of deltas
      */
-    getDeltas( doc: DeltaDocument, type: DeltaType ): Delta<any>[]
+    private _getDeltas( doc: DeltaDocument, type: DeltaType ): Delta<any>[]
     {
         const deltas_obj           = doc.rdelta || <ReverseDelta<any>>{};
         const deltas: Delta<any>[] = deltas_obj[ type ] || [];

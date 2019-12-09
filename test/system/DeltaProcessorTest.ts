@@ -22,7 +22,7 @@
 import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
 import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
-import { DeltaType, DeltaDocument } from "../../src/bucket/delta";
+import { DeltaDocument } from "../../src/bucket/delta";
 import { DocumentId } from '../../src/document/Document';
 import { EventEmitter } from 'events';
 
@@ -32,128 +32,6 @@ chai_use( require( 'chai-as-promised' ) );
 
 describe( 'system.DeltaProcessor', () =>
 {
-    describe( '#getDeltas', () =>
-    {
-        ( <{
-            label:    string,
-            type:     DeltaType,
-            given:    any,
-            expected: any
-        }[]>[
-            {
-                label: 'return empty array if no deltas are present',
-                type: 'data',
-                given: {
-                    rdelta: {},
-                },
-                expected: [],
-            },
-            {
-                label: 'return full list if no lastPublished index is found',
-                type: 'data',
-                given: {
-                    rdelta: {
-                        data: [
-                            {
-                                data:      { foo: [ 'first_bar' ] },
-                                timestamp: 123,
-                            },
-                            {
-                                data:      { foo: [ 'second_bar' ] },
-                                timestamp: 234,
-                            },
-                        ],
-                    },
-                },
-                expected: [
-                    {
-                        data:      { foo: [ 'first_bar' ] },
-                        timestamp: 123,
-                        type:      'data',
-                    },
-                    {
-                        data:      { foo: [ 'second_bar' ] },
-                        timestamp: 234,
-                        type:      'data',
-                    },
-                ],
-            },
-            {
-                label: 'marks deltas with their type',
-                type: 'data',
-                given: {
-                    rdelta: {
-                        data: [
-                            {
-                                data:      { foo: [ 'first_bar' ] },
-                                timestamp: 123,
-                            },
-                            {
-                                data:      { foo: [ 'second_bar' ] },
-                                timestamp: 234,
-                            },
-                        ],
-                    },
-                    totalPublishDelta: {
-                        data: 0,
-                    },
-                },
-                expected: [
-                    {
-                        data:      { foo: [ 'first_bar' ] },
-                        timestamp: 123,
-                        type:      'data',
-                    },
-                    {
-                        data:      { foo: [ 'second_bar' ] },
-                        timestamp: 234,
-                        type:      'data',
-                    },
-                ],
-            },
-            {
-                label: 'trims delta array based on index',
-                type: 'data',
-                given: {
-                    rdelta: {
-                        data: [
-                            {
-                                data:      { foo: [ 'first_bar' ] },
-                                timestamp: 123,
-                            },
-                            {
-                                data:      { foo: [ 'second_bar' ] },
-                                timestamp: 234,
-                            },
-                        ],
-                    },
-                    totalPublishDelta: {
-                        data: 1,
-                    },
-                },
-                expected: [
-                    {
-                        data:      { foo: [ 'second_bar' ] },
-                        timestamp: 234,
-                        type:      'data',
-                    },
-                ],
-            },
-        ] ).forEach( ( { type, given, expected, label } ) => it( label, () =>
-        {
-            const sut = new Sut(
-                createMockDeltaDao(),
-                createMockDeltaPublisher(),
-                new EventEmitter(),
-            );
-
-            const actual = sut.getDeltas( given, type );
-
-            expect( actual ).to.deep.equal( expected );
-        } ) );
-    } );
-
-
     describe( '#process', () =>
     {
         ( <{
@@ -317,6 +195,40 @@ describe( 'system.DeltaProcessor', () =>
                         delta:    { foo: [ 'second_bar_345' ] },
                         bucket:   { foo: [ 'start_bar_345' ] },
                         ratedata: { foo: [ 'second_bar_345' ] },
+                    },
+                ],
+            },
+            {
+                label: 'trims delta array based on index',
+                given: [
+                    {
+                        id:         111,
+                        lastUpdate: 123123123,
+                        data:       { foo: [ 'bar' ] },
+                        ratedata:   {},
+                        rdelta:     {
+                            data: [
+                                {
+                                    data:      { foo: [ 'first_bar' ] },
+                                    timestamp: 123,
+                                },
+                                {
+                                    data:      { foo: [ 'second_bar' ] },
+                                    timestamp: 234,
+                                },
+                            ],
+                        },
+                        totalPublishDelta: {
+                            data: 1,
+                        },
+                    },
+                ],
+                expected: [
+                    {
+                        doc_id:   111,
+                        delta:    { foo: [ 'second_bar' ] },
+                        bucket:   { foo: [ 'second_bar' ] },
+                        ratedata: {}
                     },
                 ],
             },
