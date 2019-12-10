@@ -40,7 +40,7 @@ describe( 'system.DeltaProcessor', () =>
             expected: any
         }[]>[
             {
-                label: 'No deltas are processed',
+                label: "No deltas are processed",
                 given: [
                     {
                         id:         123,
@@ -52,168 +52,313 @@ describe( 'system.DeltaProcessor', () =>
                 ],
                 expected: [],
             },
+
+            // when quote is initialized: { foo: [ "" ], state: [ "a" ] }
             {
-                label: 'Publishes deltas in order',
+                label: "Publishes deltas in order",
+
                 given: [
                     {
                         id:         123,
                         lastUpdate: 123123123,
-                        data:       { foo: [ 'start_bar' ] },
-                        ratedata:   {},
+
+                        data:       {
+                            foo:   [ "third" ],
+                            state: [ "a", "b", "c", "d" ],
+                        },
+
+                        ratedata: {
+                            prem:  [ "rate_second" ],
+                            state: [ "i", "ii", "iii" ],
+                        },
+
                         rdelta:     {
                             data: [
                                 {
-                                    data:      { foo: [ 'first_bar' ] },
-                                    timestamp: 123123,
+                                    timestamp: 1,
+                                    data:      {
+                                        foo:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
                                 },
                                 {
-                                    data:      { foo: [ 'second_bar' ] },
-                                    timestamp: 234123,
+                                    timestamp: 3,
+                                    data:      {
+                                        foo:   [ "first" ],
+                                        state: [ undefined, undefined, null ],
+                                    },
+                                },
+                                {
+                                    timestamp: 5,
+                                    data:    {
+                                        foo:   [ "second" ],
+                                        state: [ undefined, undefined, undefined, null ],
+                                    },
+                                },
+                            ],
+
+                            ratedata: [
+                                {
+                                    timestamp: 2,
+                                    data:      {
+                                        prem:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
+                                },
+                                {
+                                    timestamp: 4,
+                                    data:      {
+                                        prem:   [ "rate_first" ],
+                                        state: [ undefined, undefined, null ],
+                                    },
                                 },
                             ],
                         },
                     },
                 ],
+
                 expected: [
+                    // bucket
                     {
                         doc_id:   123,
-                        delta:    { foo: [ 'first_bar' ] },
-                        bucket:   { foo: [ 'first_bar' ] },
+                        rdelta: {
+                            foo:   [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
                         ratedata: {},
                     },
+
+                    // rate
                     {
                         doc_id:   123,
-                        delta:    { foo: [ 'second_bar' ] },
-                        bucket:   { foo: [ 'second_bar' ] },
+                        rdelta: {
+                            prem:  [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+                        ratedata: {
+                            prem:  [ "rate_first" ],
+                            state: [ "i", "ii" ],
+                        },
+                    },
+
+                    // bucket
+                    {
+                        doc_id:   123,
+                        rdelta:    {
+                            foo:   [ "first" ],
+                            state: [ undefined, undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "second" ],
+                            state: [ "a", "b", "c" ],
+                        },
+                        ratedata:  {},
+                    },
+
+                    // rate
+                    {
+                        doc_id:   123,
+                        rdelta:    {
+                            prem:  [ "rate_first" ],
+                            state: [ undefined, undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "second" ],
+                            state: [ "a", "b", "c" ],
+                        },
+                        ratedata:  {
+                            prem:  [ "rate_second" ],
+                            state: [ "i", "ii", "iii" ],
+                        },
+                    },
+
+                    // bucket
+                    {
+                        doc_id:   123,
+                        rdelta:    {
+                            foo:   [ "second" ],
+                            state: [ undefined, undefined, undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "third" ],
+                            state: [ "a", "b", "c", "d" ],
+                        },
                         ratedata: {},
                     },
                 ],
             },
+
             {
-                label: 'Publishes deltas in order for multiple documents',
+                label: "Publishes deltas in order for multiple documents",
+
                 given: [
                     {
                         id:         123,
                         lastUpdate: 123123123,
-                        data:       { foo: [ 'start_bar_123' ] },
-                        ratedata:   {},
+
+                        data:       {
+                            foo:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+
+                        ratedata: {
+                            prem:  [ "rate_first" ],
+                            state: [ "i", "ii" ],
+                        },
+
                         rdelta:     {
                             data: [
                                 {
-                                    data:      { foo: [ 'second_bar_123' ] },
-                                    timestamp: 234,
+                                    timestamp: 1,
+                                    data:      {
+                                        foo:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
                                 },
                             ],
+
                             ratedata: [
                                 {
-                                    data:      { foo: [ 'first_bar_123' ] },
-                                    timestamp: 123,
+                                    timestamp: 4,
+                                    data:      {
+                                        prem:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
                                 },
                             ],
                         },
                     },
+
+                    // timestamps of this document are sandwiched between
+                    // the above to make sure documents are processed
+                    // independently (without splicing their deltas together)
                     {
                         id:         234,
-                        lastUpdate: 123123123,
-                        data:       { foo: [ 'start_bar_234' ] },
-                        ratedata:   {},
+                        lastUpdate: 121212123,
+
+                        data:       {
+                            foo2:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+
+                        ratedata: {
+                            prem2:  [ "rate_first" ],
+                            state: [ "i", "ii" ],
+                        },
+
                         rdelta:     {
                             data: [
                                 {
-                                    data:      { foo: [ 'first_bar_234' ] },
-                                    timestamp: 123,
-                                },
-                                {
-                                    data:      { foo: [ 'second_bar_234' ] },
-                                    timestamp: 234,
-                                },
-                                {
-                                    data:      { foo: [ 'third_bar_234' ] },
-                                    timestamp: 345,
+                                    timestamp: 2,
+                                    data:      {
+                                        foo2:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
                                 },
                             ],
-                        },
-                    },
-                    {
-                        id:         345,
-                        lastUpdate: 123123123,
-                        data:       { foo: [ 'start_bar_345' ] },
-                        ratedata:   {},
-                        rdelta:     {
+
                             ratedata: [
                                 {
-                                    data:      { foo: [ 'first_bar_345' ] },
-                                    timestamp: 123,
-                                },
-                                {
-                                    data:      { foo: [ 'second_bar_345' ] },
-                                    timestamp: 234,
+                                    timestamp: 3,
+                                    data:      {
+                                        prem2:   [ "" ],
+                                        state: [ undefined, null ],
+                                    },
                                 },
                             ],
                         },
                     },
                 ],
+
                 expected: [
+                    // bucket
                     {
                         doc_id:   123,
-                        delta:    { foo: [ 'first_bar_123' ] },
-                        bucket:   { foo: [ 'start_bar_123' ] },
-                        ratedata: { foo: [ 'first_bar_123' ] },
+                        rdelta: {
+                            foo:   [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+                        ratedata: {},
                     },
+
+                    // rate
                     {
                         doc_id:   123,
-                        delta:    { foo: [ 'second_bar_123' ] },
-                        bucket:   { foo: [ 'second_bar_123' ] },
-                        ratedata: { foo: [ 'first_bar_123' ] },
+                        rdelta: {
+                            prem:  [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+                        ratedata: {
+                            prem:  [ "rate_first" ],
+                            state: [ "i", "ii" ],
+                        },
                     },
+
+                    // bucket
                     {
                         doc_id:   234,
-                        delta:    { foo: [ 'first_bar_234' ] },
-                        bucket:   { foo: [ 'first_bar_234' ] },
+                        rdelta: {
+                            foo2:   [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo2:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
                         ratedata: {},
                     },
+
+                    // rate
                     {
                         doc_id:   234,
-                        delta:    { foo: [ 'second_bar_234' ] },
-                        bucket:   { foo: [ 'second_bar_234' ] },
-                        ratedata: {},
-                    },
-                    {
-                        doc_id:   234,
-                        delta:    { foo: [ 'third_bar_234' ] },
-                        bucket:   { foo: [ 'third_bar_234' ] },
-                        ratedata: {},
-                    },
-                    {
-                        doc_id:   345,
-                        delta:    { foo: [ 'first_bar_345' ] },
-                        bucket:   { foo: [ 'start_bar_345' ] },
-                        ratedata: { foo: [ 'first_bar_345' ] },
-                    },
-                    {
-                        doc_id:   345,
-                        delta:    { foo: [ 'second_bar_345' ] },
-                        bucket:   { foo: [ 'start_bar_345' ] },
-                        ratedata: { foo: [ 'second_bar_345' ] },
+                        rdelta: {
+                            prem2:  [ "" ],
+                            state: [ undefined, null ],
+                        },
+                        bucket:   {
+                            foo2:   [ "first" ],
+                            state: [ "a", "b" ],
+                        },
+                        ratedata: {
+                            prem2:  [ "rate_first" ],
+                            state: [ "i", "ii" ],
+                        },
                     },
                 ],
             },
+
             {
-                label: 'trims delta array based on index',
+                label: "trims delta array based on index",
                 given: [
                     {
                         id:         111,
                         lastUpdate: 123123123,
-                        data:       { foo: [ 'bar' ] },
+                        data:       { foo: [ "second" ] },
                         ratedata:   {},
                         rdelta:     {
                             data: [
                                 {
-                                    data:      { foo: [ 'first_bar' ] },
+                                    data:      { foo: [ "" ] },
                                     timestamp: 123,
                                 },
                                 {
-                                    data:      { foo: [ 'second_bar' ] },
+                                    data:      { foo: [ "first" ] },
                                     timestamp: 234,
                                 },
                             ],
@@ -226,8 +371,8 @@ describe( 'system.DeltaProcessor', () =>
                 expected: [
                     {
                         doc_id:   111,
-                        delta:    { foo: [ 'second_bar' ] },
-                        bucket:   { foo: [ 'second_bar' ] },
+                        rdelta:   { foo: [ "first" ] },
+                        bucket:   { foo: [ "second" ] },
                         ratedata: {}
                     },
                 ],
@@ -253,7 +398,7 @@ describe( 'system.DeltaProcessor', () =>
             {
                 published.push( {
                     doc_id:   doc_id,
-                    delta:    delta.data,
+                    rdelta:   delta.data,
                     bucket:   bucket,
                     ratedata: ratedata,
                 } );
@@ -314,13 +459,13 @@ describe( 'system.DeltaProcessor', () =>
                 {
                     doc_id:    123,
                     delta:     { foo: [ 'first_bar' ] },
-                    bucket:    { foo: [ 'first_bar' ] },
+                    bucket:    { foo: [ 'start_bar' ] },
                     ratedata:  {},
                 },
                 {
                     doc_id:    234,
                     delta:     { foo: [ 'first_bar' ] },
-                    bucket:    { foo: [ 'first_bar' ] },
+                    bucket:    { foo: [ 'start_bar' ] },
                     ratedata:  {},
                 }
             ];
@@ -416,7 +561,7 @@ describe( 'system.DeltaProcessor', () =>
             const expected_published = [ {
                 doc_id:    123,
                 delta:     { foo: [ 'first_bar' ] },
-                bucket:    { foo: [ 'first_bar' ] },
+                bucket:    { foo: [ 'start_bar' ] },
                 ratedata:  {},
             } ];
 
