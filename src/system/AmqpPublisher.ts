@@ -21,8 +21,8 @@
  * Publish Amqp message to a queue
  */
 
-import { DeltaResult } from "../bucket/delta";
-import { DocumentId } from '../document/Document';
+import { DeltaResult } from '../bucket/delta';
+import { DocumentMeta } from '../document/Document';
 import { Options } from 'amqplib';
 
 
@@ -37,10 +37,10 @@ export function createAmqpConfig( env: NodeJS.ProcessEnv ): AmqpConfig
 {
     return <AmqpConfig>{
         protocol:   'amqp',
-        hostname:   env.AMQP_HOSTNAME,
+        hostname:   env.AMQP_HOST,
         port:       +( env.AMQP_PORT || 0 ),
-        username:   env.AMQP_USERNAME,
-        password:   env.AMQP_PASSWORD,
+        username:   env.AMQP_USER,
+        password:   env.AMQP_PASS,
         locale:     'en_US',
         frameMax:   +( env.AMQP_FRAMEMAX || 0 ),
         heartbeat:  +( env.AMQP_HEARTBEAT || 0 ),
@@ -52,8 +52,9 @@ export function createAmqpConfig( env: NodeJS.ProcessEnv ): AmqpConfig
 }
 
 
-export interface AmqpConfig extends Options.Connect {
-    /** The protocol to connect with (should always be "amqp") */
+export interface AmqpConfig extends Options.Connect
+{
+    /** The protocol to connect with (should always be 'amqp') */
     protocol: string;
 
     /** The hostname to connect to */
@@ -68,7 +69,7 @@ export interface AmqpConfig extends Options.Connect {
     /** A password if one if required */
     password?: string;
 
-    /** Locale (should always be "en_US") */
+    /** Locale (should always be 'en_US') */
     locale: string;
 
     /** The size in bytes of the maximum frame allowed */
@@ -96,13 +97,13 @@ export interface AmqpPublisher
     /**
      * Publish quote message to exchange post-rating
      *
-     * @param doc_id   - The doc_id
-     * @param delta    - The delta
-     * @param bucket   - The bucket
-     * @param ratedata - The rate data bucket
+     * @param meta     - document meta data
+     * @param delta    - delta
+     * @param bucket   - bucket
+     * @param ratedata - rate data bucket
     */
     publish(
-        doc_id:    DocumentId,
+        meta:      DocumentMeta,
         delta:     DeltaResult<any>,
         bucket:    Record<string, any>,
         ratedata?: Record<string, any>,

@@ -22,7 +22,7 @@
 import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
 import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
-import { DeltaDocument } from "../../src/bucket/delta";
+import { DeltaDocument } from '../../src/bucket/delta';
 import { DocumentId } from '../../src/document/Document';
 import { EventEmitter } from 'events';
 
@@ -40,7 +40,7 @@ describe( 'system.DeltaProcessor', () =>
             expected: any
         }[]>[
             {
-                label: "No deltas are processed",
+                label: 'No deltas are processed',
                 given: [
                     {
                         id:         123,
@@ -53,9 +53,9 @@ describe( 'system.DeltaProcessor', () =>
                 expected: [],
             },
 
-            // when quote is initialized: { foo: [ "" ], state: [ "a" ] }
+            // when quote is initialized: { foo: [ '' ], state: [ 'a' ] }
             {
-                label: "Publishes deltas in order",
+                label: 'Publishes deltas in order',
 
                 given: [
                     {
@@ -63,13 +63,13 @@ describe( 'system.DeltaProcessor', () =>
                         lastUpdate: 123123123,
 
                         data:       {
-                            foo:   [ "third" ],
-                            state: [ "a", "b", "c", "d" ],
+                            foo:   [ 'third' ],
+                            state: [ 'a', 'b', 'c', 'd' ],
                         },
 
                         ratedata: {
-                            prem:  [ "rate_second" ],
-                            state: [ "i", "ii", "iii" ],
+                            prem:  [ 'rate_second' ],
+                            state: [ 'i', 'ii', 'iii' ],
                         },
 
                         rdelta:     {
@@ -77,21 +77,21 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 1,
                                     data:      {
-                                        foo:   [ "" ],
+                                        foo:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
                                 {
                                     timestamp: 3,
                                     data:      {
-                                        foo:   [ "first" ],
+                                        foo:   [ 'first' ],
                                         state: [ undefined, undefined, null ],
                                     },
                                 },
                                 {
                                     timestamp: 5,
                                     data:    {
-                                        foo:   [ "second" ],
+                                        foo:   [ 'second' ],
                                         state: [ undefined, undefined, undefined, null ],
                                     },
                                 },
@@ -101,14 +101,14 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 2,
                                     data:      {
-                                        prem:   [ "" ],
+                                        prem:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
                                 {
                                     timestamp: 4,
                                     data:      {
-                                        prem:   [ "rate_first" ],
+                                        prem:   [ 'rate_first' ],
                                         state: [ undefined, undefined, null ],
                                     },
                                 },
@@ -122,12 +122,12 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta: {
-                            foo:   [ "" ],
+                            foo:   [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {},
                     },
@@ -136,16 +136,16 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta: {
-                            prem:  [ "" ],
+                            prem:  [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {
-                            prem:  [ "rate_first" ],
-                            state: [ "i", "ii" ],
+                            prem:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
                         },
                     },
 
@@ -153,12 +153,12 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta:    {
-                            foo:   [ "first" ],
+                            foo:   [ 'first' ],
                             state: [ undefined, undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "second" ],
-                            state: [ "a", "b", "c" ],
+                            foo:   [ 'second' ],
+                            state: [ 'a', 'b', 'c' ],
                         },
                         ratedata:  {},
                     },
@@ -167,16 +167,16 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta:    {
-                            prem:  [ "rate_first" ],
+                            prem:  [ 'rate_first' ],
                             state: [ undefined, undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "second" ],
-                            state: [ "a", "b", "c" ],
+                            foo:   [ 'second' ],
+                            state: [ 'a', 'b', 'c' ],
                         },
                         ratedata:  {
-                            prem:  [ "rate_second" ],
-                            state: [ "i", "ii", "iii" ],
+                            prem:  [ 'rate_second' ],
+                            state: [ 'i', 'ii', 'iii' ],
                         },
                     },
 
@@ -184,12 +184,12 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta:    {
-                            foo:   [ "second" ],
+                            foo:   [ 'second' ],
                             state: [ undefined, undefined, undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "third" ],
-                            state: [ "a", "b", "c", "d" ],
+                            foo:   [ 'third' ],
+                            state: [ 'a', 'b', 'c', 'd' ],
                         },
                         ratedata: {},
                     },
@@ -197,7 +197,7 @@ describe( 'system.DeltaProcessor', () =>
             },
 
             {
-                label: "Publishes deltas in order for multiple documents",
+                label: 'Publishes deltas in order for multiple documents',
 
                 given: [
                     {
@@ -205,13 +205,13 @@ describe( 'system.DeltaProcessor', () =>
                         lastUpdate: 123123123,
 
                         data:       {
-                            foo:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
 
                         ratedata: {
-                            prem:  [ "rate_first" ],
-                            state: [ "i", "ii" ],
+                            prem:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
                         },
 
                         rdelta:     {
@@ -219,7 +219,7 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 1,
                                     data:      {
-                                        foo:   [ "" ],
+                                        foo:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
@@ -229,7 +229,7 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 4,
                                     data:      {
-                                        prem:   [ "" ],
+                                        prem:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
@@ -245,13 +245,13 @@ describe( 'system.DeltaProcessor', () =>
                         lastUpdate: 121212123,
 
                         data:       {
-                            foo2:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo2:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
 
                         ratedata: {
-                            prem2:  [ "rate_first" ],
-                            state: [ "i", "ii" ],
+                            prem2:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
                         },
 
                         rdelta:     {
@@ -259,7 +259,7 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 2,
                                     data:      {
-                                        foo2:   [ "" ],
+                                        foo2:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
@@ -269,7 +269,7 @@ describe( 'system.DeltaProcessor', () =>
                                 {
                                     timestamp: 3,
                                     data:      {
-                                        prem2:   [ "" ],
+                                        prem2:   [ '' ],
                                         state: [ undefined, null ],
                                     },
                                 },
@@ -283,12 +283,12 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta: {
-                            foo:   [ "" ],
+                            foo:   [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {},
                     },
@@ -297,16 +297,16 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   123,
                         rdelta: {
-                            prem:  [ "" ],
+                            prem:  [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {
-                            prem:  [ "rate_first" ],
-                            state: [ "i", "ii" ],
+                            prem:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
                         },
                     },
 
@@ -314,12 +314,12 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   234,
                         rdelta: {
-                            foo2:   [ "" ],
+                            foo2:   [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo2:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo2:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {},
                     },
@@ -328,37 +328,37 @@ describe( 'system.DeltaProcessor', () =>
                     {
                         doc_id:   234,
                         rdelta: {
-                            prem2:  [ "" ],
+                            prem2:  [ '' ],
                             state: [ undefined, null ],
                         },
                         bucket:   {
-                            foo2:   [ "first" ],
-                            state: [ "a", "b" ],
+                            foo2:   [ 'first' ],
+                            state: [ 'a', 'b' ],
                         },
                         ratedata: {
-                            prem2:  [ "rate_first" ],
-                            state: [ "i", "ii" ],
+                            prem2:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
                         },
                     },
                 ],
             },
 
             {
-                label: "trims delta array based on index",
+                label: 'trims delta array based on index',
                 given: [
                     {
                         id:         111,
                         lastUpdate: 123123123,
-                        data:       { foo: [ "second" ] },
+                        data:       { foo: [ 'second' ] },
                         ratedata:   {},
                         rdelta:     {
                             data: [
                                 {
-                                    data:      { foo: [ "" ] },
+                                    data:      { foo: [ '' ] },
                                     timestamp: 123,
                                 },
                                 {
-                                    data:      { foo: [ "first" ] },
+                                    data:      { foo: [ 'first' ] },
                                     timestamp: 234,
                                 },
                             ],
@@ -371,8 +371,8 @@ describe( 'system.DeltaProcessor', () =>
                 expected: [
                     {
                         doc_id:   111,
-                        rdelta:   { foo: [ "first" ] },
-                        bucket:   { foo: [ "second" ] },
+                        rdelta:   { foo: [ 'first' ] },
+                        bucket:   { foo: [ 'second' ] },
                         ratedata: {}
                     },
                 ],
@@ -390,14 +390,14 @@ describe( 'system.DeltaProcessor', () =>
             }
 
             publisher.publish = (
-                doc_id,
+                meta,
                 delta,
                 bucket,
                 ratedata,
             ): Promise<void> =>
             {
                 published.push( {
-                    doc_id:   doc_id,
+                    doc_id:   meta.id,
                     rdelta:   delta.data,
                     bucket:   bucket,
                     ratedata: ratedata,
@@ -422,12 +422,19 @@ describe( 'system.DeltaProcessor', () =>
             const dao            = createMockDeltaDao();
             const publisher      = createMockDeltaPublisher();
             const emitter        = new EventEmitter();
+            const entity_num     = 'Some Agency';
+            const entity_id      = 4321;
+            const lastUpdate     = <UnixTimestamp>123123123;
+            const createdData    = <UnixTimestamp>234234234;
             const doc            = <DeltaDocument[]>[ {
-                id:         <DocumentId>123,
-                lastUpdate: <UnixTimestamp>123123123,
-                data:       { foo: [ 'start_bar' ] },
-                ratedata:   {},
-                rdelta:     {
+                id:            <DocumentId>123,
+                agentName:     entity_num,
+                agentEntityId: entity_id,
+                startDate:     createdData,
+                lastUpdate:    lastUpdate,
+                data:          { foo: [ 'start_bar' ] },
+                ratedata:      {},
+                rdelta:        {
                     data: [
                         {
                             data:      { foo: [ 'first_bar' ] },
@@ -439,11 +446,14 @@ describe( 'system.DeltaProcessor', () =>
                 },
             },
             {
-                id:         <DocumentId>234,
-                lastUpdate: <UnixTimestamp>123123123,
-                data:       { foo: [ 'start_bar' ] },
-                ratedata:   {},
-                rdelta:     {
+                id:            <DocumentId>234,
+                agentName:     entity_num,
+                agentEntityId: entity_id,
+                startDate:     createdData,
+                lastUpdate:    <UnixTimestamp>123123123,
+                data:          { foo: [ 'start_bar' ] },
+                ratedata:      {},
+                rdelta:        {
                     data: [
                         {
                             data:      { foo: [ 'first_bar' ] },
@@ -457,13 +467,25 @@ describe( 'system.DeltaProcessor', () =>
 
             const expected_published = [
                 {
-                    doc_id:    123,
+                    meta: {
+                        entity_id:   4321,
+                        entity_name: 'Some Agency',
+                        id:          123,
+                        lastUpdate:  123123123,
+                        startDate:   234234234,
+                    },
                     delta:     { foo: [ 'first_bar' ] },
                     bucket:    { foo: [ 'start_bar' ] },
                     ratedata:  {},
                 },
                 {
-                    doc_id:    234,
+                    meta: {
+                        entity_id:   4321,
+                        entity_name: 'Some Agency',
+                        id:          234,
+                        lastUpdate:  123123123,
+                        startDate:   234234234,
+                    },
                     delta:     { foo: [ 'first_bar' ] },
                     bucket:    { foo: [ 'start_bar' ] },
                     ratedata:  {},
@@ -485,14 +507,14 @@ describe( 'system.DeltaProcessor', () =>
             }
 
             publisher.publish = (
-                doc_id,
+                meta,
                 delta,
                 bucket,
                 ratedata,
             ): Promise<void> =>
             {
                 published.push( {
-                    doc_id:   doc_id,
+                    meta:     meta,
                     delta:    delta.data,
                     bucket:   bucket,
                     ratedata: ratedata,
@@ -525,11 +547,14 @@ describe( 'system.DeltaProcessor', () =>
             const publisher      = createMockDeltaPublisher();
             const emitter        = new EventEmitter();
             const doc            = <DeltaDocument[]>[ {
-                id:         <DocumentId>123,
-                lastUpdate: <UnixTimestamp>123123123,
-                data:       { foo: [ 'start_bar' ] },
-                ratedata:   {},
-                rdelta:     {
+                id:            <DocumentId>123,
+                agentName:     'Some Agency',
+                agentEntityId: 4321,
+                startDate:     <UnixTimestamp>234234234,
+                lastUpdate:    <UnixTimestamp>123123123,
+                data:          { foo: [ 'start_bar' ] },
+                ratedata:      {},
+                rdelta:        {
                     data: [
                         {
                             data:      { foo: [ 'first_bar' ] },
@@ -541,11 +566,14 @@ describe( 'system.DeltaProcessor', () =>
                 },
             },
             {
-                id:         <DocumentId>234,
-                lastUpdate: <UnixTimestamp>123123123,
-                data:       { foo: [ 'start_bar' ] },
-                ratedata:   {},
-                rdelta:     {
+                id:            <DocumentId>234,
+                agentName:     'Some Agency',
+                agentEntityId: 4321,
+                startDate:     <UnixTimestamp>234234234,
+                lastUpdate:    <UnixTimestamp>123123123,
+                data:          { foo: [ 'start_bar' ] },
+                ratedata:      {},
+                rdelta:        {
                     data: [
                         {
                             data:      { foo: [ 'first_bar' ] },
@@ -559,7 +587,13 @@ describe( 'system.DeltaProcessor', () =>
 
             // Only one is published
             const expected_published = [ {
-                doc_id:    123,
+                meta: {
+                    entity_id:   4321,
+                    entity_name: 'Some Agency',
+                    id:          123,
+                    lastUpdate:  123123123,
+                    startDate:   234234234,
+                },
                 delta:     { foo: [ 'first_bar' ] },
                 bucket:    { foo: [ 'start_bar' ] },
                 ratedata:  {},
@@ -577,14 +611,14 @@ describe( 'system.DeltaProcessor', () =>
                 Promise.reject( new Error( expected_error ) );
 
             publisher.publish = (
-                doc_id,
+                meta,
                 delta,
                 bucket,
                 ratedata,
             ): Promise<void> =>
             {
                 published.push( {
-                    doc_id:   doc_id,
+                    meta,
                     delta:    delta.data,
                     bucket:   bucket,
                     ratedata: ratedata,

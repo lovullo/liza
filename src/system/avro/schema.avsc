@@ -34,7 +34,7 @@
                     },
                     {
                         "name": "step",
-                        "type":[
+                        "type": [
                             "null",
                             {
                                 "type": "record",
@@ -76,6 +76,26 @@
                     }
                 ]
             }
+        },
+        {
+            "name": "session",
+            "type": [
+                "null",
+                {
+                    "type": "record",
+                    "name": "Session",
+                    "fields": [
+                        {
+                            "name": "entity_name",
+                            "type": "string"
+                        },
+                        {
+                            "name": "entity_id",
+                            "type": "int"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "name": "data",

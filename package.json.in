@@ -24,9 +24,10 @@
   },
 
   "dependencies": {
-    "easejs": "0.2.x",
-    "mongodb": "1.2.14",
-    "amqplib": "0.5.3"
+    "easejs":      "0.2.x",
+    "mongodb":     "1.2.14",
+    "dotenv-flow": "3.1.0",
+    "amqplib":     "0.5.3"
   },
   "devDependencies": {
     "typescript":              "~3.7",

@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * The term "Quote" is synonymous with "Document"; this project is moving
+ * The term 'Quote' is synonymous with 'Document'; this project is moving
  * more toward the latter as it is further generalized.
  */
 
@@ -31,7 +31,29 @@ export type DocumentId = NominalType<number, 'DocumentId'>;
 /**
  * Quote (Document) id
  *
- * Where the term "Quote" is still used, this will allow for type
+ * Where the term 'Quote' is still used, this will allow for type
  * compatibility and an easy transition.
  */
 export type QuoteId = DocumentId;
+
+
+/**
+ * Document meta data
+ */
+export type DocumentMeta =
+{
+    /** The document id */
+    id: DocumentId,
+
+    /** The entity name */
+    entity_name: string,
+
+    /** The entity id */
+    entity_id: number,
+
+    /** The time the document was created */
+    startDate: UnixTimestamp,
+
+    /** The time the document was updated */
+    lastUpdate: UnixTimestamp,
+}

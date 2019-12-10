@@ -62,11 +62,11 @@ describe( 'system.EventLogger captures and logs events', () =>
         expect( method_called ).to.be.true;
     } );
 
-    it( 'amqp-conn-error triggers log#warning', () =>
+    it( 'amqp-conn-warn triggers log#warning', () =>
     {
         let method_called = false;
 
-        const event_id = 'amqp-conn-error';
+        const event_id = 'amqp-conn-warn';
         const emitter  = new EventEmitter();
         const log      = createMockLogger();
 

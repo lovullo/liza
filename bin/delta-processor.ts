@@ -18,13 +18,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import * as amqplib from "amqplib";
+import * as amqplib from 'amqplib';
 import { createAmqpConfig } from '../src/system/AmqpPublisher';
 import { MongoDeltaDao } from '../src/system/db/MongoDeltaDao';
 import { DeltaProcessor } from '../src/system/DeltaProcessor';
 import { DeltaPublisher } from '../src/system/DeltaPublisher';
 import { MongoCollection } from '../src/types/mongodb';
 import { createAvroEncoder } from '../src/system/avro/AvroFactory';
+import { V1MessageWriter } from '../src/system/avro/V1MessageWriter';
 import {
     createMongoConfig,
     createMongoDB,
@@ -39,8 +40,9 @@ import {
     createPrometheusConfig,
 } from '../src/system/PrometheusFactory';
 import { AmqpConnection } from '../src/system/amqp/AmqpConnection';
-import { parse as avro_parse } from "avro-js";
+import { parse as avro_parse } from 'avro-js';
 
+require('dotenv-flow').config();
 
 const amqp_conf           = createAmqpConfig( process.env );
 const prom_conf           = createPrometheusConfig( process.env );
@@ -51,12 +53,17 @@ const env                 = process.env.NODE_ENV || 'Unknown Environment';
 const emitter             = new EventEmitter();
 const log                 = new StandardLogger( console, ts_ctr, env );
 const amqp_connection     = new AmqpConnection( amqplib, amqp_conf, emitter );
-const publisher           = new DeltaPublisher(
+
+const message_writer = new V1MessageWriter(
+    createAvroEncoder,
+    avro_parse( __dirname + '/../src/system/avro/schema.avsc' ),
+);
+
+const publisher = new DeltaPublisher(
     emitter,
     ts_ctr,
-    createAvroEncoder,
     amqp_connection,
-    avro_parse( __dirname + '/../src/system/avro/schema.avsc' ),
+    message_writer,
 );
 
 // Prometheus Metrics

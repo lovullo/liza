@@ -40,6 +40,9 @@ export class MongoDeltaDao implements DeltaDao
     /** The document fields to read */
     readonly RESULT_FIELDS: Record<string, number> = {
         id:                1,
+        agentName:         1,
+        agentEntityId:     1,
+        startDate:         1,
         lastUpdate:        1,
         data:              1,
         ratedata:          1,
@@ -70,7 +73,7 @@ export class MongoDeltaDao implements DeltaDao
             this._collection.find(
                 {
                     published:  false,
-                    deltaError: false,
+                    deltaError: { $ne: true },
                 },
                 { fields: this.RESULT_FIELDS },
                 ( e, cursor ) =>

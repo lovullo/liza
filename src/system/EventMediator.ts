@@ -48,7 +48,7 @@ export class EventMediator
             msg
         ) );
 
-        this._emitter.on( 'amqp-conn-error', ( msg ) =>
+        this._emitter.on( 'amqp-conn-warn', ( msg ) =>
             this._log.warning( 'AMQP Connection Error', msg ) );
 
         this._emitter.on( 'amqp-reconnect', () =>
@@ -68,6 +68,11 @@ export class EventMediator
     }
 
 
+    /**
+     * Handle an error event
+     *
+     * @param e - any
+     */
     private _handleError( e: any ): void
     {
         let msg: string                  = '';

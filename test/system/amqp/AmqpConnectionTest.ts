@@ -41,7 +41,7 @@ describe( 'AmqpConnection', () =>
                 assertExchange() {
                     return Promise.reject( expected_err );
                 },
-            });
+            } );
 
             const mock_connection = <amqplib.Connection>(<unknown>{
                 once() {},
@@ -49,13 +49,13 @@ describe( 'AmqpConnection', () =>
                 createChannel() {
                     return Promise.resolve( mock_channel );
                 },
-            });
+            } );
 
             const mock_amqp = <typeof amqplib>(<unknown>{
                 connect() {
                     return Promise.resolve( mock_connection );
                 }
-            });
+            } );
 
             const emitter = new EventEmitter();
             const conf    = <AmqpConfig>{};
@@ -63,6 +63,49 @@ describe( 'AmqpConnection', () =>
 
             return expect( sut.connect() )
                 .to.eventually.be.rejectedWith( expected_err );
+        } );
+    } );
+
+
+    describe( '#reconnect', () =>
+    {
+        it( "is called when there is an error with the connection", () =>
+        {
+            let reconnect_called = false;
+
+            const mock_channel = <amqplib.Channel>(<unknown>{
+                assertExchange() {
+                    return Promise.resolve();
+                },
+            } );
+
+            const mock_connection = <amqplib.Connection>Object.create(
+                new EventEmitter()
+            );
+
+            mock_connection.createChannel = (): any => {
+                return Promise.resolve( mock_channel );
+            };
+
+            const mock_amqp = <typeof amqplib>(<unknown>{
+                connect() {
+                    return Promise.resolve( mock_connection );
+                }
+            } );
+
+            const emitter = new EventEmitter();
+
+            emitter.on( 'amqp-reconnect', () => { reconnect_called = true } );
+
+            const conf    = <AmqpConfig>{};
+            const sut     = new Sut( mock_amqp, conf, emitter );
+
+            const result = sut.connect()
+                                .then( () => mock_connection.emit( 'error' ) )
+
+            return expect( result )
+                .to.eventually.deep.equal( true )
+                .then( _ => expect( reconnect_called ).to.be.true );
         } );
     } );
 } );

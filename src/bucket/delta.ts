@@ -81,6 +81,15 @@ export interface DeltaDocument
     /** The document id */
     id: DocumentId,
 
+    /** The entity name */
+    agentName: string,
+
+    /** The entity id */
+    agentEntityId: number,
+
+    /** The time the document was created */
+    startDate: UnixTimestamp,
+
     /** The time the document was updated */
     lastUpdate: UnixTimestamp,
 

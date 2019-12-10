@@ -72,7 +72,7 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
 
         const sut = new Sut( factory, conf, emitter, timer );
 
-        emitter.emit( 'delta-process-error' );
+        emitter.emit( 'error' );
 
         expect( counter_called ).to.be.true;
 

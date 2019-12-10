@@ -19,17 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DeltaDao } from "../system/db/DeltaDao";
-import { DocumentId } from "../document/Document";
-import { AmqpPublisher } from "./AmqpPublisher";
-import { EventEmitter } from "events";
+import { DeltaDao } from '../system/db/DeltaDao';
+import { DocumentMeta } from '../document/Document';
+import { AmqpPublisher } from './AmqpPublisher';
+import { EventEmitter } from 'events';
 import {
     DeltaType,
     applyDelta,
     DeltaDocument,
     Delta,
     ReverseDelta,
-} from "../bucket/delta";
+} from '../bucket/delta';
 
 /** Deltas and state of data prior to their application */
 type DeltaState = [
@@ -77,6 +77,11 @@ export class DeltaProcessor
     }
 
 
+    /**
+     * Process the next document
+     *
+     * @param docs - list of documents to process
+     */
     private _processNext( docs: DeltaDocument[] ): Promise<void>
     {
         const doc = docs.shift();
@@ -91,28 +96,38 @@ export class DeltaProcessor
     }
 
 
+    /**
+     * Process an individual document
+     *
+     * @param doc - individual document to process
+     */
     private _processDocument( doc: DeltaDocument ): Promise<void>
     {
         const deltas          = this._getTimestampSortedDeltas( doc );
-        const doc_id          = doc.id;
         const bucket          = doc.data;
         const ratedata        = doc.ratedata || {};
-        const last_updated_ts = doc.lastUpdate;
+        const meta            = {
+            id:          doc.id,
+            entity_name: doc.agentName,
+            entity_id:   +doc.agentEntityId,
+            startDate:   doc.startDate,
+            lastUpdate:  doc.lastUpdate,
+        };
 
         const history = this._applyDeltas( deltas, bucket, ratedata );
 
-        return this._processNextDelta( doc_id, history )
+        return this._processNextDelta( meta, history )
             .then( _ =>
-                this._dao.markDocumentAsProcessed( doc_id, last_updated_ts )
+                this._dao.markDocumentAsProcessed( meta.id, meta.lastUpdate )
             )
             .then( _ =>
             {
-                this._emitter.emit( 'document-processed', { doc_id: doc_id } );
+                this._emitter.emit( 'document-processed', { doc_id: meta.id } );
             } )
-            .catch( e =>
+            .catch( ( e: Error ) =>
             {
                 this._emitter.emit( 'error', e );
-                return this._dao.setErrorFlag( doc_id );
+                return this._dao.setErrorFlag( meta.id );
             } );
     }
 
@@ -179,8 +194,14 @@ export class DeltaProcessor
     }
 
 
+    /**
+     * Process the next delta from the history
+     *
+     * @param meta    - document meta data
+     * @param history - a history of deltas and their buckets (data, ratedata)
+     */
     private _processNextDelta(
-        doc_id:  DocumentId,
+        meta:    DocumentMeta,
         history: DeltaState[],
     ): Promise<void>
     {
@@ -191,17 +212,14 @@ export class DeltaProcessor
 
         const [ delta, bucket, ratedata ] = history[ 0 ];
 
-        const delta_uid = doc_id + '_' + delta.timestamp + '_' + delta.type;
+        const delta_uid = meta.id + '_' + delta.timestamp + '_' + delta.type;
 
         this._emitter.emit( 'delta-process-start', delta_uid );
 
-        return this._publisher.publish( doc_id, delta, bucket, ratedata )
-            .then( _ => this._dao.advanceDeltaIndex( doc_id, delta.type ) )
+        return this._publisher.publish( meta, delta, bucket, ratedata )
+            .then( _ => this._dao.advanceDeltaIndex( meta.id, delta.type ) )
             .then( _ => this._emitter.emit( 'delta-process-end', delta_uid ) )
-            .then( _ => this._processNextDelta(
-                doc_id,
-                history.slice( 1 ),
-            ) );
+            .then( _ => this._processNextDelta( meta, history.slice( 1 ) ) );
     }
 
 

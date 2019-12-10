@@ -160,6 +160,7 @@ export class StandardLogger implements PsrLogger
      *
      * @param msg   - the string or object to log
      * @param level - the log level
+     * @param context - additional message context
      *
      * @returns a structured logging object
      */

@@ -24,8 +24,6 @@ import * as amqplib from "amqplib";
 
 /**
  * Connection to AMQP exchange
- *
- * XXX: Needs tests!
  */
 export class AmqpConnection
 {
@@ -39,6 +37,7 @@ export class AmqpConnection
     /**
      * Amqp Connection
      *
+     * @param _conf    - amqp library
      * @param _conf    - amqp configuration
      * @param _emitter - event emitter instance
      */
@@ -65,7 +64,7 @@ export class AmqpConnection
                  */
                 this._conn.once( 'error', e =>
                 {
-                    this._emitter.emit( 'amqp-conn-error', e );
+                    this._emitter.emit( 'amqp-conn-warn', e );
                     this._reconnect();
                 } );
 

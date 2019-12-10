@@ -35,6 +35,15 @@ export declare type PrometheusConfig = {
 
     /** The rate (in milliseconds) at which metrics are pushed */
     push_interval_ms: number;
+
+    /** The starting point for process time buckets */
+    buckets_start: number;
+
+    /** The width of process time buckets */
+    buckets_width: number;
+
+    /** The number of process time buckets */
+    buckets_count: number;
 }
 
 
@@ -50,10 +59,13 @@ export function createPrometheusConfig(
 ): PrometheusConfig
 {
     return <PrometheusConfig>{
-        'hostname':         env.prom_hostname,
-        'port':             +( env.prom_port || 0 ),
-        'env':              process.env.NODE_ENV,
-        'push_interval_ms': +( process.env.prom_push_interval_ms || 5000 ),
+        hostname:         env.PROM_HOST,
+        port:             +( env.PROM_PORT || 0 ),
+        env:              process.env.NODE_ENV,
+        push_interval_ms: +( process.env.PROM_PUSH_INTERVAL_MS || 5000 ),
+        buckets_start:    +( process.env.PROM_BUCKETS_START || 0 ),
+        buckets_width:    +( process.env.PROM_BUCKETS_WIDTH || 10 ),
+        buckets_count:    +( process.env.PROM_BUCKETS_COUNT || 10 ),
     };
 }
 
@@ -63,8 +75,9 @@ export class PrometheusFactory
     /**
      * Create a PushGateway
      *
-     * @param client - prometheus client
-     * @param url    - the url of the push gateway
+     * @param client   - prometheus client
+     * @param hostname - push gateway url
+     * @param port     - push gateway port
      *
      * @return the gateway
      */

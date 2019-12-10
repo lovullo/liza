@@ -22,20 +22,17 @@
 import { AmqpConnection } from '../../src/system/amqp/AmqpConnection';
 import { Delta, DeltaResult, DeltaType } from '../../src/bucket/delta';
 import { DeltaPublisher as Sut } from '../../src/system/DeltaPublisher';
-import { DocumentId } from '../../src/document/Document';
-import { Duplex } from 'stream';
-import { EventEmitter } from "events";
+import { DocumentId, DocumentMeta } from '../../src/document/Document';
+import { EventEmitter } from 'events';
 import { hasContext } from '../../src/error/ContextError';
 import { AmqpError } from '../../src/error/AmqpError';
 import { Channel } from 'amqplib';
-import { AvroEncoderCtr } from '../../src/system/avro/AvroFactory';
+import { MessageWriter } from '../../src/system/MessageWriter';
 
-import { AvroSchema } from "avro-js";
 
 import { expect, use as chai_use } from 'chai';
 chai_use( require( 'chai-as-promised' ) );
 
-const sinon = require( 'sinon' );
 
 describe( 'server.DeltaPublisher', () =>
 {
@@ -49,6 +46,15 @@ describe( 'server.DeltaPublisher', () =>
             const ratedata        = createMockBucketData();
             const emitter         = new EventEmitter();
             const conn            = createMockAmqpConnection();
+            const writer          = createMockWriter();
+            const meta            = <DocumentMeta>{
+                id:          <DocumentId>123,
+                entity_name: 'Some Agency',
+                entity_id:   234,
+                startDate:   <UnixTimestamp>345,
+                lastUpdate:  <UnixTimestamp>456,
+            };
+
             conn.getAmqpChannel   = () =>
             {
                 return <Channel>{
@@ -63,23 +69,10 @@ describe( 'server.DeltaPublisher', () =>
                 };
             };
 
-            const stub_schema = <AvroSchema>(<unknown>{
-                isValid()
-                {
-                    // TODO: test me
-                },
-            } );
-
-            const sut = new Sut(
-                emitter,
-                ts_ctr,
-                createMockEncoderCtor( stub_schema ),
-                conn,
-                stub_schema,
-            );
+            const sut = new Sut( emitter, ts_ctr, conn, writer );
 
             return expect(
-                    sut.publish( <DocumentId>123, delta, bucket, ratedata )
+                    sut.publish( meta, delta, bucket, ratedata )
                 ).to.eventually.deep.equal( undefined )
                 .then( _ =>
                 {
@@ -119,29 +112,25 @@ describe( 'server.DeltaPublisher', () =>
             const ratedata        = createMockBucketData();
             const emitter         = new EventEmitter();
             const conn            = createMockAmqpConnection();
-            const doc_id          = <DocumentId>123;
+            const writer          = createMockWriter();
+            const meta            = <DocumentMeta>{
+                id:          <DocumentId>123,
+                entity_name: 'Some Agency',
+                entity_id:   234,
+                startDate:   <UnixTimestamp>345,
+                lastUpdate:  <UnixTimestamp>456,
+            };
+
             const expected        = {
-                doc_id:     doc_id,
+                doc_id:     meta.id,
                 delta_type: delta.type,
                 delta_ts:   delta.timestamp
             }
 
             conn.getAmqpChannel = getChannelF;
 
-            const stub_schema = <AvroSchema>(<unknown>{
-                isValid()
-                {
-                    // TODO: test me
-                },
-            } );
-
-            const result = new Sut(
-                emitter,
-                ts_ctr,
-                createMockEncoderCtor( stub_schema ),
-                conn,
-                stub_schema,
-            ).publish( doc_id, delta, bucket, ratedata );
+            const result = new Sut( emitter, ts_ctr, conn, writer )
+                            .publish( meta, delta, bucket, ratedata );
 
             return Promise.all( [
                 expect( result ).to.eventually.be.rejectedWith(
@@ -158,276 +147,47 @@ describe( 'server.DeltaPublisher', () =>
                 } )
             ] );
         } ) );
-    } );
 
-    describe( '#avroEncode parses', () =>
-    {
-        [
-            {
-                label:      'Null value',
-                valid:      true,
-                delta_data: { foo: null },
-            },
-            {
-                label:      'Null array',
-                valid:      true,
-                delta_data: { foo: { "array": [ null ] } },
-            },
-            {
-                label:      'Boolean value',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "boolean": true },
-                ] } },
-            },
-            {
-                label:      'Simple string',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "string": 'bar' },
-                    { "string": 'baz' },
-                ] } },
-            },
-            {
-                label:      'Simple int',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "double": 123 },
-                ] } },
-            },
-            {
-                label:      'Nested array',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "array": [
-                        { "string": 'bar' },
-                    ] },
-                ] } },
-            },
-            {
-                label:      'Array with nulls',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "string": 'bar' },
-                    { "string": 'baz' },
-                    null,
-                 ] } },
-            },
-            {
-                label:      'Nested Array with mixed values',
-                valid:      true,
-                delta_data: { foo: { "array": [
-                    { "array": [
-                        { "string": 'bar' },
-                        { "double": 123321 },
-                        null,
-                    ] }
-                 ] } },
-            },
-            {
-                label:      'Non-array',
-                valid:      false,
-                delta_data: { foo: 'bar' },
-            },
-            {
-                label: 'Map objects',
-                valid: true,
-                delta_data: { "foo": { "array": [
-                    { "map": {
-                        "bar": { "map": {
-                            "baz": { "double": 1572903485000 },
-                        } }
-                    } }
-                ] } },
-            }
-        ].forEach( ( { label, delta_data, valid } ) =>
+
+        it( 'writer#write rejects', () =>
         {
-            it( label, () =>
-            {
-                const emitter = createMockEventEmitter();
-                const conn    = createMockAmqpConnection();
-                const data    = createMockData( delta_data );
+            const delta           = createMockDelta();
+            const bucket          = createMockBucketData();
+            const ratedata        = createMockBucketData();
+            const emitter         = new EventEmitter();
+            const conn            = createMockAmqpConnection();
+            const writer          = createMockWriter();
+            const error           = new Error( 'Bad thing happened' );
+            const meta            = <DocumentMeta>{
+                id:          <DocumentId>123,
+                entity_name: 'Some Agency',
+                entity_id:   234,
+                startDate:   <UnixTimestamp>345,
+                lastUpdate:  <UnixTimestamp>456,
+            };
 
-                const stub_schema = <AvroSchema>(<unknown>{
-                    isValid()
-                    {
-                        // TODO: test me
-                    },
-                } );
+            writer.write = (
+                _:     any,
+                __:    any,
+                ___:   any,
+                ____:  any,
+                _____: any
+            ): Promise<Buffer> =>
+            {
+                return Promise.reject( error );
+            };
 
-                const sut = new Sut(
-                    emitter,
-                    ts_ctr,
-                    createMockEncoderCtor( stub_schema ),
-                    conn,
-                    stub_schema
-                );
+            const result = new Sut( emitter, ts_ctr, conn, writer )
+                            .publish( meta, delta, bucket, ratedata );
 
-                sut.avroEncode( data )
-                    .then( b =>
-                    {
-                        expect( typeof(b) ).to.equal( 'object' );
-                        expect( valid ).to.be.true;
-                    } )
-                    .catch( _ =>
-                    {
-                        expect( valid ).to.be.false;
-                    } );
-            } );
-        } );
-    } );
-
-
-    describe( '#setDataTypes annotates', () =>
-    {
-        [
-            {
-                label:      'Null',
-                delta_data: null,
-                expected:   null,
-            },
-            {
-                label:      'Null Value',
-                delta_data: { foo: null },
-                expected:   { foo: null },
-            },
-            {
-                label:      'Boolean Value',
-                delta_data: { foo: [ true ] },
-                expected:   { foo: { "array": [
-                    { "boolean": true },
-                ] } },
-            },
-            {
-                label:      'Simple string',
-                delta_data: { foo: [
-                    'bar',
-                    'baz',
-                ] },
-                expected: { foo: { "array": [
-                    { "string": 'bar' },
-                    { "string": 'baz' },
-                ] } },
-            },
-            {
-                label:      'Simple int',
-                delta_data: { foo: [
-                    123
-                ] },
-                expected: { foo: { "array": [
-                    { "double": 123 },
-                ] } },
-            },
-            {
-                label:      'Nested array',
-                delta_data: { foo: [
-                    [
-                        'bar',
-                        'baz',
-                    ]
-                ] },
-                expected: { foo: { "array": [
-                    { "array": [
-                        { "string": 'bar' },
-                        { "string": 'baz' },
-                    ] },
-                ] } },
-            },
-            {
-                label:      'Double nested array',
-                delta_data: { foo: [
-                    [
-                        [
-                            'bar',
-                            123,
-                            null
-                        ],
-                    ],
-                ] },
-                expected: { foo: { "array": [
-                    { "array": [
-                        { "array": [
-                            { "string": 'bar' },
-                            { "double":   123 },
-                            null,
-                        ] },
-                    ] },
-                ] } },
-            },
-            {
-                label:      'Array with nulls',
-                delta_data: { foo: [
-                    'bar',
-                    'baz',
-                    null
-                 ] },
-                 expected: { foo: { "array": [
-                    { "string": 'bar' },
-                    { "string": 'baz' },
-                    null
-                 ] } },
-            },
-            {
-                label:      'Nested Array with mixed values',
-                delta_data: { foo: [
-                    [
-                        'bar',
-                        123321,
-                        null,
-                    ]
-                ] },
-                expected: { foo: { "array": [
-                { "array": [
-                    { "string": 'bar' },
-                    { "double": 123321 },
-                    null,
-                ] },
-                ] } },
-            },
-            {
-                label:      'Nested Array with mixed values',
-                delta_data: { foo: [
-                    {
-                        "bar": {
-                            "wer": 'qaz',
-                            "qwe": 1572903485000,
-                            "asd": true,
-                            "zxc": null,
-                        },
-                    },
-                ] },
-                expected: { "foo": { "array": [
-                    { "map": {
-                        "bar": { "map": {
-                            "wer": { "string": 'qaz' },
-                            "qwe": { "double": 1572903485000 },
-                            "asd": { "boolean": true },
-                            "zxc": null,
-                        } },
-                    } },
-                ] } },
-            },
-        ].forEach( ( { label, delta_data, expected } ) =>
-        {
-            it( label, () =>
-            {
-                const encoded        = 'FooBar';
-                const emitter        = createMockEventEmitter();
-                const conn           = createMockAmqpConnection();
-                const avroEncoderCtr = createMockEncoder( encoded );
-                const stub_schema    = <AvroSchema>{};
-                const sut            = new Sut(
-                    emitter,
-                    ts_ctr,
-                    avroEncoderCtr,
-                    conn,
-                    stub_schema,
-                );
-                const actual  = sut.setDataTypes( delta_data );
-
-                expect( actual ).to.deep.equal( expected );
-            } );
-        } );
+            return Promise.all( [
+                expect( result ).to.eventually.be.rejectedWith( error ),
+                result.catch( e =>
+                {
+                    return expect( e ).to.deep.equal( error );
+                } )
+            ] );
+        } )
     } );
 } );
 
@@ -438,64 +198,11 @@ function ts_ctr(): UnixTimestamp
 }
 
 
-function createMockEncoder( mock_encoded_data: string ): AvroEncoderCtr
-{
-    return ( _schema: AvroSchema ) =>
-    {
-        const mock = sinon.mock( Duplex );
-
-        mock.on  = ( _: string, __: any ) => {};
-        mock.end = ( _: any ) => { return mock_encoded_data; };
-
-        return mock;
-    };
-}
-
-
-function createMockEventEmitter(): EventEmitter
-{
-    return <EventEmitter>{};
-}
-
-
 function createMockAmqpConnection(): AmqpConnection
 {
     return <AmqpConnection>{
         connect:         () => {},
         getExchangeName: () => { 'Foo' },
-    };
-}
-
-
-function createMockData( delta_data: any ): any
-{
-
-    return {
-        event: {
-            id:    'RATE',
-            ts:    1573856916,
-            actor: 'SERVER',
-            step:  null,
-        },
-        document: {
-            id:       123123,
-            created:  1573856916,
-            modified: 1573856916,
-            top_visited_step: '2',
-        },
-        data:     null,
-        ratedata: null,
-        delta: {
-            Data: {
-                bucket: delta_data,
-            },
-        },
-        program: {
-            Program: {
-                id:      'quote_server',
-                version: 'dadaddwafdwa',
-            },
-        },
     };
 }
 
@@ -518,26 +225,12 @@ function createMockDelta(): Delta<any>
 }
 
 
-function createMockEncoderCtor( stub_schema: AvroSchema ):
-    ( schema: AvroSchema ) => Duplex
+function createMockWriter(): MessageWriter
 {
-    const events = <Record<string, () => void>>{};
-
-    const mock_duplex   = <Duplex>(<unknown>{
-        on( event_name: string, callback: () => void )
+    return <MessageWriter>{
+        write( _: any, __:any, ___:any, ____:any, _____:any ): Promise<Buffer>
         {
-            events[ event_name ] = callback;
-        },
-
-        end()
-        {
-            events.end();
-        },
-    } );
-
-    return ( schema: AvroSchema ): Duplex =>
-    {
-        expect( schema ).to.equal( stub_schema );
-        return mock_duplex;
+            return Promise.resolve( Buffer.from( '' ) );
+        }
     };
 }

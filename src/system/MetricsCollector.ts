@@ -22,7 +22,7 @@
  */
 
 import { Histogram, Pushgateway, Counter, Gauge } from 'prom-client';
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 import { PrometheusFactory, PrometheusConfig } from './PrometheusFactory';
 
 const client = require( 'prom-client' )
@@ -72,6 +72,7 @@ export class MetricsCollector
      * @param _factory - A factory to create prometheus components
      * @param _conf    - Prometheus configuration
      * @param _emitter - Event emitter
+     * @param _timer   - A timer function to create a tuple timestamp
      */
     constructor(
         private readonly _factory: PrometheusFactory,
@@ -96,9 +97,9 @@ export class MetricsCollector
             client,
             this._process_time_name,
             this._process_time_help,
-            0,
-            10,
-            10,
+            this._conf.buckets_start,
+            this._conf.buckets_width,
+            this._conf.buckets_count,
         );
 
         this._total_error = this._factory.createCounter(
@@ -123,7 +124,8 @@ export class MetricsCollector
         this._push_interval = setInterval( () =>
             {
                 this._gateway.pushAdd(
-                    { jobName: 'liza_delta_metrics' }, this.pushCallback
+                    { jobName: 'liza_delta_metrics' },
+                    this.getPushCallback( this )
                 );
             }, this._conf.push_interval_ms
         );
@@ -145,7 +147,7 @@ export class MetricsCollector
     /**
      * List to events to update metrics
      */
-    private hookMetrics()
+    private hookMetrics(): void
     {
         this._emitter.on(
             'delta-process-start',
@@ -165,35 +167,36 @@ export class MetricsCollector
             }
         );
 
-        this._emitter.on(
-            'delta-process-error',
-            ( _ ) => this._total_error.inc()
-        );
+        this._emitter.on( 'error', ( _ ) => this._total_error.inc() );
     }
 
 
     /**
      * Handle push error
      *
-     * @param error    - Any errors that occurred
-     * @param response - The http response
-     * @param body     - The resposne body
+     * @param self - Metrics Collector object
+     *
+     * @return a function to handle the pushAdd callback
      */
-    private pushCallback(
-        error?:    Error | undefined,
-        _response?: any,
-        _body?:     any
-    ): void
+    private getPushCallback( self: MetricsCollector ): () => void
     {
-        if ( error )
+        return (
+            error?:     Error | undefined,
+            _response?: any,
+            _body?:     any
+        ): void =>
         {
-            this._emitter.emit( 'error', error );
+            if ( error )
+            {
+                self._emitter.emit( 'error', error );
+            }
         }
     }
 
-
     /**
      * Update metrics with current error count
+     *
+     * @param count - the number of errors found
      */
     updateErrorCount( count: number ): void
     {
