@@ -16,7 +16,8 @@
   },
 
   "bin": {
-    "liza-server": "bin/server"
+    "liza-server":     "bin/server",
+    "delta-processor": "bin/delta-processor"
   },
 
   "scripts": {
