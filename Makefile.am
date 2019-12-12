@@ -29,7 +29,8 @@ tsout = tsconfig.tsbuildinfo
 SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 			 tools autogen.sh README.md $(path_test) \
-			 bin/server bin/server.js tsconfig.json
+			 bin/server bin/server.js tsconfig.json \
+			 bin/delta-processor bin/delta-processor.js
 
 .PHONY: FORCE todo
 
