@@ -73,6 +73,18 @@
                     {
                         "name": "id",
                         "type": "int"
+                    },
+                    {
+                        "name":        "created",
+                        "type":         ["null", "long"],
+                        "logicalType":  "timestamp-millis",
+                        "default":      null
+                    },
+                    {
+                        "name":         "modified",
+                        "type":         ["null", "long"],
+                        "logicalType":  "timestamp-millis",
+                        "default":      null
                     }
                 ]
             }
