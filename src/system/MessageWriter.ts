@@ -1,9 +1,9 @@
 /**
- * Ideal Store for system configuration
+ * Message Writer
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
- *  This file is part of the Liza Data Collection Framework.
+ *  This file is part of liza.
  *
  *  liza is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,28 +17,28 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
-const {
-    AutoObjectStore,
-    DelimitedKey,
-    MemoryStore,
-} = require( '../' ).store;
-
-
-/**
- * A store that recursively instantiates itself
  *
- * This store is ideal for nested configurations, and handles cases where
- * configuration might be asynchronously retrieved.  Nested values may be
- * retrieved by delimiting the key with `.` (e.g. `foo.bar.baz`); see
- * trait `DelimitedKey` for more information and examples.
+ * Write a message to be published to a queue
  */
-exports.ConfStore = function ConfStore()
+import { DocumentMeta } from '../document/Document';
+import { DeltaResult } from '../bucket/delta';
+
+export interface MessageWriter
 {
-    return MemoryStore
-        .use( AutoObjectStore( ConfStore ) )
-        .use( DelimitedKey( '.' ) )();
-};
+    /**
+     * Write the data to a message
+     *
+     * @param ts       - timestamp
+     * @param meta     - document meta data
+     * @param delta    - current delta
+     * @param bucket   - data bucket
+     * @param ratedata - ratedata bucket
+     */
+    write(
+        ts:          UnixTimestamp,
+        meta:        DocumentMeta,
+        delta:       DeltaResult<any>,
+        bucket:      Record<string, any>,
+        ratedata:    Record<string, any>,
+    ): Promise<Buffer>
+}

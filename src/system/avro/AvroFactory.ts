@@ -1,5 +1,5 @@
 /**
- * Ideal Store for system configuration
+ * Factory functions for avro
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -18,27 +18,15 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import { Duplex } from 'stream';
 
-'use strict';
+import * as avro from "avro-js";
 
-const {
-    AutoObjectStore,
-    DelimitedKey,
-    MemoryStore,
-} = require( '../' ).store;
+/** The avro encoder constructor type */
+export type AvroEncoderCtr = ( type: avro.AvroSchema ) => Duplex;
 
-
-/**
- * A store that recursively instantiates itself
- *
- * This store is ideal for nested configurations, and handles cases where
- * configuration might be asynchronously retrieved.  Nested values may be
- * retrieved by delimiting the key with `.` (e.g. `foo.bar.baz`); see
- * trait `DelimitedKey` for more information and examples.
- */
-exports.ConfStore = function ConfStore()
+/** The avro encoder constructor */
+export function createAvroEncoder( schema: avro.AvroSchema ): Duplex
 {
-    return MemoryStore
-        .use( AutoObjectStore( ConfStore ) )
-        .use( DelimitedKey( '.' ) )();
-};
+    return new avro.streams.BlockEncoder( schema );
+}

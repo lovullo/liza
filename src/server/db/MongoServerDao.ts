@@ -19,83 +19,56 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( '../../events' ).EventEmitter,
-    ServerDao    = require( './ServerDao' ).ServerDao;
+import { ServerDao, Callback } from "./ServerDao";
+import { MongoCollection, MongoUpdate, MongoDb } from "mongodb";
+import { PositiveInteger } from "../../numeric";
+import { ServerSideQuote } from "../quote/ServerSideQuote";
+import { QuoteId } from "../../document/Document";
+import { WorksheetData } from "../rater/Rater";
 
+const EventEmitter = require( 'events' ).EventEmitter;
+
+type ErrorCallback = ( err: NullableError ) => void;
 
 /**
  * Uses MongoDB as a data store
  */
-module.exports = Class( 'MongoServerDao' )
-    .implement( ServerDao )
-    .extend( EventEmitter,
+export class MongoServerDao extends EventEmitter implements ServerDao
 {
-    /**
-     * Collection used to store quotes
-     * @type String
-     */
-    'const COLLECTION': 'quotes',
+    /** Collection used to store quotes */
+    readonly COLLECTION: string = 'quotes';
 
-    /**
-     * Sequence (auto-increment) collection
-     * @type {string}
-     */
-    'const COLLECTION_SEQ': 'seq',
+    /** Sequence (auto-increment) collection */
+    readonly COLLECTION_SEQ: string = 'seq';
 
-    /**
-     * Sequence key for quote ids
-     *
-     * @type {string}
-     * @const
-     */
-    'const SEQ_QUOTE_ID': 'quoteId',
+    /** Sequence key for quote ids */
+    readonly SEQ_QUOTE_ID: string = 'quoteId';
 
-    /**
-     * Sequence quoteId default
-     *
-     * @type {number}
-     * @const
-     */
-    'const SEQ_QUOTE_ID_DEFAULT': 200000,
+    /** Sequence quoteId default */
+    readonly SEQ_QUOTE_ID_DEFAULT: number = 200000;
 
 
-    /**
-     * Database instance
-     * @type Mongo.Db
-     */
-    'private _db': null,
+    /** Whether the DAO is initialized and ready to be used */
+    private _ready: boolean = false;
 
-    /**
-     * Whether the DAO is initialized and ready to be used
-     * @type Boolean
-     */
-    'private _ready': false,
+    /** Collection to save data to */
+    private _collection?: MongoCollection | null;
 
-    /**
-     * Collection to save data to
-     * @type null|Collection
-     */
-    'private _collection': null,
-
-    /**
-     * Collection to read sequences (auto-increments) from
-     * @type {null|Collection}
-     */
-    'private _seqCollection': null,
+    /** Collection to read sequences (auto-increments) from */
+    private _seqCollection?: MongoCollection | null;
 
 
     /**
      * Initializes DAO
      *
      * @param {Mongo.Db} db mongo database connection
-     *
-     * @return undefined
      */
-    'public __construct': function( db )
+    constructor(
+        private readonly _db: MongoDb
+    )
     {
-        this._db = db;
-    },
+        super();
+    }
 
 
     /**
@@ -108,12 +81,12 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return MongoServerDao self to allow for method chaining
      */
-    'public init': function( callback )
+    init( callback: () => void ): this
     {
         var dao = this;
 
         // map db error event (on connection error) to our connectError event
-        this._db.on( 'error', function( err )
+        this._db.on( 'error', function( err: Error )
         {
             dao._ready      = false;
             dao._collection = null;
@@ -123,7 +96,7 @@ module.exports = Class( 'MongoServerDao' )
 
         this.connect( callback );
         return this;
-    },
+    }
 
 
     /**
@@ -136,12 +109,12 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return MongoServerDao self to allow for method chaining
      */
-    'public connect': function( callback )
+    connect( callback: () => void ): this
     {
         var dao = this;
 
         // attempt to connect to the database
-        this._db.open( function( err, db )
+        this._db.open( function( err: any, db: any )
         {
             // if there was an error, don't bother with anything else
             if ( err )
@@ -176,84 +149,97 @@ module.exports = Class( 'MongoServerDao' )
             }
 
             // quotes collection
-            db.collection( dao.__self.$('COLLECTION'), function( err, collection )
-            {
-                // for some reason this gets called more than once
-                if ( collection == null )
-                {
-                    return;
-                }
-
-                // initialize indexes
-                collection.createIndex(
-                    [ ['id', 1] ],
-                    true,
-                    function( err, index )
+            db.collection(
+                dao.COLLECTION,
+                function(
+                    _err:       any,
+                    collection: MongoCollection,
+                ) {
+                    // for some reason this gets called more than once
+                    if ( collection == null )
                     {
-                        // mark the DAO as ready to be used
-                        dao._collection = collection;
-                        check_ready();
+                        return;
                     }
-                );
-            });
+
+                    // initialize indexes
+                    collection.createIndex(
+                        [ ['id', 1] ],
+                        true,
+                        function(
+                            _err: NullableError,
+                            _index: { [P: string]: any,
+                        } )
+                        {
+                            // mark the DAO as ready to be used
+                            dao._collection = collection;
+                            check_ready();
+                        }
+                    );
+                }
+            );
 
             // seq collection
-            db.collection( dao.__self.$('COLLECTION_SEQ'), function( err, collection )
-            {
-                if ( err )
-                {
-                    dao.emit( 'seqError', err );
-                    return;
-                }
-
-                if ( collection == null )
-                {
-                    return;
-                }
-
-                dao._seqCollection = collection;
-
-                // has the sequence we'll be referencing been initialized?
-                collection.find(
-                    { _id: dao.__self.$('SEQ_QUOTE_ID') },
-                    { limit: 1 },
-                    function( err, cursor )
+            db.collection(
+                dao.COLLECTION_SEQ,
+                function(
+                    err:        Error,
+                    collection: MongoCollection,
+                ) {
+                    if ( err )
                     {
-                        if ( err )
-                        {
-                            dao.initQuoteIdSeq( check_ready )
-                            return;
-                        }
+                        dao.emit( 'seqError', err );
+                        return;
+                    }
 
-                        cursor.toArray( function( err, data )
+                    if ( collection == null )
+                    {
+                        return;
+                    }
+
+                    dao._seqCollection = collection;
+
+                    // has the sequence we'll be referencing been initialized?
+                    collection.find(
+                        { _id: dao.SEQ_QUOTE_ID },
+                        { limit: <PositiveInteger>1 },
+                        function( err: NullableError, cursor )
                         {
-                            if ( data.length == 0 )
+                            if ( err )
                             {
-                                dao.initQuoteIdSeq( check_ready );
+                                dao._initQuoteIdSeq( check_ready )
                                 return;
                             }
 
-                            check_ready();
-                        });
-                    }
-                );
-            });
+                            cursor.toArray( function( _err: Error, data: any[] )
+                            {
+                                if ( data.length == 0 )
+                                {
+                                    dao._initQuoteIdSeq( check_ready );
+                                    return;
+                                }
+
+                                check_ready();
+                            });
+                        }
+                    );
+                }
+            );
         });
 
         return this;
-    },
+    }
 
 
-    'public initQuoteIdSeq': function( callback )
+    private _initQuoteIdSeq( callback: () => void )
     {
         var dao = this;
 
-        this._seqCollection.insert(
+        this._seqCollection!.insert(
             {
-                _id: this.__self.$('SEQ_QUOTE_ID'),
-                val: this.__self.$('SEQ_QUOTE_ID_DEFAULT'),
+                _id: this.SEQ_QUOTE_ID,
+                val: this.SEQ_QUOTE_ID_DEFAULT,
             },
-            function( err, docs )
+            function( err: NullableError, _docs: any )
             {
                 if ( err )
                 {
@@ -261,11 +247,11 @@ module.exports = Class( 'MongoServerDao' )
                     return;
                 }
 
-                dao.emit( 'seqInit', this.__self.$('SEQ_QUOTE_ID') );
-                callback.call( this );
+                dao.emit( 'seqInit', dao.SEQ_QUOTE_ID );
+                callback.call( dao );
             }
         );
-    },
+    }
 
 
     /**
@@ -281,15 +267,17 @@ module.exports = Class( 'MongoServerDao' )
      * @param Function failure_callback function to call if save fails
      * @param Object   save_data        quote data to save (optional)
      * @param Object   push_data        quote data to push (optional)
-     *
-     * @return MongoServerDao self to allow for method chaining
      */
-    'public saveQuote': function(
-        quote, success_callback, failure_callback, save_data, push_data
-    )
+    saveQuote(
+        quote:            ServerSideQuote,
+        success_callback: Callback,
+        failure_callback: Callback,
+        save_data?:       any,
+        push_data?:       any,
+    ): this
     {
-        var dao  = this;
-        var meta = {};
+        var dao                       = this;
+        var meta: Record<string, any> = {};
 
         // if we're not ready, then we can't save the quote!
         if ( this._ready === false )
@@ -301,7 +289,7 @@ module.exports = Class( 'MongoServerDao' )
             );
 
             failure_callback.call( this, quote );
-            return;
+            return dao;
         }
 
         if ( save_data === undefined )
@@ -321,6 +309,7 @@ module.exports = Class( 'MongoServerDao' )
         save_data.id                 = id;
         save_data.pver               = quote.getProgramVersion();
         save_data.importDirty        = 1;
+        save_data.published          = false;
         save_data.lastPremDate       = quote.getLastPremiumDate();
         save_data.initialRatedDate   = quote.getRatedDate();
         save_data.explicitLock       = quote.getExplicitLockReason();
@@ -349,14 +338,14 @@ module.exports = Class( 'MongoServerDao' )
 
         // update the quote data if it already exists (same id), otherwise
         // insert it
-        this._collection.update( { id: id },
+        this._collection!.update( { id: id },
             document,
 
             // create record if it does not yet exist
             { upsert: true },
 
             // on complete
-            function( err, docs )
+            function( err, _docs )
             {
                 // if an error occurred, then we cannot continue
                 if ( err )
@@ -381,7 +370,7 @@ module.exports = Class( 'MongoServerDao' )
         );
 
         return this;
-    },
+    }
 
 
     /**
@@ -391,21 +380,24 @@ module.exports = Class( 'MongoServerDao' )
      * @param {Object}   data      quote data
      * @param {Function} scallback successful callback
      * @param {Function} fcallback failure callback
-     *
-     * @return {MongoServerDao} self
      */
-    'public mergeData': function( quote, data, scallback, fcallback )
+    mergeData(
+        quote:     ServerSideQuote,
+        data:      MongoUpdate,
+        scallback: Callback,
+        fcallback: Callback,
+    ): this
     {
         // we do not want to alter the original data; use it as a prototype
         var update = data;
 
         // save the stack so we can track this call via the oplog
         var _self = this;
-        this._collection.update( { id: quote.getId() },
+        this._collection!.update( { id: quote.getId() },
             { '$set': update },
             {},
 
-            function( err, docs )
+            function( err, _docs )
             {
                 if ( err )
                 {
@@ -427,7 +419,7 @@ module.exports = Class( 'MongoServerDao' )
         );
 
         return this;
-    },
+    }
 
 
     /**
@@ -441,9 +433,14 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return {MongoServerDao} self
      */
-    'public mergeBucket': function( quote, data, scallback, fcallback )
+    mergeBucket(
+        quote:   ServerSideQuote,
+        data:    MongoUpdate,
+        success: Callback,
+        failure: Callback,
+    ): this
     {
-        var update = {};
+        var update: MongoUpdate = {};
 
         for ( var field in data )
         {
@@ -455,8 +452,8 @@ module.exports = Class( 'MongoServerDao' )
             update[ 'data.' + field ] = data[ field ];
         }
 
-        return this.mergeData( quote, update, scallback, fcallback );
-    },
+        return this.mergeData( quote, update, success, failure );
+    }
 
 
     /**
@@ -471,8 +468,10 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return MongoServerDao self
      */
-    'public saveQuoteState': function(
-        quote, success_callback, failure_callback
+    saveQuoteState(
+        quote:            ServerSideQuote,
+        success_callback: Callback,
+        failure_callback: Callback,
     )
     {
         var update = {
@@ -484,10 +483,15 @@ module.exports = Class( 'MongoServerDao' )
         return this.mergeData(
             quote, update, success_callback, failure_callback
         );
-    },
+    }
 
 
-    'public saveQuoteClasses': function( quote, classes, success, failure )
+    saveQuoteClasses(
+        quote:   ServerSideQuote,
+        classes: any,
+        success: Callback,
+        failure: Callback,
+    )
     {
         return this.mergeData(
             quote,
@@ -495,7 +499,7 @@ module.exports = Class( 'MongoServerDao' )
             success,
             failure
         );
-    },
+    }
 
 
     /**
@@ -511,9 +515,14 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return {undefined}
      */
-    'public saveQuoteMeta'( quote, new_meta, success, failure )
+    saveQuoteMeta(
+        quote:    ServerSideQuote,
+        new_meta: any,
+        success:  Callback,
+        failure:  Callback,
+    ): void
     {
-        const update = {};
+        const update: MongoUpdate = {};
 
         for ( var key in new_meta )
         {
@@ -521,13 +530,12 @@ module.exports = Class( 'MongoServerDao' )
 
             for ( var i in meta )
             {
-                update[ 'meta.' + key + '.' + i ] =
-                    new_meta[ key ][ i ];
+                update[ 'meta.' + key + '.' + i ] = new_meta[ key ][ i ];
             }
         }
 
         this.mergeData( quote, update, success, failure );
-    },
+    }
 
 
     /**
@@ -539,13 +547,20 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return MongoServerDao self
      */
-    'public saveQuoteLockState': function(
-        quote, success_callback, failure_callback
-    )
+    saveQuoteLockState(
+        quote:            ServerSideQuote,
+        success_callback: Callback,
+        failure_callback: Callback,
+    ): this
     {
         // lock state is saved by default
-        return this.saveQuote( quote, success_callback, failure_callback, {} );
-    },
+        return this.saveQuote(
+            quote,
+            success_callback,
+            failure_callback,
+            {}
+        );
+    }
 
 
     /**
@@ -556,16 +571,19 @@ module.exports = Class( 'MongoServerDao' )
      *
      * @return MongoServerDao self to allow for method chaining
      */
-    'public pullQuote': function( quote_id, callback )
+    pullQuote(
+        quote_id: PositiveInteger,
+        callback: ( data: Record<string, any> | null ) => void
+    ): this
     {
         var dao = this;
 
         // XXX: TODO: Do not read whole of record into memory; filter out
         // revisions!
-        this._collection.find( { id: quote_id }, { limit: 1 },
-            function( err, cursor )
+        this._collection!.find( { id: quote_id }, { limit: <PositiveInteger>1 },
+            function( _err, cursor )
             {
-                cursor.toArray( function( err, data )
+                cursor.toArray( function( _err: NullableError, data: any[] )
                 {
                     // was the quote found?
                     if ( data.length == 0 )
@@ -581,27 +599,28 @@ module.exports = Class( 'MongoServerDao' )
         );
 
         return this;
-    },
+    }
 
 
-    'public getMinQuoteId': function( callback )
+    getMinQuoteId( callback: ( min_id: number ) => void ): this
     {
         // just in case it's asynchronous later on
-        callback.call( this, this.__self.$('SEQ_QUOTE_ID_DEFAULT') );
+        callback.call( this, this.SEQ_QUOTE_ID_DEFAULT );
+
         return this;
-    },
+    }
 
 
-    'public getMaxQuoteId': function( callback )
+    getMaxQuoteId( callback: ( min_id: number ) => void ): void
     {
         var dao = this;
 
-        this._seqCollection.find(
-            { _id: this.__self.$('SEQ_QUOTE_ID') },
-            { limit: 1 },
-            function( err, cursor )
+        this._seqCollection!.find(
+            { _id: this.SEQ_QUOTE_ID },
+            { limit: <PositiveInteger>1 },
+            function( _err, cursor )
             {
-                cursor.toArray( function( err, data )
+                cursor.toArray( function( _err: NullableError, data: any[] )
                 {
                     if ( data.length == 0 )
                     {
@@ -614,15 +633,15 @@ module.exports = Class( 'MongoServerDao' )
                 });
             }
         );
-    },
+    }
 
 
-    'public getNextQuoteId': function( callback )
+    getNextQuoteId( callback: ( quote_id: number ) => void ): this
     {
         var dao = this;
 
-        this._seqCollection.findAndModify(
-            { _id: this.__self.$('SEQ_QUOTE_ID') },
+        this._seqCollection!.findAndModify(
+            { _id: this.SEQ_QUOTE_ID },
             [ [ 'val', 'descending' ] ],
             { $inc: { val: 1 } },
             { 'new': true },
@@ -643,7 +662,7 @@ module.exports = Class( 'MongoServerDao' )
         );
 
         return this;
-    },
+    }
 
 
     /**
@@ -654,13 +673,16 @@ module.exports = Class( 'MongoServerDao' )
      * model of storing the deltas in previous revisions and the whole of the
      * bucket in the most recently created revision).
      */
-    'public createRevision': function( quote, callback )
+    createRevision(
+        quote:    ServerSideQuote,
+        callback: ErrorCallback,
+    ): void
     {
         var _self = this,
             qid   = quote.getId(),
             data  = quote.getBucket().getData();
 
-        this._collection.update( { id: qid },
+        this._collection!.update( { id: qid },
             { '$push': { revisions: { data: data } } },
 
             // create record if it does not yet exist
@@ -678,20 +700,24 @@ module.exports = Class( 'MongoServerDao' )
                 return;
             }
         );
-    },
+    }
 
 
-    'public getRevision': function( quote, revid, callback )
+    getRevision(
+        quote:    ServerSideQuote,
+        revid:    PositiveInteger,
+        callback: ErrorCallback,
+    ): void
     {
-        revid = +revid;
+        revid = <PositiveInteger>+revid;
 
         // XXX: TODO: Filter out all but the revision we want
-        this._collection.find(
+        this._collection!.find(
             { id: quote.getId() },
-            { limit: 1 },
-            function( err, cursor )
+            { limit: <PositiveInteger>1 },
+            function( _err, cursor )
             {
-                cursor.toArray( function( err, data )
+                cursor.toArray( function( _err: NullableError, data: any[] )
                 {
                     // was the quote found?
                     if ( ( data.length === 0 )
@@ -707,12 +733,16 @@ module.exports = Class( 'MongoServerDao' )
                 });
             }
         );
-    },
+    }
 
 
-    'public setWorksheets': function( qid, data, callback )
+    setWorksheets(
+        qid:      QuoteId,
+        data:     MongoUpdate,
+        callback: NodeCallback<void>,
+    ): void
     {
-        this._collection.update( { id: qid },
+        this._collection!.update( { id: qid },
             { '$set': { worksheets: { data: data } } },
 
             // create record if it does not yet exist
@@ -725,17 +755,22 @@ module.exports = Class( 'MongoServerDao' )
                 return;
             }
         );
-    },
+    }
 
 
-    'public getWorksheet': function( qid, supplier, index, callback )
+    getWorksheet(
+        qid:      QuoteId,
+        supplier: string,
+        index:    PositiveInteger,
+        callback: ( data: WorksheetData | null ) => void,
+    ): void
     {
-        this._collection.find(
+        this._collection!.find(
             { id: qid },
-            { limit: 1 },
-            function( err, cursor )
+            { limit: <PositiveInteger>1 },
+            function( _err, cursor )
             {
-                cursor.toArray( function( err, data )
+                cursor.toArray( function( _err: NullableError, data: any[] )
                 {
                     // was the quote found?
                     if ( ( data.length === 0 )
@@ -750,74 +785,8 @@ module.exports = Class( 'MongoServerDao' )
 
                     // return the quote data
                     callback( data[ 0 ].worksheets.data[ supplier ][ index ] );
-                });
-            }
-        );
-    },
-
-
-    /**
-     * Set arbitrary data on a document
-     *
-     * @param {number}           qid      quote/document id
-     * @param {string}           key      field key
-     * @param {*}                value    field value
-     * @param {function(?Error)} callback completion callback
-     *
-     * @return {undefined}
-     */
-    'public setDocumentField'( qid, key, value, callback )
-    {
-        this._collection.update(
-            { id: qid },
-            { '$set': { [key]: value } },
-
-            // create record if it does not yet exist
-            { upsert: true },
-
-            // on complete
-            function( err )
-            {
-                callback && callback( err );
-                return;
-            }
-        );
-    },
-
-
-    /**
-     * Retrieve arbitrary data on a document
-     *
-     * @param {number}           qid      quote/document id
-     * @param {string}           key      field key
-     * @param {function(?Error)} callback completion callback
-     *
-     * @return {undefined}
-     */
-    'public getDocumentField'( qid, key, callback )
-    {
-        this._collection.find(
-            { id: qid },
-            { limit: 1 },
-            function( err, cursor )
-            {
-                if ( err !== null )
-                {
-                    callback( err, null );
-                    return;
-                }
-
-                cursor.toArray( function( err, data )
-                {
-                    if ( err !== null )
-                    {
-                        callback( err, null );
-                        return;
-                    }
-
-                    callback( null, ( data[ 0 ] || {} )[ key ] );
                 } );
             }
         );
-    },
-} );
+    }
+};

@@ -1,7 +1,7 @@
 /**
  * Start the Liza Server
  *
- *  Copyright (C) 2017 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -19,19 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
+import fs   = require( 'fs' );
+import path = require( 'path' );
 
-const fs   = require( 'fs' );
-const path = require( 'path' );
-
-const {
-    conf: {
-        ConfLoader,
-        ConfStore,
-    },
-    server,
-    version,
-} = require( '../' );
+import { ConfLoader } from "../src/conf/ConfLoader";
+import { ConfStore } from "../src/conf/ConfStore";
+import * as version from "../src/version";
 
 // kluge for now
 const conf_path = (
@@ -42,7 +35,7 @@ const conf_path = (
 
 const conf_dir = path.dirname( conf_path );
 
-ConfLoader( fs, ConfStore )
+new ConfLoader( fs, ConfStore )
     .fromFile( conf_path )
     .then( conf => Promise.all( [
         conf.get( 'name' ),
@@ -70,12 +63,12 @@ ConfLoader( fs, ConfStore )
  * Produce an absolute path if `path` is absolute, otherwise a path relative
  * to the configuration directory
  *
- * @param {string} conf_path configuration path (for relative `path`)
- * @param {string} path      path to resolve
+ * @param conf_path - configuration path (for relative `path`)
+ * @param path      - path to resolve
  *
  * @return resolved path
  */
-function _resolvePath( conf_path, path )
+function _resolvePath( conf_path: string, path: string ): string
 {
     return ( path[ 0 ] === '/' )
         ? path
@@ -83,15 +76,29 @@ function _resolvePath( conf_path, path )
 }
 
 
-function writePidFile( pid_path )
+/**
+ * Write process id (PID) file
+ *
+ * @param pid_path - path to pid file
+ */
+function writePidFile( pid_path: string ): void
 {
-    fs.writeFile( pid_path, process.pid );
+    fs.writeFileSync( pid_path, process.pid );
 
-    process.on( 'exit', () => fs.unlink( pid_path ) );
+    process.on( 'exit', () => fs.unlink( pid_path, () => {} ) );
 }
 
 
-function greet( name, pid_path )
+/**
+ * Output greeting
+ *
+ * The greeting contains the program name, version, configuration path,
+ * and PID file path.
+ *
+ * @param name     - program name
+ * @param pid_path - path to PID file
+ */
+function greet( name: string, pid_path: string ): void
 {
     console.log( `${name} (liza-${version})`);
     console.log( `Server configuration: ${conf_path}` );

@@ -16,7 +16,8 @@
   },
 
   "bin": {
-    "liza-server": "bin/server"
+    "liza-server":     "bin/server",
+    "delta-processor": "bin/delta-processor"
   },
 
   "scripts": {
@@ -24,13 +25,14 @@
   },
 
   "dependencies": {
-    "easejs": "0.2.x",
-    "mongodb": "1.2.14",
-    "amqplib": "0.5.3"
+    "easejs":      "0.2.x",
+    "mongodb":     "1.2.14",
+    "dotenv-flow": "3.1.0",
+    "amqplib":     "0.5.3"
   },
   "devDependencies": {
     "typescript":              "~3.7",
-    "@types/node":             "@TS_NODE_VERSION@",
+    "@types/node":             "12.12.11",
     "chai":                    ">=1.9.1 < 4",
     "@types/chai":             ">=1.9.1 < 4",
     "chai-as-promised":        "7.1.0",
@@ -38,7 +40,10 @@
     "mocha":                   "5.2.0",
     "@types/mocha":            "5.2.0",
     "sinon":                   ">=1.17.4",
-    "es6-promise":             "~3"
+    "es6-promise":             "~3",
+    "@types/amqplib":          "0.5.13",
+    "avro-js":                 "1.9.1",
+    "prom-client":             "11.0.0"
   },
 
   "licenses": [

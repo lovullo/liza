@@ -69,7 +69,7 @@ const {
         DocumentServer,
 
         db: {
-            MongoServerDao,
+            MongoServerDao: { MongoServerDao },
         },
 
         lock: {
@@ -126,8 +126,8 @@ exports.post_rate_publish = {};
 
 exports.init = function( logger, enc_service, conf )
 {
-    var db = _createDB( logger );
-    const dao = MongoServerDao( db );
+    var db    = _createDB( logger );
+    const dao = new MongoServerDao( db );
 
     db.collection( 'quotes', function( err, collection )
     {

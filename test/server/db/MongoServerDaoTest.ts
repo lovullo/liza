@@ -21,9 +21,17 @@
 
 'use strict';
 
-const chai                 = require( 'chai' );
-const expect               = chai.expect;
-const { MongoServerDao: Sut } = require( '../../../' ).server.db;
+import { MongoServerDao as Sut } from "../../../src/server/db/MongoServerDao";
+import { MongoSelector, MongoUpdate, MongoDb } from "mongodb";
+import { expect, use as chai_use } from 'chai';
+import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
+import { PositiveInteger } from "../../../src/numeric";
+import { Program } from "../../../src/program/Program";
+import { RateResult } from "../../../src/server/rater/Rater";
+import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
+import { QuoteId } from "../../../src/quote/Quote";
+
+chai_use( require( 'chai-as-promised' ) );
 
 
 describe( 'MongoServerDao', () =>
@@ -41,9 +49,9 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( metadata );
 
-                const sut = Sut( createMockDb(
+                const sut = new Sut( createMockDb(
                     // update
-                    ( selector, data ) =>
+                    ( _selector: MongoSelector, data: MongoUpdate ) =>
                     {
                         expect( data.$set[ 'meta.foo' ] )
                             .to.deep.equal( metadata.foo );
@@ -75,9 +83,9 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( {} );
 
-                const sut = Sut( createMockDb(
+                const sut = new Sut( createMockDb(
                     // update
-                    ( selector, data ) =>
+                    (_selector: MongoSelector, data: MongoUpdate ) =>
                     {
                         expect( data.$push[ 'foo' ] )
                             .to.deep.equal( push_data.foo );
@@ -106,9 +114,9 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( {} );
 
-                const sut = Sut( createMockDb(
+                const sut = new Sut( createMockDb(
                     // update
-                    ( selector, data ) =>
+                    ( _selector: MongoSelector, data: MongoUpdate ) =>
                     {
                         expect( data.$push ).to.equal( undefined );
 
@@ -131,24 +139,24 @@ describe( 'MongoServerDao', () =>
 } );
 
 
-function createMockDb( on_update )
+function createMockDb( on_update: any ): MongoDb
 {
     const collection_quotes = {
         update: on_update,
-        createIndex: ( _, __, c ) => c(),
+        createIndex: ( _: any, __: any, c: any ) => c(),
     };
 
     const collection_seq = {
-        find( _, __, c )
+        find( _: any, __: any, c: any )
         {
             c( null, {
-                toArray: c => c( null, { length: 5 } ),
+                toArray: ( c: any ) => c( null, { length: 5 } ),
             } );
         },
     };
 
     const db = {
-        collection( id, c )
+        collection( id: any, c: any )
         {
             const coll = ( id === 'quotes' )
                 ? collection_quotes
@@ -158,8 +166,9 @@ function createMockDb( on_update )
         },
     };
 
-    const driver = {
-        open: c => c( null, db ),
+    const driver = <MongoDb>{
+        open: ( c: any ) => c( null, db ),
+        close: () => {},
         on:   () => {},
     };
 
@@ -167,24 +176,53 @@ function createMockDb( on_update )
 }
 
 
-function createStubQuote( metadata )
+function createStubQuote( metadata: Record<string, any> )
 {
-    return {
-        getBucket: () => ( {
+    const program = <Program>{
+        getId:               () => '1',
+        ineligibleLockCount: 0,
+        apis:                {},
+        internal:            {},
+        meta:                {
+            arefs:  {},
+            fields: {},
+            groups: {},
+            qdata:  {},
+            qtypes: {},
+        },
+        mapis:               {},
+        initQuote:           () => {},
+    };
+
+    const quote = <ServerSideQuote>{
+        getBucket: () => <QuoteDataBucket>( {
             getData: () => {},
         } ),
 
-        getMetabucket: () => ( {
+        getMetabucket: () => <QuoteDataBucket>( {
             getData: () => metadata,
         } ),
 
-        getId:                 () => 1,
-        getProgramVersion:     () => 0,
-        getLastPremiumDate:    () => 0,
-        getRatedDate:          () => 0,
+        getId:                 () => <QuoteId>123,
+        getProgramVersion:     () => 'Foo',
+        getLastPremiumDate:    () => <UnixTimestamp>0,
+        getRatedDate:          () => <UnixTimestamp>0,
         getExplicitLockReason: () => "",
-        getExplicitLockStep:   () => 0,
+        getExplicitLockStep:   () => <PositiveInteger>1,
         isImported:            () => false,
         isBound:               () => false,
+        getTopVisitedStepId:   () => <PositiveInteger>1,
+        getTopSavedStepId:     () => <PositiveInteger>1,
+        setRatedDate:          () => quote,
+        setRateBucket:         () => quote,
+        setRatingData:         () => quote,
+        getRatingData:         () => <RateResult>{ _unavailable_all: '0' },
+        getProgram:            () => program,
+        setExplicitLock:       () => quote,
+        getProgramId:          () => 'Foo',
+        getCurrentStepId:      () => 0,
+        setLastPremiumDate:    () => quote,
     };
+
+    return quote;
 }

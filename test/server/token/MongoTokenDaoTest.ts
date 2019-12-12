@@ -26,7 +26,7 @@ import {
 } from "../../../src/server/token/TokenDao";
 
 import { MongoTokenDao as Sut } from "../../../src/server/token/MongoTokenDao";
-
+import { MongoCollection } from "mongodb";
 import {
     TokenId,
     TokenNamespace,
@@ -248,6 +248,9 @@ describe( 'server.token.TokenDao', () =>
 
                 update() {},
                 findOne() {},
+                find() {},
+                createIndex() {},
+                insert() {},
             };
 
             return expect(
@@ -269,6 +272,9 @@ describe( 'server.token.TokenDao', () =>
 
                 update() {},
                 findOne() {},
+                find() {},
+                createIndex() {},
+                insert() {},
             };
 
             return expect(
@@ -477,6 +483,9 @@ describe( 'server.token.TokenDao', () =>
 
                     update() {},
                     findAndModify() {},
+                    find() {},
+                    createIndex() {},
+                    insert() {},
                 };
 
                 const result = new Sut( coll, field, () => <UnixTimestamp>0 )
@@ -520,6 +529,9 @@ describe( 'server.token.TokenDao', () =>
 
                 update() {},
                 findAndModify() {},
+                find() {},
+                createIndex() {},
+                insert() {},
             };
 
             return expect(

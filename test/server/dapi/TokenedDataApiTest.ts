@@ -40,7 +40,7 @@ describe( 'TokenedDataApi', () =>
     const expected_ns = 'foo_ns';
 
 
-    ( <[string, boolean, ( e: Error|null ) => void][]>[
+    ( <[string, boolean, ( e: NullableError ) => void][]>[
         [
             "creates token and returns data if last_created",
             true,

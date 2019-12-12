@@ -131,7 +131,7 @@ export interface ServerDao
         qid:      QuoteId,
         data:     WorksheetData,
         callback: NodeCallback<void>,
-    ): this;
+    ): void;
 
 
     /**
@@ -147,5 +147,5 @@ export interface ServerDao
         supplier: string,
         index:    PositiveInteger,
         callback: ( data: WorksheetData | null ) => void,
-    ): this;
+    ): void;
 }

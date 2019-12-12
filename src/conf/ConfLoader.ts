@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
-
-const { Class } = require( 'easejs' );
+import { readFile } from "fs";
+import { Store } from "../store/Store";
 
 
 /**
@@ -35,21 +34,8 @@ const { Class } = require( 'easejs' );
  * TODO: Merging multiple configuration files would be convenient for
  * modular configuration.
  */
-module.exports = Class( 'ConfLoader',
+export class ConfLoader
 {
-    /**
-     * Filesystem module
-     * @type {fs}
-     */
-    'private _fs': null,
-
-    /**
-     * Store object constructor
-     * @type {function():Store}
-     */
-    'private _storeCtor': null,
-
-
     /**
      * Initialize with provided filesystem module and Store constructor
      *
@@ -57,14 +43,13 @@ module.exports = Class( 'ConfLoader',
      * Node.js'.  The Store constructor `store_ctor` is used to instantiate
      * new stores to be populated with configuration data.
      *
-     * @param {fs}               fs         filesystem module
-     * @param {function():Store} store_ctor Store object constructor
+     * @param fs         - filesystem module
+     * @param store_ctor - Store object constructor
      */
-    constructor( fs, store_ctor )
-    {
-        this._fs        = fs;
-        this._storeCtor = store_ctor;
-    },
+    constructor(
+        private _fs:        { readFile: typeof readFile },
+        private _storeCtor: () => Store,
+    ) {}
 
 
     /**
@@ -72,11 +57,11 @@ module.exports = Class( 'ConfLoader',
      *
      * A Store will be produced, populated with the configuration data.
      *
-     * @param {string} filename path to configuration JSON
+     * @param filename - path to configuration JSON
      *
-     * @return {Promise.<Store>} a promise of a populated Store
+     * @return a promise of a populated Store
      */
-    'public fromFile'( filename )
+    fromFile( filename: string ): Promise<Store>
     {
         return new Promise( ( resolve, reject ) =>
         {
@@ -104,7 +89,7 @@ module.exports = Class( 'ConfLoader',
                 }
             } );
         } );
-    },
+    }
 
 
     /**
@@ -112,12 +97,12 @@ module.exports = Class( 'ConfLoader',
      *
      * Parses configuration string as JSON.
      *
-     * @param {string} data raw configuration data
+     * @param data raw configuration data
      *
-     * @return {Promise.<Object>} `data` parsed as JSON
+     * @return `data` parsed as JSON
      */
-    'virtual protected parseConfData'( data )
+    protected parseConfData( data: string ): Promise<any>
     {
         return Promise.resolve( JSON.parse( data ) );
-    },
-} );
+    }
+}

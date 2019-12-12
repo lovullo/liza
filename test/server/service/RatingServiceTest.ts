@@ -36,6 +36,7 @@ import { UserRequest } from "../../../src/server/request/UserRequest";
 import { UserResponse } from "../../../src/server/request/UserResponse";
 import { UserSession } from "../../../src/server/request/UserSession";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
+import { PositiveInteger } from "../../../src/numeric";
 import { Kv } from "../../../src/bucket/delta";
 
 import {
@@ -573,19 +574,27 @@ function getStubs()
     const response = <UserResponse>{};
 
     const quote = <ServerSideQuote>{
-        getProgramId:       () => program_id,
-        getProgram:         () => program,
-        getId:              () => <QuoteId>0,
-        setLastPremiumDate: () => quote,
-        setRatedDate:       () => quote,
-        getRatedDate:       () => <UnixTimestamp>0,
-        getLastPremiumDate: () => <UnixTimestamp>0,
-        getCurrentStepId:   () => 0,
-        setExplicitLock:    () => quote,
-        setRateBucket:      () => quote,
-        setRatingData:      () => quote,
-        getRatingData:      () => stub_rate_data,
-        getBucket:          () => new QuoteDataBucket(),
+        getProgramId:          () => program_id,
+        getProgram:            () => program,
+        getId:                 () => <QuoteId>0,
+        setLastPremiumDate:    () => quote,
+        setRatedDate:          () => quote,
+        getRatedDate:          () => <UnixTimestamp>0,
+        getLastPremiumDate:    () => <UnixTimestamp>0,
+        getCurrentStepId:      () => 0,
+        setExplicitLock:       () => quote,
+        setRateBucket:         () => quote,
+        setRatingData:         () => quote,
+        getRatingData:         () => stub_rate_data,
+        getBucket:             () => new QuoteDataBucket(),
+        getMetabucket:         () => new QuoteDataBucket(),
+        getProgramVersion:     () => 'Foo',
+        getExplicitLockReason: () => 'Reason',
+        getExplicitLockStep:   () => <PositiveInteger>1,
+        isImported:            () => true,
+        isBound:               () => true,
+        getTopVisitedStepId:   () => <PositiveInteger>1,
+        getTopSavedStepId:     () => <PositiveInteger>1,
     };
 
     return {

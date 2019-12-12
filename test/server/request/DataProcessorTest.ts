@@ -503,7 +503,7 @@ function createStubs(
 
 function createStubUserRequest( internal: boolean )
 {
-    return {
+    return <UserRequest>{
         getSession: () => ( {
             isInternal: () => internal
         } )
@@ -713,7 +713,44 @@ function createStubQuote()
         getBucket()
         {
             return new QuoteDataBucket();
-        }
+        },
+
+        getMetabucket(){
+            return new QuoteDataBucket();
+        },
+
+        getProgramVersion(){
+            return 'Foo';
+        },
+
+        getExplicitLockReason(){
+            return 'Reason';
+        },
+
+        getExplicitLockStep()
+        {
+            return <PositiveInteger>1;
+        },
+
+        isImported()
+        {
+            return true;
+        },
+
+        isBound()
+        {
+            return true;
+        },
+
+        getTopVisitedStepId()
+        {
+            return <PositiveInteger>1;
+        },
+
+        getTopSavedStepId()
+        {
+            return <PositiveInteger>1;
+        },
     };
 }
 

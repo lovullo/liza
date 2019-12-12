@@ -65,4 +65,7 @@ type UnixTimestampMillis = NominalType<Milliseconds, 'UnixTimestampMillis'>;
  * reduce the boilerplate of these function definitions, and to clearly
  * document that this pattern is something that used to be done frequently.
  */
-type NodeCallback<T, R = void> = ( e: Error | null, result: T | null ) => R;
+type NodeCallback<T, R = void> = ( e: NullableError, result: T | null ) => R;
+
+/** Nullable error */
+type NullableError = Error | null;

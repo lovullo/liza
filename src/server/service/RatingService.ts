@@ -433,7 +433,7 @@ export class RatingService
             }
         }
 
-        this._dao.setWorksheets( qid, worksheets, ( err: Error | null ) =>
+        this._dao.setWorksheets( qid, worksheets, ( err: NullableError ) =>
         {
             if ( err )
             {

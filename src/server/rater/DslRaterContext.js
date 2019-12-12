@@ -28,6 +28,12 @@ module.exports = Class( 'DslRaterContext' )
     .extend( EventEmitter,
 {
     /**
+     * TODO: Remove workaround for bug extending class across
+     * multiple easejs instances
+     */
+    'public _events': {},
+
+    /**
      * Hash of classes that will result in a global submit
      * @type {Object}
      */

@@ -1,5 +1,5 @@
 /**
- * Document (quote) interface
+ * Ideal Store for system configuration
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -17,43 +17,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { Store } from "../store/Store";
+
+/**
+ * A store that recursively instantiates itself
  *
- * The term 'Quote' is synonymous with 'Document'; this project is moving
- * more toward the latter as it is further generalized.
+ * This store is ideal for nested configurations, and handles cases where
+ * configuration might be asynchronously retrieved.  Nested values may be
+ * retrieved by delimiting the key with `.` (e.g. `foo.bar.baz`); see
+ * trait `DelimitedKey` for more information and examples.
  */
-
-/**
- * Document identifier
- */
-export type DocumentId = NominalType<number, 'DocumentId'>;
-
-
-/**
- * Quote (Document) id
- *
- * Where the term 'Quote' is still used, this will allow for type
- * compatibility and an easy transition.
- */
-export type QuoteId = DocumentId;
-
-
-/**
- * Document meta data
- */
-export type DocumentMeta =
-{
-    /** The document id */
-    id: DocumentId,
-
-    /** The entity name */
-    entity_name: string,
-
-    /** The entity id */
-    entity_id: number,
-
-    /** The time the document was created */
-    startDate: UnixTimestamp,
-
-    /** The time the document was updated */
-    lastUpdate: UnixTimestamp,
-}
+export declare function ConfStore(): Store;

@@ -1,6 +1,6 @@
 ## For use my automake and autoconf
 #
-#  Copyright (C) 2014--2017 R-T Specialty, LLC.
+#  Copyright (C) 2010-2019 R-T Specialty, LLC.
 #
 #  This file is part of liza.
 #
@@ -88,6 +88,8 @@ AC_CONFIG_FILES([Makefile package.json
                  src/version.js])
 AC_CONFIG_FILES([bin/server],
                 [chmod +x bin/server])
+AC_CONFIG_FILES([bin/delta-processor],
+                [chmod +x bin/delta-processor])
 
 AC_OUTPUT
 

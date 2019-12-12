@@ -24,6 +24,7 @@
 import { Program } from "../program/Program";
 import { Quote, QuoteId } from "./Quote";
 import { QuoteDataBucket } from "../bucket/QuoteDataBucket";
+import { PositiveInteger } from "../numeric";
 
 
 export declare class BaseQuote implements Quote
@@ -98,5 +99,55 @@ export declare class BaseQuote implements Quote
      *
      * @return the data bucket
      */
-    getBucket(): QuoteDataBucket
+    getBucket(): QuoteDataBucket;
+
+
+    /**
+     * Retrieves the reason for an explicit lock
+     *
+     * @return lock reason
+     */
+    getExplicitLockReason(): string;
+
+
+    /**
+     * Returns the maximum step to which the explicit lock applies
+     *
+     * If no step restriction is set, then 0 will be returned.
+     *
+     * @return {number} locked max step or 0 if not applicable
+     */
+    getExplicitLockStep(): PositiveInteger;
+
+
+    /**
+     * Returns whether the quote has been imported
+     *
+     * @return true if imported, otherwise false
+     */
+    isImported(): boolean;
+
+
+    /**
+     * Returns whether the quote has been bound
+     *
+     * @return true if bound, otherwise false
+     */
+    isBound(): boolean;
+
+
+    /**
+     * Returns the id of the highest step the quote has reached
+     *
+     * @return top visited step id
+     */
+    getTopVisitedStepId(): PositiveInteger;
+
+
+    /**
+     * Returns the id of the highest step the quote has saved
+     *
+     * @return top saved step id
+     */
+    getTopSavedStepId(): PositiveInteger;
 }

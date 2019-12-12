@@ -23,13 +23,59 @@
  * front.
  */
 
+import { PositiveInteger } from "../numeric";
+
 declare module "mongodb";
 
 
+export interface MongoDbConfig extends Record<string, any> {
+    /** Host */
+    host?: string;
+
+    /** Port number */
+    port?: number;
+
+    /** High availability */
+    ha: boolean;
+
+    /** The mongodb collection to read from */
+    collection: string;
+}
+
+
 /**
- * Node-style callback for queries
+ * Interface for the mongo database
  */
-type MongoCallback = ( err: Error|null, data: { [P: string]: any } ) => void;
+export interface MongoDb
+{
+    /**
+     * Initialize the database connection
+     *
+     * @param callback continuation on completion
+     */
+    open( callback: MongoCallback ): void;
+
+
+    /**
+     * Close the database connection
+     *
+     * @param callback continuation on completion
+     */
+    close( callback: MongoCallback ): void;
+
+
+    /**
+     * Hook events
+     *
+     * @param event_id - the event to hook
+     * @param callback - a function to call in response to the event
+     */
+    on( event_id: string, callback: ( err: Error ) => void ): void;
+}
+
+
+/** Node-style callback for queries */
+type MongoCallback = ( err: NullableError, data: { [P: string]: any } ) => void;
 
 
 /**
@@ -52,7 +98,27 @@ interface MongoQueryUpdateOptions
  */
 interface MongoFindOneOptions
 {
+    /** Fields to select */
     fields?: MongoFieldSelector,
+}
+
+
+/**
+ * Options for `find` queries
+ *
+ * This is not at all comprehensive; it covers only the fields we actually
+ * make use of.
+ */
+interface MongoFindOptions
+{
+    /** Limit results returned */
+    limit?: PositiveInteger,
+
+    /** Whether to project only id's */
+    id?: number,
+
+    /** Which fields to include in the result set */
+    fields?: Record<string, number>,
 }
 
 
@@ -76,20 +142,25 @@ interface MongoFindAndModifyOptions
 
 
 /** Mongo query selector */
-type MongoSelector = { [P: string]: any };
-
+export type MongoSelector = { [P: string]: any };
 
 /** Field selector */
 type MongoFieldSelector = { [P: string]: number };
 
+/** Mongo index specification */
+type MongoIndexSpecification = Array< Array < string | number >>;
 
 /** Mongo update clause */
-type MongoUpdate = MongoSelector;
+export type MongoUpdate = MongoSelector;
 
+/** Mongo object */
+type MongoObject = { [P: string]: any };
+
+/** Mongo update clause */
+type MongoInsertSpecification = MongoObject | MongoObject[];
 
 /** Sorting clause **/
 type MongoSortClause = Array<string | [ string, MongoSortDirection ]>;
-
 
 /** Sort direction */
 type MongoSortDirection = -1 | 1 | 'ascending' | 'descending' | 'asc' | 'desc';
@@ -115,13 +186,28 @@ declare interface MongoCollection
      * @param data     update data
      * @param options  query options
      * @param callback continuation on completion
-     *
-     * @return callback return value
      */
     update(
         selector: MongoSelector,
         data:     MongoUpdate,
         options:  MongoQueryUpdateOptions,
+        callback: MongoCallback
+    ): void;
+
+
+    /**
+     * Execute a query and return the results
+     *
+     * Unlike `update`, the callback return value is not propagated, and so
+     * the callback ought not return anything.
+     *
+     * @param selector document query
+     * @param fields   fields to return
+     * @param callback continuation on completion
+     */
+    find(
+        selector: MongoSelector,
+        fields:   MongoFindOptions,
         callback: MongoCallback
     ): void;
 
@@ -156,6 +242,32 @@ declare interface MongoCollection
         sort:     MongoSortClause,
         update:   MongoUpdate,
         options:  MongoFindAndModifyOptions,
+        callback: MongoCallback,
+    ): void;
+
+
+    /**
+     * Creates an index on the collection
+     *
+     * @param fieldOrSpec - indexes to create
+     * @param options     - mongo options
+     * @param callback    - continuation on completion
+     */
+    createIndex(
+        fieldOrSpec: MongoIndexSpecification,
+        options:     boolean,
+        callback:    MongoCallback,
+    ): void;
+
+
+    /**
+     * Creates an index on the collection
+     *
+     * @param docs     - documents to insert
+     * @param callback - continuation on completion
+     */
+    insert(
+        docs:     MongoInsertSpecification,
         callback: MongoCallback,
     ): void;
 }
