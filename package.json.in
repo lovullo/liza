@@ -28,7 +28,9 @@
     "easejs":      "0.2.x",
     "mongodb":     "1.2.14",
     "dotenv-flow": "3.1.0",
-    "amqplib":     "0.5.3"
+    "amqplib":     "0.5.3",
+    "avro-js":     "1.9.1",
+    "prom-client": "11.0.0"
   },
   "devDependencies": {
     "typescript":              "~3.7",
@@ -41,9 +43,7 @@
     "@types/mocha":            "5.2.0",
     "sinon":                   ">=1.17.4",
     "es6-promise":             "~3",
-    "@types/amqplib":          "0.5.13",
-    "avro-js":                 "1.9.1",
-    "prom-client":             "11.0.0"
+    "@types/amqplib":          "0.5.13"
   },
 
   "licenses": [
