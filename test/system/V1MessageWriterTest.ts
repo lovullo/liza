@@ -371,8 +371,12 @@ describe( 'system.V1MessageWriter', () =>
             },
             document: {
                 id:       doc_id,
-                created:  startDate,
-                modified: lastUpdate,
+                created:  {
+                    'long': startDate * 1000
+                },
+                modified: {
+                    'long': lastUpdate * 1000
+                },
             },
             session: {
                 Session: {

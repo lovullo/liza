@@ -101,6 +101,8 @@ export class V1MessageWriter implements MessageWriter
         const bucket_formatted   = this.setDataTypes( bucket );
         const ratedata_formatted = this.setDataTypes( ratedata );
         const event_id           = this.DELTA_MAP[ delta.type ];
+        const start_date_ms      = { "long": meta.startDate * 1000 };
+        const last_update_ms     = { "long": meta.lastUpdate * 1000 };
 
         return {
             event: {
@@ -111,8 +113,8 @@ export class V1MessageWriter implements MessageWriter
             },
             document: {
                 id:       meta.id,
-                created:  meta.startDate,
-                modified: meta.lastUpdate,
+                created:  start_date_ms,
+                modified: last_update_ms,
             },
             session: {
                 Session: {

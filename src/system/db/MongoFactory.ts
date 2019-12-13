@@ -29,9 +29,9 @@ import { DaoError } from '../../error/DaoError';
 
 
 const {
-    Db:          MongoDb,
-    Server:      MongoServer,
-    ReplServers: ReplSetServers,
+    Db:             MongoDb,
+    Server:         MongoServer,
+    ReplSetServers: ReplSetServers,
 } = require( 'mongodb' );
 
 
@@ -148,26 +148,39 @@ export function getMongoCollection(
                         return;
                     }
 
-                    // initialize indexes
-                    collection.createIndex(
-                        [
-                            ['published',  1],
-                            ['deltaError', 1],
-                        ],
-                        true,
-                        ( e: any, _index: { [P: string]: any } ) =>
+                    let createdCount = 0
+                    const checkAllCreated = (): void =>
+                    {
+                        if( createdCount >= 3 )
                         {
-                            if ( e )
-                            {
-                                reject( new DaoError(
-                                    'Error creating index: ' + e
-                                ) );
-                                return;
-                            }
-
                             resolve( collection );
+                        }
+                    };
+
+                    const cb = ( e: any, _index: { [P: string]: any } ): void =>
+                    {
+                        if ( e )
+                        {
+                            reject( new DaoError(
+                                'Error creating index: ' + e
+                            ) );
                             return;
                         }
+
+                        createdCount++;
+                        checkAllCreated();
+                    };
+
+                    // initialize indexes
+                    collection.createIndex( [ ['published', 1] ], false, cb );
+                    collection.createIndex( [ ['deltaError', 1] ], false, cb);
+                    collection.createIndex(
+                        [
+                            [ 'published', 1 ],
+                            [ 'deltaError', 1 ],
+                        ],
+                        false,
+                        cb
                     );
                 }
             );
