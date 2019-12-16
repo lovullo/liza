@@ -62,7 +62,7 @@ export function createPrometheusConfig(
         hostname:         env.PROM_HOST,
         port:             +( env.PROM_PORT || 0 ),
         env:              process.env.NODE_ENV,
-        push_interval_ms: +( process.env.PROM_PUSH_INTERVAL_MS || 5000 ),
+        push_interval_ms: +( process.env.PROM_PUSH_INTERVAL_MS || 10000 ),
         buckets_start:    +( process.env.PROM_BUCKETS_START || 0 ),
         buckets_width:    +( process.env.PROM_BUCKETS_WIDTH || 10 ),
         buckets_count:    +( process.env.PROM_BUCKETS_COUNT || 10 ),
