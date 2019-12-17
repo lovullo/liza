@@ -22,6 +22,7 @@
 import { DeltaDao } from '../system/db/DeltaDao';
 import { DocumentMeta } from '../document/Document';
 import { AmqpPublisher } from './AmqpPublisher';
+import { context } from '../error/ContextError';
 import { EventEmitter } from 'events';
 import {
     DeltaType,
@@ -122,11 +123,25 @@ export class DeltaProcessor
             )
             .then( _ =>
             {
-                this._emitter.emit( 'document-processed', { doc_id: meta.id } );
+                this._emitter.emit(
+                    'document-processed',
+                    {
+                        doc_id:   meta.id,
+                        quote_id: meta.id,
+                    },
+                );
             } )
             .catch( ( e: Error ) =>
             {
-                this._emitter.emit( 'error', e );
+                const context_error = context(
+                    e,
+                    {
+                        doc_id:   meta.id,
+                        quote_id: meta.id,
+                    },
+                );
+
+                this._emitter.emit( 'error', context_error );
                 return this._dao.setErrorFlag( meta.id );
             } );
     }

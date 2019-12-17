@@ -84,6 +84,7 @@ export class DeltaPublisher implements AmqpPublisher
                         new AmqpError( 'Error sending message: No channel' ),
                         {
                             doc_id:     meta.id,
+                            quote_id:   meta.id,
                             delta_type: delta.type,
                             delta_ts:   delta.timestamp,
                         },
@@ -104,6 +105,7 @@ export class DeltaPublisher implements AmqpPublisher
                         new Error ( 'Delta publish failed' ),
                         {
                             doc_id:     meta.id,
+                            quote_id:   meta.id,
                             delta_type: delta.type,
                             delta_ts:   delta.timestamp,
                         }
@@ -115,7 +117,9 @@ export class DeltaPublisher implements AmqpPublisher
                 this._emitter.emit(
                     'delta-publish',
                     {
-                        delta: delta,
+                        doc_id:   meta.id,
+                        quote_id: meta.id,
+                        delta:    delta,
                         exchange: this._conn.getExchangeName(),
                     }
                 );

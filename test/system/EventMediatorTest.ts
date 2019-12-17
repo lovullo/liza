@@ -26,7 +26,7 @@ import { expect } from 'chai';
 import { PsrLogger } from '../../src/system/PsrLogger';
 
 
-describe( 'system.EventLogger captures and logs events', () =>
+describe( 'system.EventMediator captures and logs events', () =>
 {
     it( 'document-processed triggers log#notice', () =>
     {

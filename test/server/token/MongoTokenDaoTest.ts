@@ -372,6 +372,7 @@ describe( 'server.token.TokenDao', () =>
                 `${ns}.tok123`,
                 {
                     doc_id:   did,
+                    quote_id: did,
                     ns:       ns,
                     token_id: 'tok123',
                 },
@@ -386,8 +387,9 @@ describe( 'server.token.TokenDao', () =>
                 null,
                 ns,
                 {
-                    doc_id: did,
-                    ns:     ns,
+                    doc_id:   did,
+                    quote_id: did,
+                    ns:       ns,
                 },
             ],
 
@@ -440,8 +442,9 @@ describe( 'server.token.TokenDao', () =>
                 null,
                 ns,
                 {
-                    doc_id: did,
-                    ns:     ns,
+                    doc_id:   did,
+                    quote_id: did,
+                    ns:       ns,
                 },
             ],
 
@@ -454,8 +457,9 @@ describe( 'server.token.TokenDao', () =>
                 null,
                 ns,
                 {
-                    doc_id: did,
-                    ns:     ns,
+                    doc_id:   did,
+                    quote_id: did,
+                    ns:       ns,
                 },
             ],
         ] ).forEach( ( [ label, tok_id, dbresult, expected, fmsg, fcontext ] ) =>
