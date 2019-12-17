@@ -133,8 +133,9 @@ export class MongoDeltaDao implements DeltaDao
                         reject( context(
                             new DaoError( 'Error advancing delta index: ' + e ),
                             {
-                                doc_id: doc_id,
-                                type:   type,
+                                doc_id:   doc_id,
+                                quote_id: doc_id,
+                                type:     type,
                             }
                         ) );
                         return;
@@ -177,6 +178,7 @@ export class MongoDeltaDao implements DeltaDao
                             ),
                             {
                                 doc_id:         doc_id,
+                                quote_id:       doc_id,
                                 last_update_ts: last_update_ts,
                             }
                         ) );
@@ -215,7 +217,8 @@ export class MongoDeltaDao implements DeltaDao
                                 'Failed setting error flag: ' + e
                             ),
                             {
-                                doc_id: doc_id,
+                                doc_id:   doc_id,
+                                quote_id: doc_id,
                             }
                         ) );
                         return;

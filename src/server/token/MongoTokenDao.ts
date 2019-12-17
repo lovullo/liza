@@ -272,8 +272,9 @@ export class MongoTokenDao implements TokenDao
                                 `Unknown token namespace '${ns}' for document '${doc_id}`
                             ),
                             {
-                                doc_id: doc_id,
-                                ns:     ns,
+                                doc_id:   doc_id,
+                                quote_id: doc_id,
+                                ns:       ns,
                             }
                         ) );
 
@@ -317,8 +318,9 @@ export class MongoTokenDao implements TokenDao
                         `on document '${doc_id}'`
                 ),
                 {
-                    doc_id: doc_id,
-                    ns:     ns,
+                    doc_id:   doc_id,
+                    quote_id: doc_id,
+                    ns:       ns,
                 },
             );
         }
@@ -363,6 +365,7 @@ export class MongoTokenDao implements TokenDao
                 ),
                 {
                     doc_id:   doc_id,
+                    quote_id: doc_id,
                     ns:       ns,
                     token_id: token_id,
                 },

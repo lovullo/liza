@@ -123,6 +123,7 @@ describe( 'server.DeltaPublisher', () =>
 
             const expected        = {
                 doc_id:     meta.id,
+                quote_id:   meta.id,
                 delta_type: delta.type,
                 delta_ts:   delta.timestamp
             }
