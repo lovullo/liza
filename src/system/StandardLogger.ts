@@ -24,7 +24,7 @@ import { PsrLogger, LogLevel } from './PsrLogger';
 
 declare type StructuredLog = {
     message:   string;
-    timestamp: UnixTimestamp;
+    timestamp: string;
     service:   string;
     env:       string;
     severity:  string;
@@ -181,9 +181,12 @@ export class StandardLogger implements PsrLogger
             str = msg;
         }
 
+        const ts          = this._ts_ctr();
+        const tsFormatted = new Date( ts * 1000 ).toISOString()
+
         const structured_log = <StructuredLog>{
             message:   str,
-            timestamp: this._ts_ctr(),
+            timestamp: tsFormatted,
             service:   'quote-server',
             env:       this._env,
             severity:  LogLevel[level],

@@ -30,7 +30,7 @@ declare interface MockConsole extends Console {
     getStr(): string,
 }
 
-describe( 'system.EventLogger captures and logs events', () =>
+describe( 'system.StandardLogger captures and logs events', () =>
 {
     it( 'debug triggers console output level: info', () =>
     {
@@ -139,7 +139,7 @@ describe( 'system.EventLogger captures and logs events', () =>
         const context = { bar: 'baz' };
         const expected_output = {
             message:   'Foo',
-            timestamp: 123123,
+            timestamp: '1970-01-02T10:12:03.000Z',
             service:   'quote-server',
             env:       'test',
             severity:  'NOTICE',
