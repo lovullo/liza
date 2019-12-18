@@ -372,11 +372,13 @@ describe( 'system.V1MessageWriter', () =>
     } );
 
 
+
     it( 'Message is formatted correctly', () =>
     {
         const bucket          = { foo: [ 'bar', 'baz' ] };
         const ratedata        = {};
         const doc_id          = <DocumentId>123;
+        const program         = 'mega';
         const entity_name     = 'Some Agency';
         const entity_id       = 123;
         const startDate       = <UnixTimestamp>345;
@@ -386,6 +388,7 @@ describe( 'system.V1MessageWriter', () =>
         const encoder         = createMockEncoderCtor( schema );
         const meta            = <DocumentMeta>{
             id:          doc_id,
+            program:     program,
             entity_name: entity_name,
             entity_id:   entity_id,
             startDate:   startDate,
@@ -442,7 +445,7 @@ describe( 'system.V1MessageWriter', () =>
             },
             program: {
                 Program: {
-                    id:      'quote_server',
+                    id:      program,
                     version: '',
                 },
             },

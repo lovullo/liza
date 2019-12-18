@@ -109,6 +109,7 @@ export class DeltaProcessor
         const ratedata        = doc.ratedata || {};
         const meta            = {
             id:          doc.id,
+            program:     doc.programId,
             entity_name: doc.agentName,
             entity_id:   +doc.agentEntityId,
             startDate:   doc.startDate,

@@ -428,6 +428,7 @@ describe( 'system.DeltaProcessor', () =>
             const createdData    = <UnixTimestamp>234234234;
             const doc            = <DeltaDocument[]>[ {
                 id:            <DocumentId>123,
+                programId:     'mega',
                 agentName:     entity_num,
                 agentEntityId: entity_id,
                 startDate:     createdData,
@@ -447,6 +448,7 @@ describe( 'system.DeltaProcessor', () =>
             },
             {
                 id:            <DocumentId>234,
+                programId:     'mega',
                 agentName:     entity_num,
                 agentEntityId: entity_id,
                 startDate:     createdData,
@@ -471,6 +473,7 @@ describe( 'system.DeltaProcessor', () =>
                         entity_id:   4321,
                         entity_name: 'Some Agency',
                         id:          123,
+                        program:     'mega',
                         lastUpdate:  123123123,
                         startDate:   234234234,
                     },
@@ -483,6 +486,7 @@ describe( 'system.DeltaProcessor', () =>
                         entity_id:   4321,
                         entity_name: 'Some Agency',
                         id:          234,
+                        program:     'mega',
                         lastUpdate:  123123123,
                         startDate:   234234234,
                     },
@@ -548,6 +552,7 @@ describe( 'system.DeltaProcessor', () =>
             const emitter        = new EventEmitter();
             const doc            = <DeltaDocument[]>[ {
                 id:            <DocumentId>123,
+                programId:     'mega',
                 agentName:     'Some Agency',
                 agentEntityId: 4321,
                 startDate:     <UnixTimestamp>234234234,
@@ -567,6 +572,7 @@ describe( 'system.DeltaProcessor', () =>
             },
             {
                 id:            <DocumentId>234,
+                programId:     'mega',
                 agentName:     'Some Agency',
                 agentEntityId: 4321,
                 startDate:     <UnixTimestamp>234234234,
@@ -591,6 +597,7 @@ describe( 'system.DeltaProcessor', () =>
                     entity_id:   4321,
                     entity_name: 'Some Agency',
                     id:          123,
+                    program:     'mega',
                     lastUpdate:  123123123,
                     startDate:   234234234,
                 },

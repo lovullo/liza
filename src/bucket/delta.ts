@@ -81,6 +81,9 @@ export interface DeltaDocument
     /** The document id */
     id: DocumentId,
 
+    /** The source program */
+    programId: string,
+
     /** The entity name */
     agentName: string,
 

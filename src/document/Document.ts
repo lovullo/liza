@@ -45,6 +45,9 @@ export type DocumentMeta =
     /** The document id */
     id: DocumentId,
 
+    /** The source program */
+    program: string,
+
     /** The entity name */
     entity_name: string,
 
