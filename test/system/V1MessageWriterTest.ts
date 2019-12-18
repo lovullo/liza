@@ -95,59 +95,57 @@ describe( 'system.V1MessageWriter', () =>
             {
                 label:      'Null array',
                 valid:      true,
-                delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': null } }
-                ] } },
+                delta_data: { foo: { 'array': [ null ] } },
             },
             {
                 label:      'Boolean value',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'boolean': true } } },
+                    { 'boolean': true },
                 ] } },
             },
             {
                 label:      'Simple string',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'string': 'bar' } } },
-                    { 'bucket': { 'map': { 'string': 'baz' } } },
+                    { 'string': 'bar' },
+                    { 'string': 'baz' },
                 ] } },
             },
             {
                 label:      'Simple int',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'double': 123 } } },
+                    { 'double': 123 },
                 ] } },
             },
             {
                 label:      'Nested array',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'array': [
-                        { 'bucket': { 'map': { 'string': 'bar' } } },
-                    ] } } },
+                    { 'array': [
+                        { 'string': 'bar' },
+                    ] },
                 ] } },
             },
             {
                 label:      'Array with nulls',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'string': 'bar' } } },
-                    { 'bucket': { 'map': { 'string': 'baz' } } },
-                    { 'bucket': { 'map': null } },
+                    { 'string': 'bar' },
+                    { 'string': 'baz' },
+                    null,
                  ] } },
             },
             {
                 label:      'Nested Array with mixed values',
                 valid:      true,
                 delta_data: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'array': [
-                        { 'bucket': { 'map': { 'string': 'bar' } } },
-                        { 'bucket': { 'map': { 'double': 123321 } } },
-                        { 'bucket': { 'map': null } },
-                    ] } } }
+                    { 'array': [
+                        { 'string': 'bar' },
+                        { 'double': 123321 },
+                        null,
+                    ] }
                  ] } },
             },
             {
@@ -168,180 +166,14 @@ describe( 'system.V1MessageWriter', () =>
                 label: 'Map objects',
                 valid: true,
                 delta_data: { 'foo': { 'array': [
-                    { 'bucket': { 'map': { 'map': { 'bar':
-                        { 'bucket': { 'map': { 'map': { 'baz':
-                            { 'bucket': { 'map': { 'double': 1572903485000 } } }
-                        } } } }
-                    } } } }
+                    { 'map': {
+                        'bar': { 'map': {
+                            'baz': { 'double': 1572903485000 },
+                        } }
+                    } }
                 ] } },
-            },
-            {
-                label:      'Arbitrary array/map depth',
-                valid:      true,
-                delta_data: {
-                    "a": { "array": [
-                        { "bucket": { "map": { "map": {
-                            "b": { "bucket": { "map": { "array": [
-                                { "bucket": { "map": {
-                                    "string": "c"
-                                } } },
-                                { "bucket": { "map": { "array": [
-                                    { "bucket": { "map": {
-                                        "array": [
-                                            { "bucket": { "map": {
-                                                "string": "d"
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "map": {
-                                                    "e": { "bucket": { "map": { "string": "f" } } },
-                                                    "g": { "bucket": { "map": { "string": "h" } } },
-                                                    "i": { "bucket": { "map": { "string": "j" } } },
-                                                    "k": { "bucket": { "map": { "string": "l" } } },
-                                                    "m": { "bucket": { "map": { "string": "n" } } }
-                                                }
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "array": [
-                                                    { "bucket": { "map": {
-                                                        "array": [
-                                                            { "bucket": { "map": {
-                                                                "string": "o"
-                                                            } } },
-                                                            { "bucket": { "map": {
-                                                                "map": {
-                                                                    "p": { "bucket": { "map": {
-                                                                        "string": "q"
-                                                                    } } },
-                                                                    "r": { "bucket": { "map": {
-                                                                        "string": "s"
-                                                                    } } },
-                                                                    "t": { "bucket": { "map": {
-                                                                        "string": "u"
-                                                                    } } }
-                                                                }
-                                                            } } },
-                                                            { "bucket": { "map": { "array": [] } } },
-                                                            { "bucket": { "map": null } }
-                                                        ]
-                                                    } } },
-                                                    { "bucket": {  "map": {
-                                                        "array": [
-                                                            { "bucket": { "map": {
-                                                                "string": "v"
-                                                            } } },
-                                                            { "bucket": { "map": {
-                                                                "map": {
-                                                                    "w": { "bucket": { "map": { "string": "x" } } },
-                                                                    "y": { "bucket": { "map": { "string": "z" } } }
-                                                                }
-                                                            } } },
-                                                            {
-                                                                "bucket": {
-                                                                    "map": {
-                                                                        "array": [
-                                                                            { "bucket": { "map": {
-                                                                                "array": [
-                                                                                    { "bucket": { "map": {
-                                                                                        "string": "aa"
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "map": {
-                                                                                            "ab": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ac"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "ad": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ae"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "af": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ag"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "ah": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ai"
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": []
-                                                                                    } } },
-                                                                                    { "bucket": { "map": null } }
-                                                                                ]
-                                                                            } } },
-                                                                            { "bucket": { "map": {
-                                                                                "array": [
-                                                                                    { "bucket": { "map": {
-                                                                                        "string": "aj"
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "map": {
-                                                                                            "ak": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "al"
-                                                                                                } }
-                                                                                            },
-                                                                                            "am": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "an"
-                                                                                                } }
-                                                                                            },
-                                                                                            "ao": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "ap"
-                                                                                                } }
-                                                                                            }
-                                                                                        }
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": []
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": [
-                                                                                            { "bucket": { "map": {
-                                                                                                "string": "q"
-                                                                                            } } }
-                                                                                        ]
-                                                                                    } } }
-                                                                                ]
-                                                                            } } }
-                                                                        ]
-                                                                    }
-                                                                }
-                                                            },
-                                                            { "bucket": { "map": {
-                                                                "string": ""
-                                                            } } }
-                                                        ]
-                                                    } } }
-                                                ]
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "string": ""
-                                            } } }
-                                        ]
-                                    } } }
-                                ] } } },
-                                { "bucket": { "map": null } },
-                                { "bucket": { "map": { "boolean": false } } }
-                            ] } } }
-                        } } } }
-                    ] }
-                },
-            },
+            }
+
         ].forEach( ( { label, delta_data, valid, expected } ) =>
         {
             it( label, () =>
@@ -408,7 +240,7 @@ describe( 'system.V1MessageWriter', () =>
                 label:      'Boolean Value',
                 delta_data: { foo: [ true ] },
                 expected:   { foo: { 'array': [
-                    { 'bucket': { 'map': { 'boolean': true } } },
+                    { 'boolean': true },
                 ] } },
             },
             {
@@ -418,8 +250,8 @@ describe( 'system.V1MessageWriter', () =>
                     'baz',
                 ] },
                 expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'string': 'bar' } } },
-                    { 'bucket': { 'map': { 'string': 'baz' } } },
+                    { 'string': 'bar' },
+                    { 'string': 'baz' },
                 ] } },
             },
             {
@@ -428,7 +260,7 @@ describe( 'system.V1MessageWriter', () =>
                     123
                 ] },
                 expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'double': 123 } } },
+                    { 'double': 123 },
                 ] } },
             },
             {
@@ -440,10 +272,10 @@ describe( 'system.V1MessageWriter', () =>
                     ]
                 ] },
                 expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'array': [
-                        { 'bucket': { 'map': { 'string': 'bar' } } },
-                        { 'bucket': { 'map': { 'string': 'baz' } } },
-                    ] } } },
+                    { 'array': [
+                        { 'string': 'bar' },
+                        { 'string': 'baz' },
+                    ] },
                 ] } },
             },
             {
@@ -458,13 +290,13 @@ describe( 'system.V1MessageWriter', () =>
                     ],
                 ] },
                 expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'array': [
-                        { 'bucket': { 'map': { 'array': [
-                            { 'bucket': { 'map': { 'string': 'bar' } } },
-                            { 'bucket': { 'map': { 'double':   123 } } },
-                            { 'bucket': { 'map': null } },
-                        ] } } },
-                    ] } } },
+                    { 'array': [
+                        { 'array': [
+                            { 'string': 'bar' },
+                            { 'double':   123 },
+                            null,
+                        ] },
+                    ] },
                 ] } },
             },
             {
@@ -475,13 +307,13 @@ describe( 'system.V1MessageWriter', () =>
                     null
                  ] },
                  expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'string': 'bar' } } },
-                    { 'bucket': { 'map': { 'string': 'baz' } } },
-                    { 'bucket': { 'map': null } },
+                    { 'string': 'bar' },
+                    { 'string': 'baz' },
+                    null
                  ] } },
             },
             {
-                label:      'Nested array with mixed values',
+                label:      'Nested Array with mixed values',
                 delta_data: { foo: [
                     [
                         'bar',
@@ -490,15 +322,15 @@ describe( 'system.V1MessageWriter', () =>
                     ]
                 ] },
                 expected: { foo: { 'array': [
-                    { 'bucket': { 'map': { 'array': [
-                        { 'bucket': { 'map': { 'string': 'bar' } } },
-                        { 'bucket': { 'map': { 'double': 123321 } } },
-                        { 'bucket': { 'map': null } },
-                    ] } } }
-                 ] } },
+                { 'array': [
+                    { 'string': 'bar' },
+                    { 'double': 123321 },
+                    null,
+                ] },
+                ] } },
             },
             {
-                label:      'Nested map with mixed values',
+                label:      'Nested Array with mixed values',
                 delta_data: { foo: [
                     {
                         'bar': {
@@ -510,255 +342,15 @@ describe( 'system.V1MessageWriter', () =>
                     },
                 ] },
                 expected: { 'foo': { 'array': [
-                    { 'bucket': { 'map': { 'map': { 'bar':
-                        { 'bucket': { 'map': { 'map': {
-                            'wer': { 'bucket': { 'map': {
-                                'string': 'qaz'
-                            } } },
-                            'qwe': { 'bucket': { 'map': {
-                                'double': 1572903485000
-                            } } },
-                            'asd': { 'bucket': { 'map': {
-                                'boolean': true
-                            } } },
-                            'zxc': { 'bucket': { 'map': null } }
-                        } } } }
-                    } } } }
+                    { 'map': {
+                        'bar': { 'map': {
+                            'wer': { 'string': 'qaz' },
+                            'qwe': { 'double': 1572903485000 },
+                            'asd': { 'boolean': true },
+                            'zxc': null,
+                        } },
+                    } },
                 ] } },
-            },
-            {
-                label: 'Arbitrary array/map depth',
-                delta_data: {
-                    "a": [
-                        {
-                            "b": [
-                                "c",
-                                [
-                                    [
-                                        "d",
-                                        {
-                                            "e": "f",
-                                            "g": "h",
-                                            "i": "j",
-                                            "k": "l",
-                                            "m": "n"
-                                        },
-                                        [
-                                            [
-                                                "o",
-                                                {
-                                                    "p": "q",
-                                                    "r": "s",
-                                                    "t": "u"
-                                                },
-                                                [],
-                                                null
-                                            ],
-                                            [
-                                                "v",
-                                                {
-                                                    "w": "x",
-                                                    "y": "z"
-                                                },
-                                                [
-                                                    [
-                                                        "aa",
-                                                        {
-                                                            "ab": "ac",
-                                                            "ad": "ae",
-                                                            "af": "ag",
-                                                            "ah": "ai"
-                                                        },
-                                                        [],
-                                                        null
-                                                    ],
-                                                    [
-                                                        "aj",
-                                                        {
-                                                            "ak": "al",
-                                                            "am": "an",
-                                                            "ao": "ap"
-                                                        },
-                                                        [],
-                                                        [
-                                                            "q"
-                                                        ]
-                                                    ]
-                                                ],
-                                                ""
-                                            ]
-                                        ],
-                                        ""
-                                    ]
-                                ],
-                                null,
-                                false
-                            ],
-                    } ],
-                },
-                expected: {
-                    "a": { "array": [
-                        { "bucket": { "map": { "map": {
-                            "b": { "bucket": { "map": { "array": [
-                                { "bucket": { "map": {
-                                    "string": "c"
-                                } } },
-                                { "bucket": { "map": { "array": [
-                                    { "bucket": { "map": {
-                                        "array": [
-                                            { "bucket": { "map": {
-                                                "string": "d"
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "map": {
-                                                    "e": { "bucket": { "map": { "string": "f" } } },
-                                                    "g": { "bucket": { "map": { "string": "h" } } },
-                                                    "i": { "bucket": { "map": { "string": "j" } } },
-                                                    "k": { "bucket": { "map": { "string": "l" } } },
-                                                    "m": { "bucket": { "map": { "string": "n" } } }
-                                                }
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "array": [
-                                                    { "bucket": { "map": {
-                                                        "array": [
-                                                            { "bucket": { "map": {
-                                                                "string": "o"
-                                                            } } },
-                                                            { "bucket": { "map": {
-                                                                "map": {
-                                                                    "p": { "bucket": { "map": {
-                                                                        "string": "q"
-                                                                    } } },
-                                                                    "r": { "bucket": { "map": {
-                                                                        "string": "s"
-                                                                    } } },
-                                                                    "t": { "bucket": { "map": {
-                                                                        "string": "u"
-                                                                    } } }
-                                                                }
-                                                            } } },
-                                                            { "bucket": { "map": { "array": [] } } },
-                                                            { "bucket": { "map": null } }
-                                                        ]
-                                                    } } },
-                                                    { "bucket": {  "map": {
-                                                        "array": [
-                                                            { "bucket": { "map": {
-                                                                "string": "v"
-                                                            } } },
-                                                            { "bucket": { "map": {
-                                                                "map": {
-                                                                    "w": { "bucket": { "map": { "string": "x" } } },
-                                                                    "y": { "bucket": { "map": { "string": "z" } } }
-                                                                }
-                                                            } } },
-                                                            {
-                                                                "bucket": {
-                                                                    "map": {
-                                                                        "array": [
-                                                                            { "bucket": { "map": {
-                                                                                "array": [
-                                                                                    { "bucket": { "map": {
-                                                                                        "string": "aa"
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "map": {
-                                                                                            "ab": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ac"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "ad": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ae"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "af": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ag"
-                                                                                                    }
-                                                                                                }
-                                                                                            },
-                                                                                            "ah": {
-                                                                                                "bucket": {
-                                                                                                    "map": {
-                                                                                                        "string": "ai"
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": []
-                                                                                    } } },
-                                                                                    { "bucket": { "map": null } }
-                                                                                ]
-                                                                            } } },
-                                                                            { "bucket": { "map": {
-                                                                                "array": [
-                                                                                    { "bucket": { "map": {
-                                                                                        "string": "aj"
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "map": {
-                                                                                            "ak": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "al"
-                                                                                                } }
-                                                                                            },
-                                                                                            "am": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "an"
-                                                                                                } }
-                                                                                            },
-                                                                                            "ao": {
-                                                                                                "bucket": { "map": {
-                                                                                                    "string": "ap"
-                                                                                                } }
-                                                                                            }
-                                                                                        }
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": []
-                                                                                    } } },
-                                                                                    { "bucket": { "map": {
-                                                                                        "array": [
-                                                                                            { "bucket": { "map": {
-                                                                                                "string": "q"
-                                                                                            } } }
-                                                                                        ]
-                                                                                    } } }
-                                                                                ]
-                                                                            } } }
-                                                                        ]
-                                                                    }
-                                                                }
-                                                            },
-                                                            { "bucket": { "map": {
-                                                                "string": ""
-                                                            } } }
-                                                        ]
-                                                    } } }
-                                                ]
-                                            } } },
-                                            { "bucket": { "map": {
-                                                "string": ""
-                                            } } }
-                                        ]
-                                    } } }
-                                ] } } },
-                                { "bucket": { "map": null } },
-                                { "bucket": { "map": { "boolean": false } } }
-                            ] } } }
-                        } } } }
-                    ] }
-                },
             },
         ].forEach( ( { label, delta_data, expected } ) =>
         {
@@ -832,8 +424,8 @@ describe( 'system.V1MessageWriter', () =>
                 Data: {
                     bucket: {
                         'foo': { 'array': [
-                            { 'bucket': { 'map': { 'string': 'bar' } } },
-                            { 'bucket': { 'map': { 'string': 'baz' } } },
+                            { 'string': 'bar' },
+                            { 'string': 'baz' },
                         ] }
                     },
                 },
