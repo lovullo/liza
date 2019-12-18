@@ -22,7 +22,7 @@
 import { DeltaDao } from '../system/db/DeltaDao';
 import { DocumentMeta } from '../document/Document';
 import { AmqpPublisher } from './AmqpPublisher';
-import { context } from '../error/ContextError';
+import { context, hasContext } from '../error/ContextError';
 import { EventEmitter } from 'events';
 import {
     DeltaType,
@@ -133,15 +133,23 @@ export class DeltaProcessor
             } )
             .catch( ( e: Error ) =>
             {
-                const context_error = context(
-                    e,
-                    {
-                        doc_id:   meta.id,
-                        quote_id: meta.id,
-                    },
-                );
+                if ( hasContext( e ) )
+                {
+                    const combined_context: Record<string, any> = {};
+                    const error_context = e.context;
 
-                this._emitter.emit( 'error', context_error );
+                    Object.keys( error_context ).forEach( ( key: string ) =>
+                    {
+                        combined_context[ key ] = error_context[ key ];
+                    } );
+
+                    combined_context[ 'doc_id' ]   = meta.id;
+                    combined_context[ 'quote_id' ] = meta.id;
+
+                    e = context( e, combined_context );
+                }
+
+                this._emitter.emit( 'error', e );
                 return this._dao.setErrorFlag( meta.id );
             } );
     }
