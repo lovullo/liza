@@ -119,7 +119,8 @@ export class DeltaPublisher implements AmqpPublisher
                     {
                         doc_id:   meta.id,
                         quote_id: meta.id,
-                        delta:    delta,
+                        type:     delta.type,
+                        delta_ts: delta.timestamp,
                         exchange: this._conn.getExchangeName(),
                     }
                 );

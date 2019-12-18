@@ -139,7 +139,7 @@ export class V1MessageWriter implements MessageWriter
             },
             program: {
                 Program: {
-                    id:      'quote_server',
+                    id:      meta.program,
                     version: '',
                 },
             },
@@ -196,12 +196,12 @@ export class V1MessageWriter implements MessageWriter
     /**
      * Format the data for avro by add type specifications to the data
      *
-     * @param data  - the data to format
-     * @param depth - recursion depth
+     * @param data      - the data to format
+     * @param top_level - whether we are at the top level of the recursion
      *
      * @return the formatted data
      */
-    setDataTypes( data: any, depth: number = 0 ): any
+    setDataTypes( data: any, top_level: boolean = true ): any
     {
         let data_formatted: any = {};
 
@@ -210,7 +210,7 @@ export class V1MessageWriter implements MessageWriter
             case 'object':
                 if ( data == null )
                 {
-                    data_formatted = null;
+                    return null;
                 }
                 else if ( Array.isArray( data ) )
                 {
@@ -218,10 +218,10 @@ export class V1MessageWriter implements MessageWriter
 
                     data.forEach( ( datum ) =>
                     {
-                        arr.push( this.setDataTypes( datum, depth + 1 ) );
+                        arr.push( this.setDataTypes( datum, false ) );
                     } );
 
-                    data_formatted = ( depth < 1 )
+                    data_formatted = ( top_level )
                         ? arr
                         : { 'array': arr };
                 }
@@ -231,36 +231,38 @@ export class V1MessageWriter implements MessageWriter
 
                     Object.keys( data).forEach( ( key: string ) =>
                     {
-                        const datum = this.setDataTypes( data[ key ], depth + 1 );
+                        // Do not include "private" keys
+                        if ( key.startsWith( '__' ) )
+                        {
+                            return;
+                        }
+
+                        const datum = this.setDataTypes( data[ key ], false );
 
                         datum_formatted[ key ] = datum;
 
                     } );
 
-                    data_formatted = ( depth < 1 )
+                    data_formatted = ( top_level )
                         ? datum_formatted
                         : { 'map': datum_formatted };
                 }
                 break;
 
             case 'boolean':
-                return { 'bucket': { 'map': { 'boolean': data } } };
+                return { 'boolean': data };
 
             case 'number':
-                return { 'bucket': { 'map': { 'double': data } } };
+                return { 'double': data };
 
             case 'string':
-                return { 'bucket': { 'map': { 'string': data } } };
+                return { 'string': data };
 
             case 'undefined':
-                return { 'bucket': { 'map': null } };
-        }
-
-        if ( depth > 1 )
-        {
-            return { 'bucket': { 'map': data_formatted } };
+                return null;
         }
 
         return data_formatted;
     }
+
 }

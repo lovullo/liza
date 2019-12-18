@@ -123,16 +123,50 @@
                                 "type":   "map",
                                 "values": [
                                     "null",
-                                    "boolean",
-                                    "double",
-                                    "string",
                                     {
                                         "type": "array",
-                                        "items": "Data"
-                                    },
-                                    {
-                                        "type": "map",
-                                        "values": "Data"
+                                        "items": [
+                                            "null",
+                                            "boolean",
+                                            "double",
+                                            "string",
+                                            {
+                                                "type": "array",
+                                                "items": [
+                                                    "null",
+                                                    "boolean",
+                                                    "double",
+                                                    "string",
+                                                    {
+                                                        "type": "array",
+                                                        "items": [
+                                                            "null",
+                                                            "boolean",
+                                                            "double",
+                                                            "string"
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "map",
+                                                "values": [
+                                                    "null",
+                                                    "boolean",
+                                                    "double",
+                                                    "string",
+                                                    {
+                                                        "type": "map",
+                                                        "values": [
+                                                            "null",
+                                                            "boolean",
+                                                            "double",
+                                                            "string"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
                                     }
                                 ]
                             }

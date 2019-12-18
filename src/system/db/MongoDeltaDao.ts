@@ -40,6 +40,7 @@ export class MongoDeltaDao implements DeltaDao
     /** The document fields to read */
     readonly RESULT_FIELDS: Record<string, number> = {
         id:                1,
+        programId:         1,
         agentName:         1,
         agentEntityId:     1,
         startDate:         1,
