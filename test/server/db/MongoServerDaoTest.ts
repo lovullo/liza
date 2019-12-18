@@ -64,7 +64,7 @@ describe( 'MongoServerDao', () =>
 
                         done();
                     }
-                ) );
+                ), 'test' );
 
                 sut.init( () =>
                     sut.saveQuote( quote, () => {}, () => {} )
@@ -95,7 +95,7 @@ describe( 'MongoServerDao', () =>
 
                         done();
                     }
-                ) );
+                ), 'test' );
 
                 sut.init( () =>
                     sut.saveQuote(
@@ -122,7 +122,7 @@ describe( 'MongoServerDao', () =>
 
                         done();
                     }
-                ) );
+                ), 'test' );
 
                 sut.init( () =>
                     sut.saveQuote(

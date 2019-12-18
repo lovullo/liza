@@ -59,6 +59,7 @@ export class MongoDeltaDao implements DeltaDao
      */
     constructor(
         private readonly _collection: MongoCollection,
+        private readonly _env:        string,
     ) {}
 
 
@@ -75,6 +76,7 @@ export class MongoDeltaDao implements DeltaDao
                 {
                     published:  false,
                     deltaError: { $ne: true },
+                    env:        this._env,
                 },
                 { fields: this.RESULT_FIELDS },
                 ( e, cursor ) =>
@@ -243,7 +245,10 @@ export class MongoDeltaDao implements DeltaDao
         return new Promise( ( resolve, reject ) =>
         {
             this._collection.find(
-                { deltaError: true },
+                {
+                    deltaError: true,
+                    env:        this._env,
+                },
                 {},
                 ( e, cursor ) =>
                 {

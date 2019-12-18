@@ -124,10 +124,10 @@ exports.skey              = "";
 exports.post_rate_publish = {};
 
 
-exports.init = function( logger, enc_service, conf )
+exports.init = function( logger, enc_service, conf, env )
 {
     var db    = _createDB( logger );
-    const dao = new MongoServerDao( db );
+    const dao = new MongoServerDao( db, env );
 
     db.collection( 'quotes', function( err, collection )
     {
@@ -178,6 +178,8 @@ exports.init = function( logger, enc_service, conf )
     } );
 }
 
+
+// TODO: Remove this and use the new MongoFactory.ts
 function _createDB( logger )
 {
     if(process.env.LIZA_MONGODB_HA==1)

@@ -82,7 +82,10 @@ let process_interval: NodeJS.Timer;
 let dao: MongoDeltaDao;
 
 getMongoCollection( db, db_conf )
-    .then( ( conn: MongoCollection ) => { return new MongoDeltaDao( conn ); } )
+    .then( ( conn: MongoCollection ) =>
+    {
+        return new MongoDeltaDao( conn, env );
+    } )
     .then( ( mongoDao: MongoDeltaDao ) => { dao = mongoDao; } )
     .then( _ => amqp_connection.connect() )
     .then( _ =>
