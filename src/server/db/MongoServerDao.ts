@@ -64,7 +64,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param {Mongo.Db} db mongo database connection
      */
     constructor(
-        private readonly _db: MongoDb
+        private readonly _db:  MongoDb,
+        private readonly _env: string,
     )
     {
         super();
@@ -307,6 +308,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         // some data should always be saved because the quote will be created if
         // it does not yet exist
         save_data.id                 = id;
+        save_data.env                = this._env;
         save_data.pver               = quote.getProgramVersion();
         save_data.importDirty        = 1;
         save_data.published          = false;

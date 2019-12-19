@@ -528,7 +528,12 @@ module.exports = AbstractClass( 'Daemon',
         {
             if ( router.init instanceof Function )
             {
-                router.init( _self._debugLog, _self._encService, _self._conf );
+                router.init(
+                    _self._debugLog,
+                    _self._encService,
+                    _self._conf,
+                    process.env.NODE_ENV
+                );
             }
         });
     },
