@@ -63,6 +63,7 @@ describe( 'system.DeltaProcessor', () =>
                         lastUpdate: 123123123,
 
                         data:       {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'third' ],
                             state: [ 'a', 'b', 'c', 'd' ],
                         },
@@ -126,6 +127,7 @@ describe( 'system.DeltaProcessor', () =>
                             state: [ undefined, null ],
                         },
                         bucket:   {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'first' ],
                             state: [ 'a', 'b' ],
                         },
@@ -140,6 +142,7 @@ describe( 'system.DeltaProcessor', () =>
                             state: [ undefined, null ],
                         },
                         bucket:   {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'first' ],
                             state: [ 'a', 'b' ],
                         },
@@ -157,6 +160,7 @@ describe( 'system.DeltaProcessor', () =>
                             state: [ undefined, undefined, null ],
                         },
                         bucket:   {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'second' ],
                             state: [ 'a', 'b', 'c' ],
                         },
@@ -171,6 +175,7 @@ describe( 'system.DeltaProcessor', () =>
                             state: [ undefined, undefined, null ],
                         },
                         bucket:   {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'second' ],
                             state: [ 'a', 'b', 'c' ],
                         },
@@ -188,6 +193,7 @@ describe( 'system.DeltaProcessor', () =>
                             state: [ undefined, undefined, undefined, null ],
                         },
                         bucket:   {
+                            bar:   [ 'initial and unchanged' ],
                             foo:   [ 'third' ],
                             state: [ 'a', 'b', 'c', 'd' ],
                         },

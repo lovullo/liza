@@ -201,14 +201,14 @@ export class DeltaProcessor
             if ( delta.type === this.DELTA_DATA )
             {
                 bucket_state = applyDelta(
-                    Object.create( bucket_state ),
+                    bucket_state,
                     deltas[ i ].data,
                 );
             }
             else
             {
                 ratedata_state = applyDelta(
-                    Object.create( ratedata_state ),
+                    ratedata_state,
                     deltas[ i ].data,
                 );
             }
