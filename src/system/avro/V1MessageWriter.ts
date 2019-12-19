@@ -103,11 +103,12 @@ export class V1MessageWriter implements MessageWriter
         const event_id           = this.DELTA_MAP[ delta.type ];
         const start_date_ms      = { "long": meta.startDate * 1000 };
         const last_update_ms     = { "long": meta.lastUpdate * 1000 };
+        const ts_ms              = ts * 1000;
 
         return {
             event: {
                 id:    event_id,
-                ts:    ts,
+                ts:    ts_ms,
                 actor: 'SERVER',
                 step:  null,
             },
