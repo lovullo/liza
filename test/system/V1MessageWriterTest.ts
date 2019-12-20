@@ -404,7 +404,7 @@ describe( 'system.V1MessageWriter', () =>
         const expected = {
             event: {
                 id:    'STEP_SAVE',
-                ts:    ts,
+                ts:    ts * 1000,
                 actor: 'SERVER',
                 step:  null,
             },
