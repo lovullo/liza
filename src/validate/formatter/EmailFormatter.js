@@ -22,7 +22,7 @@
 // characters allowed in local-part, omitting dot (some of these are only
 // allowed within quotes, but we're not going to bother convuluting the regex
 // with that)
-var local_chars = '[a-zA-Z0-9!#$%&\'*+/=?^_1{|}~()\\\\" (),:;<>@\\[\\]-]';
+var local_chars = '[a-zA-Z0-9!#$%&\'*+/=?^_1{|}~-]';
 
 
 /**
