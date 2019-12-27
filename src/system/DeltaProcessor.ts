@@ -189,7 +189,7 @@ export class DeltaProcessor
             pairs[ i ] = [
                 delta,
                 bucket_state,
-                ( delta.type === this.DELTA_RATEDATA ) ? ratedata_state : {},
+                ratedata_state,
             ];
 
             // Don't apply the final delta, since we won't use it

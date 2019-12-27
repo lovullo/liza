@@ -131,7 +131,10 @@ describe( 'system.DeltaProcessor', () =>
                             foo:   [ 'first' ],
                             state: [ 'a', 'b' ],
                         },
-                        ratedata: {},
+                        ratedata: {
+                            prem:  [ '' ],
+                            state: [ 'i' ],
+                        },
                     },
 
                     // rate
@@ -164,7 +167,10 @@ describe( 'system.DeltaProcessor', () =>
                             foo:   [ 'second' ],
                             state: [ 'a', 'b', 'c' ],
                         },
-                        ratedata:  {},
+                        ratedata:  {
+                            prem:  [ 'rate_first' ],
+                            state: [ 'i', 'ii' ],
+                        },
                     },
 
                     // rate
@@ -197,7 +203,10 @@ describe( 'system.DeltaProcessor', () =>
                             foo:   [ 'third' ],
                             state: [ 'a', 'b', 'c', 'd' ],
                         },
-                        ratedata: {},
+                        ratedata: {
+                            prem:  [ 'rate_second' ],
+                            state: [ 'i', 'ii', 'iii' ],
+                        },
                     },
                 ],
             },
@@ -296,7 +305,10 @@ describe( 'system.DeltaProcessor', () =>
                             foo:   [ 'first' ],
                             state: [ 'a', 'b' ],
                         },
-                        ratedata: {},
+                        ratedata: {
+                            prem:  [ '' ],
+                            state: [ 'i' ],
+                        },
                     },
 
                     // rate
@@ -327,7 +339,10 @@ describe( 'system.DeltaProcessor', () =>
                             foo2:   [ 'first' ],
                             state: [ 'a', 'b' ],
                         },
-                        ratedata: {},
+                        ratedata: {
+                            prem2:  [ '' ],
+                            state: [ 'i' ],
+                        },
                     },
 
                     // rate
