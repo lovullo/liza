@@ -87,7 +87,6 @@ const {
             },
 
             RatingService: { RatingService },
-            RatingServicePublish,
             TokenedService,
         },
 
@@ -138,10 +137,7 @@ exports.init = function( logger, enc_service, conf, env )
             server_cache = _createCache( server );
             server.init( server_cache, exports.rater );
 
-            // TODO: temporary proof-of-concept
-            rating_service = easejs( RatingService ).use(
-                RatingServicePublish( amqplib, exports.post_rate_publish, logger )
-            )(
+            rating_service = new RatingService(
                 logger, dao, server, exports.rater, delta.createDelta
             );
 

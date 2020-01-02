@@ -72,20 +72,6 @@ export class RatingService
 
 
     /**
-     * TODO: Remove once traits subtypes are converted to TS
-     *
-     * This works around an easejs bug where prototype constructors are not
-     * properly invoked.  Note that technically the constructor above is
-     * invoked twice by easejs: once with no arguments, and again when
-     * calling this method with the proper arguments.
-     */
-    __construct()
-    {
-        (<any>RatingService ).apply( this, arguments );
-    }
-
-
-    /**
      * Sends rates to the client
      *
      * Note that the promise will be resolved after all data saving is
