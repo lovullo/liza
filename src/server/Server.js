@@ -1144,9 +1144,10 @@ module.exports = Class( 'Server' )
             {
                 try
                 {
-                    var rdelta_data;
-                    var parsed_data = JSON.parse( post_data.data );
-                    var bucket      = quote.getBucket();
+                    var   rdelta_data;
+                    var   parsed_data     = JSON.parse( post_data.data );
+                    var   bucket          = quote.getBucket();
+                    const concluding_save = post_data.concluding_save;
 
                     const { filtered, dapis, meta_clear, rdiff } =
                         server._dataProcessor.processDiff(
@@ -1158,8 +1159,9 @@ module.exports = Class( 'Server' )
                     {
                         rdelta_data = {
                             "rdelta.data": {
-                                data:      rdiff,
-                                timestamp: Math.round(
+                                data:            rdiff,
+                                concluding_save: ( concluding_save === 'true' ),
+                                timestamp:       Math.round(
                                     new Date().getTime() / 1000
                                 ),
                             }

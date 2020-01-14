@@ -105,12 +105,26 @@ export class V1MessageWriter implements MessageWriter
         const last_update_ms     = { "long": meta.lastUpdate * 1000 };
         const ts_ms              = ts * 1000;
 
+
+        let step = null;
+
+        if( delta.concluding_save === true )
+        {
+            step = {
+                EventStep: {
+                    transition: 'END',
+                    src:        '',
+                    dest:       '',
+                }
+            }
+        }
+
         return {
             event: {
                 id:    event_id,
                 ts:    ts_ms,
                 actor: 'SERVER',
-                step:  null,
+                step:  step,
             },
             document: {
                 id:       meta.id,

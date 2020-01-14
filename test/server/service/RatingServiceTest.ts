@@ -468,6 +468,7 @@ function getStubs()
             data:      {
                 _unavailable_all: [ undefined ]
             },
+            concluding_save: false,
             timestamp: 123
         }
     };
