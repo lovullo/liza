@@ -58,6 +58,8 @@ describe( "XhttpQuoteTransport", () =>
             bs:             [ null ],
         };
 
+        const concluding_save = true;
+
         const stub_quote  = { visitData: c => c( bucket ) };
 
         const mock_proxy = {
@@ -66,10 +68,13 @@ describe( "XhttpQuoteTransport", () =>
                 expect( JSON.parse( data.data ) )
                     .to.deep.equal( expected_data );
 
+                expect( JSON.parse( data.concluding_save ) )
+                    .to.deep.equal( concluding_save );
+
                 done();
             },
         };
 
-        Sut( '', mock_proxy ).send( stub_quote );
+        Sut( '', mock_proxy, concluding_save ).send( stub_quote );
     } );
 } );
