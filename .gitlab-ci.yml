@@ -1,12 +1,8 @@
-image: node:4-stretch
+image: $BUILD_IMAGE
 
 stages:
     - build
     - deploy
-
-before_script:
-    - apt-get update
-    - apt-get -y install --no-install-recommends texinfo texlive-latex-base
 
 build:
     stage: build
