@@ -42,19 +42,27 @@ module.exports = Class( 'XhttpQuoteTransport' )
      */
     'private _url': '',
 
+    /**
+     * Indicates a concluding save
+     * @type {boolean}
+     */
+    'private _concluding_save': false,
+
 
     /**
      * Constructs a new quote transport with the destination URL and proxy
      *
-     * @param {string}        url   destination URL
-     * @param {HttpDataProxy} proxy proxy to use for transfer
+     * @param {string}        url             destination URL
+     * @param {HttpDataProxy} proxy           proxy to use for transfer
+     * @param {boolean}       concluding_save concluding save
      *
      * @return {undefined}
      */
-    'public __construct': function( url, proxy )
+    'public __construct': function( url, proxy, concluding_save )
     {
-        this._url   = ''+( url );
-        this._proxy = proxy;
+        this._url             = ''+( url );
+        this._proxy           = proxy;
+        this._concluding_save = concluding_save;
     },
 
 
@@ -80,7 +88,9 @@ module.exports = Class( 'XhttpQuoteTransport' )
             var data = _self.getBucketDataJson( bucket );
 
             // post the data
-            _self._proxy.post( _self._url, { data: data },
+            _self._proxy.post(
+                _self._url,
+                { data: data, concluding_save: _self._concluding_save },
                 function( data, error )
                 {
                     if ( typeof callback === 'function' )

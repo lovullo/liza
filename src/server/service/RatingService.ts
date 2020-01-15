@@ -264,8 +264,9 @@ export class RatingService
             const save_data   = { ratedata: data };
             const rdelta_data = {
                 "rdelta.ratedata": {
-                    data:      this._createDelta( data, quote_data ),
-                    timestamp: cur_date
+                    data:            this._createDelta( data, quote_data ),
+                    concluding_save: false,
+                    timestamp:       cur_date,
                 },
             };
 

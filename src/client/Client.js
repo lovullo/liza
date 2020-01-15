@@ -1563,7 +1563,11 @@ module.exports = Class( 'Client' )
 
         // transport used to transfer the bucket data to the server, prohibiting
         // callback aborts (to ensure that we can handle failures ourselves)
-        var transport = this._createBucketTransport( step_id, true );
+        var transport = this._createBucketTransport(
+            step_id,
+            true,
+            event.concluding_save
+        );
 
         var finish, timeout;
         function dosave()
@@ -1712,11 +1716,16 @@ module.exports = Class( 'Client' )
     },
 
 
-    'private _createBucketTransport': function( step_id, prohibit_abort )
-    {
+    'private _createBucketTransport': function(
+        step_id,
+        prohibit_abort,
+        concluding_save
+    ){
         return this._factory.createDataBucketTransport(
-            this._quote.getId(), step_id,
-            this._createDataProxy( jQuery, prohibit_abort )
+            this._quote.getId(),
+            step_id,
+            this._createDataProxy( jQuery, prohibit_abort ),
+            concluding_save
         );
     },
 

@@ -459,9 +459,10 @@ describe( 'system.DeltaProcessor', () =>
                 rdelta:        {
                     data: [
                         {
-                            data:      { foo: [ 'first_bar' ] },
-                            timestamp: <UnixTimestamp>123123,
-                            type:      'data',
+                            data:            { foo: [ 'first_bar' ] },
+                            timestamp:       <UnixTimestamp>123123,
+                            type:            'data',
+                            concluding_save: false,
                         }
                     ],
                     ratedata: [],
@@ -583,9 +584,10 @@ describe( 'system.DeltaProcessor', () =>
                 rdelta:        {
                     data: [
                         {
-                            data:      { foo: [ 'first_bar' ] },
-                            timestamp: <UnixTimestamp>123123,
-                            type:      'data',
+                            data:            { foo: [ 'first_bar' ] },
+                            timestamp:       <UnixTimestamp>123123,
+                            type:            'data',
+                            concluding_save: false,
                         }
                     ],
                     ratedata: [],
@@ -603,9 +605,10 @@ describe( 'system.DeltaProcessor', () =>
                 rdelta:        {
                     data: [
                         {
-                            data:      { foo: [ 'first_bar' ] },
-                            timestamp: <UnixTimestamp>123123,
-                            type:      'data',
+                            data:            { foo: [ 'first_bar' ] },
+                            timestamp:       <UnixTimestamp>123123,
+                            type:            'data',
+                            concluding_save: false,
                         }
                     ],
                     ratedata: [],

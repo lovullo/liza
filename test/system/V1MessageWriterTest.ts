@@ -189,17 +189,12 @@ describe( 'system.V1MessageWriter', () =>
 
                 if ( valid )
                 {
-                    // return expect( result ).to.eventually.deep.equal(
-                    //         Buffer.from( '' )
-                    //     )
-                    //     .then( b =>
-                    //     {
-                    //         expect( typeof(b) ).to.equal( 'object' );
-                    //     } );
-                    return result.catch( e =>
+                    return expect( result ).to.eventually.deep.equal(
+                            Buffer.from( '' )
+                        )
+                        .then( b =>
                         {
-                            console.log( 'avroerror: ', e );
-                            expect.fail();
+                            expect( typeof(b) ).to.equal( 'object' );
                         } );
                 }
                 else
@@ -396,9 +391,10 @@ describe( 'system.V1MessageWriter', () =>
         };
 
         const delta = <Delta<any>>{
-            type:      <DeltaType>'data',
-            timestamp: <UnixTimestamp>123123123,
-            data:      <DeltaResult<any>>{},
+            type:            <DeltaType>'data',
+            timestamp:       <UnixTimestamp>123123123,
+            data:            <DeltaResult<any>>{},
+            concluding_save: true,
         };
 
         const expected = {
@@ -406,7 +402,13 @@ describe( 'system.V1MessageWriter', () =>
                 id:    'STEP_SAVE',
                 ts:    ts * 1000,
                 actor: 'SERVER',
-                step:  null,
+                step:  {
+                    EventStep: {
+                        transition: 'END',
+                        src:        '',
+                        dest: '',
+                    },
+                },
             },
             document: {
                 id:       doc_id,

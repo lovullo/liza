@@ -53,9 +53,10 @@ export type DeltaResult<T> = { [K in keyof T]: DeltaDatum<T[K]> | null };
 
 /** Complete delta type */
 export type Delta<T> = {
-    type:      DeltaType,
-    timestamp: UnixTimestamp,
-    data:      DeltaResult<T>,
+    type:            DeltaType,
+    timestamp:       UnixTimestamp,
+    concluding_save: boolean,
+    data:            DeltaResult<T>,
 }
 
 

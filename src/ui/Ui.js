@@ -934,7 +934,8 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
                     },
                     // no UI update (IE will display a security warning
                     // otherwise)
-                    ( ( last_step ) ? true : false )
+                    last_step,
+                    last_step
                 );
             });
 
@@ -1128,20 +1129,24 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
             return this;
         }
 
-        var len           = this.saveStepHooks.length,
-            step          = arguments[0] || this.getCurrentStep(),
-            callback      = arguments[1] || function() {},
-            fail_callback = arguments[2] || function() {},
-            immediate     = ( ( arguments[3] !== undefined )
+        var len              = this.saveStepHooks.length,
+            step             = arguments[0] || this.getCurrentStep(),
+            callback         = arguments[1] || function() {},
+            fail_callback    = arguments[2] || function() {},
+            immediately_save = ( ( arguments[3] !== undefined )
                 ? arguments[3]
                 : false
+            ),
+            concluding_save  = ( ( arguments[4] !== undefined )
+                    ? !!arguments[4]
+                    : false
             ),
             abort         = false;
 
         var event = {
             forceCallback: false,
             errors:        [],
-
+            concluding_save: concluding_save,
             aborted: false,
             abort: function()
             {
@@ -1285,7 +1290,7 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
             }
         };
 
-        if ( immediate )
+        if ( immediately_save )
         {
             doSave();
         }

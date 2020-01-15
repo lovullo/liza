@@ -162,11 +162,17 @@ module.exports = Class( 'ClientDependencyFactory',
     createStagingBucketDiscard: StagingBucketAutoDiscard,
 
 
-    createDataBucketTransport: function ( quote_id, step_id, proxy )
+    createDataBucketTransport: function (
+        quote_id,
+        step_id,
+        proxy,
+        concluding_save
+    )
     {
         return XhttpQuoteTransport(
             ( quote_id + '/step/' + step_id + '/post' ),
-            proxy
+            proxy,
+            concluding_save
         );
     },
 
