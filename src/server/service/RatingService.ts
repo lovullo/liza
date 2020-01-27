@@ -96,10 +96,11 @@ export class RatingService
             // cmd represents a request for a single rater
             if ( !cmd && this._isQuoteValid( quote ) )
             {
-                // send an empty reply (keeps what is currently in the
-                // bucket)
+                // send last rated data
                 this._server.sendResponse( request, quote, {
-                    data: {},
+                    data: quote.getRatingData(),
+                    initialRatedDate: quote.getRatedDate(),
+                    lastRatedDate: quote.getLastPremiumDate()
                 }, [] );
 
                 // XXX: When this class is no longer responsible for

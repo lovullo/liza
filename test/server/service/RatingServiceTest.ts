@@ -76,6 +76,62 @@ describe( 'RatingService', () =>
             .to.eventually.deep.equal( expected );
     } );
 
+    it( "returns previous rating results when rating is not performed", () =>
+    {
+        const {
+            logger,
+            server,
+            raters,
+            dao,
+            request,
+            response,
+            quote,
+            stub_rate_data,
+            createDelta,
+        } = getStubs();
+
+        let last_premium_date_call_count = 0;
+        let initial_date_call_count = 0;
+        let send_is_called = false;
+
+        const initial_date = <UnixTimestamp>2345;
+        const cur_date     = <UnixTimestamp>Math.round(
+            ( ( new Date() ).getTime() / 1000 )
+        );
+
+        // setup recent last prem date to ensure quote is valid
+        quote.getLastPremiumDate = () =>
+        {
+            last_premium_date_call_count++;
+            return cur_date;
+        };
+
+        quote.getRatedDate = () =>
+        {
+            initial_date_call_count++;
+            return initial_date;
+        };
+
+        const sut = new Sut( logger, dao, server, raters, createDelta );
+        server.sendResponse = (
+            _request: any,
+            _quote:   any,
+            resp:     RateRequestResult,
+            _actions: any
+        ) =>
+        {
+            expect( resp.initialRatedDate ).to.equal( initial_date );
+            expect( resp.lastRatedDate ).to.equal( cur_date );
+            expect( resp.data ).to.equal( stub_rate_data );
+            expect( last_premium_date_call_count ).to.equal( 2 );
+            expect( initial_date_call_count ).to.equal( 1 );
+            send_is_called = true;
+            return server;
+        };
+
+        return sut.request( request, response, quote, "" )
+            .then( _=> expect( send_is_called ).to.be.true );
+    } );
 
     it( "updates rating dates before serving to client", () =>
     {
