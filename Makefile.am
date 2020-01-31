@@ -67,10 +67,11 @@ check-ts-out:
 
 test: check
 check: $(tsout) check-ts-out
-	PATH="$(PATH):$(CURDIR)/node_modules/mocha/bin" \
-		mocha @NODE_DESTRUCTURE@ \
+	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
+		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \
 		      --recursive \
+		      @COV_ARGS@ \
 		      $(TESTARGS)
 
 FORCE:

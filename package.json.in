@@ -43,7 +43,9 @@
     "@types/mocha":            "5.2.0",
     "sinon":                   ">=1.17.4",
     "es6-promise":             "~3",
-    "@types/amqplib":          "0.5.13"
+    "@types/amqplib":          "0.5.13",
+    "nyc":                     "15.0.0",
+    "ts-node":                 "^8.6.2"
   },
 
   "licenses": [
