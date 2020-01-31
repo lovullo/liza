@@ -115,7 +115,8 @@ module.exports = Class( 'DslRater' )
         {
             try
             {
-                var single = rater( data );
+                var can_term = context.canTerm();
+                var single   = rater( data, can_term );
 
                 // ensures that any previous eligibility errors are cleared out
                 single.ineligible = '';

@@ -37,13 +37,13 @@ module.exports = Class( 'DslRaterContext' )
      * Hash of classes that will result in a global submit
      * @type {Object}
      */
-    'private _globalSubmits': {},
+    'private _global_submits': {},
 
     /**
      * Whether a particular global submit has been triggered
      * @type {Object}
      */
-    'private _hasGsubmit': {},
+    'private _has_g_submit': {},
 
     /**
      * Rater corestrictions
@@ -58,6 +58,12 @@ module.exports = Class( 'DslRaterContext' )
     'private _data': null,
 
     /**
+     * Whether to immediately terminate on assertion failure
+     * @type {boolean}
+     */
+    'private _can_term': true,
+
+    /**
      * Result sets
      * @type {Object}
      */
@@ -67,18 +73,19 @@ module.exports = Class( 'DslRaterContext' )
      * Number of available results
      * @type {number}
      */
-    'private _availCount': 0,
+    'private _avail_count': 0,
 
     /**
      * Total number of results
      * @type {number}
      */
-    'private _totalCount': 0,
+    'private _total_count': 0,
 
 
-    __construct: function( data )
+    __construct: function( data, can_term )
     {
-        this._data = data;
+        this._data    = data;
+        this._can_term = ( can_term == undefined ) ? true : !!can_term;
         this.init();
     },
 
@@ -87,6 +94,12 @@ module.exports = Class( 'DslRaterContext' )
     'public getSourceData': function()
     {
         return this._data;
+    },
+
+
+    'public canTerm': function()
+    {
+        return this._can_term;
     },
 
 
@@ -118,8 +131,8 @@ module.exports = Class( 'DslRaterContext' )
      */
     'public addResultSet': function( name, set )
     {
-        this._totalCount += set.getResultCount();
-        this._availCount += set.getAvailableCount();
+        this._total_count += set.getResultCount();
+        this._avail_count += set.getAvailableCount();
 
         this._checkGlobalSubmits( set );
 
@@ -146,11 +159,11 @@ module.exports = Class( 'DslRaterContext' )
                 return;
             }
 
-            for ( var cname in _self._globalSubmits )
+            for ( var cname in _self._global_submits )
             {
                 if ( result.__classes[ cname ] )
                 {
-                    _self._hasGsubmit[ cname ] = true;
+                    _self._has_g_submit[ cname ] = true;
                 }
             }
         } );
@@ -162,7 +175,7 @@ module.exports = Class( 'DslRaterContext' )
         var i = submits.length;
         while ( i-- )
         {
-            this._globalSubmits[ submits[ i ] ] = true;
+            this._global_submits[ submits[ i ] ] = true;
         }
 
         return this;
@@ -185,8 +198,8 @@ module.exports = Class( 'DslRaterContext' )
     'public complete': function()
     {
         // allow context some time to manipulate the results mercilessly
-        this._availCount = this.processCompleted(
-            this._results, this._availCount
+        this._avail_count = this.processCompleted(
+            this._results, this._avail_count
         );
 
         this._processGlobalSubmits();
@@ -291,7 +304,7 @@ module.exports = Class( 'DslRaterContext' )
      */
     'private _processGlobalSubmits': function()
     {
-        for ( var cname in this._hasGsubmit )
+        for ( var cname in this._has_g_submit )
         {
             this._results.forEach( function( set )
             {
@@ -302,7 +315,7 @@ module.exports = Class( 'DslRaterContext' )
                         cname;
 
                     result._unavailable = '1';
-                    this._availCount--;
+                    this._avail_count--;
                 } );
             } );
         }
@@ -340,7 +353,7 @@ module.exports = Class( 'DslRaterContext' )
 
         } );
 
-        ret.__prem_avail_count = [ this._availCount ];
+        ret.__prem_avail_count = [ this._avail_count ];
 
         return ret;
     }
