@@ -3,12 +3,13 @@ image: $BUILD_IMAGE
 stages:
     - build
     - deploy
+    - publish
 
 build:
     stage: build
     script:
         - autoreconf -fvi
-        - ./configure --with-srcuri="$SRCURI"
+        - ./configure --with-srcuri="$SRCURI" --enable-code-coverage
         - npm install
         - make all
         - make info pdf html
@@ -16,6 +17,7 @@ build:
     artifacts:
         paths:
             - doc/
+            - coverage/
         expire_in: 30 min
 
 pages:
@@ -23,6 +25,8 @@ pages:
     script:
         - mkdir -p public/doc
         - mv doc/liza.html/* doc/liza.pdf doc/liza.info public/
+        - mkdir -p public/coverage
+        - mv coverage/* public/coverage
     artifacts:
         paths:
             - public/
