@@ -72,10 +72,12 @@ export class MongoDeltaDao implements DeltaDao
     {
         return new Promise( ( resolve, reject ) =>
         {
+            // documents that have rates pending should not be processed yet
             this._collection.find(
                 {
                     published:  false,
                     deltaError: { $ne: true },
+                    'ratedata.__rate_pending': { $in: [ 0, null ] },
                     env:        this._env,
                 },
                 { fields: this.RESULT_FIELDS },

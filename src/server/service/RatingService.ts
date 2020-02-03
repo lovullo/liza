@@ -315,6 +315,20 @@ export class RatingService
         // rating worksheets are returned as metadata
         this._processWorksheetData( quote.getId(), data );
 
+        // set count of pending raters
+        const retry_count = this._getRetryCount( data );
+
+        data[ '__rate_pending' ] = retry_count;
+
+        if ( retry_count > 0 )
+        {
+            actions.push( {
+                "action": "delay",
+                "seconds": 2,
+                "then": { action: "rate" }
+            } );
+        }
+
         if ( ( program.ineligibleLockCount > 0 )
             && ( +meta.count_ineligible >= program.ineligibleLockCount )
         )
@@ -392,6 +406,21 @@ export class RatingService
                 : ''
             )
         );
+    }
+
+
+    /**
+     * Retrieve the number of raters that are pending
+     *
+     * @param data Rating results
+     */
+    private _getRetryCount( data: RateResult ): number
+    {
+        const retry_pattern = /^(.+)__retry$/;
+
+        return Object.keys( data )
+            .filter( field => field.match( retry_pattern ) && !!data[ field ][ 0 ] )
+            .length;
     }
 
 

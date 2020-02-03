@@ -423,6 +423,76 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
+    ( <[string, Record<string, any>, number, boolean][]>[
+        [
+            "delay action is returned when raters are pending",
+            {
+                'supplier-a__retry': [ 0 ],
+                'supplier-b__retry': [ 1 ],
+                'supplier-c__retry': [ 1 ],
+                'supplier-d__retry': [ 0 ],
+            },
+            2,
+            true
+        ],
+        [
+            "delay action is not returned when all raters are completed",
+            {
+                'supplier-a__retry': [ 0 ],
+                'supplier-b__retry': [ 0 ],
+                'supplier-c__retry': [ 0 ],
+                'supplier-d__retry': [ 0 ],
+            },
+            0,
+            false
+        ],
+    ] ).forEach( ( [label, supplier_data, expected_count, expected_delay_action ]) =>
+    {
+        it( label, () =>
+        {
+            const {
+                dao,
+                logger,
+                quote,
+                raters,
+                request,
+                response,
+                server,
+                stub_rate_data,
+                createDelta,
+            } = getStubs();
+
+            let sent = false;
+
+            Object.assign( stub_rate_data, supplier_data );
+
+            server.sendResponse = (
+                _request: any,
+                _quote: any,
+                resp: RateRequestResult,
+                actions: ClientActions
+            ) =>
+            {
+                const expected_action = {
+                    "action": "delay",
+                    "seconds": 2,
+                    "then": { action: "rate" }
+                };
+
+                ( expected_delay_action )
+                    ? expect( actions ).to.deep.equal( [ expected_action ] )
+                    : expect( actions ).to.not.equal( [ expected_action ] );
+
+                expect( resp.data[ '__rate_pending' ] ).to.equal( expected_count );
+                sent = true;
+                return server;
+            };
+
+            const sut = new Sut( logger, dao, server, raters, createDelta );
+            return sut.request( request, response, quote, "" )
+                .then( () => expect( sent ).to.be.true );
+        } );
+    } );
 
     describe( "protected API", () =>
     {
