@@ -507,8 +507,6 @@ module.exports = Class( 'Client' )
 
             client._monitorQuote( client._quote );
 
-            client._cmatch.hookClassifier( client._dataValidator );
-
             // store internal status
             client._isInternal = client.program.isInternal =
                 ( data.content.internal )
@@ -527,6 +525,8 @@ module.exports = Class( 'Client' )
             {
                 client.program.initQuote( bucket );
             } );
+
+            client._cmatch.hookClassifier( client._dataValidator );
 
             client.ui.setQuote( client._quote, client.program, clear_step );
 
