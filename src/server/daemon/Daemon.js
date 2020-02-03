@@ -21,9 +21,8 @@
 
 var AbstractClass = require( 'easejs' ).AbstractClass,
 
-    liza    = require( '../..' ),
-    sys     = require( 'util' ),
-    sprintf = require( 'php' ).sprintf;
+    liza            = require( '../..' ),
+    MemcachedClient = require( 'memcached' );
 
 
 /**
@@ -155,7 +154,6 @@ module.exports = AbstractClass( 'Daemon',
         this._initSignalHandlers();
         this._testEncryptionService( () =>
         {
-            this._memcacheConnect();
             this._initMemoryLogger();
 
             this._initRouters();
@@ -251,54 +249,41 @@ module.exports = AbstractClass( 'Daemon',
 
     'protected getMemcacheClient': function()
     {
-        var MemcacheClient    = require( 'memcache/lib/memcache' ).Client,
-            ResilientMemcache = liza.server.cache.ResilientMemcache,
+        var memc_host = process.env.MEMCACHE_HOST || 'localhost',
+            memc_port = process.env.MEMCACHE_PORT || 11211,
+            memc      = new MemcachedClient( memc_host + ':' + memc_port ),
+            _self     = this;
 
-            memc = ResilientMemcache(
-                new MemcacheClient(
-                    process.env.MEMCACHE_PORT || 11211,
-                    process.env.MEMCACHE_HOST || 'localhost'
-                )
-            );
-
-        var _self = this;
-
-        memc
-            .on( 'preConnect', function()
+        return memc.on( 'issue', function( details )
             {
-                _self._debugLog.log( _self._debugLog.PRIORITY_IMPORTANT,
-                    'Connecting to memcache server...'
+                _self._debugLog.log(
+                    _self._debugLog.PRIORITY_IMPORTANT,
+                    'Memcached error: %s',
+                    details.messages.join( ', ' )
                 );
             } )
-            .on( 'connect', function()
+            .on( 'failure', function( details )
             {
-                _self._debugLog.log( _self._debugLog.PRIORITY_IMPORTANT,
-                    'Connected to memcache server.'
-                );
-            } )
-            .on( 'connectError', function( e )
-            {
-                _self._debugLog.log( _self._debugLog.PRIORITY_ERROR,
+                _self._debugLog.log(
+                    _self._debugLog.PRIORITY_ERROR,
                     'Failed to connect to memcached: %s',
-                    e.message
+                    details.messages.join( ', ' )
                 );
             } )
-            .on( 'queuePurged', function( n )
+            .on( 'reconnecting', function( _details )
             {
-                _self._debugLog.log( _self._debugLog.PRIORITY_ERROR,
-                    'Memcache request queue (size %d) purged!',
-                    n
+                _self._debugLog.log(
+                    _self._debugLog.PRIORITY_IMPORTANT,
+                    'Attempting to reconnect to memcached server...'
                 );
             } )
-            .on( 'error', function( e )
+            .on( 'reconnect', function( _details )
             {
-                _self._debugLog.log( _self._debugLog.PRIORITY_ERROR,
-                    'Memcache error: %s',
-                    e.message
+                _self._debugLog.log(
+                    _self._debugLog.PRIORITY_IMPORTANT,
+                    'Reconnected to memcached server.'
                 );
             } );
-
-        return memc;
     },
 
 
@@ -476,29 +461,6 @@ module.exports = AbstractClass( 'Daemon',
                 callback();
             } );
         } );
-    },
-
-
-    /**
-     * Attempts to make connection to memcache server
-     *
-     * @param memcache.Client memcache client to connect to server
-     *
-     * @return undefined
-     */
-    'private _memcacheConnect': function()
-    {
-        try
-        {
-            this._memcache.connect();
-        }
-        catch( err )
-        {
-            this._debugLog.log( this._debugLog.PRIORITY_ERROR,
-                "Failed to connected to memcached server: %s",
-                err
-            );
-        }
     },
 
 
