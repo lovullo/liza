@@ -20,9 +20,9 @@
  */
 
 
-var fs      = require( 'fs' ),
-    sprintf = require( 'php' ).sprintf,
-    Class   = require( 'easejs' ).Class;
+var fs         = require( 'fs' ),
+    utilFormat = require( 'util' ).format,
+    Class      = require( 'easejs' ).Class;
 
 
 /**
@@ -115,7 +115,7 @@ module.exports = Class( 'Log',
         // log to file?
         if ( this._fd !== null )
         {
-            var buffer = Buffer.from( sprintf.apply( this, args ) + "\n" );
+            var buffer = Buffer.from( utilFormat.apply( this, args ) + "\n" );
             fs.writeSync( this._fd, buffer, 0, buffer.length, null );
         }
 
