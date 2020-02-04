@@ -219,9 +219,9 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
     {
         var _self = this;
 
-        this._memcache.get( this._id, function( orig )
+        this._memcache.get( this._id, function( err, orig )
         {
-            if ( !orig )
+            if ( err || !orig )
             {
                 // well we gave it a good shot! (right now we don't indicate
                 // error, because there's not much we can do about that...maybe
@@ -238,7 +238,7 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
                 newdata += key + '|' + php.serialize( data[ key ] );
             }
 
-            _self._memcache.set( _self._id, newdata, function()
+            _self._memcache.set( _self._id, newdata, 0, function()
             {
                 callback && callback();
             } );
@@ -255,9 +255,9 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
      */
     'private _getSessionData': function( callback )
     {
-        this._memcache.get( this._id, function( data )
+        this._memcache.get( this._id, function( err, data )
         {
-            if ( data === null )
+            if ( err || data === null )
             {
                 // failure
                 callback( null );
