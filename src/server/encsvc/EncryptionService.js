@@ -149,7 +149,7 @@ module.exports = Class( 'EncryptionService',
         var header_len = this.__self.$('ENC_HEADER').length;
 
         // create a new buffer to store the encrypted data along with the header
-        var buf = new Buffer( data.length + header_len );
+        var buf = Buffer.alloc( data.length + header_len );
 
         // write the header and copy in the encrypted data
         buf.write( this.__self.$('ENC_HEADER') );
@@ -171,7 +171,7 @@ module.exports = Class( 'EncryptionService',
         var header_len = this.__self.$('ENC_HEADER').length;
 
         // create a new buffer and copy all data except for the header
-        var buf = new Buffer( data.length - header_len );
+        var buf = Buffer.alloc( data.length - header_len );
         data.copy( buf, 0, header_len );
 
         return buf;

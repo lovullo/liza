@@ -115,7 +115,7 @@ module.exports = Class( 'Log',
         // log to file?
         if ( this._fd !== null )
         {
-            var buffer = new Buffer( sprintf.apply( this, args ) + "\n" );
+            var buffer = Buffer.from( sprintf.apply( this, args ) + "\n" );
             fs.writeSync( this._fd, buffer, 0, buffer.length, null );
         }
 

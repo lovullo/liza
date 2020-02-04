@@ -48,7 +48,7 @@ module.exports = Class( 'EchoEncryptionServiceTransfer' )
     'public encrypt': function( data, callback )
     {
         // simply echo the data back as a buffer
-        callback( new Buffer( data, 'binary' ) );
+        callback( Buffer.from( data, 'binary' ) );
     },
 
 
@@ -65,7 +65,7 @@ module.exports = Class( 'EchoEncryptionServiceTransfer' )
     'public decrypt': function( data, callback )
     {
         // simply echo the data back as a buffer
-        callback( new Buffer( data, 'binary' ) );
+        callback( Buffer.from( data, 'binary' ) );
     },
 } );
 
