@@ -25,13 +25,14 @@
   },
 
   "dependencies": {
-    "easejs":      "0.2.x",
-    "mongodb":     "1.2.14",
-    "dotenv-flow": "3.1.0",
-    "amqplib":     "0.5.3",
-    "avro-js":     "1.9.1",
-    "prom-client": "11.0.0",
-    "memcached":   "2.2.2"
+    "easejs":        "0.2.x",
+    "mongodb":       "1.2.14",
+    "dotenv-flow":   "3.1.0",
+    "amqplib":       "0.5.3",
+    "avro-js":       "1.9.1",
+    "prom-client":   "11.0.0",
+    "memcached":     "2.2.2",
+    "php-serialize": "3.0.1"
   },
   "devDependencies": {
     "typescript":              "~3.7",

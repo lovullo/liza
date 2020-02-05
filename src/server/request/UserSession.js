@@ -22,8 +22,8 @@
  */
 
 // php compatibility
-var php   = require( 'php' ),
-    Class = require( 'easejs' ).Class;
+var Class = require( 'easejs' ).Class,
+    phpS  = require('php-serialize');
 
 
 /**
@@ -235,7 +235,7 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
 
             for ( var key in data )
             {
-                newdata += key + '|' + php.serialize( data[ key ] );
+                newdata += key + '|' + phpS.serialize( data[ key ] );
             }
 
             _self._memcache.set( _self._id, newdata, 0, function()
@@ -281,7 +281,7 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
                         val = splits[ ++i ];
 
                     // the values are serialized PHP data; unserialize them
-                    val = php.unserialize( val );
+                    val = phpS.unserialize( val );
 
                     // add to the session data
                     session_data[ key ] = val;
