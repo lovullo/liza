@@ -98,7 +98,7 @@ module.exports = Class( 'RateEventHandler' )
         var qstep = quote.getCurrentStepId();
 
         // arbitrary delay before rating (use as a last resort)
-        var delay = ( typeof +data.value === 'number' )
+        var delay = ( !isNaN( data.value ) )
             ? data.value * 1e3
             : 0;
 
