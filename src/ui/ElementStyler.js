@@ -20,7 +20,7 @@
  *
  * @needsLove
  *   - Everything!  This class exists from when the framework was barely
- *     more than a few prototypes and has rotted ever since with little else 
+ *     more than a few prototypes and has rotted ever since with little else
  *     but workarounds.
  * @end needsLove
  */
@@ -81,6 +81,12 @@ module.exports = Class( 'ElementStyler',
      * @type {jQuery}
      */
     'private _$context': null,
+
+    /**
+     * jQuery Object
+     * @type {jQuery}
+     */
+    'private _jquery': null,
 
 
     _answerStyles: {
@@ -186,6 +192,7 @@ module.exports = Class( 'ElementStyler',
     __construct: function( jquery )
     {
         this._$context = jquery;
+        this._jquery = jquery;
     },
 
 
@@ -802,28 +809,34 @@ module.exports = Class( 'ElementStyler',
      *
      * This allows for a simple mapping from bucket to UI.
      *
-     * @param {string}  name     element name (question name)
-     * @param {number=} index    index of element to retrieve (bucket index)
-     * @param {string=} filter   filter to apply to widgets
-     * @param {jQuery=} $context filtering context
+     * @param {string}      name     element name (question name)
+     * @param {number=}     index    index of element to retrieve (bucket index)
+     * @param {string=}     filter   filter to apply to widgets
+     * @param {HTMLElement} $context filtering context
      *
      * @return {jQuery} matches
      */
-    'public getWidgetByName': function( name, index, filter, $context )
+    'public getWidgetByName': function( name, index, filter, context )
     {
-        $context = $context || this._$context;
+        context = context || this._$context;
+
+        // Todo: Transitional step to remove jQuery
+        if ( context instanceof jQuery )
+        {
+            context = context[ 0 ];
+        }
 
         // find the field; note that we *skip* the index selection if we have
         // been notified---via a property on the context---that the content
         // should contain only the index we are looking for
-        var $results = this._getWidgetByNameQuick( name, index, $context );
+        var results = this._getWidgetByNameQuick( name, index, context );
 
         if ( filter )
         {
-            return $results.filter( filter );
+           throw new Error( "Filter deprecated" );
         }
 
-        return $results;
+        return this._jquery( results );
     },
 
 
@@ -835,33 +848,31 @@ module.exports = Class( 'ElementStyler',
      * performed the check to begin with, so the idea is to find the id for as
      * many as possible.
      */
-    'private _getWidgetByNameQuick': function( name, index, $context )
+    'private _getWidgetByNameQuick': function( name, index, context )
     {
-        var hasindex = ( ( index !== undefined ) && !$context.singleIndex );
+        var hasindex = ( ( index !== undefined ) && !context.singleIndex );
 
         if ( hasindex )
         {
-            var id = this._getElementId( name, index, $context );
+            var id = this._getElementId( name, index );
 
             if ( id )
             {
-                $element = $context.find( '#' + id );
+                element = document.getElementById( id );
 
                 // let's hope for the best
-                if ( $element.length )
+                if ( element !== null )
                 {
-                    return $element;
+                    return element;
                 }
             }
+
+            // Fallback to the painfully slow method.
+            return context.querySelectorAll( '[data-field-name="' + name + '"]' )[ index ];
         }
 
-        // damnit. Fallback to the painfully slow method.
-        return $context.find( '[data-field-name="' + name + '"]' +
-            ( ( hasindex )
-                ? ':nth(' + +index + ')'
-                : ''
-            )
-        );
+        // If no index, return first element
+        return context.querySelector( '[data-field-name="' + name + '"]' );
     },
 
 
@@ -922,28 +933,32 @@ module.exports = Class( 'ElementStyler',
      * using NAME as an element id; otherwise, this acts just as
      * getElementByName.
      *
-     * @param {string}  name     element name (question name)
-     * @param {number=} index    index of element to retrieve (bucket index)
-     * @param {string=} filter   filter to apply to widgets
-     * @param {jQuery=} $context filtering context
+     * @param {string}      name     element name (question name)
+     * @param {number=}     index    index of element to retrieve (bucket index)
+     * @param {string=}     filter   filter to apply to widgets
+     * @param {HTMLElement} context filtering context
      *
      * @return {jQuery} matches
      */
     'public getElementByNameLax': function(
-        name, index, filter, $context
+        name, index, filter, context
     )
     {
-        $context = $context || this._$context;
+        context = context || this._$context;
+
+        // Todo: Transitional step to remove jQuery
+        if ( context instanceof jQuery )
+        {
+            context = context[ 0 ];
+        }
 
         if ( !( this.isAField( name ) ) )
         {
-            return $context.find(
-                '#' + name + ':nth(' + index + ')'
-            );
+            return this._jquery( context.querySelectorAll( '#' + name  )[ index ] );
         }
 
         return this.getElementByName(
-            name, index, filter, $context
+            name, index, filter, context
         );
     },
 
@@ -1030,7 +1045,7 @@ module.exports = Class( 'ElementStyler',
     },
 
 
-    'private _getElementId': function( name, index, $context )
+    'private _getElementId': function( name, index )
     {
         switch ( this._getElementType( name ) )
         {
