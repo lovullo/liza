@@ -833,7 +833,7 @@ module.exports = Class( 'ElementStyler',
 
         if ( filter )
         {
-           throw new Error( "Filter deprecated" );
+           throw new Error( 'Filter deprecated' );
         }
 
         return this._jquery( results );
@@ -855,7 +855,7 @@ module.exports = Class( 'ElementStyler',
         if ( hasindex )
         {
             var id = this._getElementId( name, index );
-
+            
             if ( id )
             {
                 element = document.getElementById( id );
@@ -1045,11 +1045,25 @@ module.exports = Class( 'ElementStyler',
     },
 
 
+    /**
+     * Determines the id of an element based on the type
+     *
+     * @param {string} name  element name
+     * @param {number} index index of element to retrieve (bucket index)
+     *
+     * @return {string} element id
+     */
     'private _getElementId': function( name, index )
     {
         switch ( this._getElementType( name ) )
         {
-            case 'radio': return '';
+            case 'radio':
+                return '';
+            case 'answer':
+                return name;
+            case 'checkbox':
+                name += '_n';
+                break;
             case 'noyes':
                 // append yes/no depending on whether or not the given index is
                 // even/odd
@@ -1057,13 +1071,11 @@ module.exports = Class( 'ElementStyler',
                     ? '_y'
                     : '_n';
 
-                index = index / 2;
-
-                /* fallthrough */
-
-            default:
-                return 'q_' + name + '_' + index;
+                index = Math.floor( index / 2 );
+                break;
         }
+
+        return 'q_' + name + '_' + index;
     },
 
 
