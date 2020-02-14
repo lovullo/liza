@@ -21,7 +21,7 @@
   },
 
   "scripts": {
-    "postinstall": "./configure"
+    "postinstall": "./configure && if [ $(@NODE@ --version | sed 's/^v//' | cut -d. -f1) -ge \"12\" ]; then ln -s php-serialize ./node_modules/php; else rm -f node_modules/php; fi"
   },
 
   "dependencies": {
