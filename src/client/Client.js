@@ -935,8 +935,15 @@ module.exports = Class( 'Client' )
                 } );
                 break;
 
+            case 'delay':
+                this._eventHandler.handle( action_type, function() {}, action );
+                break;
+
             default:
-                window.console && console.error( 'Unrecognized action: %s', action.action );
+                window.console && console.error(
+                    'Unrecognized action: %s',
+                    action.action
+                );
         }
     },
 
@@ -2129,7 +2136,8 @@ module.exports = Class( 'Client' )
         this.emit( this.__self.$('EVENT_TRIGGER'), event_name, data );
 
         this._eventHandler.handle(
-            event_name, function( err, data )
+            event_name,
+            function( err, data )
             {
                 if ( err )
                 {
@@ -2144,7 +2152,8 @@ module.exports = Class( 'Client' )
                 }
 
                 callback && callback( data );
-            }, data
+            },
+            data
         );
 
         return this;

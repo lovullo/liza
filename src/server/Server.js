@@ -367,6 +367,7 @@ module.exports = Class( 'Server' )
                     .setLastPremiumDate( quote_data.lastPremDate || 0 )
                     .setRatedDate( quote_data.initialRatedDate || 0 )
                     .setRatingData( quote_data.ratedata || {} )
+                    .setRetryAttempts( quote_data.retryAttempts || 0 )
                     .on( 'stepChange', function( step_id )
                     {
                         // save the quote state (we don't care if it succeeds or
@@ -1237,6 +1238,7 @@ module.exports = Class( 'Server' )
         if ( ( program.rateSteps || [] )[ step_id ] !== true )
         {
             quote.setLastPremiumDate( 0 );
+            quote.setRetryAttempts( 0 );
         }
 
         server.quoteFill( quote, step_id, request.getSession(),

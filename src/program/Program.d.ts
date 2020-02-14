@@ -42,6 +42,8 @@ export declare abstract class Program
 
     mapis: Record<string, string[]>;
 
+    rateSteps: boolean[];
+
     getId(): string;
 
     initQuote( bucket: StagingBucket, store_only: boolean ): void

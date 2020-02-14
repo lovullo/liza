@@ -19,16 +19,34 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * Action Types
+ */
+export type ClientActionType =
+    'gostep' |
+    'invalidate' |
+    'quotePrompt' |
+    'warning' |
+    'setProgram' |
+    'lock' |
+    'unlock' |
+    'indvRate' |
+    'delay' |
+    'rate' |
+    'kickBack' |
+    'status' |
+    'show' |
+    'hide' |
+    'set' |
+    'action$cvv2Dialog';
 
 /**
  * Action to be performed by the client
- *
- * TODO: More specific types
  */
 export interface ClientAction
 {
     /** Action to be performed */
-    action: string;
+    action: ClientActionType;
 
     /** Action arguments */
     [P: string]: any;

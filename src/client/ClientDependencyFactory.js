@@ -82,31 +82,30 @@ var Step          = require( '../step/Step' ),
 
     DataApiFactory = require( '../dapi/DataApiFactory' ),
     DataApiManager = require( '../dapi/DataApiManager' ),
+    DataApiMediator = require( './dapi/DataApiMediator' );
 
     RootDomContext     = require( '../ui/context/RootDomContext' ),
     DomFieldFactory    = require( '../ui/field/DomFieldFactory' ),
     StepErrorStyler    = require( '../ui/styler/StepErrorStyler' ),
     SidebarErrorStyler = require( '../ui/styler/SidebarErrorStyler' ),
     ErrorFieldStyler   = require( '../ui/styler/ErrorFieldStyler' ),
-
-    NaFieldStyler = require( '../ui/styler/NaFieldStyler' ),
-
-    DelegateEventHandler = require( './event/DelegateEventHandler' ),
+    NaFieldStyler      = require( '../ui/styler/NaFieldStyler' ),
 
     diffStore = require( 'liza/system/client' ).data.diffStore,
 
-    DataApiMediator = require( './dapi/DataApiMediator' ),
+    FieldVisibilityEventHandler = require( './event/FieldVisibilityEventHandler' ),
+    IndvRateEventHandler        = require( './event/IndvRateEventHandler' ),
+    RateEventHandler            = require( './event/RateEventHandler' ),
+    KickbackEventHandler        = require( './event/KickbackEventHandler' ),
+    StatusEventHandler          = require( './event/StatusEventHandler' ),
+    ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
+    Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
-    Class = require( 'easejs' ).Class;
 
+const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
+const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 
-var liza_event = require( './event' );
-
-
-function requireh( name )
-{
-    return liza_event[ name ];
-}
+const Class = require( 'easejs' ).Class;
 
 
 module.exports = Class( 'ClientDependencyFactory',
@@ -355,26 +354,22 @@ module.exports = Class( 'ClientDependencyFactory',
         client, data_validator, styler, data_proxy, jquery
     )
     {
-        const field_vis_handler = requireh( 'FieldVisibilityEventHandler' )(
+        const field_vis_handler = FieldVisibilityEventHandler(
             client.getUi(),
             data_validator
         );
 
-        return DelegateEventHandler( {
-            'indvRate': requireh( 'IndvRateEventHandler' )(
-                client, data_proxy
-            ),
+        return new DelegateEventHandler( {
+            'indvRate':          IndvRateEventHandler( client, data_proxy ),
+            'rate':              RateEventHandler( client, data_proxy ),
+            'kickBack':          KickbackEventHandler( client ),
+            'status':            StatusEventHandler( styler ),
+            'set':               ValueSetEventHandler( client ),
+            'action$cvv2Dialog': Cvv2DialogEventHandler( jquery ),
+            'delay':             new DelayEventHandler( client ),
+            'show':              field_vis_handler,
+            'hide':              field_vis_handler,
 
-            'rate':     requireh( 'RateEventHandler' )( client, data_proxy ),
-            'kickBack': requireh( 'KickbackEventHandler' )( client ),
-            'status':   requireh( 'StatusEventHandler' )( styler ),
-
-            'show': field_vis_handler,
-            'hide': field_vis_handler,
-
-            'set': requireh( 'ValueSetEventHandler' )( client ),
-
-            'action$cvv2Dialog':   requireh( 'Cvv2DialogEventHandler' )( jquery )
         } );
     },
 
