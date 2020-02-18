@@ -114,6 +114,181 @@ describe( 'RateEventHandler', () =>
         } )
     } );
 
+    describe( "Handles rating delay", () =>
+    {
+        it( "uses a number to determine rating delay", done =>
+        {
+            let set_timeout_called = false;
+            let actual_delay       = 0;
+
+            const delay          = '25';
+            const expected_delay = 25000;
+
+            const quote = {
+                getExplicitLockStep: () => 0,
+                setLastPremiumDate:  () => {},
+                setInitialRatedDate: () => {},
+                getCurrentStepId:    () => 1,
+                refreshData:         () => {},
+                isLocked:            () => {},
+                getId:               () => "111111"
+            };
+
+            const client = {
+                uiDialog: {
+                    showRatingInProgressDialog: () =>
+                    {
+                        return { close: () => {} }
+                    },
+                },
+                showRatingInProgressDialog: () => "Some Dialog",
+                getQuote: () => quote,
+                isSaving: () => false,
+                once:     ( _, __ ) => {},
+                getUi:    () =>
+                {
+                    return {
+                        getStep: ( _ ) =>
+                        {
+                            return { invalidate: () => {} }
+                        }
+                    }
+                },
+                getDataByName: ( name ) => { return [ 'foo' ]; },
+            };
+
+            const proxy = {
+                get: ( url, callback ) => callback(
+                    {
+                        content: {
+                            data:             "Some Data",
+                            initialRatedDate: 111,
+                            lastRatedDate:    222
+                        }
+                    },
+                    null
+                )
+            };
+
+            const sut = Sut( client, proxy );
+
+            const old_setTimeout = setTimeout;
+
+            setTimeout = ( callback, delay ) => {
+                set_timeout_called = true;
+                actual_delay       = delay;
+
+                callback.apply( this, arguments );
+            }
+
+            sut.handle(
+                "",
+                ( _, __ ) => {},
+                {
+                    indv:   'somerater',
+                    stepId: 1,
+                    value:  delay
+                }
+            );
+
+            setTimeout = old_setTimeout;
+
+            expect( set_timeout_called ).to.equal( true );
+            expect( actual_delay ).to.equal( expected_delay );
+            done();
+        } )
+
+
+        it( "rating delay defaults to zero", done =>
+        {
+            let set_timeout_called = false;
+            let actual_delay       = 0;
+
+            const delay          = 'foo';
+            const expected_delay = 0;
+
+            const quote = {
+                getExplicitLockStep: () => 0,
+                setLastPremiumDate:  () => {},
+                setInitialRatedDate: () => {},
+                getCurrentStepId:    () => 1,
+                refreshData:         () => {},
+                isLocked:            () => {},
+                getId:               () => "111111"
+            };
+
+            const client = {
+                uiDialog: {
+                    showRatingInProgressDialog: () =>
+                    {
+                        return { close: () => {} }
+                    },
+                },
+                showRatingInProgressDialog: () => "Some Dialog",
+                getQuote: () => quote,
+                isSaving: () => false,
+                once:     ( _, __ ) => {},
+                getUi:    () =>
+                {
+                    return {
+                        getStep: ( _ ) =>
+                        {
+                            return { invalidate: () => {} }
+                        }
+                    }
+                },
+            };
+
+            const proxy = {
+                get: ( url, callback ) => callback(
+                    {
+                        content: {
+                            data:             "Some Data",
+                            initialRatedDate: 111,
+                            lastRatedDate:    222
+                        }
+                    },
+                    null
+                )
+            };
+
+            const sut = Sut( client, proxy );
+
+            const old_setTimeout = setTimeout;
+
+            setTimeout = ( callback, delay ) => {
+                set_timeout_called = true;
+                actual_delay       = delay;
+
+                callback.apply( this, arguments );
+            }
+
+            // this is necessary because if something breaks here, setTimeout
+            // will not be restored and will yield a false negative on other
+            // tests
+            try {
+                sut.handle(
+                    "",
+                    ( _, __ ) => {},
+                    {
+                        indv:   'somerater',
+                        stepId: 1,
+                        value:  delay
+                    }
+                );
+            }
+            catch( e ) {}
+            finally
+            {
+                setTimeout = old_setTimeout;
+            }
+
+            expect( set_timeout_called ).to.equal( true );
+            expect( actual_delay ).to.equal( expected_delay );
+            done();
+        } )
+    } );
+
     describe( "Handle Rating Event with locked quote", () =>
     {
         it( "calls #handle to do the rating with a locked quote", done =>
