@@ -115,10 +115,15 @@ describe( 'ui.ElementStyler', () =>
     {
         it( "determines the correct element id for " + name, () =>
         {
-            // Stub all objects
-            $        = sinon.stub();
-            jQuery   = sinon.stub();
-            document = sinon.stub();
+            // Stub document and jQuery calls
+            $      = sinon.stub();
+            jQuery = sinon.stub();
+
+            const document = {
+                getElementById: sinon.stub()
+            };
+
+            jQuery.withArgs( 'body' ).returns( { context: document } );
 
             const sut = Sut( jQuery );
 
@@ -136,12 +141,11 @@ describe( 'ui.ElementStyler', () =>
                 html: html,
             };
 
-            document.getElementById = sinon.stub();
             document.getElementById.returns( node );
 
             sut.getWidgetByName( name, index, null, context );
 
-            const actual_id = document.getElementById.getCall(0).args[0];
+            const actual_id = document.getElementById.getCall( 0 ).args[ 0 ];
 
             expect( actual_id )
                 .to.equal( expected_id );

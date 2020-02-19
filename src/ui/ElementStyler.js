@@ -88,6 +88,12 @@ module.exports = Class( 'ElementStyler',
      */
     'private _jquery': null,
 
+    /**
+     * HTML Document
+     * @type {HTMLElement}
+     */
+    'private _document': null,
+
 
     _answerStyles: {
         'deductible': function( value, _, default_val  )
@@ -193,6 +199,7 @@ module.exports = Class( 'ElementStyler',
     {
         this._$context = jquery;
         this._jquery = jquery;
+        this._document = jquery( 'body' ).context;
     },
 
 
@@ -855,10 +862,10 @@ module.exports = Class( 'ElementStyler',
         if ( hasindex )
         {
             var id = this._getElementId( name, index );
-            
+
             if ( id )
             {
-                element = document.getElementById( id );
+                element = this._document.getElementById( id );
 
                 // let's hope for the best
                 if ( element !== null )
