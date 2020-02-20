@@ -359,30 +359,34 @@ module.exports = Class( 'GroupUi' )
      *
      * The name format is expected to be: name_i, where i is the index.
      *
-     * @param jQuery  $elements elements to set index on
+     * @param HTML    elements  elements to set index on
      * @param Integer index     index to set
      *
      * @return void
      */
-    'protected setElementIdIndexes': function( $elements, index )
+    'protected setElementIdIndexes': function( elements, index )
     {
-        var _self = this;
-
-        $elements.each( function( i )
+        // Todo: Transitional step to remove jQuery
+        if ( elements instanceof jQuery )
         {
-            var $element     = _self._jquery( this );
-            var id           = $element.attr( 'id' );
+            elements = elements[ 0 ];
+        }
+
+        for ( var i = 0; i < elements.length; i++ )
+        {
+            var element      = elements[ i ];
+            var id           = element.getAttribute( 'id' ) || '';
             var element_data = 0;
 
-            // grab the index from the id
+            // grab the index from the id if found
             if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
             {
                 // regenerate the id
-                $element.attr( 'id', element_data[1] + index );
+                element.setAttribute( 'id', element_data[1] + index );
             }
 
-            $element.attr( 'data-index', index );
-        });
+            element.setAttribute( 'data-index', index );
+        }
     },
 
 
