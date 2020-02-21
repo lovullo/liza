@@ -151,6 +151,18 @@ module.exports = Class( 'GroupUi' )
     'protected context': null,
 
     /**
+     * Group context
+     * @type {HTMLElement}
+     */
+    'protected content': null,
+
+    /**
+     * jQuery object
+     * @type {jQuery}
+     */
+    'protected jquery': null,
+
+    /**
      * Styler when fields are no longer applicable
      * @type {FieldStyler}
      */
@@ -180,9 +192,12 @@ module.exports = Class( 'GroupUi' )
         this.group     = group;
         this.$content  = $content;
         this.styler    = styler;
-        this._jquery   = jquery;
+        this.jquery    = jquery;
         this.context   = context;
         this._naStyler = na_styler;
+
+        // Todo: Transition away from jQuery
+        this.content   = $content[ 0 ];
     },
 
 
@@ -326,7 +341,7 @@ module.exports = Class( 'GroupUi' )
             e.preventDefault();
 
             // TODO: index
-            var $this = _self._jquery( this ),
+            var $this = _self.jquery( this ),
                 ref   = $this.attr( 'data-ref' ),
                 type  = $this.attr( 'data-type' ),
                 index = +$this.attr( 'data-index' ) || 0;
@@ -430,7 +445,7 @@ module.exports = Class( 'GroupUi' )
     },
 
 
-    'protected getCurrentIndex': function()
+    'public getCurrentIndex': function()
     {
         return ( this.getCurrentIndexCount() - 1 );
     },
@@ -823,7 +838,7 @@ module.exports = Class( 'GroupUi' )
      * @param index
      * @returns {boolean}
      */
-    'protected hasVisibleField'( index )
+    'public hasVisibleField': function( index )
     {
         return this._visCount[ index ] > 0 ? true : false;
     },

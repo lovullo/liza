@@ -35,12 +35,12 @@ module.exports = Class( 'StackedGroupUi' )
     /**
      * Containing group DOM element
      */
-    'private _$container': null,
+    'private _container': null,
 
     /**
      * Definition list of each stacked item
      */
-    'private _$dl': null,
+    'private _dl': null,
 
 
     /**
@@ -52,8 +52,10 @@ module.exports = Class( 'StackedGroupUi' )
      */
     'override protected processContent': function( quote )
     {
-        this._$container = this.$content.find( 'div.stacked-container' );
-        this._$dl        = this._$container.find( 'dl' ).detach();
+        this._container = this.content.querySelector( 'div.stacked-container' );
+
+        this._dl = this._container.querySelector( 'dl' );
+        this._dl.parentNode.removeChild( this._dl );
     },
 
 
@@ -68,15 +70,17 @@ module.exports = Class( 'StackedGroupUi' )
     {
         this.__super( index );
 
-        const $item = this._$dl.clone();
-        const item  = $item[ 0 ];
+        const item = this._dl.cloneNode( true );
 
         this.setElementIdIndexes( item.getElementsByTagName( '*' ), index );
 
         // add the index to the row title
-        $item.find( 'span.item-index' ).text( ' ' + ( index + 1 ) );
+        item.querySelector( 'span.item-index' ).textContent = ' ' + ( index + 1 );
 
-        this._$container.append( $item );
+        this._container.appendChild( item );
+
+        // Todo: Transitional step to remove jQuery
+        var $item = this.jquery( item );
 
         this.styler.apply( $item );
         this.postAddRow( $item, index );
@@ -94,10 +98,10 @@ module.exports = Class( 'StackedGroupUi' )
      */
     'protected override removeIndex': function( index )
     {
-        const $item = this._$container
-            .find( 'dl:last-child' );
+        const item = this._container
+            .querySelector( 'dl:last-child' );
 
-        this.styler.remove( $item );
+        this.styler.remove( this.jquery( item ) );
 
         return this.__super( index );
     },
@@ -123,7 +127,7 @@ module.exports = Class( 'StackedGroupUi' )
             // likely fix the current issue and reduce the chances of
             // something like this happening.
             try {
-                const header = this._$container.find( 'dl' )[ index ];
+                const header = this._container.querySelectorAll( 'dl' )[ index ];
 
                 header.classList.add( 'hidden' );
             }
@@ -147,7 +151,7 @@ module.exports = Class( 'StackedGroupUi' )
 
         if ( this.hasVisibleField( index ) )
         {
-            const header = this._$container.find( 'dl' )[ index ];
+            const header = this._container.querySelectorAll( 'dl' )[ index ];
 
             header.classList.remove( 'hidden' );
         }
