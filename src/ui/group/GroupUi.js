@@ -366,12 +366,6 @@ module.exports = Class( 'GroupUi' )
      */
     'protected setElementIdIndexes': function( elements, index )
     {
-        // Todo: Transitional step to remove jQuery
-        if ( elements instanceof jQuery )
-        {
-            elements = elements[ 0 ];
-        }
-
         for ( var i = 0; i < elements.length; i++ )
         {
             var element      = elements[ i ];

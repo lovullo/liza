@@ -216,6 +216,7 @@ module.exports = Class( 'TabbedGroupUi' )
         var $container = this._getTabContainer();
 
         var $content = this.$baseTabContent.clone( true );
+        var content  = $content[ 0 ];
         var id       = $content.attr( 'id' );
         var index    = this.getCurrentIndex();
 
@@ -224,7 +225,7 @@ module.exports = Class( 'TabbedGroupUi' )
         $content.attr( 'id', id );
 
         // properly name the elements to prevent id conflicts
-        this.setElementIdIndexes( $content.find( '*' ), index );
+        this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
 
         // append the content
         $container.append( $content );

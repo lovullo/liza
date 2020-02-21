@@ -157,13 +157,15 @@ module.exports = Class( 'SideTableGroupUi' )
     {
         var $col_head = this.$baseHeadColumn.clone( true ),
             $col_body = this.$baseBodyColumn.clone( true ),
+            col_head  = $col_head[ 0 ],
+            col_body  = $col_body[ 0 ],
             $thead    = this.$table.find( 'thead' ),
             $tbody    = this.$table.find( 'tbody' ),
             index     = this.getCurrentIndex();
 
         // properly name the elements to prevent id conflicts
-        this.setElementIdIndexes( $col_head.find( '*' ), index );
-        this.setElementIdIndexes( $col_body.find( '*' ), index );
+        this.setElementIdIndexes( col_head.getElementsByTagName( '*' ), index );
+        this.setElementIdIndexes( col_body.getElementsByTagName( '*' ), index );
 
         // add the column headings
         $col_head.each( function( i, th )

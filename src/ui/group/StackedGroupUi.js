@@ -69,8 +69,9 @@ module.exports = Class( 'StackedGroupUi' )
         this.__super( index );
 
         const $item = this._$dl.clone();
+        const item  = $item[ 0 ];
 
-        this.setElementIdIndexes( $item.find( '*' ), index );
+        this.setElementIdIndexes( item.getElementsByTagName( '*' ), index );
 
         // add the index to the row title
         $item.find( 'span.item-index' ).text( ' ' + ( index + 1 ) );
