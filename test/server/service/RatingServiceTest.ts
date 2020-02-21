@@ -423,7 +423,7 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
-    ( <[string, Record<string, any>, number, boolean][]>[
+    ( <[string, Record<string, any>, number[], boolean][]>[
         [
             "delay action is returned when raters are pending",
             {
@@ -432,7 +432,7 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 0 ],
             },
-            2,
+            [ 2 ],
             true
         ],
         [
@@ -441,9 +441,9 @@ describe( 'RatingService', () =>
                 'supplier-a__retry': [ 0 ],
                 'supplier-b__retry': [ 0 ],
                 'supplier-c__retry': [ 0 ],
-                'supplier-d__retry': [ 0 ],
+                'supplier-d__retry': [ [ 0 ] ],
             },
-            0,
+            [ 0 ],
             false
         ],
     ] ).forEach( ( [label, supplier_data, expected_count, expected_delay_action ]) =>
@@ -483,7 +483,7 @@ describe( 'RatingService', () =>
                     ? expect( actions ).to.deep.equal( [ expected_action ] )
                     : expect( actions ).to.not.equal( [ expected_action ] );
 
-                expect( resp.data[ '__rate_pending' ] ).to.equal( expected_count );
+                expect( resp.data[ '__rate_pending' ] ).to.deep.equal( expected_count );
                 sent = true;
                 return server;
             };

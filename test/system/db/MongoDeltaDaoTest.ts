@@ -61,7 +61,7 @@ describe( 'system.db.MongoDeltaDao', () =>
                     callback )
                 {
                     expect( selector[ 'ratedata.__rate_pending' ] )
-                        .to.deep.equal( { $in: [ 0, null ] } );
+                        .to.deep.equal( { $in: [ [ 0 ], null ] } );
                     expect( selector.deltaError )
                         .to.deep.equal( { $ne: true } );
                     expect( selector.published )
