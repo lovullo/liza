@@ -151,4 +151,76 @@ describe( 'ui.ElementStyler', () =>
                 .to.equal( expected_id );
         } );
     } );
+
+
+    [
+
+        {
+            label:  'returns multiple elements when index not defined for',
+            name:   'noyes_foo',
+            index:  undefined,
+            qtypes: {
+                noyes_foo: {
+                    type:  'noyes',
+                }
+            },
+            expected: [ 'bar', 'foo' ],
+        },
+
+        {
+            label:  'returns first element of array when id is not found but index is defined',
+            name:   'noyes_baz',
+            index:  '0',
+            qtypes: {
+                noyes_baz: {
+                    type:  'noyes',
+                }
+            },
+            expected: 'bar',
+        },
+
+        {
+            label:  'returns second element of array when id is not found but index is defined',
+            name:   'noyes_baz',
+            index:  '1',
+            qtypes: {
+                noyes_baz: {
+                    type:  'noyes',
+                }
+            },
+            expected: 'foo',
+        },
+    ].forEach( ( { label, name, qtypes, index, expected } ) =>
+    {
+        it( label + " " + name, () =>
+        {
+            // Stub document and jQuery calls
+            $      = sinon.stub();
+            jQuery = sinon.stub();
+
+            const document = {
+                getElementById: sinon.stub().returns( null )
+            };
+
+            jQuery.withArgs( 'body' ).returns( { context: document } );
+
+            const sut = Sut( jQuery );
+
+            sut.setTypeData( qtypes );
+
+            const stubbedSelectorResults = [ 'bar', 'foo' ];
+
+            const context = {
+                querySelectorAll: sinon.stub().returns( stubbedSelectorResults )
+            };
+
+            jQuery.withArgs( expected ).returns( expected );
+
+            var results = sut.getWidgetByName( name, index, null, context );
+
+            sinon.assert.calledOnce( context.querySelectorAll );
+
+            expect( results ).to.equal( expected );
+        } );
+    } );
 } );

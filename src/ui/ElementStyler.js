@@ -878,8 +878,8 @@ module.exports = Class( 'ElementStyler',
             return context.querySelectorAll( '[data-field-name="' + name + '"]' )[ index ];
         }
 
-        // If no index, return first element
-        return context.querySelector( '[data-field-name="' + name + '"]' );
+        // If no index, return all elements
+        return context.querySelectorAll( '[data-field-name="' + name + '"]' );
     },
 
 
