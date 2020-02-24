@@ -77,7 +77,7 @@ export class MongoDeltaDao implements DeltaDao
                 {
                     published:  false,
                     deltaError: { $ne: true },
-                    'ratedata.__rate_pending': { $in: [ 0, null ] },
+                    'ratedata.__rate_pending': { $in: [ [ 0 ], null ] },
                     env:        this._env,
                 },
                 { fields: this.RESULT_FIELDS },

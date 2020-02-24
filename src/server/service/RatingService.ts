@@ -318,7 +318,7 @@ export class RatingService
         // set count of pending raters
         const retry_count = this._getRetryCount( data );
 
-        data[ '__rate_pending' ] = retry_count;
+        data[ '__rate_pending' ] = [ retry_count ];
 
         if ( retry_count > 0 )
         {
@@ -419,7 +419,17 @@ export class RatingService
         const retry_pattern = /^(.+)__retry$/;
 
         return Object.keys( data )
-            .filter( field => field.match( retry_pattern ) && !!data[ field ][ 0 ] )
+            .filter( field =>
+            {
+                let value = Array.isArray( data[ field ] )
+
+                    // In case the data are in a nested array
+                    // e.g. data[ field ] === [ [ 0 ] ]
+                    ? Array.prototype.concat.apply( [], data[ field ] )
+                    : data[ field ];
+
+                return field.match( retry_pattern ) && !!value[ 0 ];
+            } )
             .length;
     }
 
