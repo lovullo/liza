@@ -20,7 +20,7 @@
  */
 
 import { EventHandler } from './EventHandler';
-import { ClientActionType } from '../action/ClientAction';
+import { ClientAction, ClientActionType } from '../action/ClientAction';
 
 
 /**
@@ -46,24 +46,24 @@ export class DelayEventHandler implements EventHandler
     handle(
         _type: ClientActionType,
         c:     () => void,
-        data:  Record<string, any>
+        data:  ClientAction
     ): this
     {
         const delay_ms = ( !isNaN( +data.seconds ) ) ? +data.seconds * 1e3 : 0;
 
         setTimeout( () =>
             {
-                // Include the indv here, otherwise the server
-                // will skip rating because no data has changed
-                this._client.handleEvent(
-                    data.then.action,
-                    { indv: 'retry' }
-                );
+                const then_action = data.then.action;
+                const then_data   = data.then;
+
+                // pass along any arbitrary properties assigned to the action
+                // except the action type itself
+                delete then_data.action;
+
+                this._client.handleEvent( then_action, then_data, c );
             },
             delay_ms
         );
-
-        c();
 
         return this;
     }

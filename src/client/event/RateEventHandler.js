@@ -128,7 +128,7 @@ module.exports = Class( 'RateEventHandler' )
 
         function dorate()
         {
-            _self._scheduleRating( delay, function( finish )
+            _self._scheduleRating( delay, data.indv, function( finish )
             {
                 _self._performRating( quote, data.indv, data.stepId, function()
                 {
@@ -153,10 +153,17 @@ module.exports = Class( 'RateEventHandler' )
      * delay period.
      *
      * @param {number}   delay    rating delay in milliseconds
+     * @param {str}      indv     a rating command
      * @param {Function} callback continuation after delay
      */
-    'private _scheduleRating': function( delay, callback )
+    'private _scheduleRating': function( delay, indv, callback )
     {
+        if( indv )
+        {
+            callback( function(){} );
+            return;
+        }
+
         // queue display of "rating in progress" dialog
         var dialog_close = this.queueProgressDialog(
             this.__self.$( '_DIALOG_DELAY_MS' )

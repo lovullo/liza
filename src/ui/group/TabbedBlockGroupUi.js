@@ -37,27 +37,27 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 {
     /**
      * The parent element boxy thingy that contains all other elements
-     * @type {jQuery}
+     * @type {DomElement}
      */
-    'private _$box': null,
+    'private _box': null,
 
     /**
      * The list containing all clickable tabs
-     * @type {jQuery}
+     * @type {DomElement}
      */
-    'private _$tabList': null,
+    'private _tabList': null,
 
     /**
      * Element representing a tab itself
-     * @type {jQuery}
+     * @type {DomElement}
      */
-    'private _$tabItem': null,
+    'private _tabItem': null,
 
     /**
      * Base tab content element
-     * @type {jQuery}
+     * @type {DomElement}
      */
-    'private _$contentItem': null,
+    'private _contentItem': null,
 
     /**
      * Index of the currently selected tab
@@ -70,6 +70,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
      * @type {number}
      */
     'private _defaultSelectionField': null,
+
+     /**
+     * Block flags
+     * @type {array}
+     */
+    'private _blockFlags': [],
 
     /**
      * Disable flags
@@ -121,9 +127,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var _self = this;
 
         // hide flags
-        this._disableFlags = this._getBox()
-            .attr( 'data-disable-flags' )
-            .split( ';' );
+        var box = this._getBox();
+
+        var disable_attr = box.getAttribute( 'data-disable-flags' );
+        var block_attr   = box.getAttribute( 'data-block-flags' );
+        this._disableFlags = ( disable_attr ) ? disable_attr.split( ';' ) : [];
+        this._blockFlags   = ( block_attr ) ? block_attr.split( ' ' ) : [];
 
         quote.visitData( function( bucket )
         {
@@ -134,21 +143,33 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _processTabExtract': function()
     {
-        var $box = this._getBox();
+        var box = this._getBox();
 
-        this._tabExtractSrc         = $box.attr( 'data-tabextract-src' );
-        this._tabExtractDest        = $box.attr( 'data-tabextract-dest' );
-        this._defaultSelectionField = $box.attr( 'data-default-selected-field' ) || '';
+        this._tabExtractSrc         = box.getAttribute( 'data-tabextract-src' );
+        this._tabExtractDest        = box.getAttribute( 'data-tabextract-dest' );
+        this._defaultSelectionField = box.getAttribute( 'data-default-selected-field' ) || '';
     },
 
 
     'private _processElements': function()
     {
-        this._$box     = this.$content.find( '.groupTabbedBlock' );
-        this._$tabList = this._$box.find( 'ul.tabs' );
+        this._box     = this.$content.find( '.groupTabbedBlock' )[ 0 ];
+        this._tabList = this._box.querySelector( 'ul.tabs' );
 
-        this._$tabItem     = this._$box.find( 'li' ).detach();
-        this._$contentItem = this._$box.find( '.tab-content' ).detach();
+        var tab     = this._box.querySelector( 'li' );
+        var content = this._box.querySelector( '.tab-content' );
+
+        this._tabItem     = tab.parentElement.removeChild( tab );
+        this._contentItem = content.parentElement.removeChild( content );
+
+        var pending_div = document.createElement( 'div' );
+
+        pending_div.classList.add( 'supplier-pending' );
+        pending_div.classList.add( 'hidden' );
+
+        pending_div.innerText = 'Please wait...';
+
+        this._box.appendChild( pending_div );
     },
 
 
@@ -172,13 +193,19 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _processLengthField': function()
     {
-        this._lengthField = this._getBox().attr( 'data-length-field' ) || '';
+        this._lengthField = this._getBox().getAttribute( 'data-length-field' ) || '';
     },
 
 
-    'private _processHideFlags': function( data )
+    'private _processHideFlags': function()
     {
-        var n = 0;
+        if ( this._disableFlags.length === 0 )
+        {
+            return;
+        }
+
+        var data = this._bucket.getData();
+        var n    = 0;
 
         var disables = [];
         for ( var i in this._disableFlags )
@@ -205,24 +232,101 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
             n += +hide;
         }
 
-        this._getBox().toggleClass(
+        this._toggleClass(
+            this._getBox(),
             'disabled',
             ( n >= this._getTabCount() )
         );
     },
 
 
+    /**
+     * Update the related pending UI elements
+     *
+     * @param {boolean} pending whether we are setting pending to true or false
+     *
+     * @return {TabbedBlockGroupUi} self
+     */
+    'private _setPending': function( pending )
+    {
+        this._toggleClass(
+            this._box.querySelector( '.supplier-pending' ),
+            'hidden',
+            !pending
+        );
+
+        this._toggleClass(
+            this._box.querySelector( '.supplier-selector' ),
+            'hidden',
+            pending
+        );
+
+        this._toggleClass(
+            this._box.querySelector( '.tab-content' ),
+            'hidden',
+            pending
+        );
+
+        this._toggleClass( this._tabList, 'hidden', pending );
+
+        return this;
+    },
+
+
+    'private _processBlockFlags': function()
+    {
+        if ( this._blockFlags.length === 0 )
+        {
+            return;
+        }
+
+        for ( var index in this._blockFlags )
+        {
+            var flag = this._blockFlags[ index ];
+            var data = this._bucket.getDataByName( flag ) || [];
+
+            if( data.length === 0 )
+            {
+                this._setPending( false );
+                return;
+            }
+
+            for ( var data_index in data )
+            {
+                if ( +data[ data_index ] === 0 )
+                {
+                    this._setPending( false );
+                    return;
+                }
+            }
+        }
+
+        this._setPending( true );
+    },
+
+
     'private _disableTab': function( i, disable )
     {
-        this._getTab( i ).toggleClass( 'disabled', disable );
-        //this._getTabContent( i ).addClass( 'hidden', disable );
+        var tab = this._getTab( i );
+
+        if ( disable && !tab.classList.contains( 'disabled' ) )
+        {
+            tab.classList.add( 'disabled' );
+        }
+        else if ( !disable && tab.classList.contains( 'disabled' ) )
+        {
+            tab.classList.remove( 'disabled' );
+        }
     },
 
 
     'private _removeTab': function( index )
     {
-        this._getTab( index ).remove();
-        this._getTabContent( index ).remove();
+        var tab     = this._getTab( index );
+        var content = this._getTabContent( index );
+
+        tab.parentElement.removeChild( tab );
+        content.parentElement.removeChild( content );
     },
 
 
@@ -239,6 +343,33 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         return this;
     },
 
+
+    /**
+     * Sets element value given a name and index
+     *
+     * This has the performance benefit of searching *only* within the group
+     * rather than scanning the entire DOM (or a much larger subset)
+     *
+     * @param {string}  name         element name
+     * @param {number}  index        index to set
+     * @param {string}  value        value to set
+     * @param {boolean} change_event whether to trigger change event
+     *
+     * @return {TabbedBlockGroupUi} self
+     */
+    'override public setValueByName': function(
+        name,
+        index,
+        value,
+        change_event
+    )
+    {
+        this._processHideFlags();
+        this._processBlockFlags();
+
+        this.__super.call( this, arguments );
+        return this;
+    },
 
     'override protected addIndex': function( index )
     {
@@ -330,12 +461,15 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         }
 
         // append the tab itself
-        this._$tabList.append( this._createTab( index ) );
+        this._tabList.appendChild( this._createTab( index )[ 0 ] );
 
         // append the tab content
-        this._$box
-            .find( '.tabClear:last' )
-            .before( this._createTabContent( index ) );
+        var clear_tabs = this._box.getElementsByClassName( 'tabClear' );
+
+        clear_tabs[ clear_tabs.length - 1 ].insertAdjacentElement(
+            'beforebegin',
+            this._createTabContent( index )[ 0 ]
+        );
 
         // hide the add button if needed
         this._checkAddButton();
@@ -351,7 +485,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var _self = this;
 
         return this._finalizeContent( index,
-            this._$tabItem.clone( true )
+            $( this._tabItem.cloneNode( true ) )
                 .click( function()
                 {
                     _self._selectTab( index );
@@ -370,14 +504,14 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     'private _createTabContent': function( index )
     {
         return this._finalizeContent( index,
-            this._$contentItem.clone( true )
+            $( this._contentItem.cloneNode( true ) )
         );
     },
 
 
     'private _finalizeContent': function( index, $content )
     {
-        const content = $content[ 0 ];
+        var content = $content[ 0 ];
 
         // apply styling and id safeguards
         this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
@@ -448,48 +582,50 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     {
         // avoiding use of jQuery selector because it caches DOM elements, which
         // causes problems in other parts of the framework
-        return $( this.$content[ 0 ].getElementsByTagName( 'div' )[ 0 ] );
+        return this.$content[ 0 ].getElementsByTagName( 'div' )[ 0 ];
     },
 
 
     'private _getTabContent': function( index )
     {
-        return this._$box.find( '.tab-content:nth(' + index + ')' );
+        return this._box.getElementsByClassName( 'tab-content' )[ index ];
     },
 
 
     'private _getTab': function( index )
     {
-        return this._$tabList.find( 'li:nth(' + index + ')' );
+        return this._tabList.querySelectorAll( 'li' )[ index ];
     },
 
 
     'private _showTab': function( index )
     {
-        this._getTab( index ).removeClass( 'inactive' );
-        this._getTabContent( index ).removeClass( 'inactive' );
+        this._toggleClass( this._getTab( index ), 'inactive', false );
+        this._toggleClass( this._getTabContent( index ), 'inactive', false );
     },
 
 
     'private _hideTab': function( index )
     {
-        this._getTab( index ).addClass( 'inactive' );
-        this._getTabContent( index ).addClass( 'inactive' );
+        this._toggleClass( this._getTab( index ), 'inactive', true );
+        this._toggleClass( this._getTabContent( index ), 'inactive', true );
     },
 
 
     'private _getLastEligibleTab': function()
     {
-        var tab_index = this._$tabList.find( 'li' ).not( '.disabled' ).last().index();
-        return ( tab_index === -1 )
+        var i = this._tabList.querySelectorAll( 'li:not(.disabled)' ).length;
+
+        return ( i === -1 )
             ? 0
-            : tab_index;
+            : i;
     },
 
 
     'private _isEligibleTab': function( index )
     {
-        return !this._$tabList.find( 'li' ).get( index ).classList.contains( 'disabled' );
+        return !this._tabList.querySelectorAll( 'li' )[ index ]
+                             .classList.contains( 'disabled' );
     },
 
 
@@ -499,7 +635,8 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         this.__super();
 
         // we will have already rated once by the time this is called
-        this._processHideFlags( this._bucket.getData() );
+        this._processHideFlags();
+        this._processBlockFlags();
 
         if ( this._defaultSelectionField === '' )
         {
@@ -523,5 +660,34 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         }
 
         return this;
+    },
+
+
+    /**
+     * Toggles a class name on a given element
+     *
+     * @param {DomElement} elem       the element
+     * @param {string}     class_name the class to toggle`
+     * @param {boolean}    force      whether to add or remove the class
+     *
+     * @returns {boolean} whether or not the toggle happened
+     */
+    'private _toggleClass': function( elem, class_name, force )
+    {
+        if( elem )
+        {
+            if ( force && !elem.classList.contains( class_name ) )
+            {
+                elem.classList.add( class_name );
+                return true;
+            }
+            else if ( !force && elem.classList.contains( class_name ) )
+            {
+                elem.classList.remove( class_name );
+                return true;
+            }
+        }
+
+        return false;
     }
 } );

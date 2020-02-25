@@ -75,7 +75,6 @@ export class RatingService
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
         private readonly _createDelta:   DeltaConstructor<number>,
-
     ) {}
 
 
@@ -339,9 +338,12 @@ export class RatingService
         )
         {
             actions.push( {
-                "action": "delay",
-                "seconds": this.RETRY_DELAY,
-                "then": { action: "rate" }
+                'action':  'delay',
+                'seconds': this.RETRY_DELAY,
+                'then': {
+                    action: 'rate',
+                    indv:   'retry',
+                },
             } );
 
             quote.setRetryAttempts( retry_attempts + 1 );

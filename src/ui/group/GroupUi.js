@@ -1108,7 +1108,7 @@ module.exports = Class( 'GroupUi' )
      *
      * @return {GroupUi} self
      */
-    'public setValueByName': function( name, index, value, change_event )
+    'virtual public setValueByName': function( name, index, value, change_event )
     {
         this.styler.setValueByName(
             name, index, value, change_event,
