@@ -819,7 +819,7 @@ module.exports = Class( 'ElementStyler',
      * @param {string}      name     element name (question name)
      * @param {number=}     index    index of element to retrieve (bucket index)
      * @param {string=}     filter   filter to apply to widgets
-     * @param {HTMLElement} $context filtering context
+     * @param {HTMLElement} context  filtering context
      *
      * @return {jQuery} matches
      */
@@ -830,7 +830,15 @@ module.exports = Class( 'ElementStyler',
         // Todo: Transitional step to remove jQuery
         if ( context instanceof jQuery )
         {
+            if ( context.length === 0 )
+            {
+                // No elements to search
+                return context;
+            }
+
+            const singleIndex = context.singleIndex;
             context = context[ 0 ];
+            context.singleIndex = singleIndex;
         }
 
         // find the field; note that we *skip* the index selection if we have
@@ -854,6 +862,10 @@ module.exports = Class( 'ElementStyler',
      * not find a match on the id, this will be slower than if we hadn't
      * performed the check to begin with, so the idea is to find the id for as
      * many as possible.
+     *
+     * @param {string}      name     element name (question name)
+     * @param {number=}     index    index of element to retrieve (bucket index)
+     * @param {HTMLElement} context  filtering context
      */
     'private _getWidgetByNameQuick': function( name, index, context )
     {

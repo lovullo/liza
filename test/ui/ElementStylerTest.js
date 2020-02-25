@@ -156,10 +156,11 @@ describe( 'ui.ElementStyler', () =>
     [
 
         {
-            label:  'returns multiple elements when index not defined for',
-            name:   'noyes_foo',
-            index:  undefined,
-            qtypes: {
+            label:        'returns multiple elements when index not defined for',
+            name:         'noyes_foo',
+            index:        undefined,
+            single_index: false,
+            qtypes:       {
                 noyes_foo: {
                     type:  'noyes',
                 }
@@ -168,10 +169,24 @@ describe( 'ui.ElementStyler', () =>
         },
 
         {
-            label:  'returns first element of array when id is not found but index is defined',
-            name:   'noyes_baz',
-            index:  '0',
-            qtypes: {
+            label:        'returns multiple indexes when index is defined and singleIndex is true',
+            name:         'noyes_bar',
+            index:        '1',
+            single_index: true,
+            qtypes:       {
+                noyes_baz: {
+                    type:  'noyes',
+                }
+            },
+            expected: [ 'bar', 'foo' ],
+        },
+
+        {
+            label:        'returns first element of array when id is not found but index is defined',
+            name:         'noyes_baz',
+            index:        '0',
+            single_index: false,
+            qtypes:       {
                 noyes_baz: {
                     type:  'noyes',
                 }
@@ -180,17 +195,18 @@ describe( 'ui.ElementStyler', () =>
         },
 
         {
-            label:  'returns second element of array when id is not found but index is defined',
-            name:   'noyes_baz',
-            index:  '1',
-            qtypes: {
+            label:        'returns second element of array when id is not found but index is defined',
+            name:         'noyes_baz',
+            index:        '1',
+            single_index: false,
+            qtypes:       {
                 noyes_baz: {
                     type:  'noyes',
                 }
             },
             expected: 'foo',
         },
-    ].forEach( ( { label, name, qtypes, index, expected } ) =>
+    ].forEach( ( { label, name, qtypes, index, single_index, expected } ) =>
     {
         it( label + " " + name, () =>
         {
@@ -211,6 +227,7 @@ describe( 'ui.ElementStyler', () =>
             const stubbedSelectorResults = [ 'bar', 'foo' ];
 
             const context = {
+                singleIndex: single_index,
                 querySelectorAll: sinon.stub().returns( stubbedSelectorResults )
             };
 
@@ -223,4 +240,5 @@ describe( 'ui.ElementStyler', () =>
             expect( results ).to.equal( expected );
         } );
     } );
+
 } );
