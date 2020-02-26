@@ -150,7 +150,8 @@ describe( 'system.StandardLogger captures and logs events', () =>
 
         sut.notice( 'Foo', context );
 
-        expect( con.getStr() ).to.deep.equal( expected_output );
+        expect( con.getStr() )
+            .to.deep.equal( JSON.stringify( expected_output ) );
     } );
 } );
 
