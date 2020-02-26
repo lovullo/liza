@@ -319,10 +319,11 @@ module.exports = Class( 'CollapseTableGroupUi' )
     'public addRow': function()
     {
         var $unit = this._$baseRows.clone( true ),
+            unit  = $unit[ 0 ],
             index = this.getCurrentIndex();
 
         // properly name the elements to prevent id conflicts
-        this.setElementIdIndexes( $unit.find( '*' ), index );
+        this.setElementIdIndexes( unit.getElementsByTagName( '*' ), index );
 
         // add the index to the row title
         $unit.find( 'span.rowindex' ).text( ' ' + ( index + 1 ) );

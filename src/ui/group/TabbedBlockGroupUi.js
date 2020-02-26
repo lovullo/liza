@@ -377,8 +377,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _finalizeContent': function( index, $content )
     {
+        const content = $content[ 0 ];
+
         // apply styling and id safeguards
-        this.setElementIdIndexes( $content.find( '*' ), index );
+        this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
         this.styler.apply( $content );
 
         // allow hooks to perform their magic on our content

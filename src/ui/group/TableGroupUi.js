@@ -258,12 +258,13 @@ module.exports = Class( 'TableGroupUi' )
     _incRow: function( $row )
     {
         var new_index = this.getCurrentIndex();
+        var row       = $row[ 0 ];
 
         // update the row id
         $row.attr( 'id', this._genTableRowId( new_index ) );
 
         // properly name the elements to prevent id conflicts
-        this.setElementIdIndexes( $row.find( '*' ), new_index );
+        this.setElementIdIndexes( row.getElementsByTagName( '*' ), new_index );
 
         return new_index;
     },

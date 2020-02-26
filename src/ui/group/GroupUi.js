@@ -151,6 +151,18 @@ module.exports = Class( 'GroupUi' )
     'protected context': null,
 
     /**
+     * Group context
+     * @type {HTMLElement}
+     */
+    'protected content': null,
+
+    /**
+     * jQuery object
+     * @type {jQuery}
+     */
+    'protected jquery': null,
+
+    /**
      * Styler when fields are no longer applicable
      * @type {FieldStyler}
      */
@@ -180,9 +192,12 @@ module.exports = Class( 'GroupUi' )
         this.group     = group;
         this.$content  = $content;
         this.styler    = styler;
-        this._jquery   = jquery;
+        this.jquery    = jquery;
         this.context   = context;
         this._naStyler = na_styler;
+
+        // Todo: Transition away from jQuery
+        this.content   = $content[ 0 ];
     },
 
 
@@ -326,7 +341,7 @@ module.exports = Class( 'GroupUi' )
             e.preventDefault();
 
             // TODO: index
-            var $this = _self._jquery( this ),
+            var $this = _self.jquery( this ),
                 ref   = $this.attr( 'data-ref' ),
                 type  = $this.attr( 'data-type' ),
                 index = +$this.attr( 'data-index' ) || 0;
@@ -359,30 +374,28 @@ module.exports = Class( 'GroupUi' )
      *
      * The name format is expected to be: name_i, where i is the index.
      *
-     * @param jQuery  $elements elements to set index on
+     * @param HTML    elements  elements to set index on
      * @param Integer index     index to set
      *
      * @return void
      */
-    'protected setElementIdIndexes': function( $elements, index )
+    'protected setElementIdIndexes': function( elements, index )
     {
-        var _self = this;
-
-        $elements.each( function( i )
+        for ( var i = 0; i < elements.length; i++ )
         {
-            var $element     = _self._jquery( this );
-            var id           = $element.attr( 'id' );
+            var element      = elements[ i ];
+            var id           = element.getAttribute( 'id' ) || '';
             var element_data = 0;
 
-            // grab the index from the id
+            // grab the index from the id if found
             if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
             {
                 // regenerate the id
-                $element.attr( 'id', element_data[1] + index );
+                element.setAttribute( 'id', element_data[1] + index );
             }
 
-            $element.attr( 'data-index', index );
-        });
+            element.setAttribute( 'data-index', index );
+        }
     },
 
 
@@ -432,7 +445,7 @@ module.exports = Class( 'GroupUi' )
     },
 
 
-    'protected getCurrentIndex': function()
+    'public getCurrentIndex': function()
     {
         return ( this.getCurrentIndexCount() - 1 );
     },
@@ -825,7 +838,7 @@ module.exports = Class( 'GroupUi' )
      * @param index
      * @returns {boolean}
      */
-    'protected hasVisibleField'( index )
+    'public hasVisibleField': function( index )
     {
         return this._visCount[ index ] > 0 ? true : false;
     },
