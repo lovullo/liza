@@ -168,7 +168,7 @@ export class StandardLogger implements PsrLogger
         level:   LogLevel,
         msg:     string | object,
         context: object = {},
-    ): StructuredLog
+    ): string
     {
         let str: string;
 
@@ -197,6 +197,6 @@ export class StandardLogger implements PsrLogger
             structured_log[ "context" ] = context;
         }
 
-        return structured_log;
+        return JSON.stringify( structured_log );
     }
 }
