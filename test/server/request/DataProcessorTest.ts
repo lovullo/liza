@@ -524,6 +524,7 @@ function createStubProgram( internals: { internal: boolean } )
             qtypes: {},
         },
         mapis:               {},
+        rateSteps:           [],
         apis:                {},
 
         getId(){ return 'Foo'; },
@@ -750,6 +751,16 @@ function createStubQuote()
         getTopSavedStepId()
         {
             return <PositiveInteger>1;
+        },
+
+        setRetryAttempts()
+        {
+            return this;
+        },
+
+        getRetryAttempts()
+        {
+            return 1;
         },
     };
 }

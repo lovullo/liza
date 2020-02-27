@@ -84,4 +84,20 @@ export declare class ServerSideQuote extends BaseQuote
      * @return program version
      */
     getProgramVersion(): string;
+
+
+    /**
+     * Set the number of retries attempted
+     *
+     * @param {number} attempts the number of attempts
+     */
+    setRetryAttempts( attempts: number ): this;
+
+
+    /**
+     * Get the number of retries attempted
+     *
+     * @return {number} the number of attempts that have been made
+     */
+    getRetryAttempts(): number;
 }

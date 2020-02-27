@@ -19,9 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class             = require( 'easejs' ).Class,
-    EventHandler      = require( './EventHandler' ),
-    UnknownEventError = require( './UnknownEventError' );
+import { EventHandler, EventHandlers } from "./EventHandler";
+import { UnknownEventError } from "./UnknownEventError";
+import { ClientActionType } from "../action/ClientAction";
 
 
 /**
@@ -29,31 +29,15 @@ var Class             = require( 'easejs' ).Class,
  *
  * Handlers must be registered to recgonize an event.
  */
-module.exports = Class( 'DelegateEventHandler' )
-    .implement( EventHandler )
-    .extend(
+export class DelegateEventHandler implements EventHandler
 {
-    /**
-     * Hash of event handlers to delegate to for various events
-     * @type {Object}
-     */
-    'private _handlers': {},
-
-
     /**
      * Initialize delegate with handlers to delegate requests to for each
      * supported event type
      *
      * @param {Object} handlers events as keys, handlers as values
      */
-    __construct: function( handlers )
-    {
-        // register each provided handler
-        for ( var type in handlers )
-        {
-            this._addHandler( type, handlers[ type ] );
-        }
-    },
+    constructor( private readonly _handlers: EventHandlers  ){}
 
 
     /**
@@ -63,10 +47,10 @@ module.exports = Class( 'DelegateEventHandler' )
      *
      * @return {boolean} whether a handler exists for the given type
      */
-    'public hasHandler': function( type )
+    hasHandler( type: ClientActionType ): boolean
     {
         return ( this._handlers[ type ] !== undefined );
-    },
+    }
 
 
     /**
@@ -84,41 +68,23 @@ module.exports = Class( 'DelegateEventHandler' )
      *
      * @return {EventHandler} self
      */
-    'public handle': function( type )
+    handle(
+        type: ClientActionType,
+        c:    () => void,
+        data: any
+    ): this
     {
-        var handler = this._handlers[ type ];
+        var handler: EventHandler = this._handlers[ type ];
 
         // fail if we do not have a handler for this particular event
         if ( !handler )
         {
-            throw UnknownEventError( "Unsupported event type: " + type );
+            throw new UnknownEventError( "Unsupported event type: " + type );
         }
 
         // delegate
-        handler.handle.apply( handler, arguments );
+        handler.handle.apply( handler, [ type, c, data ] );
 
-        return this;
-    },
-
-
-    /**
-     * Add an EventHandler for a given event type
-     *
-     * Warning: this will overwrite existing handlers for this type.
-     *
-     * @param {string}       type    event id
-     * @param {EventHandler} handler handler for event
-     *
-     * @return {ClientEventHandler} self
-     */
-    'private _addHandler': function( type, handler )
-    {
-        if ( !( Class.isA( EventHandler, handler ) ) )
-        {
-            throw TypeError( "Expected EventHandler for event type " + type );
-        }
-
-        this._handlers[ type ] = handler;
         return this;
     }
-} );
+};

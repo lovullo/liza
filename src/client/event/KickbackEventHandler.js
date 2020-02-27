@@ -24,7 +24,7 @@ var Class        = require( 'easejs' ).Class,
 
 
 /**
- * Performs rate requests
+ * Handles kickback events
  */
 module.exports = Class( 'KickbackEventHandler' )
     .implement( EventHandler )
@@ -54,8 +54,6 @@ module.exports = Class( 'KickbackEventHandler' )
      * @param {string} type event id; ignored
      *
      * @param {function(*,Object)} continuation to invoke on completion
-     *
-     * @return {KickbackEventHandler} self
      */
     'public handle': function( type, c, data )
     {

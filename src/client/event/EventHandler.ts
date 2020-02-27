@@ -19,10 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+import { ClientActionType } from "../action/ClientAction";
 
 
-module.exports = Interface( 'EventHandler',
+export interface EventHandler
 {
     /**
      * Handle an event of the given type
@@ -33,9 +33,17 @@ module.exports = Interface( 'EventHandler',
      * the caller, then a callback should be provided as an argument to the
      * handler.
      *
-     * @param {string} type event id
-     *
-     * @return {EventHandler} self
+     * @param _type - event id; ignored
+     * @param c     - to invoke on completion
+     * @param data  - additional event data
      */
-    'public handle': [ 'type' /*, ... */ ]
-} );
+    handle(
+        _type: ClientActionType,
+        c:     () => void,
+        data:  any
+    ): this
+}
+
+export type EventHandlers = {
+    [P: string]: EventHandler
+}

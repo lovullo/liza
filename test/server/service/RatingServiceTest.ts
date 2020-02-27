@@ -201,7 +201,7 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
-    it( "saves rate data to it's own field", () =>
+    it( "saves rate data to its own field", () =>
     {
         const {
             logger,
@@ -243,7 +243,7 @@ describe( 'RatingService', () =>
     } );
 
 
-    it( "saves delta to it's own field", () =>
+    it( "saves delta to its own field", () =>
     {
         const {
             logger,
@@ -289,7 +289,6 @@ describe( 'RatingService', () =>
         return sut.request( request, response, quote, "" )
             .then( () => { expect( saved_quote ).to.be.true; } );
     } );
-
 
 
     it( "rejects and responds with error", () =>
@@ -423,7 +422,15 @@ describe( 'RatingService', () =>
             .then( () => expect( sent ).to.be.true );
     } );
 
-    ( <[string, Record<string, any>, number[], boolean][]>[
+    ( <[
+        string,
+        Record<string, any>,
+        number[],
+        boolean,
+        boolean[],
+        number,
+        number
+    ][]>[
         [
             "delay action is returned when raters are pending",
             {
@@ -433,7 +440,10 @@ describe( 'RatingService', () =>
                 'supplier-d__retry': [ 0 ],
             },
             [ 2 ],
-            true
+            true,
+            [ true ],
+            0,
+            0,
         ],
         [
             "delay action is not returned when all raters are completed",
@@ -444,9 +454,48 @@ describe( 'RatingService', () =>
                 'supplier-d__retry': [ [ 0 ] ],
             },
             [ 0 ],
-            false
+            false,
+            [ true ],
+            0,
+            0,
         ],
-    ] ).forEach( ( [label, supplier_data, expected_count, expected_delay_action ]) =>
+        [
+            "Undefined ratesteps defaults gracefully",
+            {
+                'supplier-a__retry': [ 0 ],
+                'supplier-b__retry': [ 0 ],
+                'supplier-c__retry': [ 1 ],
+                'supplier-d__retry': [ 1 ],
+            },
+            [ 2 ],
+            false,
+            undefined,
+            0,
+            0,
+        ],
+        [
+            "Set __rate_pending to zero after max attempts are reached",
+            {
+                'supplier-a__retry': [ 0 ],
+                'supplier-b__retry': [ 0 ],
+                'supplier-c__retry': [ 1 ],
+                'supplier-d__retry': [ 1 ],
+            },
+            [ 0 ],
+            false,
+            undefined,
+            0,
+            30,
+        ],
+    ] ).forEach( ([
+        label,
+        supplier_data,
+        expected_count,
+        expected_delay_action,
+        rate_steps,
+        step_id,
+        attempts,
+    ]) =>
     {
         it( label, () =>
         {
@@ -460,6 +509,7 @@ describe( 'RatingService', () =>
                 server,
                 stub_rate_data,
                 createDelta,
+                program,
             } = getStubs();
 
             let sent = false;
@@ -475,7 +525,7 @@ describe( 'RatingService', () =>
             {
                 const expected_action = {
                     "action": "delay",
-                    "seconds": 2,
+                    "seconds": 5,
                     "then": { action: "rate" }
                 };
 
@@ -483,10 +533,17 @@ describe( 'RatingService', () =>
                     ? expect( actions ).to.deep.equal( [ expected_action ] )
                     : expect( actions ).to.not.equal( [ expected_action ] );
 
-                expect( resp.data[ '__rate_pending' ] ).to.deep.equal( expected_count );
+                expect( resp.data[ '__rate_pending' ] )
+                    .to.deep.equal( expected_count );
+
                 sent = true;
                 return server;
             };
+
+            program.rateSteps      = rate_steps;
+            quote.getProgram       = () => { return program; };
+            quote.getCurrentStepId = () => { return step_id; };
+            quote.getRetryAttempts = () => { return attempts; };
 
             const sut = new Sut( logger, dao, server, raters, createDelta );
             return sut.request( request, response, quote, "" )
@@ -582,6 +639,7 @@ function getStubs()
     const program = <Program>{
         getId:               () => program_id,
         ineligibleLockCount: 0,
+        rateSteps:           [ true ],
     };
 
     // rate reply
@@ -675,7 +733,12 @@ function getStubs()
 
         saveQuoteState(): this
         {
-            throw new Error( "Unused method" );
+            return this;
+        }
+
+        saveQuoteRateRetries(): this
+        {
+            return this;
         }
 
         saveQuoteLockState(): this
@@ -722,6 +785,8 @@ function getStubs()
         isBound:               () => true,
         getTopVisitedStepId:   () => <PositiveInteger>1,
         getTopSavedStepId:     () => <PositiveInteger>1,
+        setRetryAttempts:      () => quote,
+        getRetryAttempts:      () => 1,
     };
 
     return {

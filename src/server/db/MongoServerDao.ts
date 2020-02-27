@@ -313,6 +313,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.importDirty        = 1;
         save_data.published          = false;
         save_data.lastPremDate       = quote.getLastPremiumDate();
+        save_data.retryAttempts      = quote.getRetryAttempts();
         save_data.initialRatedDate   = quote.getRatedDate();
         save_data.explicitLock       = quote.getExplicitLockReason();
         save_data.explicitLockStepId = quote.getExplicitLockStep();
@@ -481,6 +482,27 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             topVisitedStepId: quote.getTopVisitedStepId(),
             topSavedStepId:   quote.getTopSavedStepId(),
         };
+
+        return this.mergeData(
+            quote, update, success_callback, failure_callback
+        );
+    }
+
+
+    /**
+     * Saves the quote retry attempts
+     *
+     * @param Quote    quote            the quote to save
+     * @param Function success_callback function to call on success
+     * @param Function failure_callback function to call if save fails
+     */
+    saveQuoteRateRetries(
+        quote:            ServerSideQuote,
+        success_callback: Callback,
+        failure_callback: Callback,
+    )
+    {
+        var update = { retryAttempts: quote.getRetryAttempts() };
 
         return this.mergeData(
             quote, update, success_callback, failure_callback

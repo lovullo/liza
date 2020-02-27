@@ -53,6 +53,13 @@ export type RateRequestResult = {
  */
 export class RatingService
 {
+    /** The maximum amount of retries to attempt */
+    readonly RETRY_MAX_ATTEMPTS: PositiveInteger = <PositiveInteger>12;
+
+    /** Seconds to wait between retries */
+    readonly RETRY_DELAY: PositiveInteger = <PositiveInteger>5;
+
+
     /**
      * Initialize rating service
      *
@@ -68,6 +75,7 @@ export class RatingService
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
         private readonly _createDelta:   DeltaConstructor<number>,
+
     ) {}
 
 
@@ -316,17 +324,32 @@ export class RatingService
         this._processWorksheetData( quote.getId(), data );
 
         // set count of pending raters
-        const retry_count = this._getRetryCount( data );
+        const retry_count    = this._getRetryCount( data );
+        const retry_attempts = quote.getRetryAttempts();
+        const step           = quote.getCurrentStepId();
+        const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
+        const retry_on_step  = ( retry_attempts > 0 ) ? is_rate_step : true;
 
         data[ '__rate_pending' ] = [ retry_count ];
 
-        if ( retry_count > 0 )
+        if (
+            retry_count > 0 &&
+            retry_attempts < this.RETRY_MAX_ATTEMPTS &&
+            retry_on_step
+        )
         {
             actions.push( {
                 "action": "delay",
-                "seconds": 2,
+                "seconds": this.RETRY_DELAY,
                 "then": { action: "rate" }
             } );
+
+            quote.setRetryAttempts( retry_attempts + 1 );
+            this._dao.saveQuoteRateRetries( quote, () => {}, () => {} );
+        }
+        else if ( retry_attempts >= this.RETRY_MAX_ATTEMPTS )
+        {
+            data[ '__rate_pending' ] = [ 0 ];
         }
 
         if ( ( program.ineligibleLockCount > 0 )

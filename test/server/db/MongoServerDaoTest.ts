@@ -191,6 +191,7 @@ function createStubQuote( metadata: Record<string, any> )
             qtypes: {},
         },
         mapis:               {},
+        rateSteps:           [],
         initQuote:           () => {},
     };
 
@@ -222,6 +223,8 @@ function createStubQuote( metadata: Record<string, any> )
         getProgramId:          () => 'Foo',
         getCurrentStepId:      () => 0,
         setLastPremiumDate:    () => quote,
+        setRetryAttempts:      () => quote,
+        getRetryAttempts:      () => 1,
     };
 
     return quote;

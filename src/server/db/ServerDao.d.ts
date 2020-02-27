@@ -106,6 +106,20 @@ export interface ServerDao
     ): this;
 
 
+     /**
+     * Saves the quote retry attempts
+     *
+     * @param Quote    quote            the quote to save
+     * @param Function success_callback function to call on success
+     * @param Function failure_callback function to call if save fails
+     */
+    saveQuoteRateRetries(
+        quote:            ServerSideQuote,
+        success_callback: Callback,
+        failure_callback: Callback,
+    ): this
+
+
     /**
      * Saves the quote lock state to the database
      *

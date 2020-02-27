@@ -58,6 +58,12 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'private _rate_bucket': null,
 
+    /**
+     * The number of rate retries that have been attempted
+     * @type {number}
+     */
+    'private _retry_attempts': 0,
+
 
     'public setProgramVersion': function( version )
     {
@@ -212,5 +218,29 @@ module.exports = Class( 'ServerSideQuote' )
 
         return this._rate_bucket.getData();
     },
+
+
+    /**
+     * Set the number of retries attempted
+     *
+     * @param {number} attempts the number of attempts
+     */
+    'public setRetryAttempts': function( attempts )
+    {
+        this._retry_attempts = attempts;
+
+        return this;
+    },
+
+
+    /**
+     * Get the number of retries attempted
+     *
+     * @return {number} the number of attempts that have been made
+     */
+    'public getRetryAttempts': function()
+    {
+        return this._retry_attempts;
+    }
 } );
 
