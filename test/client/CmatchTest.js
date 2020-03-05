@@ -95,6 +95,58 @@ describe( "Cmatch", () =>
     } );
 
 
+    it( "getCmatchFields returns only fields with cmatch data", () =>
+    {
+        expected_fields = [
+            'foo_address',
+            'foo_phone'
+        ];
+
+        const field_names = [
+            'foo_name',
+            'foo_id',
+            'foo_address',
+            'foo_term',
+            'foo_date',
+            'foo_phone',
+            'foo_email',
+        ];
+
+        const cmatch = {
+            foo_address: { all: true, any: true, indexes: [ 0 ] },
+            foo_phone:   { all: true, any: true, indexes: [ 0 ] }
+        };
+
+        const program = {
+            getClassifierKnownFields() {},
+            classify: {
+                apply() {},
+            }
+        };
+
+        const class_matcher  = createStubClassMatcher( cmatch );
+        const data_validator = createStubDataValidator();
+        const quote          = createStubClientQuote();
+
+        const mock_client = {
+            getUi: () => ( {
+                setCmatch() {},
+                getCurrentStep() { return false; },
+            } ),
+            getQuote: () => quote
+        };
+
+        const sut = Sut( class_matcher, program, mock_client );
+
+        sut.hookClassifier( data_validator );
+
+        quote.emit( "classify", function(){} );
+
+        expect( sut.getCmatchFields( field_names ) )
+            .to.deep.equal( expected_fields );
+    } );
+
+
     /**
      * __classes is always returned (at least at the time of writing) by
      * TAME.  here was a bug when it was recognized as a field (e.g. marked
@@ -128,3 +180,56 @@ describe( "Cmatch", () =>
         );
     } );
 } );
+
+
+
+function createStubClientQuote()
+{
+    const callbacks = {};
+
+    return {
+        setClassifier( fields, callback )
+        {
+            return this;
+        },
+
+        on( name, callback )
+        {
+            callbacks[ name ] = callback;
+        },
+
+        emit( name )
+        {
+            const data = Array.prototype.slice.call( arguments, 1 );
+
+            callbacks[ name ].apply( null, data );
+        },
+    };
+}
+
+
+function createStubDataValidator()
+{
+    return {
+        validate( undefined, classes )
+        {
+            return this;
+        },
+
+        catch( callback )
+        {
+            return;
+        },
+    };
+}
+
+
+function createStubClassMatcher( cmatch )
+{
+    return {
+        match( _, callback )
+        {
+            callback( cmatch ) ;
+        }
+    }
+}

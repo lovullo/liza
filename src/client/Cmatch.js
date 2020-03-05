@@ -486,6 +486,27 @@ module.exports = Class( 'Cmatch',
 
 
     /**
+     * Return filtered array of fields that have cmatch data
+     *
+     * This can be used to filter elements in a group
+     * by all the fields with cmatch data
+     *
+     * @param {Array.<string>} fields array of fields
+     *
+     * @return {Array.<string>} filtered fields
+     */
+    'public getCmatchFields': function( fields )
+    {
+        if ( !( this._cmatch ) )
+        {
+            return [];
+        }
+
+        return fields.filter( field => this._cmatch[ field ] !== undefined );
+    },
+
+
+    /**
      * Force handling of the most recent cmatch data
      *
      * This can be used to refresh the UI to ensure that it is consistent with
@@ -514,7 +535,7 @@ module.exports = Class( 'Cmatch',
      *
      * @return {Object} classification matches
      */
-    'public getMatches'()
+    'public getMatches': function()
     {
         return this._cmatch;
     },

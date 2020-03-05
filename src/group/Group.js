@@ -67,6 +67,12 @@ module.exports = Class( 'Group',
     'private _exclusiveHash': {},
 
     /**
+     * Stores names of cmatch fields available exclusively in the group (no linked)
+     * @type {Array.<string>}
+     */
+    'private _exclusiveCmatchFields': [],
+
+    /**
      * Names of fields that are visible to the user
      *
      * For example: excludes external fields, but includes display.
@@ -204,6 +210,32 @@ module.exports = Class( 'Group',
     'public getExclusiveFieldNames': function()
     {
         return this._exclusiveFields;
+    },
+
+
+    /**
+     * Set names of cmatch fields available in the group (no linked)
+     *
+     * @param {Array.<string>} fields field names
+     *
+     * @return {Group} self
+     */
+    'public setExclusiveCmatchFieldNames': function( fields )
+    {
+        this._exclusiveCmatchFields = fields.slice( 0 );
+
+        return this;
+    },
+
+
+    /**
+     * Returns the cmatch fields available in the group
+     *
+     * @return {Array.<string>}
+     */
+    'public getExclusiveCmatchFieldNames': function()
+    {
+        return this._exclusiveCmatchFields;
     },
 
 
