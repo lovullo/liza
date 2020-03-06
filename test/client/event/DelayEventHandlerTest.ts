@@ -23,7 +23,7 @@
 
 import { expect } from 'chai';
 import { DelayEventHandler as Sut } from '../../../src/client/event/DelayEventHandler';
-import { ClientActionType } from '../../../src/client/action/ClientAction';
+import { ClientActionType, ClientAction } from '../../../src/client/action/ClientAction';
 
 describe( 'DelayEventHandler', () =>
 {
@@ -48,7 +48,7 @@ describe( 'DelayEventHandler', () =>
             },
         };
 
-        const action = {
+        const action: ClientAction = {
             'action': 'delay',
             'seconds': 25,
             'then': {
@@ -109,7 +109,7 @@ describe( 'DelayEventHandler', () =>
             handleEvent: ( _: ClientActionType, __: any ) => {},
         };
 
-        const action = {
+        const action: ClientAction = {
             'action': 'delay',
             'seconds': 'string-foo',
             'then': {
@@ -134,24 +134,15 @@ describe( 'DelayEventHandler', () =>
             return new NodeJS.Timeout();
         }
 
-        try {
-            sut.handle(
-                "delay",
-                () =>
-                { done(); },
-                action
-            )
-        }
+        try { sut.handle( "delay", () => {}, action ) }
         catch( e ) {}
-        finally
-        {
-            global.setTimeout = old_setTimeout;
-        }
+        finally { global.setTimeout = old_setTimeout; }
 
         expect( set_timeout_called ).to.equal( true );
         expect( actual_delay ).to.equal( expected_delay );
         done();
     } ),
+
 
     it( "Calls callback function and returns itself", done =>
     {
@@ -159,10 +150,10 @@ describe( 'DelayEventHandler', () =>
         let returned        = null;
 
         const client = {
-            handleEvent: ( _: ClientActionType, __: any ) => {},
+            handleEvent: ( _: ClientActionType, __: any, cb: any ) => { cb() },
         };
 
-        const action = {
+        const action: ClientAction = {
             'action': 'delay',
             'seconds': 0,
             'then': {
@@ -172,17 +163,31 @@ describe( 'DelayEventHandler', () =>
 
         const sut = new Sut( client );
 
-        returned = sut.handle(
-            "delay",
-            () =>
-            {
-                callback_called = true;
-            },
-            action
-        )
+        const old_setTimeout = global.setTimeout;
+
+        global.setTimeout = (
+            callback: ( ...args: any[] ) => void,
+            _: number
+        ) =>
+        {
+            callback();
+
+            return <NodeJS.Timeout>{};
+        }
+
+        try
+        {
+            returned = sut.handle(
+                "delay",
+                () => { callback_called = true },
+                action
+            );
+        }
+        catch( e ) { console.log( e )}
+        finally { global.setTimeout = old_setTimeout; }
 
         expect( callback_called ).to.equal( true );
         expect( returned ).to.deep.equal( sut );
         done();
-    } )
+    } );
 } )

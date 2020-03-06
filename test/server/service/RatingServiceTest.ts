@@ -524,9 +524,12 @@ describe( 'RatingService', () =>
             ) =>
             {
                 const expected_action = {
-                    "action": "delay",
-                    "seconds": 5,
-                    "then": { action: "rate" }
+                    "action":    "delay",
+                    "seconds":   5,
+                    "then":      {
+                        action: "rate",
+                        indv:   "retry",
+                    },
                 };
 
                 ( expected_delay_action )

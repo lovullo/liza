@@ -181,15 +181,24 @@ describe( 'RateEventHandler', () =>
                 callback.apply( this, arguments );
             }
 
-            sut.handle(
-                "",
-                ( _, __ ) => {},
-                {
-                    indv:   'somerater',
-                    stepId: 1,
-                    value:  delay
-                }
-            );
+            // this is necessary because if something breaks here, setTimeout
+            // will not be restored and will yield a false negative on other
+            // tests
+            try {
+                sut.handle(
+                    "",
+                    ( _, __ ) => {},
+                    {
+                        stepId: 1,
+                        value:  delay
+                    }
+                );
+            }
+            catch( e ) {}
+            finally
+            {
+                setTimeout = old_setTimeout;
+            }
 
             setTimeout = old_setTimeout;
 
@@ -271,7 +280,6 @@ describe( 'RateEventHandler', () =>
                     "",
                     ( _, __ ) => {},
                     {
-                        indv:   'somerater',
                         stepId: 1,
                         value:  delay
                     }
