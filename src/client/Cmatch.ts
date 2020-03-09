@@ -24,43 +24,45 @@
  * as this is one of the core systems and is both complicated and complex.
  */
 
-"use strict";
+import { FieldClassMatcher } from "../field/FieldClassMatcher";
+import { Program } from "../program/Program";
+import { Client } from "./Client";
+import { DataValidator } from "../validate/DataValidator";
+import { PositiveInteger } from "../numeric";
 
-const { Class } = require( 'easejs' );
+export type ClassData = {
+    [ index: string ]: {
+        is: boolean,
+        indexes: PositiveInteger | PositiveInteger[]
+    }
+};
 
+export type CmatchData = Record<string, any>;
 
-module.exports = Class( 'Cmatch',
+/**
+ * TODO: remove dependency on this global var in handleClassMatch
+ */
+declare var name: string;
+
+export type VisibilityQueue = {
+    [ index: string ]: {
+        [ index: string ]: PositiveInteger[]
+    }
+};
+
+/**
+ *
+ */
+export class Cmatch
 {
-    /**
-     * Contains classification match data per field
-     *
-     * @type {Object}
-     */
-    'private _cmatch': {},
+    /** Contains classification match data per field **/
+    private _cmatch: CmatchData = {};
 
     /**
-     * Fields that were hidden (including indexes) since the last cmatch
-     * clear
-     *
-     * @type {Object}
+     * Fields that were hidden (including indexes) since the
+     * last cmatch clear
      */
-    'private _cmatchHidden': {},
-
-    /**
-     * Performs classification matching on fields
-     *
-     * A field will have a positive match for a given index if all of its
-     * classes match
-     *
-     * @type {FieldClassMatcher}
-     */
-    'private _classMatcher': null,
-
-    /**
-     * Program client
-     * @type {Client}
-     */
-    'private _client': null,
+    private _cmatchHidden: CmatchData = {};
 
 
     /**
@@ -68,19 +70,18 @@ module.exports = Class( 'Cmatch',
      *
      * This relies on too many objects; see header.
      *
-     * @param {FieldClassMatcher} class_matcher class/field matcher
-     * @param {Program}           program       active program
-     * @param {Client}            client        active client
+     * @param _classMatcher - class/field matcher
+     * @param _program      - active program
+     * @param _client       - active client
      */
-    constructor( class_matcher, program, client )
-    {
-        this._classMatcher = class_matcher;
-        this._program      = program;
-        this._client       = client;
-    },
+    constructor(
+        private readonly _classMatcher: FieldClassMatcher,
+        private readonly _program: Program,
+        private readonly _client: Client,
+    ) {}
 
 
-    'private _cmatchVisFromUi': function( field, all )
+    private _cmatchVisFromUi( field: string, all: boolean ): boolean[]
     {
         var step = this._client.getUi().getCurrentStep();
 
@@ -104,10 +105,12 @@ module.exports = Class( 'Cmatch',
         }
 
         return ret;
-    },
+    }
 
 
-    'public hookClassifier': function( data_validator )
+    hookClassifier(
+        data_validator: DataValidator
+    ): void
     {
         var _self   = this,
             program = this._program;
@@ -121,7 +124,7 @@ module.exports = Class( 'Cmatch',
         this._client.getQuote()
             .setClassifier( program.getClassifierKnownFields(), function()
             {
-                return program.classify.apply( program, arguments );
+                return program.classify.apply( program, <any>arguments );
             } )
             .on( 'classify', function( classes )
             {
@@ -133,8 +136,9 @@ module.exports = Class( 'Cmatch',
                 cmatchprot = true;
 
                 // handle field fixes
-                data_validator.validate( undefined, classes )
-                    .catch( e => _self.client._handleError( e ) );
+                data_validator
+                    .validate( undefined, classes )
+                    .catch( ( e: Error ) => _self._client.handleError( e ) );
 
                 _self._classMatcher.match( classes, function( cmatch )
                 {
@@ -154,10 +158,10 @@ module.exports = Class( 'Cmatch',
                     cmatchprot = false;
                 } );
             } );
-    },
+    }
 
 
-    'private _postProcessCmatch': function( cmatch )
+    private _postProcessCmatch( cmatch: CmatchData ): CmatchData
     {
         // for any matches that are scalars (they will have no indexes), loop
         // through each field and set the index to the value of 'all'
@@ -184,10 +188,14 @@ module.exports = Class( 'Cmatch',
         }
 
         return cmatch;
-    },
+    }
 
 
-    'private _mergeCmatchHidden': function( name, indexes, hidden )
+    private _mergeCmatchHidden(
+        name: string,
+        indexes: PositiveInteger[],
+        hidden: boolean
+    ): void
     {
         if ( !( this._cmatchHidden[ name ] ) )
         {
@@ -221,10 +229,10 @@ module.exports = Class( 'Cmatch',
             // property access on the object
             this._cmatchHidden[ name ] = undefined;
         }
-    },
+    }
 
 
-    'virtual protected handleClassMatch': function( cmatch, force )
+    protected handleClassMatch( cmatch: CmatchData, force?: boolean ): void
     {
         force = !!force;
 
@@ -238,7 +246,8 @@ module.exports = Class( 'Cmatch',
                 .getExclusiveFieldNames();
 
 
-        var visq = {};
+        let visq: VisibilityQueue = {};
+
         for ( var field in cmatch )
         {
             // ignore fields that are not on the current step
@@ -257,8 +266,8 @@ module.exports = Class( 'Cmatch',
                 continue;
             }
 
-            var show = [],
-                hide = [],
+            let show: PositiveInteger[] = [],
+                hide: PositiveInteger[] = [],
 
                 cfield = cmatch[ field ],
 
@@ -289,12 +298,12 @@ module.exports = Class( 'Cmatch',
             // undefined in the first index is a workaround for the explicit
             // setting of the length property of the bucket value when
             // indexes are removed
-            var curdata = quote.getDataByName( field ),
+            let curdata = quote.getDataByName( field ),
                 fieldn  = ( curdata.length > 0 && ( curdata[ 0 ] !== undefined ) )
                     ? curdata.length
                     : vis.length;
 
-            for ( var i = 0; i < fieldn; i++ )
+            for ( let i = 0; i < fieldn; i++ )
             {
                 // do not record unchanged indexes as changed
                 // (avoiding the event overhead)
@@ -303,7 +312,7 @@ module.exports = Class( 'Cmatch',
                     continue;
                 }
 
-                ( ( vis[ i ] ) ? show : hide ).push( i );
+                ( ( vis[ i ] ) ? show : hide ).push( <PositiveInteger>i );
             }
 
             this.markShowHide( field, visq, show, hide );
@@ -312,7 +321,6 @@ module.exports = Class( 'Cmatch',
         // it's important to do this before showing/hiding fields, since
         // those might trigger events that check the current cmatches
         this._cmatch = cmatch;
-
 
         // allow DOM operations to complete before we trigger
         // manipulations on it (TODO: this is a workaround for group
@@ -337,7 +345,7 @@ module.exports = Class( 'Cmatch',
                 this._dapiTrigger( name );
             } );
         }, 25 );
-    },
+    }
 
 
     /**
@@ -345,13 +353,17 @@ module.exports = Class( 'Cmatch',
      *
      * This also updates the cached visibility of field FIELD.
      *
-     * @param {string} field field name
-     * @param {Array}  show  indexes to show
-     * @param {Array}  hide  indexes to hide
-     *
-     * @return {undefined}
+     * @param field - field name
+     * @param visq  - field visibility queue
+     * @param show  - indexes to show
+     * @param hide  - indexes to hide
      */
-    'virtual protected markShowHide'( field, visq, show, hide )
+    protected markShowHide(
+        field: string,
+        visq: VisibilityQueue,
+        show: PositiveInteger[],
+        hide: PositiveInteger[]
+    ): VisibilityQueue
     {
         if ( !( show.length || hide.length ) )
         {
@@ -375,17 +387,13 @@ module.exports = Class( 'Cmatch',
         visq[ field ] = result;
 
         return visq;
-    },
+    }
 
 
     /**
      * Trigger DataApi event for field FIELD
-     *
-     * @param {string} field field name
-     *
-     * @return {undefined}
      */
-    'private _dapiTrigger': function( field )
+    private _dapiTrigger( field: string ): void
     {
         const current_step_id = this._client.nav.getCurrentStepId();
 
@@ -400,10 +408,10 @@ module.exports = Class( 'Cmatch',
                 null
             );
         } );
-    },
+    }
 
 
-    'public clearCmatchFields': function()
+    clearCmatchFields(): void
     {
         var step    = this._client.getUi().getCurrentStep(),
             program = this._program;
@@ -414,10 +422,11 @@ module.exports = Class( 'Cmatch',
             return;
         }
 
-        var reset = {};
-        for ( var name in step.getStep().getExclusiveFieldNames() )
+        let reset: CmatchData = {};
+
+        for ( let name in step.getStep().getExclusiveFieldNames() )
         {
-            var data = this._cmatchHidden[ name ];
+            let data = this._cmatchHidden[ name ];
 
             // if there is no data or we have been asked to retain this field's
             // value, then do not clear
@@ -427,12 +436,12 @@ module.exports = Class( 'Cmatch',
             }
 
             // what state is the current data in?
-            var cur = this._client.getQuote().getDataByName( name );
+            let cur = this._client.getQuote().getDataByName( name );
 
             // we could have done Array.join(',').split(','), but we're trying
             // to keep performance sane here
-            var indexes = [];
-            for ( var i in data )
+            let indexes = [];
+            for ( let i in data )
             {
                 // we do *not* want to reset fields that have been removed
                 if ( cur[ i ] === undefined )
@@ -451,21 +460,21 @@ module.exports = Class( 'Cmatch',
 
         // we've done our deed; reset it for the next time around
         this._cmatchHidden = {};
-    },
+    }
 
 
-    'private _resetFields': function( fields )
+    private _resetFields( fields: CmatchData ): void
     {
         const quote  = this._client.getQuote();
-        const update = {};
+        const update: { [ index: string ]: any } = {};
 
-        for ( var field in fields )
+        for ( let field in fields )
         {
-            var cur   = fields[ field ],
+            let cur   = fields[ field ],
                 cdata = quote.getDataByName( field ),
                 val   = this._client.elementStyler.getDefault( field );
 
-            var data = [];
+            let data = [];
             for ( var i in cur )
             {
                 var index = cur[ i ];
@@ -482,7 +491,7 @@ module.exports = Class( 'Cmatch',
         }
 
         quote.setData( update );
-    },
+    }
 
 
     /**
@@ -490,12 +499,8 @@ module.exports = Class( 'Cmatch',
      *
      * This can be used to filter elements in a group
      * by all the fields with cmatch data
-     *
-     * @param {Array.<string>} fields array of fields
-     *
-     * @return {Array.<string>} filtered fields
      */
-    'public getCmatchFields': function( fields )
+    getCmatchFields( fields: string[] ): string[]
     {
         if ( !( this._cmatch ) )
         {
@@ -503,7 +508,7 @@ module.exports = Class( 'Cmatch',
         }
 
         return fields.filter( field => this._cmatch[ field ] !== undefined );
-    },
+    }
 
 
     /**
@@ -511,10 +516,8 @@ module.exports = Class( 'Cmatch',
      *
      * This can be used to refresh the UI to ensure that it is consistent with
      * the cmatch data.
-     *
-     * @return {Client} self
      */
-    'public forceCmatchAction': function()
+    forceCmatchAction(): Cmatch
     {
         if ( !( this._cmatch ) )
         {
@@ -524,7 +527,7 @@ module.exports = Class( 'Cmatch',
         this.handleClassMatch( this._cmatch, true );
 
         return this;
-    },
+    }
 
 
     /**
@@ -532,11 +535,9 @@ module.exports = Class( 'Cmatch',
      *
      * TODO: Remove me; breaks encapsulation.  Intended for transition from
      * mammoth Client.
-     *
-     * @return {Object} classification matches
      */
-    'public getMatches': function()
+    getMatches(): CmatchData
     {
         return this._cmatch;
-    },
-} );
+    }
+}
