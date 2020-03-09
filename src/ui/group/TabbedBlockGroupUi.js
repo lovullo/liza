@@ -614,7 +614,8 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _getLastEligibleTab': function()
     {
-        var i = this._tabList.querySelectorAll( 'li:not(.disabled)' ).length;
+        var active_tabs = this._tabList.querySelectorAll( 'li:not(.disabled)' );
+        var i           = ( active_tabs.length - 1 );
 
         return ( i === -1 )
             ? 0
