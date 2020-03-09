@@ -46,7 +46,7 @@ export declare class ClientQuote
     /**
      * Returns data from the quote
      */
-    getDataByName( name: string ): Record<string, any>
+    getDataByName( name: string ): Data;
 
 
     /**

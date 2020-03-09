@@ -37,7 +37,7 @@ export declare class Ui
     /**
      * Returns the step the user is currently on
      */
-    getCurrentStep(): StepUi;
+    getCurrentStep(): StepUi | null;
 
 
     /**

@@ -239,12 +239,17 @@ export class Cmatch
         this._client.getUi().setCmatch( cmatch );
 
         var _self = this,
-            quote = this._client.getQuote(),
+            quote = this._client.getQuote();
 
-            // oh dear god...(Demeter, specifically..)
-            fields = this._client.getUi().getCurrentStep().getStep()
-                .getExclusiveFieldNames();
+        // oh dear god...(Demeter, specifically..)
+        let cur_step = this._client.getUi().getCurrentStep();
 
+        if ( cur_step === null )
+        {
+            throw TypeError( 'Cannot handle class match on undefined step' );
+        }
+
+        let fields = cur_step.getStep().getExclusiveFieldNames();
 
         let visq: VisibilityQueue = {};
 
