@@ -79,9 +79,15 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     /**
      * Disable flags
-     * @type {string}
+     * @type {array}
      */
     'private _disableFlags': [],
+
+    /**
+     * Message to display when group is disabled after a blocking state resolves
+     * @type {string}
+     */
+    'private _disableMessage': '',
 
     /**
      * Bucket prefix for "tab extraction" source data
@@ -108,6 +114,8 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     {
         this.__super();
 
+        this._box = this.$content.find( '.groupTabbedBlock' )[ 0 ];
+
         // determine if we should lock this group down
         if ( this.$content.find( '.groupTabbedBlock' ).hasClass( 'locked' ) )
         {
@@ -126,13 +134,16 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     {
         var _self = this;
 
-        // hide flags
-        var box = this._getBox();
+        var disable_attr     = this._box.getAttribute( 'data-disable-flags' );
+        var block_attr       = this._box.getAttribute( 'data-block-flags' );
+        var disable_msg_attr = this._box.getAttribute( 'data-disable-message' );
 
-        var disable_attr = box.getAttribute( 'data-disable-flags' );
-        var block_attr   = box.getAttribute( 'data-block-flags' );
         this._disableFlags = ( disable_attr ) ? disable_attr.split( ';' ) : [];
         this._blockFlags   = ( block_attr ) ? block_attr.split( ' ' ) : [];
+
+        this._disableMessage = ( disable_msg_attr )
+            ? disable_msg_attr
+            : 'Unable to provide a rate at this time' ;
 
         quote.visitData( function( bucket )
         {
@@ -143,17 +154,14 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _processTabExtract': function()
     {
-        var box = this._getBox();
-
-        this._tabExtractSrc         = box.getAttribute( 'data-tabextract-src' );
-        this._tabExtractDest        = box.getAttribute( 'data-tabextract-dest' );
-        this._defaultSelectionField = box.getAttribute( 'data-default-selected-field' ) || '';
+        this._tabExtractSrc         = this._box.getAttribute( 'data-tabextract-src' );
+        this._tabExtractDest        = this._box.getAttribute( 'data-tabextract-dest' );
+        this._defaultSelectionField = this._box.getAttribute( 'data-default-selected-field' ) || '';
     },
 
 
     'private _processElements': function()
     {
-        this._box     = this.$content.find( '.groupTabbedBlock' )[ 0 ];
         this._tabList = this._box.querySelector( 'ul.tabs' );
 
         var tab     = this._box.querySelector( 'li' );
@@ -162,14 +170,51 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         this._tabItem     = tab.parentElement.removeChild( tab );
         this._contentItem = content.parentElement.removeChild( content );
 
-        var pending_div = document.createElement( 'div' );
+        this._box.appendChild(
+            this._createElement( 'div',
+                {
+                    classList: [ 'group-pending', 'hidden' ],
+                    innerText: 'Please wait...'
+                }
+            )
+        );
 
-        pending_div.classList.add( 'supplier-pending' );
-        pending_div.classList.add( 'hidden' );
+        this._box.appendChild(
+            this._createElement( 'div',
+                {
+                    classList: [ 'group-unavailable', 'hidden' ],
+                    innerText: this._disableMessage
+                }
+            )
+        );
+    },
 
-        pending_div.innerText = 'Please wait...';
 
-        this._box.appendChild( pending_div );
+    /**
+     * Create an element by tag name with a set of attributes
+     *
+     * @param  {string} tagName    Element's tag name
+     * @param  {object} attributes List of attributes
+     *
+     * @return {Element}           An HTML element
+     */
+    'private _createElement': function( tagName, attributes )
+    {
+        attributes = attributes || {};
+
+        let elem = document.createElement( tagName );
+
+        if ( Array.isArray( attributes.classList ) )
+        {
+            attributes.classList.forEach( c => elem.classList.add( c ) );
+        }
+
+        if ( typeof attributes.innerText === 'string' )
+        {
+            elem.innerText = attributes.innerText;
+        }
+
+        return elem;
     },
 
 
@@ -193,7 +238,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _processLengthField': function()
     {
-        this._lengthField = this._getBox().getAttribute( 'data-length-field' ) || '';
+        this._lengthField = this._box.getAttribute( 'data-length-field' ) || '';
     },
 
 
@@ -232,11 +277,63 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
             n += +hide;
         }
 
-        this._toggleClass(
-            this._getBox(),
-            'disabled',
-            ( n >= this._getTabCount() )
-        );
+        var isHidden = n >= this._getTabCount();
+
+        this._toggleClass( this._box, 'disabled', isHidden );
+
+        return isHidden;
+    },
+
+
+    /**
+     * Inspect blocking flags an evaluated a pending state
+     *
+     * @return {boolean} If there is some pending state
+     */
+    'private _processBlockFlags': function()
+    {
+        if ( this._blockFlags.length === 0 )
+        {
+            return this._setPending( false );
+        }
+
+        for ( var index in this._blockFlags )
+        {
+            var flag = this._blockFlags[ index ];
+            var data = this._bucket.getDataByName( flag ) || [];
+
+            for ( var data_index in data )
+            {
+                if ( +data[ data_index ] > 0 )
+                {
+                    return this._setPending( true );
+                }
+            }
+        }
+
+        return this._setPending( false );
+    },
+
+
+    /**
+     * Handle forced-visibility for a disabled tab group when a blocking state
+     * is resolved
+     *
+     * @param {boolean} isDisabled If the group is disabled
+     * @param {boolean} isPending  If the group is pending the resolution of a
+     *                             blocking flag
+     */
+    'private _processUnavailable': function( isDisabled, isPending )
+    {
+        if ( this._blockFlags.length === 0 )
+        {
+            return;
+        }
+
+        var unavailableMsg = this._box.querySelector( '.group-unavailable' );
+
+        this._toggleClass( this._box, 'unavailable', isDisabled );
+        this._toggleClass( unavailableMsg, 'hidden', isPending || !isDisabled );
     },
 
 
@@ -245,12 +342,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
      *
      * @param {boolean} pending whether we are setting pending to true or false
      *
-     * @return {TabbedBlockGroupUi} self
+     * @return {boolean} Pending state
      */
     'private _setPending': function( pending )
     {
         this._toggleClass(
-            this._box.querySelector( '.supplier-pending' ),
+            this._box.querySelector( '.group-pending' ),
             'hidden',
             !pending
         );
@@ -269,39 +366,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         this._toggleClass( this._tabList, 'hidden', pending );
 
-        return this;
-    },
-
-
-    'private _processBlockFlags': function()
-    {
-        if ( this._blockFlags.length === 0 )
-        {
-            return;
-        }
-
-        for ( var index in this._blockFlags )
-        {
-            var flag = this._blockFlags[ index ];
-            var data = this._bucket.getDataByName( flag ) || [];
-
-            if( data.length === 0 )
-            {
-                this._setPending( false );
-                return;
-            }
-
-            for ( var data_index in data )
-            {
-                if ( +data[ data_index ] === 0 )
-                {
-                    this._setPending( false );
-                    return;
-                }
-            }
-        }
-
-        this._setPending( true );
+        return pending;
     },
 
 
@@ -364,8 +429,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         change_event
     )
     {
-        this._processHideFlags();
-        this._processBlockFlags();
+        var isDisabled = this._processHideFlags();
+        var isPending  = this._processBlockFlags();
+
+        this._processUnavailable( isDisabled, isPending );
 
         this.__super.call( this, arguments );
         return this;
@@ -636,8 +703,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         this.__super();
 
         // we will have already rated once by the time this is called
-        this._processHideFlags();
-        this._processBlockFlags();
+        var isDisabled = this._processHideFlags();
+        var isPending  = this._processBlockFlags();
+
+        this._processUnavailable( isDisabled, isPending );
 
         if ( this._defaultSelectionField === '' )
         {
@@ -671,7 +740,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
      * @param {string}     class_name the class to toggle`
      * @param {boolean}    force      whether to add or remove the class
      *
-     * @returns {boolean} whether or not the toggle happened
+     * @return {boolean} whether or not the toggle happened
      */
     'private _toggleClass': function( elem, class_name, force )
     {
