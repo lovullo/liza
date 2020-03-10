@@ -101,6 +101,7 @@ describe( 'DslRater', () =>
         it( `Calls rater with canTerm from context`, () =>
         {
             let actual;
+            let called = false;
 
             const expected = false;
             const callback = ( data, canTerm ) =>
@@ -109,18 +110,23 @@ describe( 'DslRater', () =>
                 called = true;
             }
 
-            const raters    = [ getRaterStub( callback ) ];
+            const classes = {
+                '--elig-suppliers-bar': true
+            };
+
+            const raters    = [ getRaterStub( callback, classes ) ];
             const resultSet = getResultSetStub();
             const context   = DslRaterContext( null, expected );
             const sut       = Sut( raters, resultSet );
 
             sut.rate( context );
 
+            expect( called ).to.equal( true );
             expect( actual ).to.equal( expected );
         } );
 
 
-        it( `Submit or prohibit sets _unavailable flag`, () =>
+        it( `Submit sets _unavailable flag`, () =>
         {
             let called = false;
             let actual = {};
@@ -132,6 +138,7 @@ describe( 'DslRater', () =>
                 __classes: {
                     'submit':     true,
                     'submit-foo': true,
+                    '--elig-suppliers-bar': true
                 },
             };
             const raterCb   = ( _, __ ) => {};
@@ -143,10 +150,98 @@ describe( 'DslRater', () =>
             const classes   = {
                 'submit-foo': true,
                 submit:       true,
+                '--elig-suppliers-bar': true
             };
             const raters    = [ getRaterStub( raterCb, classes ) ];
             const resultSet = getResultSetStub( resultCb );
             const context   = DslRaterContext( null, expected );
+            const sut       = Sut( raters, resultSet );
+
+            sut.rate( context );
+
+            expect( called ).to.equal( true );
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+
+        it( `Prohibit sets _unavailable flag`, () =>
+        {
+            let called = false;
+            let actual = {};
+
+            const expected  = {
+                _unavailable: '1',
+                ineligible:   'foo prohibit; baz prohibit',
+                submit:       '',
+                __classes: {
+                    'inelig-foo': 'foo prohibit',
+                    'inelig-baz': 'baz prohibit',
+                    '--elig-suppliers-bar': false
+                }
+            };
+            const raterCb   = ( _, __ ) => {};
+            const resultCb  = ( name, set ) =>
+            {
+                actual = name;
+                called = true;
+            };
+
+            const classes   = {
+                'inelig-foo': 'foo prohibit',
+                'inelig-baz': 'baz prohibit',
+                '--elig-suppliers-bar': false
+            };
+
+            const canTerm   = false;
+            const overrides = {};
+            const raters    = [ getRaterStub( raterCb, classes ) ];
+            const resultSet = getResultSetStub( resultCb );
+            const context   = getDslContext( overrides, expected, false );
+            const sut       = Sut( raters, resultSet );
+
+
+            sut.rate( context );
+
+            expect( called ).to.equal( true );
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+
+        it( `Assertions sets _unavailable flag`, () =>
+        {
+            let called = false;
+            let actual = {};
+
+            const expected  = {
+                _unavailable: '1',
+                ineligible:   'foo assertion; baz assertion',
+                submit:       '',
+                __classes: {
+                    '-assert-foo': 'foo assertion',
+                    '-assert-bar':  false,
+                    '-assert-baz': 'baz assertion',
+                    '--elig-suppliers-bar': false
+                }
+            };
+            const raterCb   = ( _, __ ) => {};
+            const resultCb  = ( name, set ) =>
+            {
+                actual = name;
+                called = true;
+            };
+
+            const classes   = {
+                '-assert-foo': 'foo assertion',
+                '-assert-bar':  false,
+                '-assert-baz': 'baz assertion',
+                '--elig-suppliers-bar': false
+            };
+
+            const canTerm   = false;
+            const overrides = {};
+            const raters    = [ getRaterStub( raterCb, classes ) ];
+            const resultSet = getResultSetStub( resultCb );
+            const context   = getDslContext( overrides, expected, canTerm );
             const sut       = Sut( raters, resultSet );
 
             sut.rate( context );
@@ -169,6 +264,7 @@ describe( 'DslRater', () =>
             __classes: {
                 'foo':    true,
                 'submit': false,
+                '--elig-suppliers-bar': true
             },
         };
         const raterCb   = ( _, __ ) => {};
@@ -180,6 +276,7 @@ describe( 'DslRater', () =>
         const classes   = {
             'foo':  true,
             submit: false,
+            '--elig-suppliers-bar': true
         };
         const raters    = [ getRaterStub( raterCb, classes ) ];
         const resultSet = getResultSetStub( resultCb );
@@ -190,6 +287,78 @@ describe( 'DslRater', () =>
 
         expect( called ).to.equal( true );
         expect( actual ).to.deep.equal( expected );
+    } );
+
+
+    it( `--elig-supplier-{supplier} causes ineligibility`, () =>
+    {
+        let called = false;
+        let actual = {};
+
+        const expected  = {
+            _unavailable: '1',
+            ineligible:   'This supplier is ineligible.',
+            submit:       '',
+            __classes: {
+                '--elig-suppliers-bar': false
+            }
+        };
+        const raterCb   = ( _, __ ) => {};
+        const resultCb  = ( name, set ) =>
+        {
+            actual = name;
+            called = true;
+        };
+
+        const classes   = {
+            '--elig-suppliers-bar': false
+        };
+
+        const canTerm   = false;
+        const overrides = {};
+        const raters    = [ getRaterStub( raterCb, classes ) ];
+        const resultSet = getResultSetStub( resultCb );
+        const context   = getDslContext( overrides, expected, canTerm );
+        const sut       = Sut( raters, resultSet );
+
+        sut.rate( context );
+
+        expect( called ).to.equal( true );
+        expect( actual ).to.deep.equal( expected );
+    } );
+
+    it( `missing --elig-supplier-{supplier} throws error`, () =>
+    {
+        let called = false;
+        let actual = {};
+
+        const expected  = {
+            _unavailable: '1',
+            ineligible:   'This supplier is ineligible.',
+            submit:       '',
+            __classes: {
+            }
+        };
+        const raterCb   = ( _, __ ) => {};
+        const resultCb  = ( name, set ) =>
+        {
+            actual = name;
+            called = true;
+        };
+
+        const classes   = {
+        };
+
+        const canTerm   = false;
+        const overrides = {};
+        const raters    = [ getRaterStub( raterCb, classes ) ];
+        const resultSet = getResultSetStub( resultCb );
+        const context   = getDslContext( overrides, expected, canTerm );
+        const sut       = Sut( raters, resultSet );
+
+        expect( () => sut.rate( context ) ).to.throw(
+            'Missing supplier eligibility field: --elig-suppliers-bar'
+        );
     } );
 
 

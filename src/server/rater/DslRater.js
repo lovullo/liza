@@ -137,7 +137,8 @@ module.exports = Class( 'DslRater' )
             // submits, etc)
             single = context.processResult( single, meta, rcontext );
 
-            _self._processSubmits( rater, single, context, data, rcontext )
+            _self ._processProhibits( rater, single, context, data )
+                ._processSubmits( rater, single, context, data, rcontext )
                 ._flagEligibility( single )
                 ._cleanResult( single );
 
@@ -171,6 +172,7 @@ module.exports = Class( 'DslRater' )
         }
 
         var c = single.__classes;
+
         if ( !( c.submit ) )
         {
             return this;
@@ -190,6 +192,107 @@ module.exports = Class( 'DslRater' )
 
         single.submit = submits.join( '; ' );
         return this;
+    },
+
+
+    /**
+     *
+     * @param {Object}          rater   Supplier rater
+     * @param {Object}          single  Supplier UI options
+     * @param {DslRaterContext} context Rater context
+     * @param {Object}          data    Bucket data
+     *
+     * @return {DslRater}
+     */
+    'private _processProhibits': function(
+        rater, single, context, data
+    )
+    {
+        // Don't process prohibits if rating can naturally terminate
+        if ( context.canTerm() )
+        {
+            return this;
+        }
+
+        var classes   = single.__classes;
+        var prohibits = [];
+        var regex     =
+        {
+            prohibit:  /^inelig-.+$/,
+            assertion: /^-assert-.+$/
+        };
+
+        for ( className in classes )
+        {
+            var foundProhibit = regex.prohibit.test( className )
+                             || regex.assertion.test( className );
+
+            var classValue = classes[ className ];
+
+            if ( foundProhibit && classValue )
+            {
+                prohibits.push( this.getCdesc( className, rater, data ) );
+            }
+        }
+
+        // Backup when an error is thrown but no prohibit is found (unlikely)
+        if ( this._isIneligible( classes, rater ) && prohibits.length === 0 )
+        {
+            prohibits.push( 'This supplier is ineligible.' );
+        }
+
+        single.ineligible = this._filterProhibits( prohibits ).join( "; " );
+
+        return this;
+    },
+
+
+    /**
+     *
+     * @param  {Object}  classes Classification data
+     * @param {Object}   rater   Supplier rater
+     *
+     * @return {boolean}         If the data contain an error
+     */
+    'private _isIneligible': function( classes, rater )
+    {
+        // XXX: use elig-class when propagated by tameld;
+        // this is a generated classification name
+        var eligKey = '--elig-suppliers-' + rater.supplier;
+
+        if ( classes[ eligKey ] === undefined )
+        {
+            throw new Error( 'Missing supplier eligibility field: ' + eligKey );
+        }
+
+        return classes[ eligKey ] === false;
+    },
+
+
+    /**
+     * Remove generic and duplicated prohibit reasons
+     * Generic prohibits take the form of [{supplier-name} prohibit]
+     *
+     * @param  {string[]} prohibits A list of prohibit reasons
+     *
+     * @return {string[]}           A filtered list of prohibit reasons
+     */
+    'private _filterProhibits': function( prohibits )
+    {
+
+        var unique = function( value, index, array )
+        {
+            return array.indexOf( value ) === index;
+        }
+
+        var hasSpecificProhibit = function( value, index, array )
+        {
+            var generic = /^\[.+\sprohibit\]$/.test( value );
+
+            return !generic;
+        }
+
+        return prohibits.filter( unique ).filter( hasSpecificProhibit );
     },
 
 
