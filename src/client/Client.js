@@ -1314,15 +1314,16 @@ module.exports = Class( 'Client' )
             ui    = this._factory.createGroupUi(
                 group, $content, styler, this._rootContext, na_styler
             ),
-            id    = ui.getId(),
-            data  = this.groupData[id];
+            id               = ui.getId(),
+            data             = this.groupData[id],
+            exclusive_fields = this.program.groupExclusiveFields[ id ] || [],
+            cmatch_fields    = this._cmatch.getCmatchFields( exclusive_fields );
 
         group
             .setIndexFieldName( this.program.groupIndexField[ id ] || '' )
             .setFieldNames( this.program.groupFields[ id ] || [] )
-             .setExclusiveFieldNames(
-                this.program.groupExclusiveFields[ id ] || []
-            )
+            .setExclusiveFieldNames( exclusive_fields )
+            .setExclusiveCmatchFieldNames( cmatch_fields )
             .setUserFieldNames(
                 this.program.groupUserFields[ id ] || []
             );

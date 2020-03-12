@@ -26,10 +26,11 @@ import { MongoSelector, MongoUpdate, MongoDb } from "mongodb";
 import { expect, use as chai_use } from 'chai';
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { PositiveInteger } from "../../../src/numeric";
-import { Program } from "../../../src/program/Program";
+import {ClassificationResult, Program} from "../../../src/program/Program";
 import { RateResult } from "../../../src/server/rater/Rater";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
 import { QuoteId } from "../../../src/quote/Quote";
+import {DataApiResult} from "../../../src/dapi/DataApi";
 
 chai_use( require( 'chai-as-promised' ) );
 
@@ -190,6 +191,7 @@ function createStubQuote( metadata: Record<string, any> )
     const program = <Program>{
         getId:               () => '1',
         ineligibleLockCount: 0,
+        cretain:             {},
         apis:                {},
         internal:            {},
         meta:                {
@@ -199,9 +201,12 @@ function createStubQuote( metadata: Record<string, any> )
             qdata:  {},
             qtypes: {},
         },
-        mapis:               {},
-        rateSteps:           [],
-        initQuote:           () => {},
+        mapis:                    {},
+        rateSteps:                [],
+        dapi:                     () => <DataApiResult>{},
+        initQuote:                () => {},
+        getClassifierKnownFields: () => <ClassificationResult>{},
+        classify:                 () => <ClassificationResult>{},
     };
 
     const quote = <ServerSideQuote>{

@@ -21,12 +21,18 @@
 
 import { StagingBucket } from "../bucket/StagingBucket";
 import { PositiveInteger } from "../numeric";
+import { CmatchData} from "../client/Cmatch";
+import { DataApiResult } from "../dapi/DataApi";
 
-export type DataApiDefinitions = any
+export type DataApiDefinitions = any;
+export type ClassificationResult = { [ index: string ]: any };
+export type ClassificationRetain = Record<string, any>;
 
 export declare abstract class Program
 {
     readonly ineligibleLockCount: number;
+
+    cretain: ClassificationRetain;
 
     apis: DataApiDefinitions;
 
@@ -46,5 +52,29 @@ export declare abstract class Program
 
     getId(): string;
 
-    initQuote( bucket: StagingBucket, store_only: boolean ): void
+    /**
+     * Data API
+     */
+    dapi(
+        step_id: PositiveInteger,
+        name: string,
+        bucket: StagingBucket,
+        diff: Record<string, any>,
+        cmatch: CmatchData,
+        callback: ( () => void ) | null
+    ): DataApiResult;
+
+    initQuote( bucket: StagingBucket, store_only: boolean ): void;
+
+
+    /**
+     * Get known classifier fields
+     */
+    getClassifierKnownFields(): ClassificationResult;
+
+
+    /**
+     * Classify the given bucket data
+     */
+    classify( data: Record<string, any> ): ClassificationResult;
 }

@@ -26,6 +26,8 @@ import { PositiveInteger } from "../../../src/numeric";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
+import {DataApiResult} from "../../../src/dapi/DataApi";
+import {ClassificationResult} from "../../../src/program/Program";
 
 chai_use( require( 'chai-as-promised' ) );
 
@@ -525,11 +527,14 @@ function createStubProgram( internals: { internal: boolean } )
         },
         mapis:               {},
         rateSteps:           [],
+        cretain:             {},
         apis:                {},
 
         getId(){ return 'Foo'; },
-
         initQuote() {},
+        dapi:                     () => <DataApiResult>{},
+        getClassifierKnownFields: () => <ClassificationResult>{},
+        classify:                 () => <ClassificationResult>{},
     };
 }
 
