@@ -205,9 +205,7 @@ export class RatingService
                     );
 
                     // TODO: move me during refactoring
-                    this._dao.saveQuoteClasses(
-                        quote, class_dest, () => {}, () => {}
-                    );
+                    this._dao.saveQuoteClasses( quote, class_dest );
 
                     // save all data server-side (important: do after
                     // post-processing); async
@@ -291,7 +289,7 @@ export class RatingService
         // user a rate (if this save fails, it's likely we have bigger problems
         // anyway); this can also be done concurrently with the above request
         // since it only modifies a portion of the bucket
-        this._dao.mergeBucket( quote, data, () => {}, () => {} );
+        this._dao.mergeBucket( quote, data );
     }
 
 
@@ -333,9 +331,7 @@ export class RatingService
         {
             this._dao.saveQuoteMeta(
                 quote,
-                { liza_timestamp_rate_request: this._ts_ctr() },
-                () => {},
-                () => {}
+                { liza_timestamp_rate_request: [ this._ts_ctr() ] },
             );
         }
 
@@ -355,7 +351,7 @@ export class RatingService
             } );
 
             quote.setRetryAttempts( retry_attempts + 1 );
-            this._dao.saveQuoteRateRetries( quote, () => {}, () => {} );
+            this._dao.saveQuoteRateRetries( quote );
         }
         else if ( retry_attempts >= this.RETRY_MAX_ATTEMPTS )
         {
@@ -380,7 +376,7 @@ export class RatingService
             // have a race condition with async. rating (the /visit request may
             // be made while we're rating, and when we come back we would then
             // update the step id with a prior, incorrect step)
-            this._dao.saveQuoteLockState( quote, () => {}, () => {} );
+            this._dao.saveQuoteLockState( quote );
         }
 
         // if any have been deferred, instruct the client to request them
