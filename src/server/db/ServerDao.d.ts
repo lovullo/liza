@@ -48,11 +48,11 @@ export interface ServerDao
      * @param push_data - quote data to push (optional)
      */
     saveQuote(
-        quote:     ServerSideQuote,
-        success:   Callback,
-        failure:   Callback,
-        save_data: Record<string, any>,
-        push_data: Record<string, any>,
+        quote:      ServerSideQuote,
+        success?:   Callback,
+        failure?:   Callback,
+        save_data?: Record<string, any>,
+        push_data?: Record<string, any>,
     ): this;
 
 
@@ -66,10 +66,10 @@ export interface ServerDao
      * @param failure - failure callback
      */
     mergeBucket(
-        quote:   ServerSideQuote,
-        data:    Record<string, any>,
-        success: Callback,
-        failure: Callback,
+        quote:    ServerSideQuote,
+        data:     Record<string, any>,
+        success?: Callback,
+        failure?: Callback,
     ): this;
 
 
@@ -82,10 +82,10 @@ export interface ServerDao
      * @param failure - failure callback
      */
     saveQuoteClasses(
-        quote:   ServerSideQuote,
-        classes: ClassificationData,
-        success: Callback,
-        failure: Callback,
+        quote:    ServerSideQuote,
+        classes:  ClassificationData,
+        success?: Callback,
+        failure?: Callback,
     ): this;
 
 
@@ -100,24 +100,43 @@ export interface ServerDao
      * @param failure - function to call if save fails
      */
     saveQuoteState(
-        quote:   ServerSideQuote,
-        success: Callback,
-        failure: Callback,
+        quote:    ServerSideQuote,
+        success?: Callback,
+        failure?: Callback,
     ): this;
 
 
-     /**
+    /**
      * Saves the quote retry attempts
      *
-     * @param Quote    quote            the quote to save
-     * @param Function success_callback function to call on success
-     * @param Function failure_callback function to call if save fails
+     * @param quote   - the quote to save
+     * @param success - function to call on success
+     * @param failure - function to call if save fails
      */
     saveQuoteRateRetries(
-        quote:            ServerSideQuote,
-        success_callback: Callback,
-        failure_callback: Callback,
+        quote:    ServerSideQuote,
+        success?: Callback,
+        failure?: Callback,
     ): this
+
+
+    /**
+     * Save document metadata (meta field on document)
+     *
+     * Only the provided indexes will be modified (that is---data will be
+     * merged with what is already in the database).
+     *
+     * @param quote    - destination quote
+     * @param new_meta - bucket-formatted data to write
+     * @param success  - callback on success
+     * @param failure  - callback on error
+     */
+    saveQuoteMeta(
+        quote:    ServerSideQuote,
+        new_meta: any,
+        success?: Callback,
+        failure?: Callback,
+    ): void
 
 
     /**
@@ -128,24 +147,24 @@ export interface ServerDao
      * @param failure - function to call if save fails
      */
     saveQuoteLockState(
-        quote:   ServerSideQuote,
-        success: Callback,
-        failure: Callback,
+        quote:    ServerSideQuote,
+        success?: Callback,
+        failure?: Callback,
     ): this
 
 
     /**
-     * Save worksheet data
+     * Set worksheet data
      *
-     * @param qid      - quote identifier
+     * @param qid      - The quote id
      * @param data     - worksheet data
-     * @param callback - callback
+     * @param failure  - a function to call on error
      */
     setWorksheets(
         qid:      QuoteId,
-        data:     WorksheetData,
-        callback: NodeCallback<void>,
-    ): void;
+        data:     any,
+        failure?: NodeCallback<void>,
+    ): void
 
 
     /**

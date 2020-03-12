@@ -37,12 +37,12 @@ export class StandardLogger implements PsrLogger
      * Initialize logger
      *
      * @param _console
-     * @param _ts_ctr  - a timestamp constructor
+     * @param _ts_ctor - a timestamp constructor
      * @param _env     - The environment ( dev, test, demo, live )
      */
     constructor(
         private readonly _console: Console,
-        private readonly _ts_ctr:  () => UnixTimestamp,
+        private readonly _ts_ctor: () => UnixTimestamp,
         private readonly _env:     string,
     ) {}
 
@@ -181,7 +181,7 @@ export class StandardLogger implements PsrLogger
             str = msg;
         }
 
-        const ts          = this._ts_ctr();
+        const ts          = this._ts_ctor();
         const tsFormatted = new Date( ts * 1000 ).toISOString()
 
         const structured_log = <StructuredLog>{

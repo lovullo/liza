@@ -137,8 +137,13 @@ exports.init = function( logger, enc_service, conf, env )
             server_cache = _createCache( server );
             server.init( server_cache, exports.rater );
 
+            const ts_ctor = () =>
+            {
+                return Math.floor( new Date().getTime() / 1000 );
+            };
+
             rating_service = new RatingService(
-                logger, dao, server, exports.rater, delta.createDelta
+                logger, dao, server, exports.rater, delta.createDelta, ts_ctor
             );
 
             // TODO: exports.init needs to support callbacks; this will work, but

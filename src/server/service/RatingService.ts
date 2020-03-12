@@ -68,6 +68,7 @@ export class RatingService
      * @param _server        - server actions
      * @param _rater_manager - rating manager
      * @param _createDelta   - delta constructor
+     * @param _ts_ctor       - a timestamp constructor
      */
     constructor(
         private readonly _logger:        PriorityLog,
@@ -75,6 +76,7 @@ export class RatingService
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
         private readonly _createDelta:   DeltaConstructor<number>,
+        private readonly _ts_ctor:       () => UnixTimestamp,
     ) {}
 
 
@@ -144,9 +146,7 @@ export class RatingService
     private _isQuoteValid( quote: ServerSideQuote ): boolean
     {
         // quotes are valid for 30 days
-        var re_date = Math.round( ( ( new Date() ).getTime() / 1000 ) -
-            ( 60 * 60 * 24 * 30 )
-        );
+        var re_date = this._ts_ctor() - ( 60 * 60 * 24 * 30 );
 
         if ( quote.getLastPremiumDate() > re_date )
         {
@@ -205,9 +205,7 @@ export class RatingService
                     );
 
                     // TODO: move me during refactoring
-                    this._dao.saveQuoteClasses(
-                        quote, class_dest, () => {}, () => {}
-                    );
+                    this._dao.saveQuoteClasses( quote, class_dest );
 
                     // save all data server-side (important: do after
                     // post-processing); async
@@ -261,9 +259,7 @@ export class RatingService
         // only update the last premium calc date on the initial request
         if ( !indv )
         {
-            var cur_date = <UnixTimestamp>Math.round(
-                ( new Date() ).getTime() / 1000
-            );
+            var cur_date = this._ts_ctor();
 
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
@@ -293,7 +289,7 @@ export class RatingService
         // user a rate (if this save fails, it's likely we have bigger problems
         // anyway); this can also be done concurrently with the above request
         // since it only modifies a portion of the bucket
-        this._dao.mergeBucket( quote, data, () => {}, () => {} );
+        this._dao.mergeBucket( quote, data );
     }
 
 
@@ -331,6 +327,14 @@ export class RatingService
 
         data[ '__rate_pending' ] = [ retry_count ];
 
+        if( retry_attempts === 0 )
+        {
+            this._dao.saveQuoteMeta(
+                quote,
+                { liza_timestamp_rate_request: [ this._ts_ctor() ] },
+            );
+        }
+
         if (
             retry_count > 0 &&
             retry_attempts < this.RETRY_MAX_ATTEMPTS &&
@@ -347,7 +351,7 @@ export class RatingService
             } );
 
             quote.setRetryAttempts( retry_attempts + 1 );
-            this._dao.saveQuoteRateRetries( quote, () => {}, () => {} );
+            this._dao.saveQuoteRateRetries( quote );
         }
         else if ( retry_attempts >= this.RETRY_MAX_ATTEMPTS )
         {
@@ -372,7 +376,7 @@ export class RatingService
             // have a race condition with async. rating (the /visit request may
             // be made while we're rating, and when we come back we would then
             // update the step id with a prior, incorrect step)
-            this._dao.saveQuoteLockState( quote, () => {}, () => {} );
+            this._dao.saveQuoteLockState( quote );
         }
 
         // if any have been deferred, instruct the client to request them

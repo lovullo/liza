@@ -61,7 +61,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Initializes DAO
      *
-     * @param {Mongo.Db} db mongo database connection
+     * @param _db  - mongo database connection
+     * @param _env - the name of the current environment
      */
     constructor(
         private readonly _db:  MongoDb,
@@ -77,12 +78,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      *
      * connectError event will be emitted on failure.
      *
-     * @param Function callback function to call when connection is complete
+     * @param success - function to call when connection is complete
      *                          (will not be called if connection fails)
-     *
-     * @return MongoServerDao self to allow for method chaining
      */
-    init( callback: () => void ): this
+    init( success: () => void ): this
     {
         var dao = this;
 
@@ -95,7 +94,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             dao.emit( 'connectError', err );
         });
 
-        this.connect( callback );
+        this.connect( success );
         return this;
     }
 
@@ -105,12 +104,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      *
      * connectError event will be emitted on failure.
      *
-     * @param Function callback function to call when connection is complete
+     * @param success - function to call when connection is complete
      *                          (will not be called if connection fails)
-     *
-     * @return MongoServerDao self to allow for method chaining
      */
-    connect( callback: () => void ): this
+    connect( success: () => void ): this
     {
         var dao = this;
 
@@ -143,9 +140,9 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 dao.emit( 'ready' );
 
                 // connection was successful; call the callback
-                if ( callback instanceof Function )
+                if ( success instanceof Function )
                 {
-                    callback.call( dao );
+                    success.call( dao );
                 }
             }
 
@@ -167,7 +164,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                         [ ['id', 1] ],
                         true,
                         function(
-                            _err: NullableError,
+                            _err:   NullableError,
                             _index: { [P: string]: any,
                         } )
                         {
@@ -231,7 +228,12 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
-    private _initQuoteIdSeq( callback: () => void )
+    /**
+     * Initialize the quote id sequence collection
+     *
+     * @param success - a function to call once it has been initialized
+     */
+    private _initQuoteIdSeq( success: () => void )
     {
         var dao = this;
 
@@ -249,7 +251,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 }
 
                 dao.emit( 'seqInit', dao.SEQ_QUOTE_ID );
-                callback.call( dao );
+                success.call( dao );
             }
         );
     }
@@ -263,18 +265,18 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * fields because those results write to individual indexes and do not
      * rely on existing data.
      *
-     * @param Quote    quote            the quote to save
-     * @param Function success_callback function to call on success
-     * @param Function failure_callback function to call if save fails
-     * @param Object   save_data        quote data to save (optional)
-     * @param Object   push_data        quote data to push (optional)
+     * @param quote     - the quote to save
+     * @param success   - function to call on success
+     * @param failure   - function to call if save fails
+     * @param save_data - quote data to save (optional)
+     * @param push_data - quote data to push (optional)
      */
     saveQuote(
-        quote:            ServerSideQuote,
-        success_callback: Callback,
-        failure_callback: Callback,
-        save_data?:       any,
-        push_data?:       any,
+        quote:      ServerSideQuote,
+        success:    Callback = () => {},
+        failure:    Callback = () => {},
+        save_data?: any,
+        push_data?: any,
     ): this
     {
         var dao                       = this;
@@ -289,7 +291,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 quote
             );
 
-            failure_callback.call( this, quote );
+            failure.call( this, quote );
             return dao;
         }
 
@@ -356,18 +358,18 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                     dao.emit( 'saveQuoteError', err, quote );
 
                     // let the caller handle the error
-                    if ( failure_callback instanceof Function )
+                    if ( failure instanceof Function )
                     {
-                        failure_callback.call( dao, quote );
+                        failure.call( dao, quote );
                     }
 
                     return;
                 }
 
                 // successful
-                if ( success_callback instanceof Function )
+                if ( success instanceof Function )
                 {
-                    success_callback.call( dao, quote );
+                    success.call( dao, quote );
                 }
             }
         );
@@ -379,16 +381,16 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Merges quote data with the existing (rather than overwriting)
      *
-     * @param {Quote}    quote     quote to save
-     * @param {Object}   data      quote data
-     * @param {Function} scallback successful callback
-     * @param {Function} fcallback failure callback
+     * @param quote   - quote to save
+     * @param data    - quote data
+     * @param success - successful callback
+     * @param failure - failure callback
      */
     mergeData(
-        quote:     ServerSideQuote,
-        data:      MongoUpdate,
-        scallback: Callback,
-        fcallback: Callback,
+        quote:   ServerSideQuote,
+        data:    MongoUpdate,
+        success: Callback = () => {},
+        failure: Callback = () => {},
     ): this
     {
         // we do not want to alter the original data; use it as a prototype
@@ -406,17 +408,17 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 {
                     _self.emit( 'saveQuoteError', err, quote );
 
-                    if ( typeof fcallback === 'function' )
+                    if ( typeof failure === 'function' )
                     {
-                        fcallback( quote );
+                        failure( quote );
                     }
 
                     return;
                 }
 
-                if ( typeof scallback === 'function' )
+                if ( typeof success === 'function' )
                 {
-                    scallback( quote );
+                    success( quote );
                 }
             }
         );
@@ -429,18 +431,16 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * Merges bucket data with the existing bucket (rather than overwriting the
      * entire bucket)
      *
-     * @param {Quote}    quote     quote to save
-     * @param {Object}   data      bucket data
-     * @param {Function} scallback successful callback
-     * @param {Function} fcallback failure callback
-     *
-     * @return {MongoServerDao} self
+     * @param quote   - quote to save
+     * @param data    - bucket data
+     * @param success - successful callback
+     * @param failure - failure callback
      */
     mergeBucket(
         quote:   ServerSideQuote,
         data:    MongoUpdate,
-        success: Callback,
-        failure: Callback,
+        success: Callback = () => {},
+        failure: Callback = () => {},
     ): this
     {
         var update: MongoUpdate = {};
@@ -465,17 +465,15 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * The quote state includes the current step, the top visited step and the
      * explicit lock message.
      *
-     * @param Quote    quote            the quote to save
-     * @param Function success_callback function to call on success
-     * @param Function failure_callback function to call if save fails
-     *
-     * @return MongoServerDao self
+     * @param quote   - the quote to save
+     * @param success - function to call on success
+     * @param failure - function to call if save fails
      */
     saveQuoteState(
-        quote:            ServerSideQuote,
-        success_callback: Callback,
-        failure_callback: Callback,
-    )
+        quote:   ServerSideQuote,
+        success: Callback = () => {},
+        failure: Callback = () => {},
+    ): this
     {
         var update = {
             currentStepId:    quote.getCurrentStepId(),
@@ -484,7 +482,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         };
 
         return this.mergeData(
-            quote, update, success_callback, failure_callback
+            quote, update, success, failure
         );
     }
 
@@ -492,30 +490,38 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Saves the quote retry attempts
      *
-     * @param Quote    quote            the quote to save
-     * @param Function success_callback function to call on success
-     * @param Function failure_callback function to call if save fails
+     * @param quote   - the quote to save
+     * @param success - function to call on success
+     * @param failure - function to call if save fails
      */
     saveQuoteRateRetries(
-        quote:            ServerSideQuote,
-        success_callback: Callback,
-        failure_callback: Callback,
-    )
+        quote:   ServerSideQuote,
+        success: Callback = () => {},
+        failure: Callback = () => {},
+    ): this
     {
         var update = { retryAttempts: quote.getRetryAttempts() };
 
         return this.mergeData(
-            quote, update, success_callback, failure_callback
+            quote, update, success, failure
         );
     }
 
 
+    /**
+     * Saves the quote class data
+     *
+     * @param quote   - the quote to save
+     * @param classed - the classes to save
+     * @param success - function to call on success
+     * @param failure - function to call if save fails
+     */
     saveQuoteClasses(
         quote:   ServerSideQuote,
         classes: any,
-        success: Callback,
-        failure: Callback,
-    )
+        success: Callback = () => {},
+        failure: Callback = () => {},
+    ): this
     {
         return this.mergeData(
             quote,
@@ -532,16 +538,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * Only the provided indexes will be modified (that is---data will be
      * merged with what is already in the database).
      *
-     * @param {Quote}    quote    destination quote
-     * @param {Object}   new_meta bucket-formatted data to write
-     * @param {Function} success  callback on success
-     * @param {Function} failure  callback on error
-     *
-     * @return {undefined}
+     * @param quote    - destination quote
+     * @param new_meta - bucket-formatted data to write
+     * @param success  - callback on success
+     * @param failure  - callback on error
      */
     saveQuoteMeta(
         quote:    ServerSideQuote,
-        new_meta: any,
+        new_meta: Record<string, any>,
         success:  Callback,
         failure:  Callback,
     ): void
@@ -565,35 +569,26 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Saves the quote lock state to the database
      *
-     * @param Quote    quote            the quote to save
-     * @param Function success_callback function to call on success
-     * @param Function failure_callback function to call if save fails
-     *
-     * @return MongoServerDao self
+     * @param quote   - the quote to save
+     * @param success - function to call on success
+     * @param failure - function to call if save fails
      */
     saveQuoteLockState(
-        quote:            ServerSideQuote,
-        success_callback: Callback,
-        failure_callback: Callback,
+        quote:   ServerSideQuote,
+        success: Callback = () => {},
+        failure: Callback = () => {},
     ): this
     {
         // lock state is saved by default
-        return this.saveQuote(
-            quote,
-            success_callback,
-            failure_callback,
-            {}
-        );
+        return this.saveQuote( quote, success, failure, {} );
     }
 
 
     /**
      * Pulls quote data from the database
      *
-     * @param Integer          quote_id id of quote
-     * @param Function( data ) callback function to call when data is available
-     *
-     * @return MongoServerDao self to allow for method chaining
+     * @param quote_id - id of quote
+     * @param callback - function to call when data is available
      */
     pullQuote(
         quote_id: PositiveInteger,
@@ -626,6 +621,11 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
+    /**
+     * Returns the minimum allowable quote id
+     *
+     * @param callback - function to call with minimum quote id
+     */
     getMinQuoteId( callback: ( min_id: number ) => void ): this
     {
         // just in case it's asynchronous later on
@@ -635,7 +635,12 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
-    getMaxQuoteId( callback: ( min_id: number ) => void ): void
+    /**
+     * Returns the current highest quote id
+     *
+     * @param callback - function to call with current highest quote id
+     */
+    getMaxQuoteId( callback: ( max_id: number ) => void ): void
     {
         var dao = this;
 
@@ -660,6 +665,11 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
+    /**
+     * Returns the next available quote id
+     *
+     * @param callback - function to call with next available quote id
+     */
     getNextQuoteId( callback: ( quote_id: number ) => void ): this
     {
         var dao = this;
@@ -696,6 +706,9 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * can (in the future) calculate a delta instead (Mike recommends the Git
      * model of storing the deltas in previous revisions and the whole of the
      * bucket in the most recently created revision).
+     *
+     * @param quote    - the quote to create a revision with
+     * @param callback - function to call on error
      */
     createRevision(
         quote:    ServerSideQuote,
@@ -727,6 +740,13 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
+    /**
+     * Get a quote revision by its revision id
+     *
+     * @param quote    - the quote
+     * @param revid    - the revision id
+     * @param callback - a function to call with results
+     */
     getRevision(
         quote:    ServerSideQuote,
         revid:    PositiveInteger,
@@ -760,10 +780,17 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
+    /**
+     * Set worksheet data
+     *
+     * @param qid      - The quote id
+     * @param data     - worksheet data
+     * @param failure  - a function to call on error
+     */
     setWorksheets(
-        qid:      QuoteId,
-        data:     MongoUpdate,
-        callback: NodeCallback<void>,
+        qid:     QuoteId,
+        data:    MongoUpdate,
+        failure: NodeCallback<void>,
     ): void
     {
         this._collection!.update( { id: qid },
@@ -775,13 +802,21 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             // on complete
             function( err )
             {
-                callback( err );
+                failure( err );
                 return;
             }
         );
     }
 
 
+    /**
+     * Retrieve worksheet data for a given quote id and supplier
+     *
+     * @param qid      - the quote id
+     * @param supplier - the supplier to retrieve the worksheet for
+     * @param index    - the worksheet index
+     * @param callback - a function to call with the results of the lookup
+     */
     getWorksheet(
         qid:      QuoteId,
         supplier: string,

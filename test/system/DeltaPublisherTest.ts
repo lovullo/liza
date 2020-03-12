@@ -69,7 +69,7 @@ describe( 'server.DeltaPublisher', () =>
                 };
             };
 
-            const sut = new Sut( emitter, ts_ctr, conn, writer );
+            const sut = new Sut( emitter, ts_ctor, conn, writer );
 
             return expect(
                     sut.publish( meta, delta, bucket, ratedata )
@@ -130,7 +130,7 @@ describe( 'server.DeltaPublisher', () =>
 
             conn.getAmqpChannel = getChannelF;
 
-            const result = new Sut( emitter, ts_ctr, conn, writer )
+            const result = new Sut( emitter, ts_ctor, conn, writer )
                             .publish( meta, delta, bucket, ratedata );
 
             return Promise.all( [
@@ -178,7 +178,7 @@ describe( 'server.DeltaPublisher', () =>
                 return Promise.reject( error );
             };
 
-            const result = new Sut( emitter, ts_ctr, conn, writer )
+            const result = new Sut( emitter, ts_ctor, conn, writer )
                             .publish( meta, delta, bucket, ratedata );
 
             return Promise.all( [
@@ -193,7 +193,7 @@ describe( 'server.DeltaPublisher', () =>
 } );
 
 
-function ts_ctr(): UnixTimestamp
+function ts_ctor(): UnixTimestamp
 {
     return <UnixTimestamp>Math.floor( new Date().getTime() / 1000 );
 }
