@@ -185,7 +185,7 @@ module.exports = Class( 'GroupUi' )
      * (refactoring).
      *
      * @param {Group}         group     group to style
-     * @param {jQuery}        $content  the group content
+     * @param {HTMLElement}   content   the group content
      * @param {ElementStyler} styler    styler to use to style elements
      * @param {jQuery}        jquery    jQuery-compatible object
      * @param {DomContext}    context   group context
@@ -194,18 +194,18 @@ module.exports = Class( 'GroupUi' )
      * @return  {undefined}
      */
     'public __construct': function(
-        group, $content, styler, jquery, context, na_styler
+        group, content, styler, jquery, context, na_styler
     )
     {
         this.group     = group;
-        this.$content  = $content;
+        this.content   = content;
         this.styler    = styler;
         this.jquery    = jquery;
         this.context   = context;
         this._naStyler = na_styler;
 
         // Todo: Transition away from jQuery
-        this.content   = $content[ 0 ];
+        this.$content   = this.jquery( content );
     },
 
 

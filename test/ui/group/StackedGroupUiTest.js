@@ -46,7 +46,7 @@ describe( 'ui.group.StackedGroupUi', () =>
                 const container = createContainer();
                 const content   = createContent();
 
-                content[ 0 ].querySelector
+                content.querySelector
                     .withArgs( 'div.stacked-container' )
                     .returns( container );
 
@@ -99,7 +99,7 @@ describe( 'ui.group.StackedGroupUi', () =>
                 const container = createContainer();
                 const content   = createContent();
 
-                content[ 0 ].querySelector
+                content.querySelector
                     .withArgs( 'div.stacked-container' )
                     .returns( container );
 
@@ -155,26 +155,32 @@ function createSut( content, field )
 
     const group = {
         getIndexFieldName: sinon.stub().returns( field ),
-        getUserFieldNames: sinon.stub().returns( [ field ] )
+        getUserFieldNames: sinon.stub().returns( [ field ] ),
+        getExclusiveFieldNames: sinon.stub().returns( [] ),
     }
 
-    return Sut( group, content, null, null, context, null );
+    // Mock jquery content object
+    const $content = {};
+
+    $content.hide = sinon.stub();
+    $content.find = sinon.stub()
+        .returns( { click: sinon.stub() });
+
+    const jquery = sinon.stub();
+
+    jquery.withArgs( content )
+        .returns( $content );
+
+    return Sut( group, content, null, jquery, context, null );
 }
 
 
 function createContent()
 {
-    const content = [ {
+    return {
         querySelector: sinon.stub(),
         getAttribute: sinon.stub().returns( null )
-    } ];
-
-    content.hide = sinon.stub();
-    content.find = sinon.stub()
-        .returns( { click: sinon.stub() });
-
-
-    return content;
+    };
 }
 
 

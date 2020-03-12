@@ -296,43 +296,43 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, $content, styler, root_context, na_styler
+        group, content, styler, context, na_styler
     )
     {
         // default
         var obj = FlatGroupUi;
 
-        if ( $content.hasClass( 'table' ) )
+        if ( content.classList.contains( 'table' ) )
         {
             obj = TableGroupUi;
         }
-        else if ( $content.hasClass( 'sidetable' ) )
+        else if ( content.classList.contains( 'sidetable' ) )
         {
             obj = SideTableGroupUi;
         }
-        else if ( $content.hasClass( 'collapsetable' ) )
+        else if ( content.classList.contains( 'collapsetable' ) )
         {
             obj = CollapseTableGroupUi;
         }
-        else if ( $content.hasClass( 'tabbed' ) )
+        else if ( content.classList.contains( 'tabbed' ) )
         {
             obj = TabbedGroupUi;
         }
-        else if ( $content.hasClass( 'tabbedblock' ) )
+        else if ( content.classList.contains( 'tabbedblock' ) )
         {
             obj = TabbedBlockGroupUi;
         }
-        else if ( $content.hasClass( 'stacked' ) )
+        else if ( content.classList.contains( 'stacked' ) )
         {
             obj = StackedGroupUi;
         }
-        else if ( $content.hasClass( 'accordion' ) )
+        else if ( content.classList.contains( 'accordion' ) )
         {
             obj = AccordionGroupUi;
         }
 
         return obj(
-            group, $content, styler, jQuery, root_context, na_styler
+            group, content, styler, jQuery, context, na_styler
         );
     },
 
