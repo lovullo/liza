@@ -36,7 +36,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.debug( 'Foo' );
 
@@ -47,7 +47,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.info( 'Foo' );
 
@@ -58,7 +58,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.notice( 'Foo' );
 
@@ -69,7 +69,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.warning( 'Foo' );
 
@@ -80,7 +80,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.error( 'Foo' );
 
@@ -91,7 +91,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.critical( 'Foo' );
 
@@ -102,7 +102,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.alert( 'Foo' );
 
@@ -113,7 +113,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.emergency( 'Foo' );
 
@@ -124,7 +124,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
 
         sut.log( LogLevel.ERROR, 'Foo' );
 
@@ -135,7 +135,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
     {
         const con = createMockConsole();
         const env = 'test';
-        const sut = new Sut( con, ts_ctr, env );
+        const sut = new Sut( con, ts_ctor, env );
         const context = { bar: 'baz' };
         const expected_output = {
             message:   'Foo',
@@ -156,7 +156,7 @@ describe( 'system.StandardLogger captures and logs events', () =>
 } );
 
 
-function ts_ctr(): UnixTimestamp
+function ts_ctor(): UnixTimestamp
 {
     return <UnixTimestamp>123123;
 }

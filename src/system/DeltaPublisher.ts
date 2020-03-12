@@ -38,13 +38,13 @@ export class DeltaPublisher implements AmqpPublisher
      * Delta publisher
      *
      * @param _emitter - event emitter instance
-     * @param _ts_ctr  - a timestamp constructor
+     * @param _ts_ctor - a timestamp constructor
      * @param _conn    - the amqp connection
      * @param _writer  - message writer
      */
     constructor(
         private readonly _emitter: EventEmitter,
-        private readonly _ts_ctr:  () => UnixTimestamp,
+        private readonly _ts_ctor: () => UnixTimestamp,
         private readonly _conn:    AmqpConnection,
         private readonly _writer:  MessageWriter,
     ) {}
@@ -65,7 +65,7 @@ export class DeltaPublisher implements AmqpPublisher
         ratedata: Record<string, any>,
     ): Promise<void>
     {
-        const ts          = this._ts_ctr();
+        const ts          = this._ts_ctor();
         const headers     = { version: 1, created: ts };
 
         return this._writer.write(

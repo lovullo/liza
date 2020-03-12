@@ -51,7 +51,7 @@ const db                  = createMongoDB( db_conf );
 const process_interval_ms = +( process.env.PROCESS_INTERVAL_MS || 10000 );
 const env                 = process.env.NODE_ENV || 'Unknown Environment';
 const emitter             = new EventEmitter();
-const log                 = new StandardLogger( console, ts_ctr, env );
+const log                 = new StandardLogger( console, ts_ctor, env );
 const amqp_connection     = new AmqpConnection( amqplib, amqp_conf, emitter );
 
 const message_writer = new V1MessageWriter(
@@ -61,7 +61,7 @@ const message_writer = new V1MessageWriter(
 
 const publisher = new DeltaPublisher(
     emitter,
-    ts_ctr,
+    ts_ctor,
     amqp_connection,
     message_writer,
 );
@@ -172,7 +172,7 @@ function shutdown( signal: string ): void
  *
  * @return a timestamp
  */
-function ts_ctr(): UnixTimestamp
+function ts_ctor(): UnixTimestamp
 {
     return <UnixTimestamp>Math.floor( new Date().getTime() / 1000 );
 }
