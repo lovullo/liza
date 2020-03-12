@@ -61,7 +61,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Initializes DAO
      *
-     * @param {Mongo.Db} db mongo database connection
+     * @param _db  - mongo database connection
+     * @param _env - the name of the current environment
      */
     constructor(
         private readonly _db:  MongoDb,
@@ -536,8 +537,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param {Object}   new_meta bucket-formatted data to write
      * @param {Function} success  callback on success
      * @param {Function} failure  callback on error
-     *
-     * @return {undefined}
      */
     saveQuoteMeta(
         quote:    ServerSideQuote,

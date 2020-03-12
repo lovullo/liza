@@ -49,22 +49,25 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( metadata );
 
-                const sut = new Sut( createMockDb(
-                    // update
-                    ( _selector: MongoSelector, data: MongoUpdate ) =>
-                    {
-                        expect( data.$set[ 'meta.foo' ] )
-                            .to.deep.equal( metadata.foo );
+                const sut = new Sut(
+                    createMockDb(
+                        // update
+                        ( _selector: MongoSelector, data: MongoUpdate ) =>
+                        {
+                            expect( data.$set[ 'meta.foo' ] )
+                                .to.deep.equal( metadata.foo );
 
-                        expect( data.$set[ 'meta.bar' ] )
-                            .to.deep.equal( metadata.bar );
+                            expect( data.$set[ 'meta.bar' ] )
+                                .to.deep.equal( metadata.bar );
 
 
-                        expect( data.$push ).to.equal( undefined );
+                            expect( data.$push ).to.equal( undefined );
 
-                        done();
-                    }
-                ), 'test' );
+                            done();
+                        }
+                    ),
+                    'test',
+                );
 
                 sut.init( () =>
                     sut.saveQuote( quote, () => {}, () => {} )
@@ -83,19 +86,22 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( {} );
 
-                const sut = new Sut( createMockDb(
-                    // update
-                    (_selector: MongoSelector, data: MongoUpdate ) =>
-                    {
-                        expect( data.$push[ 'foo' ] )
-                            .to.deep.equal( push_data.foo );
+                const sut = new Sut(
+                    createMockDb(
+                        // update
+                        (_selector: MongoSelector, data: MongoUpdate ) =>
+                        {
+                            expect( data.$push[ 'foo' ] )
+                                .to.deep.equal( push_data.foo );
 
-                        expect( data.$push[ 'bar' ] )
-                            .to.deep.equal( push_data.bar );
+                            expect( data.$push[ 'bar' ] )
+                                .to.deep.equal( push_data.bar );
 
-                        done();
-                    }
-                ), 'test' );
+                            done();
+                        }
+                    ),
+                    'test',
+                );
 
                 sut.init( () =>
                     sut.saveQuote(
@@ -114,15 +120,18 @@ describe( 'MongoServerDao', () =>
 
                 const quote = createStubQuote( {} );
 
-                const sut = new Sut( createMockDb(
-                    // update
-                    ( _selector: MongoSelector, data: MongoUpdate ) =>
-                    {
-                        expect( data.$push ).to.equal( undefined );
+                const sut = new Sut(
+                    createMockDb(
+                        // update
+                        ( _selector: MongoSelector, data: MongoUpdate ) =>
+                        {
+                            expect( data.$push ).to.equal( undefined );
 
-                        done();
-                    }
-                ), 'test' );
+                            done();
+                        }
+                    ),
+                    'test',
+                );
 
                 sut.init( () =>
                     sut.saveQuote(

@@ -121,6 +121,25 @@ export interface ServerDao
 
 
     /**
+     * Save document metadata (meta field on document)
+     *
+     * Only the provided indexes will be modified (that is---data will be
+     * merged with what is already in the database).
+     *
+     * @param {Quote}    quote    destination quote
+     * @param {Object}   new_meta bucket-formatted data to write
+     * @param {Function} success  callback on success
+     * @param {Function} failure  callback on error
+     */
+    saveQuoteMeta(
+        quote:    ServerSideQuote,
+        new_meta: any,
+        success:  Callback,
+        failure:  Callback,
+    ): void
+
+
+    /**
      * Saves the quote lock state to the database
      *
      * @param quote   - the quote to save

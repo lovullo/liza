@@ -68,6 +68,7 @@ export class RatingService
      * @param _server        - server actions
      * @param _rater_manager - rating manager
      * @param _createDelta   - delta constructor
+     * @param _ts_ctr        - a timestamp constructor
      */
     constructor(
         private readonly _logger:        PriorityLog,
@@ -75,6 +76,7 @@ export class RatingService
         private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
         private readonly _createDelta:   DeltaConstructor<number>,
+        private readonly _ts_ctr:        () => UnixTimestamp,
     ) {}
 
 
@@ -144,9 +146,7 @@ export class RatingService
     private _isQuoteValid( quote: ServerSideQuote ): boolean
     {
         // quotes are valid for 30 days
-        var re_date = Math.round( ( ( new Date() ).getTime() / 1000 ) -
-            ( 60 * 60 * 24 * 30 )
-        );
+        var re_date = this._ts_ctr() - ( 60 * 60 * 24 * 30 );
 
         if ( quote.getLastPremiumDate() > re_date )
         {
@@ -261,9 +261,7 @@ export class RatingService
         // only update the last premium calc date on the initial request
         if ( !indv )
         {
-            var cur_date = <UnixTimestamp>Math.round(
-                ( new Date() ).getTime() / 1000
-            );
+            var cur_date = this._ts_ctr();
 
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
@@ -330,6 +328,16 @@ export class RatingService
         const retry_on_step  = ( retry_attempts > 0 ) ? is_rate_step : true;
 
         data[ '__rate_pending' ] = [ retry_count ];
+
+        if( retry_attempts === 0 )
+        {
+            this._dao.saveQuoteMeta(
+                quote,
+                { liza_timestamp_rate_request: this._ts_ctr() },
+                () => {},
+                () => {}
+            );
+        }
 
         if (
             retry_count > 0 &&

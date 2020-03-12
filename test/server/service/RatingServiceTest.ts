@@ -62,9 +62,10 @@ describe( 'RatingService', () =>
             quote,
             stub_rate_data,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, server, raters, createDelta);
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         const expected = {
             data:             stub_rate_data,
@@ -88,6 +89,7 @@ describe( 'RatingService', () =>
             quote,
             stub_rate_data,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         let last_premium_date_call_count = 0;
@@ -112,7 +114,7 @@ describe( 'RatingService', () =>
             return initial_date;
         };
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
         server.sendResponse = (
             _request: any,
             _quote:   any,
@@ -145,15 +147,16 @@ describe( 'RatingService', () =>
             quote,
             stub_rate_data,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         let last_prem_called  = false;
         let rated_date_called = false;
 
-        let stub_last_prem_ts  = <UnixTimestamp>12345;
-        let stub_rated_date_ts = <UnixTimestamp>23456;
+        let stub_last_prem_ts  = <UnixTimestamp>0;
+        let stub_rated_date_ts = <UnixTimestamp>0;
 
         let sent = false;
 
@@ -213,6 +216,7 @@ describe( 'RatingService', () =>
             quote,
             stub_rate_data,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         let saved_rates = false;
@@ -233,7 +237,7 @@ describe( 'RatingService', () =>
             return dao;
         };
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         return sut.request( request, response, quote, "" )
             .then( () =>
@@ -255,6 +259,7 @@ describe( 'RatingService', () =>
             quote,
             stub_rate_delta,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         let saved_quote = false;
@@ -284,7 +289,7 @@ describe( 'RatingService', () =>
             return dao;
         };
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         return sut.request( request, response, quote, "" )
             .then( () => { expect( saved_quote ).to.be.true; } );
@@ -304,13 +309,14 @@ describe( 'RatingService', () =>
             response,
             server,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         const expected_error = new Error( "expected error" );
 
         rater.rate = () => { throw expected_error; };
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         let logged = false;
 
@@ -353,11 +359,12 @@ describe( 'RatingService', () =>
             response,
             server,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         const expected_message = 'expected foo';
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         rater.rate = (
             _quote:   ServerSideQuote,
@@ -391,6 +398,7 @@ describe( 'RatingService', () =>
             server,
             stub_rate_data,
             createDelta,
+            ts_ctr,
         } = getStubs();
 
         let sent = false;
@@ -416,7 +424,7 @@ describe( 'RatingService', () =>
             return server;
         };
 
-        const sut = new Sut( logger, dao, server, raters, createDelta );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
         return sut.request( request, response, quote, "" )
             .then( () => expect( sent ).to.be.true );
@@ -429,7 +437,8 @@ describe( 'RatingService', () =>
         boolean,
         boolean[],
         number,
-        number
+        number,
+        boolean,
     ][]>[
         [
             "delay action is returned when raters are pending",
@@ -444,6 +453,7 @@ describe( 'RatingService', () =>
             [ true ],
             0,
             0,
+            true,
         ],
         [
             "delay action is not returned when all raters are completed",
@@ -458,6 +468,7 @@ describe( 'RatingService', () =>
             [ true ],
             0,
             0,
+            true,
         ],
         [
             "Undefined ratesteps defaults gracefully",
@@ -472,6 +483,7 @@ describe( 'RatingService', () =>
             undefined,
             0,
             0,
+            true,
         ],
         [
             "Set __rate_pending to zero after max attempts are reached",
@@ -486,6 +498,7 @@ describe( 'RatingService', () =>
             undefined,
             0,
             30,
+            false,
         ],
     ] ).forEach( ([
         label,
@@ -495,6 +508,7 @@ describe( 'RatingService', () =>
         rate_steps,
         step_id,
         attempts,
+        expected_save_meta,
     ]) =>
     {
         it( label, () =>
@@ -510,17 +524,19 @@ describe( 'RatingService', () =>
                 stub_rate_data,
                 createDelta,
                 program,
+                ts_ctr,
             } = getStubs();
 
-            let sent = false;
+            let sent             = false;
+            let meta_save_called = false;
 
             Object.assign( stub_rate_data, supplier_data );
 
             server.sendResponse = (
                 _request: any,
-                _quote: any,
-                resp: RateRequestResult,
-                actions: ClientActions
+                _quote:   any,
+                resp:     RateRequestResult,
+                actions:  ClientActions
             ) =>
             {
                 const expected_action = {
@@ -543,14 +559,30 @@ describe( 'RatingService', () =>
                 return server;
             };
 
+            if( expected_save_meta )
+            {
+                dao.saveQuoteMeta = ( _, meta, __, ___ ) =>
+                {
+                    expect( meta.liza_timestamp_rate_request )
+                        .to.deep.equal( [ ts_ctr() ] );
+
+                    meta_save_called = true;
+                }
+            }
+            else
+            {
+                meta_save_called = true;
+            }
+
             program.rateSteps      = rate_steps;
             quote.getProgram       = () => { return program; };
             quote.getCurrentStepId = () => { return step_id; };
             quote.getRetryAttempts = () => { return attempts; };
 
-            const sut = new Sut( logger, dao, server, raters, createDelta );
+            const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
             return sut.request( request, response, quote, "" )
-                .then( () => expect( sent ).to.be.true );
+                .then( () => expect( sent ).to.be.true )
+                .then( () => expect( meta_save_called ).to.be.true );
         } );
     } );
 
@@ -569,6 +601,7 @@ describe( 'RatingService', () =>
                 response,
                 quote,
                 createDelta,
+                ts_ctr,
             } = getStubs();
 
             dao.mergeBucket = () =>
@@ -585,7 +618,7 @@ describe( 'RatingService', () =>
                 {
                     processed = true;
                 }
-            }( logger, dao, server, raters, createDelta );
+            }( logger, dao, server, raters, createDelta, ts_ctr );
 
             sut.request( request, response, quote, 'something' );
         } );
@@ -606,6 +639,7 @@ describe( 'RatingService', () =>
                 response,
                 quote,
                 createDelta,
+                ts_ctr,
             } = getStubs();
 
             quote.getLastPremiumDate = () =>
@@ -616,7 +650,7 @@ describe( 'RatingService', () =>
 
             quote.getRatedDate = () => initial_date;
 
-            const sut = new Sut( logger, dao, server, raters, createDelta );
+            const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctr );
 
             server.sendResponse = ( _request: any, _quote: any, resp: any, _actions: any ) =>
             {
@@ -744,6 +778,11 @@ function getStubs()
             return this;
         }
 
+        saveQuoteMeta( _: any, __:any, ___:any, ____:any ): void
+        {
+
+        }
+
         saveQuoteLockState(): this
         {
             throw new Error( "Unused method" );
@@ -792,6 +831,8 @@ function getStubs()
         getRetryAttempts:      () => 1,
     };
 
+    const ts_ctr = () => { return <UnixTimestamp>2592001 };
+
     return {
         program:         program,
         stub_rate_data:  stub_rate_data,
@@ -806,5 +847,6 @@ function getStubs()
         request:         request,
         response:        response,
         quote:           quote,
+        ts_ctr:          ts_ctr,
     };
 };
