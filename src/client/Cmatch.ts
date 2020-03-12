@@ -39,11 +39,6 @@ export type ClassData = {
 
 export type CmatchData = Record<string, any>;
 
-/**
- * TODO: remove dependency on this global var in handleClassMatch
- */
-declare var name: string;
-
 export type VisibilityQueue = {
     [ index: string ]: {
         [ index: string ]: PositiveInteger[]
@@ -51,7 +46,7 @@ export type VisibilityQueue = {
 };
 
 /**
- *
+ * Handles classification matching
  */
 export class Cmatch
 {
@@ -347,7 +342,7 @@ export class Cmatch
                     } );
                 } );
 
-                this._dapiTrigger( name );
+                this._dapiTrigger( field );
             } );
         }, 25 );
     }

@@ -121,7 +121,7 @@ module.exports = Class( 'QuoteDataBucket' )
         // remove any data that has not been updated (the hooks do processing on
         // this data, often updating the DOM, so it's faster to do this than to
         // have a lot of unnecessary DOM work done)
-        for ( name in data )
+        for ( let name in data )
         {
             var data_set = data[ name ],
                 pre_set  = this._data[ name ],
@@ -155,7 +155,7 @@ module.exports = Class( 'QuoteDataBucket' )
 
         this.emit( this.__self.$('EVENT_UPDATE'), data );
 
-        for ( name in data )
+        for ( let name in data )
         {
             if ( ignore[ name ] )
             {
