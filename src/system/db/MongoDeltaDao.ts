@@ -285,5 +285,62 @@ export class MongoDeltaDao implements DeltaDao
             )
         } );
     }
+
+
+    /**
+     * Get stale documents
+     *
+     * A document will be considered stale if it has gone a certain amount
+     * of time unpublished or pending a rate completion
+     *
+     * @return a count of the documents that are stale
+     */
+    getStaleDocuments( stale_ts: UnixTimestamp ): Promise<number>
+    {
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection.find(
+                {
+                    lastUpdate: { $lte: stale_ts },
+                    $or: [
+                        { published:  false },
+                        { 'ratedata.__rate_pending': { $in: [ [ 0 ], null ] } },
+                    ],
+                    env:        this._env,
+                },
+                {},
+                ( e, cursor ) =>
+                {
+                    if ( e )
+                    {
+                        reject(
+                            new Error(
+                                'Failed getting stale documents: ' + e
+                            )
+                        );
+                        return;
+                    }
+
+                    cursor.toArray( ( e: NullableError, data: any[] ) =>
+                    {
+                        if ( e )
+                        {
+                            reject( context(
+                                new DaoError(
+                                    'Failed getting stale documents: ' + e
+                                ),
+                                {
+                                    cursor: cursor,
+                                }
+                            ) );
+                            return;
+                        }
+
+                        resolve( data.length );
+                    });
+                }
+            )
+        } );
+    }
 }
 
