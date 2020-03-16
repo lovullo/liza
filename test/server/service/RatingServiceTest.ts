@@ -561,12 +561,14 @@ describe( 'RatingService', () =>
 
             if( expected_save_meta )
             {
-                dao.saveQuoteMeta = ( _, meta, __, ___ ) =>
+                dao.mergeData = ( _, data, __, ___ ) =>
                 {
-                    expect( meta.liza_timestamp_rate_request )
+                    expect( data[ 'meta.liza_timestamp_rate_request' ] )
                         .to.deep.equal( [ ts_ctor() ] );
 
                     meta_save_called = true;
+
+                    return dao;
                 }
             }
             else
@@ -778,7 +780,12 @@ function getStubs()
             return this;
         }
 
-        saveQuoteMeta( _: any, __:any, ___:any, ____:any ): void
+        mergeData( _: any, __:any, ___:any, ____:any ): this
+        {
+            return this;
+        }
+
+        saveQuoteMeta(): void
         {
 
         }

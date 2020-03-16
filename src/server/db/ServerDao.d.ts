@@ -57,6 +57,22 @@ export interface ServerDao
 
 
     /**
+     * Merges quote data with the existing (rather than overwriting)
+     *
+     * @param quote   - quote to save
+     * @param data    - quote data
+     * @param success - successful callback
+     * @param failure - failure callback
+     */
+    mergeData(
+        quote:    ServerSideQuote,
+        data:     any,
+        success?: Callback,
+        failure?: Callback,
+    ): this
+
+
+    /**
      * Merges bucket data with the existing bucket (rather than overwriting the
      * entire bucket)
      *

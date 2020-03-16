@@ -329,9 +329,9 @@ export class RatingService
 
         if( retry_attempts === 0 )
         {
-            this._dao.saveQuoteMeta(
+            this._dao.mergeData(
                 quote,
-                { liza_timestamp_rate_request: [ this._ts_ctor() ] },
+                { 'meta.liza_timestamp_rate_request': [ this._ts_ctor() ] },
             );
         }
 
