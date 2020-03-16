@@ -684,6 +684,7 @@ function createMockDeltaDao(): DeltaDao
         markDocumentAsProcessed() { return Promise.resolve(); },
         setErrorFlag()            { return Promise.resolve(); },
         getErrorCount()           { return Promise.resolve( 0 ); },
+        getStaleDocuments()       { return Promise.resolve( 0 ); },
     };
 }
 

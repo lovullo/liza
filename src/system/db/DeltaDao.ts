@@ -83,5 +83,16 @@ export interface DeltaDao
      * @return a count of the documents in an error state
      */
     getErrorCount(): Promise<number>
+
+
+    /**
+     * Get unpublished deltas
+     *
+     * @param stale_ts - A timestamp to consider unpublished, earlier
+     *                   documents as stale
+     *
+     * @return a count of the documents that are stale
+     */
+    getStaleDocuments( stale_ts: UnixTimestamp ): Promise<number>
 }
 
