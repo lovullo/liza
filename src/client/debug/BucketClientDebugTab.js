@@ -537,7 +537,7 @@ module.exports = Class( 'BucketClientDebugTab' )
 
             listener = function( data )
             {
-                for ( name in data )
+                for ( let name in data )
                 {
                     $editor.find( 'input[name="' + name + '"]' )
                         .val( JSON.stringify(
@@ -590,7 +590,7 @@ module.exports = Class( 'BucketClientDebugTab' )
     {
         var data = staging.getData();
 
-        for ( name in data )
+        for ( let name in data )
         {
             // The data we've been provided with does not include the staging
             // data.  If we request it by name, however, that data will then be

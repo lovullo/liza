@@ -39,7 +39,6 @@ import { ExclusiveFields, Step } from "../../src/step/Step";
 import { GroupUi } from "../../src/ui/group/GroupUi";
 import {PositiveInteger} from "../../src/numeric";
 
-
 // these tests aren't terribly effective right now
 describe( "Cmatch", () =>
 {
@@ -47,7 +46,7 @@ describe( "Cmatch", () =>
     {
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         expect(
             sut.markShowHide( 'foo', {}, [ <PositiveInteger>1, <PositiveInteger>2 ], [] )
@@ -59,7 +58,7 @@ describe( "Cmatch", () =>
     {
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         expect(
             sut.markShowHide(
@@ -77,7 +76,7 @@ describe( "Cmatch", () =>
 
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         expect(
             sut.markShowHide(
@@ -98,7 +97,7 @@ describe( "Cmatch", () =>
     {
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         expect(
             sut.markShowHide( 'foo', {}, [], [] )
@@ -110,7 +109,7 @@ describe( "Cmatch", () =>
     {
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         expect( () => sut.handleClassMatch( {}, false ) ).to.throw( TypeError );
     } );
@@ -123,7 +122,7 @@ describe( "Cmatch", () =>
 
         const {
             sut,
-        } = createStubs( {}, null );
+        } = createStubs();
 
         const results: VisibilityQueue = sut.markShowHide(
             'foo',
@@ -133,6 +132,61 @@ describe( "Cmatch", () =>
         );
 
         expect( results.bar ).to.equal( barval );
+    } );
+
+
+    it( "handleClassMatch triggers dapi for every visible queued element",
+        done =>
+    {
+        const field_names = {
+            foo: true,
+            bar: true,
+            baz: true,
+        };
+
+        const cmatch: CmatchData = {
+            foo: { all: true, any: true, indexes: [ 0 ] },
+            baz: { all: true, any: true, indexes: [ 0 ] },
+        };
+
+        const step_ui = createStubStepUi( field_names );
+
+        const {
+            data_validator,
+            quote,
+            program,
+            sut,
+        } = createStubs( cmatch, step_ui );
+
+        let given: string[] = [];
+        let async_flag= false;
+        let dapi_call_count = 0;
+
+        program.dapi = (
+            _step_id: PositiveInteger,
+            field: string,
+            _bucket: StagingBucket,
+            _diff: Record<string, any>,
+            _cmatch: CmatchData,
+            _callback: ( () => void ) | null
+        ) =>
+        {
+            given.push( field );
+            ++dapi_call_count;
+
+            if ( dapi_call_count === 2 && async_flag )
+            {
+                expect( given ).to.deep
+                    .equal( [ 'foo', 'baz' ] );
+                done();
+            }
+
+            return <DataApiResult>{};
+        }
+
+        sut.hookClassifier( data_validator );
+        quote.emit("classify");
+        async_flag = true;
     } );
 
 
@@ -162,7 +216,7 @@ describe( "Cmatch", () =>
             sut,
             quote,
             data_validator
-        } = createStubs( cmatch, null );
+        } = createStubs( cmatch );
 
         sut.hookClassifier( data_validator );
         quote.emit( "classify" );
@@ -201,7 +255,6 @@ describe( "Cmatch", () =>
 } );
 
 
-
 function createStubClientQuote()
 {
     const callbacks: any = {};
@@ -218,8 +271,11 @@ function createStubClientQuote()
             return {};
         }
 
-        visitData( _visitor: ( bucket: StagingBucket ) => void): void
+        visitData(
+            visitor: ( bucket: StagingBucket ) => void
+        ): void
         {
+            visitor( <StagingBucket>{} );
         }
 
         setData( _data: Data ): ClientQuote
@@ -324,7 +380,9 @@ function createStubStepUi( field_names: ExclusiveFields  )
 function createStubClient( quote: ClientQuote, ui: Ui )
 {
     return <Client>{
-        nav: <Nav>{},
+        nav: <Nav>{
+            getCurrentStepId: () => <PositiveInteger>0
+        },
         elementStyler: <ElementStyler>{},
         getUi: () => <Ui>ui,
         getQuote: () => <ClientQuote>quote,
@@ -334,7 +392,10 @@ function createStubClient( quote: ClientQuote, ui: Ui )
 }
 
 
-function createStubs( cmatch: CmatchData, step: StepUi | null )
+function createStubs(
+    cmatch: CmatchData = {},
+    step: StepUi | null = null
+)
 {
     const data_validator = createStubDataValidator();
     const quote          = createStubClientQuote();
