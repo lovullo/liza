@@ -188,6 +188,15 @@ export class RatingService
                 quote.getId()
             );
 
+            // Only update the rate request timestamp on the first request made
+            if( quote.getRetryAttempts() === 0 )
+            {
+                const meta = { 'liza_timestamp_rate_request': [ this._ts_ctor() ] }
+
+                quote.setMetadata( meta );
+                this._dao.saveQuoteMeta( quote, meta );
+            }
+
             rater.rate( quote, request.getSession(), indv,
                 ( rate_data: RateResult, actions: ClientActions ) =>
                 {
@@ -318,28 +327,15 @@ export class RatingService
         // rating worksheets are returned as metadata
         this._processWorksheetData( quote.getId(), data );
 
-        // set count of pending raters
-        const retry_count    = this._getRetryCount( data );
-        const retry_attempts = quote.getRetryAttempts();
-        const step           = quote.getCurrentStepId();
-        const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
-        const retry_on_step  = ( retry_attempts > 0 ) ? is_rate_step : true;
+        const {
+            pending_count,
+            timeout,
+            should_retry
+        } = this._processRetries( program, quote, data );
 
-        data[ '__rate_pending' ] = [ retry_count ];
+        data[ '__rate_pending' ] = [ pending_count ];
 
-        if( retry_attempts === 0 )
-        {
-            this._dao.mergeData(
-                quote,
-                { 'meta.liza_timestamp_rate_request': [ this._ts_ctor() ] },
-            );
-        }
-
-        if (
-            retry_count > 0 &&
-            retry_attempts < this.RETRY_MAX_ATTEMPTS &&
-            retry_on_step
-        )
+        if ( should_retry )
         {
             actions.push( {
                 'action':  'delay',
@@ -350,10 +346,10 @@ export class RatingService
                 },
             } );
 
-            quote.setRetryAttempts( retry_attempts + 1 );
+            quote.retryAttempted();
             this._dao.saveQuoteRateRetries( quote );
         }
-        else if ( retry_attempts >= this.RETRY_MAX_ATTEMPTS )
+        else if ( timeout )
         {
             data[ '__rate_pending' ] = [ 0 ];
         }
@@ -564,5 +560,38 @@ export class RatingService
         }
 
         return result;
+    }
+
+
+    private _processRetries(
+        program: Program,
+        quote:   ServerSideQuote,
+        data:    RateResult
+    ): Record<string, boolean|number>
+    {
+        // Gather determinant factors
+        const pending_count  = this._getRetryCount( data );
+        const request_ts     = quote.getRateRequestDate();
+        const current_ts     = this._ts_ctor();
+        const retry_attempts = quote.getRetryAttempts();
+        const step           = quote.getCurrentStepId();
+        const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
+
+        // Make determinations
+        const timed_out     = ( current_ts - request_ts ) > ( 60 * 2 );
+        const max_attempts  = ( retry_attempts >= this.RETRY_MAX_ATTEMPTS );
+        const has_pending   = ( pending_count > 0 );
+        const retry_on_step = ( retry_attempts > 0 ) ? is_rate_step : true;
+
+        return {
+            pending_count: pending_count,
+            timeout:       max_attempts || timed_out,
+            should_retry:  (
+                has_pending &&
+                !max_attempts &&
+                !timed_out &&
+                retry_on_step
+            ),
+        }
     }
 }

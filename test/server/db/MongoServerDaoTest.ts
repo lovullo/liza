@@ -239,6 +239,9 @@ function createStubQuote( metadata: Record<string, any> )
         setLastPremiumDate:    () => quote,
         setRetryAttempts:      () => quote,
         getRetryAttempts:      () => 1,
+        retryAttempted:        () => quote,
+        getRateRequestDate:    () => 123,
+        setMetadata:           () => quote,
     };
 
     return quote;

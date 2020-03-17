@@ -87,6 +87,14 @@ export declare class ServerSideQuote extends BaseQuote
 
 
     /**
+     * Set metabucket data
+     *
+     * @param data - key/value data
+     */
+    setMetadata( data: Record<string, any> ): this
+
+
+    /**
      * Set the number of retries attempted
      *
      * @param {number} attempts the number of attempts
@@ -100,4 +108,20 @@ export declare class ServerSideQuote extends BaseQuote
      * @return {number} the number of attempts that have been made
      */
     getRetryAttempts(): number;
+
+
+    /**
+     * Increments the number of retries attempted
+     *
+     * @return {ServerSideQuote} self
+     */
+    retryAttempted(): this;
+
+
+    /**
+     * Get the last time rating was requested
+     *
+     * @return {number} the last time rating was requested
+     */
+    getRateRequestDate(): number;
 }

@@ -767,6 +767,21 @@ function createStubQuote()
         {
             return 1;
         },
+
+        retryAttempted()
+        {
+            return this;
+        },
+
+        getRateRequestDate()
+        {
+            return 123;
+        },
+
+        setMetadata()
+        {
+            return this;
+        },
     };
 }
 
