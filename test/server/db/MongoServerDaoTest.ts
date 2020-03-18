@@ -240,7 +240,6 @@ function createStubQuote( metadata: Record<string, any> )
         setRetryAttempts:      () => quote,
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
-        getRateRequestDate:    () => 123,
         setMetadata:           () => quote,
     };
 

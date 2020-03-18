@@ -773,11 +773,6 @@ function createStubQuote()
             return this;
         },
 
-        getRateRequestDate()
-        {
-            return 123;
-        },
-
         setMetadata()
         {
             return this;

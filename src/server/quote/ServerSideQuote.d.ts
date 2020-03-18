@@ -116,12 +116,4 @@ export declare class ServerSideQuote extends BaseQuote
      * @return {ServerSideQuote} self
      */
     retryAttempted(): this;
-
-
-    /**
-     * Get the last time rating was requested
-     *
-     * @return {number} the last time rating was requested
-     */
-    getRateRequestDate(): number;
 }

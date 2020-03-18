@@ -251,25 +251,9 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'public retryAttempted': function()
     {
-        this._retry_attempts = ++this._retry_attempts;
+        this._retry_attempts++;
 
         return this;
     },
-
-
-    /**
-     * Get the last time rating was requested
-     *
-     * @return {number} the last time rating was requested
-     */
-    'public getRateRequestDate': function()
-    {
-        if ( !this._metabucket )
-        {
-            throw Error( "No metabucket available for #setMetadata" );
-        }
-
-        return this._metabucket.getDataByName( 'liza_timestamp_rate_request' );
-    }
 } );
 

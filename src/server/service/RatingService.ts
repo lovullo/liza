@@ -351,7 +351,7 @@ export class RatingService
         }
         else if ( timeout )
         {
-            data[ '__rate_pending' ] = [ 0 ];
+            this._clearRetries( data );
         }
 
         if ( ( program.ineligibleLockCount > 0 )
@@ -460,6 +460,30 @@ export class RatingService
 
 
     /**
+     * Clear all pending retry attempts
+     *
+     * @param data Rating results
+     */
+    private _clearRetries( data: RateResult ): void
+    {
+        const retry_pattern = /^(.+)__retry$/;
+
+        for ( let field in data )
+        {
+            if ( !field.match( retry_pattern ) )
+            {
+                continue;
+            }
+
+            // Reset the field to zero
+            data[ field ] = [ 0 ];
+        }
+
+        data[ '__rate_pending' ] = [ 0 ];
+    }
+
+
+    /**
      * Process and save worksheet data from rating results
      *
      * @param qid  - quote id
@@ -563,6 +587,15 @@ export class RatingService
     }
 
 
+    /**
+     * Process retry logic
+     *
+     * @param program  - program used to perform rating
+     * @param quote    - quote used for rating
+     * @param data     - rating data returned
+     *
+     * @return an object with a retry flag, a timeout flag, and a pending count
+     */
     private _processRetries(
         program: Program,
         quote:   ServerSideQuote,
@@ -571,25 +604,21 @@ export class RatingService
     {
         // Gather determinant factors
         const pending_count  = this._getRetryCount( data );
-        const request_ts     = quote.getRateRequestDate();
-        const current_ts     = this._ts_ctor();
         const retry_attempts = quote.getRetryAttempts();
         const step           = quote.getCurrentStepId();
         const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
 
         // Make determinations
-        const timed_out     = ( current_ts - request_ts ) > ( 60 * 2 );
         const max_attempts  = ( retry_attempts >= this.RETRY_MAX_ATTEMPTS );
         const has_pending   = ( pending_count > 0 );
         const retry_on_step = ( retry_attempts > 0 ) ? is_rate_step : true;
 
         return {
             pending_count: pending_count,
-            timeout:       max_attempts || timed_out,
+            timeout:       max_attempts,
             should_retry:  (
                 has_pending &&
                 !max_attempts &&
-                !timed_out &&
                 retry_on_step
             ),
         }

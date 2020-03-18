@@ -555,6 +555,13 @@ describe( 'RatingService', () =>
                 expect( resp.data[ '__rate_pending' ] )
                     .to.deep.equal( expected_count );
 
+                if( expected_count === [ 0 ] )
+                {
+                    supplier_data.forEach( ( datum: number[] ) => {
+                        expect( datum[ 0 ] ).to.equal( 0 );
+                    });
+                }
+
                 sent = true;
                 return server;
             };
@@ -837,7 +844,6 @@ function getStubs()
         setRetryAttempts:      () => quote,
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
-        getRateRequestDate:    () => 2591991,
         setMetadata:           () => quote,
     };
 
