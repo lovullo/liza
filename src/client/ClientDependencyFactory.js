@@ -102,8 +102,12 @@ var Step          = require( '../step/Step' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
 
+const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
+const { GroupContext }         = require( '../ui/context/GroupContext' );
+const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
+
 
 const Class = require( 'easejs' ).Class;
 
@@ -296,7 +300,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, content, styler, context, na_styler
+        group, content, styler, root_context, na_styler
     )
     {
         // default
@@ -331,8 +335,10 @@ module.exports = Class( 'ClientDependencyFactory',
             obj = AccordionGroupUi;
         }
 
+        const context = this.createGroupContext();
+
         return obj(
-            group, content, styler, jQuery, context, na_styler
+            group, content, styler, jQuery, context, root_context, na_styler
         );
     },
 
@@ -340,6 +346,14 @@ module.exports = Class( 'ClientDependencyFactory',
     createNaFieldStyler: function()
     {
         return NaFieldStyler();
+    },
+
+    createGroupContext: function()
+    {
+        return new GroupContext(
+            new ContextParser(),
+            new FieldContextFactory()
+        );
     },
 
     createFormErrorBox: FormErrorBox,

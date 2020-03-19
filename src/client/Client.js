@@ -1302,19 +1302,17 @@ module.exports = Class( 'Client' )
     /**
      * Builds a new group object from the given content
      *
-     * @param {HTMlElement}   content   group content
-     * @param {ElementStyler} styler    styler to use for elements
-     * @param {FieldStyler}   na_styler N/A field styler
+     * @param {HTMlElement}     content   group content
+     * @param {ElementStyler}   styler    styler to use for elements
+     * @param {FieldStyler}     na_styler N/A field styler
      *
      * @return lovullo.program.Group new group object
      */
     _buildGroup: function( content, styler, na_styler )
     {
-        const context = this._rootContext.splitByContent( content );
-
         var group = this._factory.createGroup(),
             ui    = this._factory.createGroupUi(
-                group, content, styler, context, na_styler
+                group, content, styler, this._rootContext, na_styler
             ),
             id               = ui.getId(),
             data             = this.groupData[id],

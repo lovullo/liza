@@ -144,13 +144,17 @@ describe( 'ui.group.StackedGroupUi', () =>
  */
 function createSut( content, field )
 {
-    const context = {
+    const rcontext = {
         getFieldByName: function(){
             return {
                 revokeStyle: function(){},
                 applyStyle: function(){},
             }
         },
+    };
+
+    const context = {
+        createFieldCache: function(){},
     };
 
     const group = {
@@ -171,7 +175,7 @@ function createSut( content, field )
     jquery.withArgs( content )
         .returns( $content );
 
-    return Sut( group, content, null, jquery, context, null );
+    return Sut( group, content, null, jquery, context, rcontext, null );
 }
 
 

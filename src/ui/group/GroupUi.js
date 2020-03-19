@@ -154,9 +154,15 @@ module.exports = Class( 'GroupUi' )
 
     /**
      * DOM group context
-     * @type {DomContext}
+     * @type {GroupContext}
      */
     'protected context': null,
+
+    /**
+     * Root DOM context (deprecated)
+     * @type {DomContext}
+     */
+    'protected rcontext': null,
 
     /**
      * Group context
@@ -180,21 +186,20 @@ module.exports = Class( 'GroupUi' )
     /**
      * Initializes GroupUi
      *
-     * @todo three of the below parameters might be able to be removed by
-     * using context instead; the separate context is transitional
-     * (refactoring).
+     * @todo remove root (DOM) context, and na field styler!
      *
      * @param {Group}         group     group to style
      * @param {HTMLElement}   content   the group content
      * @param {ElementStyler} styler    styler to use to style elements
      * @param {jQuery}        jquery    jQuery-compatible object
-     * @param {DomContext}    context   group context
+     * @param {GroupContext}  context   group context
+     * @param {DomContext}    rcontext  root context
      * @param {FieldStyler}   na_styler styler for fields that are N/A
      *
      * @return  {undefined}
      */
     'public __construct': function(
-        group, content, styler, jquery, context, na_styler
+        group, content, styler, jquery, context, rcontext, na_styler
     )
     {
         this.group     = group;
@@ -202,6 +207,7 @@ module.exports = Class( 'GroupUi' )
         this.styler    = styler;
         this.jquery    = jquery;
         this.context   = context;
+        this.rcontext  = rcontext;
         this._naStyler = na_styler;
 
         // Todo: Transition away from jQuery
@@ -211,6 +217,9 @@ module.exports = Class( 'GroupUi' )
 
     'public init': function( quote )
     {
+        const fields = this.group.getExclusiveFieldNames();
+        this.context.createFieldCache( fields, this.content );
+
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
@@ -901,7 +910,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        this.context.getFieldByName( field, index )
+        this.rcontext.getFieldByName( field, index )
             .applyStyle( this._naStyler );
     },
 
@@ -941,7 +950,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        this.context.getFieldByName( field, index )
+        this.rcontext.getFieldByName( field, index )
             .revokeStyle( this._naStyler );
     },
 
