@@ -19,6 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+"use strict";
+
 var Class        = require( 'easejs' ).Class,
     Bucket       = require( './Bucket' ),
     EventEmitter = require( '../events' ).EventEmitter;
