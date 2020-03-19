@@ -112,13 +112,6 @@ getMongoCollection( db, db_conf )
 
                 dao.getErrorCount()
                     .then( count => { metrics.updateErrorCount( count ) } );
-
-                // Consider a document to be stale if it has not been processed
-                // for over 5 minutes
-                const stale_ts = <UnixTimestamp>( ts_ctor() - ( 60 * 5 ) );
-
-                dao.getStaleDocuments( stale_ts )
-                    .then( count => { metrics.updateStaleDocuments( count ) } );
             }, process_interval_ms );
         } );
     } )

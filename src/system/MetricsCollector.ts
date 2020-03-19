@@ -54,12 +54,6 @@ export class MetricsCollector
     private _current_error_help: string =
         'The current number of documents in an error state';
 
-    /** Delta current error gauge */
-    private _stale_docs:      Gauge;
-    private _stale_docs_name: string = 'liza_delta_stale';
-    private _stale_docs_help: string =
-        'The current number of stale documents';
-
     /** Delta error counter */
     private _total_processed:      Counter;
     private _total_processed_name: string = 'liza_delta_success';
@@ -118,12 +112,6 @@ export class MetricsCollector
             client,
             this._current_error_name,
             this._current_error_help,
-        );
-
-        this._stale_docs = this._factory.createGauge(
-            client,
-            this._stale_docs_name,
-            this._stale_docs_help,
         );
 
         this._total_processed = this._factory.createCounter(
@@ -205,7 +193,6 @@ export class MetricsCollector
         }
     }
 
-
     /**
      * Update metrics with current error count
      *
@@ -214,16 +201,5 @@ export class MetricsCollector
     updateErrorCount( count: number ): void
     {
         this._current_error.set( +count );
-    }
-
-
-    /**
-     * Update metrics with unpublished deltas older than 5 minutes
-     *
-     * @param count - the number of documents found
-     */
-    updateStaleDocuments( count: number ): void
-    {
-        this._stale_docs.set( +count );
     }
 }
