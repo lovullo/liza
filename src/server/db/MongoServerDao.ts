@@ -540,12 +540,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      *
      * @param quote    - destination quote
      * @param new_meta - bucket-formatted data to write
+     * @param ts       - the current time
      * @param success  - callback on success
      * @param failure  - callback on error
      */
     saveQuoteMeta(
         quote:    ServerSideQuote,
         new_meta: Record<string, any>,
+        ts:       UnixTimestamp,
         success:  Callback,
         failure:  Callback,
     ): void
@@ -561,6 +563,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 update[ 'meta.' + key + '.' + i ] = new_meta[ key ][ i ];
             }
         }
+
+        update[ 'meta.liza_timestamp_last_meta_update' ] = ts
 
         this.mergeData( quote, update, success, failure );
     }

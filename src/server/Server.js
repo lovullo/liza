@@ -1206,6 +1206,7 @@ module.exports = Class( 'Server' )
                 this.dao.saveQuoteMeta(
                     quote,
                     data,
+                    Math.round( new Date().getTime() / 1000 ),
                     null,
                     e => { throw e; }
                 )

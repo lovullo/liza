@@ -144,12 +144,14 @@ export interface ServerDao
      *
      * @param quote    - destination quote
      * @param new_meta - bucket-formatted data to write
+     * @param ts       - the current time
      * @param success  - callback on success
      * @param failure  - callback on error
      */
     saveQuoteMeta(
         quote:    ServerSideQuote,
-        new_meta: any,
+        new_meta: Record<string,any>,
+        ts:       UnixTimestamp,
         success?: Callback,
         failure?: Callback,
     ): void
