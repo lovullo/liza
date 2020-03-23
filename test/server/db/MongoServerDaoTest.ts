@@ -228,6 +228,7 @@ function createStubQuote( metadata: Record<string, any> )
         isBound:               () => false,
         getTopVisitedStepId:   () => <PositiveInteger>1,
         getTopSavedStepId:     () => <PositiveInteger>1,
+        getMetaUpdatedDate:    () => <UnixTimestamp>0,
         setRatedDate:          () => quote,
         setRateBucket:         () => quote,
         setRatingData:         () => quote,

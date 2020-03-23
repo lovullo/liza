@@ -80,6 +80,14 @@ export declare class ServerSideQuote extends BaseQuote
 
 
     /**
+     * Get the last time metadata was updated
+     *
+     * @return {UnixTimestamp} self
+     */
+    getMetaUpdatedDate(): UnixTimestamp;
+
+
+    /**
      * Get the program version
      *
      * @return program version

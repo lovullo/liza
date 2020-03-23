@@ -142,7 +142,10 @@ export class RatingService
         // quotes are valid for 30 days
         var re_date = this._ts_ctor() - ( 60 * 60 * 24 * 30 );
 
-        if ( quote.getLastPremiumDate() > re_date )
+        if (
+            quote.getLastPremiumDate() > re_date ||
+            quote.getLastPremiumDate() > quote.getMetaUpdatedDate()
+        )
         {
             this._logger.log( this._logger.PRIORITY_INFO,
                 "Skipping '%s' rating for quote #%s; quote is still valid",

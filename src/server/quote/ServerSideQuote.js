@@ -163,6 +163,31 @@ module.exports = Class( 'ServerSideQuote' )
 
 
     /**
+     * Get the last time metadata was updated
+     *
+     * @return {number} self
+     */
+    'public getMetaUpdatedDate': function()
+    {
+        if ( !this._metabucket )
+        {
+            throw Error( "No metabucket available for #getMetaUpdatedDate" );
+        }
+
+        const data = this._metabucket.getDataByName(
+            'liza_timestamp_last_meta_update'
+        );
+
+        if( data && Array.isArray( data ) && data.length > 0 )
+        {
+            return +data[ 0 ];
+        }
+
+        return 0;
+    },
+
+
+    /**
      * Set rating bucket
      *
      * @param {Bucket} bucket the rate bucket to set

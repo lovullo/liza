@@ -726,6 +726,10 @@ function createStubQuote()
             return new QuoteDataBucket();
         },
 
+        getMetaUpdatedDate(){
+            return <UnixTimestamp>123;
+        },
+
         getProgramVersion(){
             return 'Foo';
         },

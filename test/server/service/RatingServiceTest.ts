@@ -103,6 +103,12 @@ describe( 'RatingService', () =>
             return cur_date;
         };
 
+        // Return an earlier meta data so quote is valid
+        quote.getMetaUpdatedDate = () =>
+        {
+            return <UnixTimestamp>( cur_date - 1 );
+        };
+
         quote.getRatedDate = () =>
         {
             initial_date_call_count++;
@@ -121,6 +127,61 @@ describe( 'RatingService', () =>
                 expect( initial_date_call_count ).to.equal( 1 );
             } );
     } );
+
+
+    it( "Invalidates a quote with a meta bucket updated after last rate", () =>
+    {
+        const {
+            logger,
+            raters,
+            dao,
+            session,
+            quote,
+            stub_rate_data,
+            createDelta,
+            ts_ctor,
+        } = getStubs();
+
+        let last_premium_date_call_count = 0;
+        let initial_date_call_count = 0;
+
+        const initial_date = <UnixTimestamp>2345;
+        const cur_date     = <UnixTimestamp>Math.round(
+            ( ( new Date() ).getTime() / 1000 )
+        );
+
+        // setup recent last prem date to ensure quote is valid
+        quote.getLastPremiumDate = () =>
+        {
+            last_premium_date_call_count++;
+            return cur_date;
+        };
+
+        // Return an later meta data so quote is not valid
+        quote.getMetaUpdatedDate = () =>
+        {
+            return <UnixTimestamp>( cur_date + 1 );
+        };
+
+        quote.getRatedDate = () =>
+        {
+            initial_date_call_count++;
+            return initial_date;
+        };
+
+        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+
+        return sut.request( session, quote, "" )
+            .then( ( result: RateRequestResult ) =>
+            {
+                expect( result.content.initialRatedDate ).to.equal( initial_date );
+                expect( result.content.lastRatedDate ).to.equal( cur_date );
+                expect( result.content.data ).to.equal( stub_rate_data );
+                expect( last_premium_date_call_count ).to.equal( 2 );
+                expect( initial_date_call_count ).to.equal( 1 );
+            } );
+    } );
+
 
     it( "updates rating dates before serving to client", () =>
     {
@@ -592,6 +653,12 @@ describe( 'RatingService', () =>
                 return last_date
             };
 
+            // Return an earlier meta data so quote is valid
+            quote.getMetaUpdatedDate = () =>
+            {
+                return <UnixTimestamp>( last_date - 1 );
+            };
+
             quote.getRatedDate = () => initial_date;
 
             const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
@@ -752,6 +819,7 @@ function getStubs()
         getRatingData:         () => stub_rate_data,
         getBucket:             () => new QuoteDataBucket(),
         getMetabucket:         () => new QuoteDataBucket(),
+        getMetaUpdatedDate:    () => <UnixTimestamp>0,
         getProgramVersion:     () => 'Foo',
         getExplicitLockReason: () => 'Reason',
         getExplicitLockStep:   () => <PositiveInteger>1,
