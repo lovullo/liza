@@ -20,6 +20,7 @@
  */
 
 import { FieldContext as Sut, ContextContent } from "../../../src/ui/context/FieldContext";
+import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
 
@@ -37,19 +38,21 @@ describe( "FieldContext", () =>
     [
         {
             element_id: 'qcontainer_checkbox_foo',
+            position: 1,
             expected: '<dt id="qlabel_checkbox_foo">Foo</dt>'
         },
         {
             element_id: 'qcontainer_foo_bar_long_name',
+            position: 2,
             expected: '<dt id="qlabel_foo_bar_long_name">Bar</dt>'
         },
-    ].forEach( ( { element_id, expected } ) =>
+    ].forEach( ( { element_id, position, expected } ) =>
     {
         it( "sets sibling content for " + element_id, () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
-            const sut = new Sut( content );
+            const sut = new Sut( content, <PositiveInteger>position );
 
             const given: ContextContent = sut.getSiblingContent();
 
@@ -71,7 +74,7 @@ describe( "FieldContext", () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
-            const sut = new Sut( content );
+            const sut = new Sut( content, <PositiveInteger>0 );
 
             const given: ContextContent = sut.getSiblingContent();
 

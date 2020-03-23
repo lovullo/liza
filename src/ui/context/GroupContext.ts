@@ -22,6 +22,7 @@
 import { ContextParser } from "./ContextParser";
 import { FieldContext, ContextContent } from "./FieldContext";
 import { FieldContextFactory } from "./FieldContextFactory";
+import { PositiveInteger } from "../../numeric";
 
 
 export type ContextCache = Record<string, FieldContext>;
@@ -63,13 +64,14 @@ export class GroupContext
         for ( let i = 0; i < fields.length; i++ )
         {
             let field = fields[ i ];
+            let position = <PositiveInteger>+i;
 
             let field_content = this._parser.parse( field, content );
 
             if ( field_content !== null )
             {
                 let field_context = this._field_context_factory
-                    .create( field_content );
+                    .create( field_content, position );
 
                 this._field_context_cache[ field ] = field_context;
             }

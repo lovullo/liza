@@ -19,6 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { PositiveInteger } from "../../numeric";
+
 export type ContextContent = Element | null;
 
 
@@ -37,12 +39,23 @@ export class FieldContext
      * Initialize FieldContext
      *
      * @param _content field content
+     * @param _position position index of content in the group
      */
     constructor(
         private readonly _content: ContextContent,
+        private readonly _position: PositiveInteger
     )
     {
         this.setSiblingContent();
+    }
+
+
+    /**
+     * Return position index
+     */
+    getPosition(): PositiveInteger
+    {
+        return this._position;
     }
 
 
@@ -64,7 +77,7 @@ export class FieldContext
     setSiblingContent(): void
     {
         if ( this._content !== null
-            && this._content.previousElementSibling != null )
+            && this._content.previousElementSibling !== null )
         {
             const sibling: ContextContent = this._content.previousElementSibling;
             const node_name = sibling.nodeName.toUpperCase();

@@ -20,6 +20,7 @@
  */
 
 import { FieldContext, ContextContent } from "./FieldContext";
+import { PositiveInteger } from "../../numeric";
 
 
 export class FieldContextFactory
@@ -28,13 +29,16 @@ export class FieldContextFactory
      * Creates a new FieldContext
      *
      * @param content - field HTML content
+     * @param position - position index of content in the group
      */
     create(
-        content: ContextContent
+        content: ContextContent,
+        position: PositiveInteger
     ): FieldContext
     {
         return new FieldContext(
-            content
+            content,
+            position
         );
     }
 

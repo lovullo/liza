@@ -21,6 +21,7 @@
 
 import { FieldContextFactory as Sut } from "../../../src/ui/context/FieldContextFactory";
 import { FieldContext } from "../../../src/ui/context/FieldContext";
+import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
 
@@ -34,7 +35,7 @@ describe( "FieldContextFactory", () =>
         const content = document.createElement( "div" );
         content.innerHTML = '<dt></dt>';
 
-        const given = sut.create( content );
+        const given = sut.create( content, <PositiveInteger>0 );
 
         expect( given ).to.be.instanceOf( FieldContext );
     } );

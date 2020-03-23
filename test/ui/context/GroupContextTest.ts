@@ -23,18 +23,21 @@ import { GroupContext as Sut } from "../../../src/ui/context/GroupContext";
 import { FieldContextFactory } from "../../../src/ui/context/FieldContextFactory";
 import { FieldContext } from "../../../src/ui/context/FieldContext";
 import { ContextParser } from "../../../src/ui/context/ContextParser";
+import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
+
 
 
 describe( "GroupContext", () =>
 {
     it( "createFieldCache calls parser and field context factory for each field", () =>
     {
-        const fields = [ 'foo', 'baz' ];
+        const fields          = [ 'foo', 'baz' ];
+        const field_positions = [ 0, 1 ];
 
         let parser_fields: string[] = [];
-        let factory_call_count  = 0;
+        let factory_field_position: number[] = [];
 
         const parser = <ContextParser>{
             'parse':( _element_id: string, _: any ) => {
@@ -44,8 +47,8 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: any ) => {
-                factory_call_count++;
+            'create': ( _: any, position: PositiveInteger ) => {
+                factory_field_position.push( position );
                 return getFieldContextStub();
             },
         };
@@ -56,8 +59,11 @@ describe( "GroupContext", () =>
 
         sut.createFieldCache( fields, dummy_content );
 
-        expect( parser_fields ).to.deep.equal( fields );
-        expect( factory_call_count ).to.equal( fields.length );
+        expect( parser_fields )
+            .to.deep.equal( fields );
+
+        expect( factory_field_position )
+            .to.deep.equal( field_positions );
     } );
 
 
@@ -74,7 +80,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: any ) => {
+            'create': ( _: any, __:any ) => {
                 factory_call_count++;
                 return getFieldContextStub();
             },
