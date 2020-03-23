@@ -1392,7 +1392,7 @@ module.exports = Class( 'Server' )
                                 // sendResponse() to ensure consistency
                                 if ( internal === false )
                                 {
-                                    for ( id in program.internal )
+                                    for ( let id in program.internal )
                                     {
                                         delete retdata[ id ];
                                     }
