@@ -815,37 +815,47 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param qid      - the quote id
      * @param supplier - the supplier to retrieve the worksheet for
      * @param index    - the worksheet index
-     * @param callback - a function to call with the results of the lookup
      */
     getWorksheet(
         qid:      QuoteId,
         supplier: string,
         index:    PositiveInteger,
-        callback: ( data: WorksheetData | null ) => void,
-    ): void
+    ): Promise<WorksheetData>
     {
-        this._collection!.find(
-            { id: qid },
-            { limit: <PositiveInteger>1 },
-            function( _err, cursor )
-            {
-                cursor.toArray( function( _err: NullableError, data: any[] )
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection!.find(
+                { id: qid },
+                { limit: <PositiveInteger>1 },
+                function( err, cursor )
                 {
-                    // was the quote found?
-                    if ( ( data.length === 0 )
-                        || ( !data[ 0 ].worksheets )
-                        || ( !data[ 0 ].worksheets.data )
-                        || ( !data[ 0 ].worksheets.data[ supplier ] )
-                    )
+                    if ( err )
                     {
-                        callback( null );
-                        return;
+                        reject( err );
+                        return
                     }
 
-                    // return the quote data
-                    callback( data[ 0 ].worksheets.data[ supplier ][ index ] );
-                } );
-            }
-        );
+                    cursor.toArray( function( _err: NullableError, data: any[] )
+                    {
+                        // was the quote found?
+                        if ( ( data.length === 0 )
+                            || ( !data[ 0 ].worksheets )
+                            || ( !data[ 0 ].worksheets.data )
+                            || ( !data[ 0 ].worksheets.data[ supplier ] )
+                        )
+                        {
+                            reject( 'Worksheet data not found' );
+                            return
+                        }
+
+                        // return the quote data
+                        const worksheet_data: WorksheetData
+                            = data[ 0 ].worksheets.data[ supplier ][ index ];
+
+                        resolve( worksheet_data );
+                    } );
+                }
+            );
+        } );
     }
 };

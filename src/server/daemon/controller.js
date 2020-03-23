@@ -554,7 +554,12 @@ function doRoute( program, request, data, resolve, reject )
 
         handleRequest( function( quote )
         {
-            rating_service.serveWorksheet( request, quote, supplier, index );
+            rating_service.getWorksheet( quote, supplier, index )
+                .then( ( data ) =>
+                {
+                    server.sendResponse( request, quote, data );
+                } )
+                .catch( err => reject( err ) );
         } );
     }
     else if ( /^export\//.test( cmd ) )

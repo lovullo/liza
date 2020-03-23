@@ -29,7 +29,7 @@ import { PriorityLog } from "../../../src/server/log/PriorityLog";
 import { ProcessManager } from "../../../src/server/rater/ProcessManager";
 import { Program } from "../../../src/program/Program";
 import { QuoteId } from "../../../src/quote/Quote";
-import { Rater, RateResult } from "../../../src/server/rater/Rater";
+import { Rater, RateResult, WorksheetData } from "../../../src/server/rater/Rater";
 import { Server } from "../../../src/server/Server";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { UserRequest } from "../../../src/server/request/UserRequest";
@@ -802,7 +802,7 @@ function getStubs()
             throw new Error( "Unused method" );
         }
 
-        getWorksheet(): this
+        getWorksheet(): Promise<WorksheetData>
         {
             throw new Error( "Unused method" );
         }

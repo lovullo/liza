@@ -524,28 +524,21 @@ export class RatingService
 
 
     /**
-     * Serve worksheet data to user
+     * Get worksheet data
      *
-     * @param request  - user request to satisfy
      * @param quote    - quote from which to look up worksheet data
      * @param supplier - supplier name
      * @param index    - worksheet index
      */
-    serveWorksheet(
-        request:  UserRequest,
+    getWorksheet(
         quote:    ServerSideQuote,
         supplier: string,
         index:    PositiveInteger,
-    ): void
+    ): Promise<WorksheetData>
     {
         var qid = quote.getId();
 
-        this._dao.getWorksheet( qid, supplier, index, data =>
-        {
-            this._server.sendResponse( request, quote, {
-                data: data
-            } );
-        } );
+        return this._dao.getWorksheet( qid, supplier, index );
     }
 
 

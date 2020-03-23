@@ -195,6 +195,5 @@ export interface ServerDao
         qid:      QuoteId,
         supplier: string,
         index:    PositiveInteger,
-        callback: ( data: WorksheetData | null ) => void,
-    ): void;
+    ): Promise<WorksheetData>;
 }
