@@ -540,8 +540,30 @@ function doRoute( program, request, data, resolve, reject )
             {
                 var response = UserResponse( request );
 
-                rating_service.request( request, response, quote, alias )
-                    .catch( () => {} )
+                rating_service.request( request.getSession(), quote, alias )
+                    .then( ( result ) =>
+                    {
+                        server.sendResponse(
+                            request,
+                            quote,
+                            result.content,
+                            result.actions
+                        );
+                    } )
+                    .catch( ( err ) =>
+                    {
+                        server.sendError( request,
+                            'There was a problem during the rating process. Unable to ' +
+                            'continue. Please contact our support team for assistance.' +
+
+                            // show details for internal users
+                            ( ( request.getSession().isInternal() )
+                                ? '<br /><br />[Internal] ' + err.message + '<br /><br />' +
+                                    '<hr />' + ( err.stack || "" ).replace( /\n/g, '<br />' )
+                                : ''
+                            )
+                        );
+                    } )
                     .then( () => free() );
             } );
         }, true );

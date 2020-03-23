@@ -24,6 +24,7 @@
 import { Program } from "../../program/Program";
 import { BaseQuote } from "../../quote/BaseQuote";
 import { QuoteDataBucket } from "../../bucket/QuoteDataBucket";
+import { RateResult } from "../rater/Rater";
 
 
 export declare class ServerSideQuote extends BaseQuote
@@ -67,7 +68,7 @@ export declare class ServerSideQuote extends BaseQuote
      *
      * @return rating data
      */
-    getRatingData(): Record<string, any>;
+    getRatingData(): RateResult;
 
 
     /**
