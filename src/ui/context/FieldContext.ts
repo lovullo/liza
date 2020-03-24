@@ -71,6 +71,40 @@ export class FieldContext
 
 
     /**
+     * Attach the field to the DOM
+     * @param to - Parent to attach to
+     * @param prev_element - Previous element to attach before
+     */
+    attach( to: ContextContent, prev_element: NullableContextContent ): void
+    {
+        to.insertBefore( this._content, prev_element );
+        if ( this._sibling !== null )
+        {
+            to.insertBefore( this._sibling, this._content );
+        }
+    }
+
+
+    /**
+     * Detach the field from the DOM
+     *
+     * @param from - Parent to detach from
+     */
+    detach( from: ContextContent ): void
+    {
+        if ( this._content.parentElement && this._content.parentElement === from )
+        {
+            from.removeChild( this._content );
+
+            if ( this._sibling !== null )
+            {
+                from.removeChild( this._sibling );
+            }
+        }
+    }
+
+
+    /**
      * Return sibling content
      */
     getSiblingContent(): NullableContextContent
