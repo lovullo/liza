@@ -19,9 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { GroupContext as Sut } from "../../../src/ui/context/GroupContext";
+import { ContextCache, GroupContext as Sut } from "../../../src/ui/context/GroupContext";
 import { FieldContextFactory } from "../../../src/ui/context/FieldContextFactory";
-import { FieldContext } from "../../../src/ui/context/FieldContext";
+import { ContextContent, FieldContext, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { ContextParser } from "../../../src/ui/context/ContextParser";
 import { PositiveInteger } from "../../../src/numeric";
 
@@ -94,13 +94,72 @@ describe( "GroupContext", () =>
 
         expect( factory_call_count ).to.equal( 0 );
     } );
+
+
+    it( "attach field supplies previous element to attach to", () =>
+    {
+        const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];
+        let stubs = <ContextCache>{
+            'moo': getFieldContextStub('moo', 0, false ),
+            'foo': getFieldContextStub('foo', 1, false ),
+            'bar': getFieldContextStub('bar', 2, false ),
+            'baz': getFieldContextStub('baz', 3,  true ),
+            'qux': getFieldContextStub('qux', 4,  true )
+        }
+
+        let attach_is_called = false;
+        const parser = <ContextParser>{
+            'parse':( _: any, __: any ) => {
+                return document.createElement( "dd" );
+            },
+        };
+
+        const factory = <FieldContextFactory>{
+            'create': ( field: string, __: any, ___:any ) => {
+                return stubs[ field ];
+            },
+        };
+
+        const baz_content = document.createElement( "div" );
+        stubs[ 'baz' ].getFirstOfContentSet = () =>
+        {
+            return baz_content;
+        };
+
+        stubs[ 'foo' ].attach = (
+            to: ContextContent,
+            prev_element: NullableContextContent
+        ) =>
+        {
+            expect( to ).to.equal( dummy_content );
+            // it should be attaching to baz which is the next attached element
+            expect( prev_element ).to.equal( baz_content );
+            attach_is_called = true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+        sut.attach( 'foo', dummy_content );
+        expect( attach_is_called ).to.be.true;
+    } );
+
+
 } );
 
 
-function getFieldContextStub()
+function getFieldContextStub(
+    name: string = '',
+    position = 0,
+    is_attached = false
+)
 {
     return <FieldContext>{
+        'getName': () => { return name },
         'setSiblingContent': () => {},
         'getSiblingContent': () => {},
+        'getPosition': () => { return position; },
+        'isAttached': () => { return is_attached; },
+        'getFirstOfContentSet': () => {}
     };
 }

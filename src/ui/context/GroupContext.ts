@@ -20,7 +20,7 @@
  */
 
 import { ContextParser } from "./ContextParser";
-import { FieldContext, ContextContent } from "./FieldContext";
+import { FieldContext, ContextContent, NullableContextContent } from "./FieldContext";
 import { FieldContextFactory } from "./FieldContextFactory";
 import { PositiveInteger } from "../../numeric";
 
@@ -37,6 +37,11 @@ export class GroupContext
      */
     private _field_context_cache: ContextCache = {};
 
+    /**
+     * Position of all cached fields
+     */
+    private _field_positions: string[] = [];
+
 
     /**
      * Initialize GroupContext
@@ -48,6 +53,46 @@ export class GroupContext
         private readonly _parser: ContextParser,
         private readonly _field_context_factory: FieldContextFactory,
     ) {}
+
+
+    /**
+     * Attach field to DOM
+     *
+     * @param field_name  To attach to DOM
+     */
+    attach( field_name : string, to: ContextContent ): void
+    {
+        if ( this._field_context_cache[ field_name ] !== undefined )
+        {
+            this._field_context_cache[ field_name ].attach(
+                to,
+                this._getNextElement( field_name )
+            );
+        }
+    }
+
+
+    /**
+     * Determine the next attached element to attach before
+     *
+     * @param field_name - of element to find next element
+     */
+    private _getNextElement( field_name : string ): NullableContextContent
+    {
+        const position = this._field_context_cache[ field_name ].getPosition();
+
+        for ( let i = position; i < this._field_positions.length; i++ )
+        {
+            let next_element_name = this._field_positions[ i ];
+            let next_element = this._field_context_cache[ next_element_name ];
+            if ( next_element.isAttached() )
+            {
+                return next_element.getFirstOfContentSet();
+            }
+        }
+
+        return null;
+    }
 
 
     /**
@@ -73,6 +118,7 @@ export class GroupContext
                 let field_context = this._field_context_factory
                     .create( field, field_content, position );
 
+                this._field_positions[ position ] = field;
                 this._field_context_cache[ field ] = field_context;
             }
         }
