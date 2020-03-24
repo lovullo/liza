@@ -555,15 +555,22 @@ describe( 'RatingService', () =>
                 expect( resp.data[ '__rate_pending' ] )
                     .to.deep.equal( expected_count );
 
+                if( expected_count === [ 0 ] )
+                {
+                    supplier_data.forEach( ( datum: number[] ) => {
+                        expect( datum[ 0 ] ).to.equal( 0 );
+                    });
+                }
+
                 sent = true;
                 return server;
             };
 
             if( expected_save_meta )
             {
-                dao.mergeData = ( _, data, __, ___ ) =>
+                dao.saveQuoteMeta = ( _, data, __, ___ ) =>
                 {
-                    expect( data[ 'meta.liza_timestamp_rate_request' ] )
+                    expect( data[ 'liza_timestamp_rate_request' ] )
                         .to.deep.equal( [ ts_ctor() ] );
 
                     meta_save_called = true;
@@ -780,14 +787,14 @@ function getStubs()
             return this;
         }
 
-        mergeData( _: any, __:any, ___:any, ____:any ): this
+        saveQuoteMeta( _: any, __:any, ___:any, ____:any ): this
         {
             return this;
         }
 
-        saveQuoteMeta(): void
+        mergeData(): this
         {
-
+            return this;
         }
 
         saveQuoteLockState(): this
@@ -836,6 +843,8 @@ function getStubs()
         getTopSavedStepId:     () => <PositiveInteger>1,
         setRetryAttempts:      () => quote,
         getRetryAttempts:      () => 1,
+        retryAttempted:        () => quote,
+        setMetadata:           () => quote,
     };
 
     const ts_ctor = () => { return <UnixTimestamp>2592001 };

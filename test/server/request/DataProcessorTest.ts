@@ -767,6 +767,16 @@ function createStubQuote()
         {
             return 1;
         },
+
+        retryAttempted()
+        {
+            return this;
+        },
+
+        setMetadata()
+        {
+            return this;
+        },
     };
 }
 

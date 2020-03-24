@@ -223,7 +223,7 @@ module.exports = Class( 'ServerSideQuote' )
     /**
      * Set the number of retries attempted
      *
-     * @param {number} attempts the number of attempts
+     * @return {ServerSideQuote} self
      */
     'public setRetryAttempts': function( attempts )
     {
@@ -241,6 +241,19 @@ module.exports = Class( 'ServerSideQuote' )
     'public getRetryAttempts': function()
     {
         return this._retry_attempts;
-    }
+    },
+
+
+    /**
+     * Increments the number of retries attempted
+     *
+     * @return {ServerSideQuote} self
+     */
+    'public retryAttempted': function()
+    {
+        this._retry_attempts++;
+
+        return this;
+    },
 } );
 
