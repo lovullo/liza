@@ -245,7 +245,41 @@ describe( "FieldContext", () =>
         sut.detach( from_content );
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
-    } )
+    } ),
+
+
+    it( 'isAttached is false when not attached to DOM', () => {
+        // do not append the child
+        const child = document.createElement( "div" );
+        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        expect( sut.isAttached() ).to.be.false;
+    } );
+
+
+    it( 'isAttached is true when attached to DOM', () => {
+        const parent = document.createElement("dl");
+        const child = document.createElement( "div" );
+        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        sut.attach( parent, null );
+        expect( sut.isAttached() ).to.be.true;
+    } );
+
+
+    it( 'getFirstOfContentSet returns the field content', () => {
+        const content = document.createElement( "div" );
+        const sut = new Sut( '', <ContextContent>content, <PositiveInteger>0 );
+        expect( sut.getFirstOfContentSet() ).to.equal( content );
+    } );
+
+
+    it( 'getFirstOfContentSet returns the sibling if exists', () => {
+        const group_content = getGroupContent();
+        let content = group_content.querySelector( "#qcontainer_checkbox_foo" );
+        let sibling = group_content.querySelector( "#qlabel_checkbox_foo" );
+        const sut = new Sut( '', <ContextContent>content, <PositiveInteger>0 );
+        expect( sut.getFirstOfContentSet() ).to.equal( sibling );
+    } );
+
 
 } );
 

@@ -71,6 +71,15 @@ export class FieldContext
 
 
     /**
+     * If the field is attached to the DOM
+     */
+    isAttached(): boolean
+    {
+        return ( this._content.parentElement !== null );
+    }
+
+
+    /**
      * Attach the field to the DOM
      * @param to - Parent to attach to
      * @param prev_element - Previous element to attach before
@@ -101,6 +110,15 @@ export class FieldContext
                 from.removeChild( this._sibling );
             }
         }
+    }
+
+
+    /**
+     * Get the field content or sibling if it exists
+     */
+    getFirstOfContentSet(): ContextContent
+    {
+        return this._sibling || this._content;
     }
 
 
