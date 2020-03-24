@@ -145,6 +145,14 @@ module.exports = Class( 'GroupUi' )
     'private _rawFieldCount': 0,
 
     /**
+     * An array of classifications with css classes we
+     * would like to bind to them
+     *
+     * Structured: classification => css class
+     */
+    'private _bind_classes': [],
+
+    /**
      * DOM group context
      * @type {DomContext}
      */
@@ -212,6 +220,8 @@ module.exports = Class( 'GroupUi' )
 
         // get the number of unique fields in the group
         this._rawFieldCount = this.group.getUserFieldNames().length;
+
+        this._bindClasses( quote );
 
         return this;
     },
@@ -729,6 +739,70 @@ module.exports = Class( 'GroupUi' )
     {
         // return all but the beginning 'group_'
         return this.$content.attr( 'id' ).substring( 6 );
+    },
+
+
+    /**
+     * Bind css classes to classifications
+     *
+     * @param {quote} quote the quote to listen on
+     */
+    'private _bindClasses': function( quote )
+    {
+        // Get the css classes that we would like to bind to classifications
+        this._bind_classes = this._getBindClasses();
+
+        const self = this;
+
+        quote.onClassifyAndNow( function( classes )
+        {
+            for( let bind_class in self._bind_classes )
+            {
+                css_class = self._bind_classes[ bind_class ];
+
+                if( classes[ bind_class ] && classes[ bind_class ].is === true )
+                {
+                    self.content.classList.add( css_class );
+                }
+                else
+                {
+                    self.content.classList.remove( css_class );
+                }
+            }
+        } );
+    },
+
+
+    /**
+     * Get the class attributes and their classifiers
+     *
+     * @return {array} bound classes and their conditional classifications
+     */
+    'private _getBindClasses': function()
+    {
+        // return all but the beginning 'group_'
+        const class_str = this.content.getAttribute( 'data-class-bind' );
+
+        if( !class_str )
+        {
+            return [];
+        }
+
+        const classes   = [];
+
+        class_str.split( ' ' ).forEach( datum => {
+            const kv = datum.split( ':' );
+
+            if( !kv[ 0 ] || !kv[ 1 ] )
+            {
+                return;
+            }
+
+            // Add the classifications as the keys and the css class as value
+            classes[ kv[ 1 ] ] = kv[ 0 ];
+        } );
+
+        return classes;
     },
 
 
