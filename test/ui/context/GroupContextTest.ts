@@ -96,6 +96,38 @@ describe( "GroupContext", () =>
     } );
 
 
+    it( "detaches field", () =>
+    {
+        const fields = [ 'foo', 'baz' ];
+
+        const parser = <ContextParser>{
+            'parse':( _: any, __: any ) => {
+                return document.createElement( "dd" );
+            },
+        };
+
+        let detach_is_called = false;
+        const stub = getFieldContextStub();
+        const factory = <FieldContextFactory>{
+            'create': ( _: string, __: any, ___:any ) => {
+                return stub;
+            },
+        };
+
+        stub.detach = ( from: ContextContent ) =>
+        {
+            expect( from ).to.equal( dummy_content );
+            detach_is_called = true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+        sut.detach( 'foo', dummy_content );
+        expect( detach_is_called ).to.be.true;
+    } );
+
+
     it( "attach field supplies previous element to attach to", () =>
     {
         const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];

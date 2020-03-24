@@ -58,7 +58,8 @@ export class GroupContext
     /**
      * Attach field to DOM
      *
-     * @param field_name  To attach to DOM
+     * @param field_name - to attach to DOM
+     * @param to - parent context
      */
     attach( field_name : string, to: ContextContent ): void
     {
@@ -68,6 +69,21 @@ export class GroupContext
                 to,
                 this._getNextElement( field_name )
             );
+        }
+    }
+
+
+    /**
+     * Detach field from DOM
+     *
+     * @param field_name - to detach from DOM
+     * @param from - parent context
+     */
+    detach( field_name: string, from: ContextContent ): void
+    {
+        if ( this._field_context_cache[ field_name ] !== undefined )
+        {
+            this._field_context_cache[ field_name ].detach( from );
         }
     }
 
