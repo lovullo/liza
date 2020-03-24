@@ -28,15 +28,18 @@ export class FieldContextFactory
     /**
      * Creates a new FieldContext
      *
+     * @param name - field name
      * @param content - field HTML content
      * @param position - position index of content in the group
      */
     create(
+        name: string,
         content: ContextContent,
         position: PositiveInteger
     ): FieldContext
     {
         return new FieldContext(
+            name,
             content,
             position
         );

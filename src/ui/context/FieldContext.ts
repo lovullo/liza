@@ -21,7 +21,8 @@
 
 import { PositiveInteger } from "../../numeric";
 
-export type ContextContent = Element | null;
+export type ContextContent = Element;
+export type NullableContextContent = ContextContent | null;
 
 
 /**
@@ -32,7 +33,7 @@ export class FieldContext
     /**
      * Sibling content
      **/
-    private _sibling: ContextContent = null;
+    private _sibling: NullableContextContent = null;
 
 
     /**
@@ -42,11 +43,21 @@ export class FieldContext
      * @param _position position index of content in the group
      */
     constructor(
+        private readonly _name: string,
         private readonly _content: ContextContent,
         private readonly _position: PositiveInteger
     )
     {
         this.setSiblingContent();
+    }
+
+
+    /**
+     * Return the field name
+     */
+    getName(): string
+    {
+        return this._name;
     }
 
 
@@ -62,7 +73,7 @@ export class FieldContext
     /**
      * Return sibling content
      */
-    getSiblingContent(): ContextContent
+    getSiblingContent(): NullableContextContent
     {
         return this._sibling;
     }

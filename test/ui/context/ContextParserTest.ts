@@ -20,7 +20,7 @@
  */
 
 import { ContextParser as Sut } from "../../../src/ui/context/ContextParser";
-import { ContextContent } from "../../../src/ui/context/FieldContext";
+import { NullableContextContent} from "../../../src/ui/context/FieldContext";
 
 import { expect } from 'chai';
 
@@ -63,7 +63,7 @@ describe( "ContextParser", () =>
         {
             const sut = new Sut();
 
-            const given: ContextContent = sut.parse( element_id, getContent() );
+            const given: NullableContextContent = sut.parse( element_id, getContent() );
 
             expect( ( given?.outerHTML as string ) ).to.equal( expected );
         } );
@@ -76,7 +76,7 @@ describe( "ContextParser", () =>
 
         const element_id = 'external_no_field_exists';
 
-        const given: ContextContent = sut.parse( element_id, getContent() );
+        const given: NullableContextContent = sut.parse( element_id, getContent() );
 
         expect( given ).to.equal( null );
     } );

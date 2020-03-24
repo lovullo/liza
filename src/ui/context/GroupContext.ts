@@ -71,7 +71,7 @@ export class GroupContext
             if ( field_content !== null )
             {
                 let field_context = this._field_context_factory
-                    .create( field_content, position );
+                    .create( field, field_content, position );
 
                 this._field_context_cache[ field ] = field_context;
             }

@@ -35,7 +35,7 @@ describe( "FieldContextFactory", () =>
         const content = document.createElement( "div" );
         content.innerHTML = '<dt></dt>';
 
-        const given = sut.create( content, <PositiveInteger>0 );
+        const given = sut.create( 'foo', content, <PositiveInteger>0 );
 
         expect( given ).to.be.instanceOf( FieldContext );
     } );

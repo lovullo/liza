@@ -52,9 +52,13 @@ describe( "FieldContext", () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
-            const sut = new Sut( content, <PositiveInteger>position );
+            const sut = new Sut(
+                '',
+                <ContextContent>content,
+                <PositiveInteger>position
+            );
 
-            const given: ContextContent = sut.getSiblingContent();
+            const given = <ContextContent>sut.getSiblingContent();
 
             expect( ( given?.outerHTML as string ) ).to.equal( expected );
         } );

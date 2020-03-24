@@ -47,7 +47,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: any, position: PositiveInteger ) => {
+            'create': ( _: string, __: any, position: PositiveInteger ) => {
                 factory_field_position.push( position );
                 return getFieldContextStub();
             },
@@ -80,7 +80,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: any, __:any ) => {
+            'create': ( _: string, __: any, ___:any ) => {
                 factory_call_count++;
                 return getFieldContextStub();
             },
