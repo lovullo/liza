@@ -91,6 +91,7 @@ export class RatingService
      * @param session - user session
      * @param quote   - quote to export
      * @param cmd     - applicable of command request
+     * @param force   - (optional) force a rate, overriding quote valid checks
      *
      * @return result promise
      */
@@ -98,23 +99,29 @@ export class RatingService
         session: UserSession,
         quote:   ServerSideQuote,
         cmd:     string,
+        force:   boolean = false,
     ): Promise<RateRequestResult>
     {
         return new Promise<RateRequestResult>( resolve =>
         {
             // cmd represents a request for a single rater
-            if ( !cmd && this._isQuoteValid( quote ) )
+            if ( !cmd && !force && this._isQuoteValid( quote ) )
             {
+                const actions: ClientActions = [];
+                const data                   = quote.getRatingData();
+                const program                = quote.getProgram();
+
+                this._processRetries( program, quote, data, actions );
+
                 // send last rated data
-                resolve( {
+                return resolve( {
                     content: {
-                        data:             quote.getRatingData(),
+                        data:             data,
                         initialRatedDate: quote.getRatedDate(),
                         lastRatedDate:    quote.getLastPremiumDate()
                     },
-                    actions: []
+                    actions: actions
                 } );
-                return;
             }
 
             resolve( this._performRating( session, quote, cmd ) );
@@ -142,10 +149,7 @@ export class RatingService
         // quotes are valid for 30 days
         var re_date = this._ts_ctor() - ( 60 * 60 * 24 * 30 );
 
-        if (
-            quote.getLastPremiumDate() > re_date ||
-            quote.getLastPremiumDate() > quote.getMetaUpdatedDate()
-        )
+        if ( quote.getLastPremiumDate() > re_date )
         {
             this._logger.log( this._logger.PRIORITY_INFO,
                 "Skipping '%s' rating for quote #%s; quote is still valid",
@@ -188,7 +192,8 @@ export class RatingService
             // Only update the rate request timestamp on the first request made
             if( quote.getRetryAttempts() === 0 )
             {
-                const meta = { 'liza_timestamp_rate_request': [ this._ts_ctor() ] }
+                const ts   = this._ts_ctor();
+                const meta = { 'liza_timestamp_rate_request': [ ts ], }
 
                 quote.setMetadata( meta );
                 this._dao.saveQuoteMeta( quote, meta );
@@ -316,32 +321,7 @@ export class RatingService
         // rating worksheets are returned as metadata
         this._processWorksheetData( quote.getId(), data );
 
-        const {
-            pending_count,
-            timeout,
-            should_retry
-        } = this._processRetries( program, quote, data );
-
-        data[ '__rate_pending' ] = [ pending_count ];
-
-        if ( should_retry )
-        {
-            actions.push( {
-                'action':  'delay',
-                'seconds': this.RETRY_DELAY,
-                'then': {
-                    action: 'rate',
-                    indv:   'retry',
-                },
-            } );
-
-            quote.retryAttempted();
-            this._dao.saveQuoteRateRetries( quote );
-        }
-        else if ( timeout )
-        {
-            this._clearRetries( data );
-        }
+        this._processRetries( program, quote, data, actions );
 
         if ( ( program.ineligibleLockCount > 0 )
             && ( +meta.count_ineligible >= program.ineligibleLockCount )
@@ -406,31 +386,6 @@ export class RatingService
             quote.getProgramId(),
             err.message + '\n-!' + ( err.stack || "" ).replace( /\n/g, '\n-!' )
         );
-    }
-
-
-    /**
-     * Retrieve the number of raters that are pending
-     *
-     * @param data Rating results
-     */
-    private _getRetryCount( data: RateResult ): number
-    {
-        const retry_pattern = /^(.+)__retry$/;
-
-        return Object.keys( data )
-            .filter( field =>
-            {
-                let value = Array.isArray( data[ field ] )
-
-                    // In case the data are in a nested array
-                    // e.g. data[ field ] === [ [ 0 ] ]
-                    ? Array.prototype.concat.apply( [], data[ field ] )
-                    : data[ field ];
-
-                return field.match( retry_pattern ) && !!value[ 0 ];
-            } )
-            .length;
     }
 
 
@@ -558,20 +513,20 @@ export class RatingService
     /**
      * Process retry logic
      *
-     * @param program  - program used to perform rating
-     * @param quote    - quote used for rating
-     * @param data     - rating data returned
-     *
-     * @return an object with a retry flag, a timeout flag, and a pending count
+     * @param program - program used to perform rating
+     * @param quote   - quote used for rating
+     * @param data    - rating data returned
+     * @param actions - actions to sent to the client
      */
     private _processRetries(
         program: Program,
         quote:   ServerSideQuote,
-        data:    RateResult
-    ): Record<string, boolean|number>
+        data:    RateResult,
+        actions: ClientActions,
+    ): void
     {
         // Gather determinant factors
-        const pending_count  = this._getRetryCount( data );
+        const pending_count  = quote.getRetryCount( data );
         const retry_attempts = quote.getRetryAttempts();
         const step           = quote.getCurrentStepId();
         const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
@@ -581,14 +536,26 @@ export class RatingService
         const has_pending   = ( pending_count > 0 );
         const retry_on_step = ( retry_attempts > 0 ) ? is_rate_step : true;
 
-        return {
-            pending_count: pending_count,
-            timeout:       max_attempts,
-            should_retry:  (
-                has_pending &&
-                !max_attempts &&
-                retry_on_step
-            ),
+        data[ '__rate_pending' ] = [ pending_count ];
+
+        if ( has_pending && !max_attempts && retry_on_step )
+        {
+            // Set rate event value to -1 so that it will be in the background
+            actions.push( {
+                'action':  'delay',
+                'seconds': this.RETRY_DELAY,
+                'then':    {
+                    action: 'rate',
+                    value:  -1,
+                },
+            } );
+
+            quote.retryAttempted();
+            this._dao.saveQuoteRateRetries( quote );
+        }
+        else if ( max_attempts )
+        {
+            this._clearRetries( data );
         }
     }
 }

@@ -68,6 +68,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -102,6 +103,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -132,6 +134,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -242,6 +245,7 @@ function createStubQuote( metadata: Record<string, any> )
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
+        getRetryCount:         () => 0,
     };
 
     return quote;

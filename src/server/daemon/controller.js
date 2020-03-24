@@ -125,31 +125,34 @@ exports.post_rate_publish = {};
 
 exports.init = function( logger, enc_service, conf, env )
 {
-    var db    = _createDB( logger );
-    const dao = new MongoServerDao( db, env );
+    var   db      = _createDB( logger );
+    const ts_ctor = () => { return Math.floor( new Date().getTime() / 1000 ); };
+    const dao     = new MongoServerDao( db, env, ts_ctor );
 
     db.collection( 'quotes', function( err, collection )
     {
-        _createDocumentServer( dao, logger, enc_service, conf, collection ).then( srv =>
+        _createDocumentServer(
+            dao,
+            logger,
+            enc_service,
+            conf,
+            collection,
+            ts_ctor
+        ).then( srv =>
         {
             server = srv;
 
             server_cache = _createCache( server );
             server.init( server_cache, exports.rater );
 
-            const ts_ctor = () =>
-            {
-                return Math.floor( new Date().getTime() / 1000 );
-            };
-
             rating_service = new RatingService(
-                logger, dao, server, exports.rater, delta.createDelta, ts_ctor
+                logger, dao, exports.rater, delta.createDelta, ts_ctor
             );
 
-            // TODO: exports.init needs to support callbacks; this will work, but
-            // only because it's unlikely that we'll get a request within
+            // TODO: exports.init needs to support callbacks; this will work,
+            // but only because it's unlikely that we'll get a request within
             // milliseconds of coming online
-            _initExportService( collection, function( service )
+            _initExportService( collection, ts_ctor, function( service )
             {
                 c1_export_service = service;
             } );
@@ -211,7 +214,14 @@ function _createDB( logger )
     return db;
 }
 
-function _createDocumentServer( dao, logger, enc_service, conf, collection )
+function _createDocumentServer(
+    dao,
+    logger,
+    enc_service,
+    conf,
+    collection,
+    ts_ctor
+)
 {
     const origin_url = process.env.HTTP_ORIGIN_URL || '';
 
@@ -226,12 +236,13 @@ function _createDocumentServer( dao, logger, enc_service, conf, collection )
         );
     }
 
-    return DocumentServer()
-        .create( dao, logger, enc_service, origin_url, conf, collection );
+    return DocumentServer().create(
+        dao, logger, enc_service, origin_url, conf, collection, ts_ctor
+    );
 }
 
 
-function _initExportService( collection, callback )
+function _initExportService( collection, ts_ctor, callback )
 {
     var spoof_host = (
         ''+(
@@ -247,7 +258,7 @@ function _initExportService( collection, callback )
         ExportService
             .use( TokenedService(
                 'c1import',
-                new MongoTokenDao( collection, "exports", getUnixTimestamp ),
+                new MongoTokenDao( collection, "exports", ts_ctor ),
                 function tokgen()
                 {
                     var shasum = crypto.createHash( 'sha1' );
@@ -264,15 +275,6 @@ function _initExportService( collection, callback )
             ) )
             ( spoof )
     );
-}
-
-
-/**
- * Retrieve current date as a Unix timestamp
- */
-function getUnixTimestamp()
-{
-    return Math.floor( ( new Date() ).getTime() / 1000 );
 }
 
 
@@ -538,8 +540,6 @@ function doRoute( program, request, data, resolve, reject )
 
             handleRequest( function( quote )
             {
-                var response = UserResponse( request );
-
                 rating_service.request( request.getSession(), quote, alias )
                     .then( ( result ) =>
                     {

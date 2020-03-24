@@ -76,10 +76,19 @@ module.exports = Class( 'DocumentServer',
      * @param {string}            origin_url  HTTP_ORIGIN_URL
      * @param {ConfStore}         conf        configuration store
      * @param {MongoConnection}   collection  database collection
+     * @param {function}          ts_ctor     timestamp constructor
      *
      * @return {Promise<Server>}
      */
-    'public create'( dao, logger, enc_service, origin_url, conf, collection )
+    'public create'(
+        dao,
+        logger,
+        enc_service,
+        origin_url,
+        conf,
+        collection,
+        ts_ctor
+    )
     {
         return Promise.all( [
             conf.get( 'dapi' ),
@@ -88,16 +97,22 @@ module.exports = Class( 'DocumentServer',
             dao,
             logger,
             enc_service,
-
             new DataProcessor(
                 bucket_filter,
                 ( apis, request, quote ) => this._createDapiManager(
-                    apis, request, origin_url, dapi_conf, quote, collection
+                    apis,
+                    request,
+                    origin_url,
+                    dapi_conf,
+                    quote,
+                    collection,
+                    ts_ctor
                 ),
                 DapiMetaSource( QuoteDataBucket ),
                 StagingBucket
             ),
-            ProgramInit()
+            ProgramInit(),
+            ts_ctor
         ) );
     },
 
@@ -113,9 +128,10 @@ module.exports = Class( 'DocumentServer',
      * @param {Object}          dapi_conf  dapi configuration
      * @param {Quote}           quote      current quote for request
      * @param {MongoConnection} collection database collection
+     * @param {function}        ts_ctor    timestamp constructor
      */
     'private _createDapiManager'(
-        apis, request, origin_url, dapi_conf, quote, collection
+        apis, request, origin_url, dapi_conf, quote, collection, ts_ctor
     )
     {
         return DataApiManager(
@@ -124,11 +140,7 @@ module.exports = Class( 'DocumentServer',
                 request,
                 dapi_conf,
                 quote.getId(),
-                new MongoTokenDao(
-                    collection,
-                    'dapitok',
-                    () => Math.floor( ( new Date() ).getTime() / 1000 )
-                )
+                new MongoTokenDao( collection, 'dapitok', ts_ctor )
             ),
             apis
         );

@@ -94,13 +94,16 @@ module.exports = Class( 'RateEventHandler' )
     'public handle': function( type, c, data )
     {
         var _self = this;
-        var  quote = this._client.getQuote();
+        var quote = this._client.getQuote();
         var qstep = quote.getCurrentStepId();
 
         // arbitrary delay before rating (use as a last resort)
-        var delay = ( !isNaN( data.value ) )
+        const delay = ( !isNaN( data.value ) )
             ? data.value * 1e3
             : 0;
+
+        // A value of -1 indicates that we do not want to see the rating dialog
+        const hide_dialog = ( +data.value === -1 );
 
         // do not perform rating if quote is locked; use existing rates, if
         // available (stored in bucket)
@@ -128,14 +131,24 @@ module.exports = Class( 'RateEventHandler' )
 
         function dorate()
         {
-            _self._scheduleRating( delay, data.indv, function( finish )
-            {
-                _self._performRating( quote, data.indv, data.stepId, function()
+            _self._scheduleRating(
+                delay,
+                data.indv,
+                hide_dialog,
+                function( finish )
                 {
-                    finish();
-                    c.apply( null, arguments );
-                } );
-            } );
+                    _self._performRating(
+                        quote,
+                        data.indv,
+                        data.stepId,
+                        function()
+                        {
+                            finish();
+                            c.apply( null, arguments );
+                        }
+                    );
+                }
+            );
         }
 
         // perform rating immediately
@@ -152,13 +165,14 @@ module.exports = Class( 'RateEventHandler' )
      * milliseconds.  The dialog will be permitted to display during this
      * delay period.
      *
-     * @param {number}   delay    rating delay in milliseconds
-     * @param {str}      indv     a rating command
-     * @param {Function} callback continuation after delay
+     * @param {number}   delay       rating delay in milliseconds
+     * @param {str}      indv        a rating command
+     * @param {boolean}  hide_dialog hide the progress dialog
+     * @param {Function} callback    continuation after delay
      */
-    'private _scheduleRating': function( delay, indv, callback )
+    'private _scheduleRating': function( delay, indv, hide_dialog, callback )
     {
-        if( indv )
+        if( indv || hide_dialog )
         {
             callback( function(){} );
             return;
@@ -186,7 +200,11 @@ module.exports = Class( 'RateEventHandler' )
         this._dataProxy.get( this._genRateUrl( quote, indv ),
             function( response, err )
             {
-                const { initialRatedDate: initial_rated = 0, lastRatedDate: last_rated = 0, data = {} } = response.content || {};
+                const {
+                    initialRatedDate: initial_rated = 0,
+                    lastRatedDate   : last_rated    = 0,
+                    data                            = {}
+                } = response.content || {};
 
                 if ( err )
                 {
@@ -209,10 +227,13 @@ module.exports = Class( 'RateEventHandler' )
                 // that data is updated on the screen when it's re-rated (will
                 // be undefined if the step hasn't been loaded yet, in which
                 // case it doesn't need to be invalidated)
-                var stepui = _self._client.getUi().getStep( dest_step_id );
+                const step_id = quote.getCurrentStepId();
+                var   stepui  = _self._client.getUi().getStep( step_id );
+
                 if ( stepui !== undefined )
                 {
                     stepui.invalidate();
+                    stepui.emptyBucket();
                 }
 
                 c( null, response.content.data );

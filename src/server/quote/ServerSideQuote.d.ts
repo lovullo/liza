@@ -80,14 +80,6 @@ export declare class ServerSideQuote extends BaseQuote
 
 
     /**
-     * Get the last time metadata was updated
-     *
-     * @return {UnixTimestamp} self
-     */
-    getMetaUpdatedDate(): UnixTimestamp;
-
-
-    /**
      * Get the program version
      *
      * @return program version
@@ -125,4 +117,13 @@ export declare class ServerSideQuote extends BaseQuote
      * @return {ServerSideQuote} self
      */
     retryAttempted(): this;
+
+    /**
+     * Retrieve the number of raters that are pending
+     *
+     * @param data (optional) Rate data
+     *
+     * @return the number of retries pending
+     */
+    getRetryCount( data?: Record<string, any> ): number;
 }

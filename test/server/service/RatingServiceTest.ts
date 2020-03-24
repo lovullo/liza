@@ -103,12 +103,6 @@ describe( 'RatingService', () =>
             return cur_date;
         };
 
-        // Return an earlier meta data so quote is valid
-        quote.getMetaUpdatedDate = () =>
-        {
-            return <UnixTimestamp>( cur_date - 1 );
-        };
-
         quote.getRatedDate = () =>
         {
             initial_date_call_count++;
@@ -155,12 +149,6 @@ describe( 'RatingService', () =>
         {
             last_premium_date_call_count++;
             return cur_date;
-        };
-
-        // Return an later meta data so quote is not valid
-        quote.getMetaUpdatedDate = () =>
-        {
-            return <UnixTimestamp>( cur_date + 1 );
         };
 
         quote.getRatedDate = () =>
@@ -446,6 +434,7 @@ describe( 'RatingService', () =>
     ( <[
         string,
         Record<string, any>,
+        number,
         number[],
         boolean,
         boolean[],
@@ -461,6 +450,7 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 0 ],
             },
+            2,
             [ 2 ],
             true,
             [ true ],
@@ -476,6 +466,7 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 0 ],
                 'supplier-d__retry': [ [ 0 ] ],
             },
+            0,
             [ 0 ],
             false,
             [ true ],
@@ -491,6 +482,7 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 1 ],
             },
+            2,
             [ 2 ],
             false,
             undefined,
@@ -506,6 +498,7 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 1 ],
             },
+            2,
             [ 0 ],
             false,
             undefined,
@@ -516,6 +509,7 @@ describe( 'RatingService', () =>
     ] ).forEach( ([
         label,
         supplier_data,
+        retry_count,
         expected_count,
         expected_delay_action,
         rate_steps,
@@ -563,6 +557,7 @@ describe( 'RatingService', () =>
             quote.getProgram       = () => { return program; };
             quote.getCurrentStepId = () => { return step_id; };
             quote.getRetryAttempts = () => { return attempts; };
+            quote.getRetryCount    = () => { return retry_count; };
 
             const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
             return sut.request( session, quote, "" )
@@ -572,8 +567,8 @@ describe( 'RatingService', () =>
                         "action":    "delay",
                         "seconds":   5,
                         "then":      {
-                            action: "rate",
-                            indv:   "retry",
+                            action:  "rate",
+                            value:  -1,
                         },
                     };
 
@@ -651,12 +646,6 @@ describe( 'RatingService', () =>
             {
                 getLastPremiumDateCallCount++;
                 return last_date
-            };
-
-            // Return an earlier meta data so quote is valid
-            quote.getMetaUpdatedDate = () =>
-            {
-                return <UnixTimestamp>( last_date - 1 );
             };
 
             quote.getRatedDate = () => initial_date;
@@ -779,6 +768,20 @@ function getStubs()
             return this;
         }
 
+        updateQuoteRateRetries(
+            quote: ServerSideQuote
+        ): Promise<ServerSideQuote>
+        {
+            return Promise.resolve( quote );
+        }
+
+        ensurePendingSuppliers(
+            quote: ServerSideQuote
+        ): Promise<ServerSideQuote>
+        {
+            return Promise.resolve( quote );
+        }
+
         saveQuoteMeta( _: any, __:any, ___:any, ____:any ): this
         {
             return this;
@@ -831,6 +834,7 @@ function getStubs()
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
+        getRetryCount:         () => 0,
     };
 
     const ts_ctor = () => { return <UnixTimestamp>2592001 };

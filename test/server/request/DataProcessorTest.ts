@@ -782,6 +782,11 @@ function createStubQuote()
         {
             return this;
         },
+
+        getRetryCount()
+        {
+            return 0;
+        },
     };
 }
 
