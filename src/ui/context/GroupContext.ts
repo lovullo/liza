@@ -25,7 +25,7 @@ import { FieldContextFactory } from "./FieldContextFactory";
 import { PositiveInteger } from "../../numeric";
 
 
-export type ContextCache = Record<string, FieldContext>;
+export type ContextCache = Record<string, FieldContext[]>;
 
 /**
  * Context responsible for a group and its fields
@@ -68,9 +68,11 @@ export class GroupContext
     {
         for ( let i = 0; i < fields.length; i++ )
         {
-            let index = <PositiveInteger>i;
             let field = fields[ i ];
-            let position = <PositiveInteger>+i;
+            let position = <PositiveInteger>i;
+
+            // Initial fields have 0 index
+            let index = <PositiveInteger>0;
 
             let field_content = this._parser.parse( field, content );
 
@@ -80,7 +82,9 @@ export class GroupContext
                     .create( field, index, position, field_content );
 
                 this._field_positions[ position ] = field;
-                this._field_context_cache[ field ] = field_context;
+
+                this._field_context_cache[ field ] = [];
+                this._field_context_cache[ field ][ index ] = field_context;
             }
         }
     }
@@ -90,17 +94,27 @@ export class GroupContext
      * Attach field to DOM
      *
      * @param field_name - to attach to DOM
+     * @param index - field index
      * @param to - parent context
      */
-    attach( field_name: string, to: ContextContent ): void
+    attach(
+        field_name: string,
+        index: PositiveInteger,
+        to: ContextContent
+    ): void
     {
-        if ( this._field_context_cache[ field_name ] !== undefined )
+        // If field name was never added, do nothing
+        if ( this._field_context_cache[ field_name ] === undefined )
         {
-            this._field_context_cache[ field_name ].attach(
-                to,
-                this._getNextElement( field_name )
-            );
+            return;
         }
+
+        const field_context = this._fromCache( field_name, index );
+
+        field_context.attach(
+            to,
+            this._getNextElement( field_name, index )
+        );
     }
 
 
@@ -108,14 +122,57 @@ export class GroupContext
      * Detach field from DOM
      *
      * @param field_name - to detach from DOM
+     * @param index - field index
      * @param from - parent context
      */
-    detach( field_name: string, from: ContextContent ): void
+    detach(
+        field_name: string,
+        index: PositiveInteger,
+        from: ContextContent
+    ): void
     {
-        if ( this._field_context_cache[ field_name ] !== undefined )
+        // If field name was never added, do nothing
+        if ( this._field_context_cache[ field_name ] === undefined )
         {
-            this._field_context_cache[ field_name ].detach( from );
+            return;
         }
+
+        const field_context = this._fromCache( field_name, index );
+
+        field_context.detach( from );
+    }
+
+
+    /**
+     * Return FieldContext from cache, or create a new one
+     * and save it to the cache
+     *
+     * @param field_name - field name
+     * @param index - field index
+     */
+    private _fromCache(
+        field_name: string,
+        index: PositiveInteger
+    ): FieldContext
+    {
+        if ( this._field_context_cache[ field_name ][ index ] !== undefined )
+        {
+            return this._field_context_cache[ field_name ][ index ];
+        }
+
+        // Retrieve cloned nodes from first index of field
+        const first_context = this._field_context_cache[ field_name ][ 0 ];
+
+        const field_content   = <ContextContent>first_context.getContentClone();
+        const sibling_content = first_context.getSiblingContentClone();
+        const position        = first_context.getPosition();
+
+        const field_context = this._field_context_factory
+            .create( field_name, index, position, field_content, sibling_content );
+
+        this._field_context_cache[ field_name ][ index ] = field_context;
+
+        return field_context;
     }
 
 
@@ -123,19 +180,26 @@ export class GroupContext
      * Determine the next attached element to attach before
      *
      * @param field_name - of element to find next element
+     * @param index - field index
      */
-    private _getNextElement( field_name: string ): NullableContextContent
+    private _getNextElement(
+        field_name: string,
+        index: PositiveInteger
+    ): NullableContextContent
     {
-        const position = this._field_context_cache[ field_name ].getPosition();
+        const position = this._field_context_cache[ field_name ][ index ].getPosition();
 
         for ( let i = position; i < this._field_positions.length; i++ )
         {
             let next_element_name = this._field_positions[ i ];
-            let next_element = this._field_context_cache[ next_element_name ];
-            if ( next_element.isAttached() )
+            let field_context = this._field_context_cache[ next_element_name ];
+
+            if ( field_context[ index ] !== undefined
+                && field_context[ index ].isAttached() )
             {
-                return next_element.getFirstOfContentSet();
+                return field_context[ index ].getFirstOfContentSet();
             }
+
         }
 
         return null;
@@ -143,8 +207,3 @@ export class GroupContext
 
 
 }
-
-
-
-
-
