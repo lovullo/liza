@@ -48,46 +48,44 @@ describe( "FieldContext", () =>
         },
     ].forEach( ( { element_id, position, expected } ) =>
     {
-        it( "sets sibling content for " + element_id, () =>
+        it( "sets sibling content and cloned content for " + element_id, () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
+            const content_string = ( content?.outerHTML as string );
             const sut = new Sut(
                 '',
-                <ContextContent>content,
-                <PositiveInteger>position
+                <PositiveInteger>0,
+                <PositiveInteger>position,
+                <ContextContent>content
             );
 
-            const given = <ContextContent>sut.getSiblingContent();
+            const sibling       = <ContextContent>sut.getSiblingContent();
+            const sibling_clone = <ContextContent>sut.getSiblingContentClone();
+            const content_clone = <ContextContent>sut.getContentClone();
 
-            expect( ( given?.outerHTML as string ) ).to.equal( expected );
+            expect( ( sibling?.outerHTML as string ) ).to.equal( expected );
+            expect( ( sibling_clone?.outerHTML as string ) ).to.equal( expected );
+            expect( ( content_clone?.outerHTML as string ) ).to.equal( content_string );
         } );
     } );
 
 
-    [
-        {
-            element_id: 'qcontainer_checkbox_no_label',
-        },
-        {
-            element_id: 'container_does_not_exist',
-        },
-    ].forEach( ( { element_id } ) =>
+    it( "sibling is null when label does not exist", () =>
     {
-        it( "sibling is null when label does not exist for " + element_id, () =>
-        {
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
-            const sut = new Sut(
-                '',
-                <ContextContent>content,
-                <PositiveInteger>0
-            );
+        const element_id = 'qcontainer_checkbox_no_label';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>content
+        );
 
-            const given = <ContextContent>sut.getSiblingContent();
+        const given = <ContextContent>sut.getSiblingContent();
 
-            expect( given ).to.equal( null );
-        } );
+        expect( given ).to.equal( null );
     } );
 
 
@@ -98,11 +96,28 @@ describe( "FieldContext", () =>
         const name = 'foo';
         const sut = new Sut(
             name,
-            <ContextContent>content,
-            <PositiveInteger>0
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>content
         );
 
         expect( sut.getName() ).to.equal( name );
+    } );
+
+
+    it( 'gets field index', () =>
+    {
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#foo_bar" );
+        const index = <PositiveInteger>4;
+        const sut = new Sut(
+            'baz',
+            index,
+            <PositiveInteger>0,
+            <ContextContent>content
+        );
+
+        expect( sut.getIndex() ).to.equal( index );
     } );
 
 
@@ -125,8 +140,9 @@ describe( "FieldContext", () =>
             const name = 'foo';
             const sut = new Sut(
                 name,
-                <ContextContent>content,
-                <PositiveInteger>0
+                <PositiveInteger>0,
+                <PositiveInteger>0,
+                <ContextContent>content
             );
 
             const to_content = document.createElement("dl");
@@ -171,8 +187,9 @@ describe( "FieldContext", () =>
             const name = 'foo';
             const sut = new Sut(
                 name,
-                <ContextContent>content,
-                <PositiveInteger>0
+                <PositiveInteger>0,
+                <PositiveInteger>0,
+                <ContextContent>content
             );
 
             const dummy_parent = document.createElement("dl");
@@ -195,7 +212,12 @@ describe( "FieldContext", () =>
         const from_content = getGroupContent();
         let content = from_content.querySelector( "#qcontainer_checkbox_foo" );
         let sibling = from_content.querySelector( "#qlabel_checkbox_foo" );
-        const sut = new Sut( '', <ContextContent>content, <PositiveInteger>0 );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>content
+        );
 
         expect( from_content.contains( content ) ).to.be.true;
         expect( from_content.contains( sibling ) ).to.be.true;
@@ -209,7 +231,12 @@ describe( "FieldContext", () =>
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );
-        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>child
+        );
 
         sut.detach( from_content );
         expect( from_content.contains( child ) ).to.be.false;
@@ -223,7 +250,12 @@ describe( "FieldContext", () =>
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
 
-        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>child
+        );
 
         sut.detach( from_content );
         expect( from_content.contains( child ) ).to.be.false;
@@ -240,7 +272,12 @@ describe( "FieldContext", () =>
         const child = document.createElement( "div" );
         from_another_content.appendChild( child );
 
-        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>child
+        );
 
         sut.detach( from_content );
         expect( from_content.contains( child ) ).to.be.false;
@@ -251,7 +288,12 @@ describe( "FieldContext", () =>
     it( 'isAttached is false when not attached to DOM', () => {
         // do not append the child
         const child = document.createElement( "div" );
-        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>child
+        );
         expect( sut.isAttached() ).to.be.false;
     } );
 
@@ -259,7 +301,14 @@ describe( "FieldContext", () =>
     it( 'isAttached is true when attached to DOM', () => {
         const parent = document.createElement("dl");
         const child = document.createElement( "div" );
-        const sut = new Sut( '', <ContextContent>child, <PositiveInteger>0 );
+
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>child
+        );
+
         sut.attach( parent, null );
         expect( sut.isAttached() ).to.be.true;
     } );
@@ -267,7 +316,14 @@ describe( "FieldContext", () =>
 
     it( 'getFirstOfContentSet returns the field content', () => {
         const content = document.createElement( "div" );
-        const sut = new Sut( '', <ContextContent>content, <PositiveInteger>0 );
+
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>content
+        );
+
         expect( sut.getFirstOfContentSet() ).to.equal( content );
     } );
 
@@ -276,7 +332,14 @@ describe( "FieldContext", () =>
         const group_content = getGroupContent();
         let content = group_content.querySelector( "#qcontainer_checkbox_foo" );
         let sibling = group_content.querySelector( "#qlabel_checkbox_foo" );
-        const sut = new Sut( '', <ContextContent>content, <PositiveInteger>0 );
+
+        const sut = new Sut(
+            '',
+            <PositiveInteger>0,
+            <PositiveInteger>0,
+            <ContextContent>content
+        );
+
         expect( sut.getFirstOfContentSet() ).to.equal( sibling );
     } );
 

@@ -31,24 +31,104 @@ export type NullableContextContent = ContextContent | null;
 export class FieldContext
 {
     /**
-     * Sibling content
-     **/
-    private _sibling: NullableContextContent = null;
+     * Cloned content
+     * Needed for additional indexes
+     */
+    private _content_clone: NullableContextContent = null;
+
+    /**
+     * Cloned sibling content
+     * Needed for additional indexes
+     */
+    private _sibling_clone: NullableContextContent = null;
 
 
     /**
      * Initialize FieldContext
      *
-     * @param _content field content
+     * @param _name field name
+     * @param _index field index
      * @param _position position index of content in the group
+     * @param _content field content
+     * @param _sibling sibling field content
      */
     constructor(
         private readonly _name: string,
+        private readonly _index: PositiveInteger,
+        private readonly _position: PositiveInteger,
         private readonly _content: ContextContent,
-        private readonly _position: PositiveInteger
+        private _sibling: NullableContextContent = null
     )
     {
+        this.processContent();
+    }
+
+
+    /**
+     * FieldContexts with indexes higher than 0 will need
+     * cloned nodes of the original content and the sibling
+     * so the nodes are unique
+     */
+    processContent(): void
+    {
+        if( this._index !== 0 )
+        {
+            return;
+        }
+
+        this._content_clone = <ContextContent>this._content.cloneNode( true );
+
         this.setSiblingContent();
+    }
+
+
+    /**
+     * Return sibling content
+     */
+    getSiblingContent(): NullableContextContent
+    {
+        return this._sibling;
+    }
+
+
+    /**
+     * Capture the sibling label content if it exists
+     *
+     * This function could be removed if the HTML structure
+     * changed so that fields and labels have unique container elements.
+     */
+    setSiblingContent(): void
+    {
+        if ( this._content !== null
+            && this._content.previousElementSibling != null )
+        {
+            const sibling: ContextContent = this._content.previousElementSibling;
+            const node_name = sibling.nodeName.toUpperCase();
+            this._sibling = ( sibling !== null && node_name === 'DT' ) ? sibling : null;
+
+            if ( this._sibling !== null )
+            {
+                this._sibling_clone = <ContextContent>this._sibling.cloneNode( true );
+            }
+        }
+    }
+
+
+    /**
+     * Return content clone
+     */
+    getContentClone(): NullableContextContent
+    {
+        return this._content_clone;
+    }
+
+
+    /**
+     * Return sibling content clone
+     */
+    getSiblingContentClone(): NullableContextContent
+    {
+        return this._sibling_clone;
     }
 
 
@@ -58,6 +138,15 @@ export class FieldContext
     getName(): string
     {
         return this._name;
+    }
+
+
+    /**
+     * Return the field index
+     */
+    getIndex(): PositiveInteger
+    {
+        return this._index;
     }
 
 
@@ -122,29 +211,4 @@ export class FieldContext
     }
 
 
-    /**
-     * Return sibling content
-     */
-    getSiblingContent(): NullableContextContent
-    {
-        return this._sibling;
-    }
-
-
-    /**
-     * Capture the sibling label content if it exists
-     *
-     * This function could be removed if the HTML structure
-     * changed so that fields and labels have unique container elements.
-     */
-    setSiblingContent(): void
-    {
-        if ( this._content !== null
-            && this._content.previousElementSibling !== null )
-        {
-            const sibling: ContextContent = this._content.previousElementSibling;
-            const node_name = sibling.nodeName.toUpperCase();
-            this._sibling = ( sibling !== null && node_name === 'DT' ) ? sibling : null;
-        }
-    }
 }

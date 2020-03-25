@@ -56,12 +56,43 @@ export class GroupContext
 
 
     /**
+     * Create cache of field contexts
+     *
+     * @param fields - exclusive field names of group
+     * @param content - group content
+     */
+    createFieldCache(
+        fields: string[],
+        content: ContextContent
+    ): void
+    {
+        for ( let i = 0; i < fields.length; i++ )
+        {
+            let index = <PositiveInteger>i;
+            let field = fields[ i ];
+            let position = <PositiveInteger>+i;
+
+            let field_content = this._parser.parse( field, content );
+
+            if ( field_content !== null )
+            {
+                let field_context = this._field_context_factory
+                    .create( field, index, position, field_content );
+
+                this._field_positions[ position ] = field;
+                this._field_context_cache[ field ] = field_context;
+            }
+        }
+    }
+
+
+    /**
      * Attach field to DOM
      *
      * @param field_name - to attach to DOM
      * @param to - parent context
      */
-    attach( field_name : string, to: ContextContent ): void
+    attach( field_name: string, to: ContextContent ): void
     {
         if ( this._field_context_cache[ field_name ] !== undefined )
         {
@@ -93,7 +124,7 @@ export class GroupContext
      *
      * @param field_name - of element to find next element
      */
-    private _getNextElement( field_name : string ): NullableContextContent
+    private _getNextElement( field_name: string ): NullableContextContent
     {
         const position = this._field_context_cache[ field_name ].getPosition();
 
@@ -110,35 +141,6 @@ export class GroupContext
         return null;
     }
 
-
-    /**
-     * Create cache of field contexts
-     *
-     * @param fields - exclusive field names of group
-     * @param content - group content
-     */
-    createFieldCache(
-        fields: string[],
-        content: ContextContent
-    ): void
-    {
-        for ( let i = 0; i < fields.length; i++ )
-        {
-            let field = fields[ i ];
-            let position = <PositiveInteger>+i;
-
-            let field_content = this._parser.parse( field, content );
-
-            if ( field_content !== null )
-            {
-                let field_context = this._field_context_factory
-                    .create( field, field_content, position );
-
-                this._field_positions[ position ] = field;
-                this._field_context_cache[ field ] = field_context;
-            }
-        }
-    }
 
 }
 

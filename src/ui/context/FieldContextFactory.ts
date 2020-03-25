@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FieldContext, ContextContent } from "./FieldContext";
+import { FieldContext, ContextContent, NullableContextContent } from "./FieldContext";
 import { PositiveInteger } from "../../numeric";
 
 
@@ -29,19 +29,25 @@ export class FieldContextFactory
      * Creates a new FieldContext
      *
      * @param name - field name
-     * @param content - field HTML content
+     * @param index - field index
      * @param position - position index of content in the group
+     * @param content - field HTML content
+     * @param sibling - field HTML sibling content
      */
     create(
         name: string,
+        index: PositiveInteger,
+        position: PositiveInteger,
         content: ContextContent,
-        position: PositiveInteger
+        sibling: NullableContextContent = null
     ): FieldContext
     {
         return new FieldContext(
             name,
+            index,
+            position,
             content,
-            position
+            sibling
         );
     }
 
