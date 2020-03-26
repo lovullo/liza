@@ -111,10 +111,13 @@ export class GroupContext
 
         const field_context = this._fromCache( field_name, index );
 
-        field_context.attach(
-            to,
-            this._getNextElement( field_name, index )
-        );
+        if ( field_context.isAttached() === false )
+        {
+            field_context.attach(
+                to,
+                this._getNextElement( field_name, index )
+            );
+        }
     }
 
 
@@ -187,9 +190,9 @@ export class GroupContext
         index: PositiveInteger
     ): NullableContextContent
     {
-        const position = this._field_context_cache[ field_name ][ index ].getPosition();
+        let position = this._field_context_cache[ field_name ][ index ].getPosition();
 
-        for ( let i = position; i < this._field_positions.length; i++ )
+        for ( let i = position++; i < this._field_positions.length; i++ )
         {
             let next_element_name = this._field_positions[ i ];
             let field_context = this._field_context_cache[ next_element_name ];
