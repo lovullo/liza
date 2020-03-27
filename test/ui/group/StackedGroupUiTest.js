@@ -69,9 +69,7 @@ describe( 'ui.group.StackedGroupUi', () =>
                     .withArgs( 'dl' )
                     .returns( [ header, header ] );
 
-                const quote = {
-                    on: sinon.stub()
-                };
+                const quote = createQuote();
 
                 sut.init( quote );
                 sut.showField( field, index );
@@ -124,9 +122,7 @@ describe( 'ui.group.StackedGroupUi', () =>
                     .withArgs( 'dl' )
                     .returns( [ header, header ] );
 
-                const quote = {
-                    on: sinon.stub()
-                };
+                const quote = createQuote();
 
                 sut.init( quote );
                 sut.hideField( field, index );
@@ -168,11 +164,15 @@ function createSut( content, field )
 
 function createContent()
 {
-    const content = [ { querySelector: sinon.stub() } ];
+    const content = [ {
+        querySelector: sinon.stub(),
+        getAttribute: sinon.stub().returns( null )
+    } ];
 
     content.hide = sinon.stub();
     content.find = sinon.stub()
         .returns( { click: sinon.stub() });
+
 
     return content;
 }
@@ -194,5 +194,14 @@ function createContainer()
         .returns( dlist );
 
     return container;
+}
+
+
+function createQuote()
+{
+    return {
+        on: sinon.stub(),
+        onClassifyAndNow: sinon.stub()
+    };
 }
 
