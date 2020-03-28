@@ -65,20 +65,23 @@ export class FieldContext
 
 
     /**
+     * Each element in the content need unique element ids
+     *
      * FieldContexts with indexes higher than 0 will need
      * cloned nodes of the original content and the sibling
      * so the nodes are unique
      */
     processContent(): void
     {
-        if( this._index !== 0 )
+        this._setElementIdIndexes( this._content );
+        this._setElementIdIndexes( this._sibling );
+
+        if ( this._index === 0 )
         {
-            return;
+            this._content_clone = <ContextContent>this._content.cloneNode( true );
+
+            this.setSiblingContent();
         }
-
-        this._content_clone = <ContextContent>this._content.cloneNode( true );
-
-        this.setSiblingContent();
     }
 
 
@@ -94,7 +97,7 @@ export class FieldContext
     /**
      * Capture the sibling label content if it exists
      *
-     * This function could be removed if the HTML structure
+     * This sibling content and its logic could be removed if the HTML structure
      * changed so that fields and labels have unique container elements.
      */
     setSiblingContent(): void
@@ -108,8 +111,44 @@ export class FieldContext
 
             if ( this._sibling !== null )
             {
+                this._setElementIdIndexes( this._sibling );
                 this._sibling_clone = <ContextContent>this._sibling.cloneNode( true );
             }
+        }
+    }
+
+
+    /**
+     * Sets the index (for the name attribute) of all given elements
+     *
+     * The name format is expected to be: name_i, where i is the index.
+     *
+     * @param content - the content
+     */
+    private _setElementIdIndexes( content: NullableContextContent ): void
+    {
+        if ( content === null )
+        {
+            return;
+        }
+
+        const elements = content.getElementsByTagName( "*" );
+
+        for ( let i = 0; i < elements.length; i++ )
+        {
+            let element = elements[ i ];
+            let id      = element.getAttribute( 'id' ) || '';
+
+            let element_data: RegExpMatchArray | null = null;
+
+            // grab the index from the id if found
+            if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
+            {
+                // regenerate the id
+                element.setAttribute( 'id', element_data[ 1 ] + this._index );
+            }
+
+            element.setAttribute( 'data-index', this._index.toString()  );
         }
     }
 

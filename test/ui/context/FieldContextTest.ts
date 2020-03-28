@@ -38,24 +38,72 @@ describe( "FieldContext", () =>
     [
         {
             element_id: 'qcontainer_checkbox_foo',
+            index: 10,
             position: 1,
-            expected: '<dt id="qlabel_checkbox_foo">Foo</dt>'
+            expected_content: '<dd id="qcontainer_checkbox_foo">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_10" data-index="10">' +
+                    '<input type="checkbox" id="q_checkbox_foo_y_10" data-index="10">' +
+                '</dd>',
         },
         {
             element_id: 'qcontainer_foo_bar_long_name',
+            index: 324,
             position: 2,
-            expected: '<dt id="qlabel_foo_bar_long_name">Bar</dt>'
+            expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
+                    '<input type="text" id="foo_bar_324" data-index="324">' +
+                '</dd>',
         },
-    ].forEach( ( { element_id, position, expected } ) =>
+    ].forEach( ( { element_id, index, position, expected_content } ) =>
     {
-        it( "sets sibling content and cloned content for " + element_id, () =>
+        it( "sets element indexes for " + element_id, () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
-            const content_string = ( content?.outerHTML as string );
+
             const sut = new Sut(
                 '',
-                <PositiveInteger>0,
+                <PositiveInteger>index,
+                <PositiveInteger>position,
+                <ContextContent>content
+            );
+
+            const content_modified = <ContextContent>sut.getFirstOfContentSet();
+
+            expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content );
+        } );
+    } );
+
+
+    [
+        {
+            element_id: 'qcontainer_checkbox_foo',
+            index: 0,
+            position: 1,
+            expected_content: '<dd id="qcontainer_checkbox_foo">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_0" data-index="0">' +
+                    '<input type="checkbox" id="q_checkbox_foo_y_0" data-index="0">' +
+                '</dd>',
+            expected_sibling: '<dt id="qlabel_checkbox_foo">Foo</dt>'
+        },
+        {
+            element_id: 'qcontainer_foo_bar_long_name',
+            index: 0,
+            position: 2,
+            expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
+                    '<input type="text" id="foo_bar_0" data-index="0">' +
+                '</dd>',
+            expected_sibling: '<dt id="qlabel_foo_bar_long_name">Bar</dt>'
+        },
+    ].forEach( ( { element_id, index, position, expected_content, expected_sibling } ) =>
+    {
+        it( "sets sibling content and cloned content with element indexes for " + element_id, () =>
+        {
+            const group_content = getGroupContent();
+            const content = group_content.querySelector( "#" + element_id );
+
+            const sut = new Sut(
+                '',
+                <PositiveInteger>index,
                 <PositiveInteger>position,
                 <ContextContent>content
             );
@@ -64,12 +112,11 @@ describe( "FieldContext", () =>
             const sibling_clone = <ContextContent>sut.getSiblingContentClone();
             const content_clone = <ContextContent>sut.getContentClone();
 
-            expect( ( sibling?.outerHTML as string ) ).to.equal( expected );
-            expect( ( sibling_clone?.outerHTML as string ) ).to.equal( expected );
-            expect( ( content_clone?.outerHTML as string ) ).to.equal( content_string );
+            expect( ( sibling?.outerHTML as string ) ).to.equal( expected_sibling );
+            expect( ( sibling_clone?.outerHTML as string ) ).to.equal( expected_sibling );
+            expect( ( content_clone?.outerHTML as string ) ).to.equal( expected_content );
         } );
     } );
-
 
     it( "sibling is null when label does not exist", () =>
     {
@@ -91,12 +138,13 @@ describe( "FieldContext", () =>
 
     it( 'gets field name', () =>
     {
+        const element_id = 'qcontainer_checkbox_no_label';
         const group_content = getGroupContent();
-        const content = group_content.querySelector( "#foo_bar" );
+        const content = group_content.querySelector( "#" + element_id );
         const name = 'foo';
         const sut = new Sut(
             name,
-            <PositiveInteger>0,
+            <PositiveInteger>55,
             <PositiveInteger>0,
             <ContextContent>content
         );
@@ -107,8 +155,9 @@ describe( "FieldContext", () =>
 
     it( 'gets field index', () =>
     {
+        const element_id = 'qcontainer_checkbox_no_label';
         const group_content = getGroupContent();
-        const content = group_content.querySelector( "#foo_bar" );
+        const content = group_content.querySelector( "#" + element_id );
         const index = <PositiveInteger>4;
         const sut = new Sut(
             'baz',
@@ -123,20 +172,49 @@ describe( "FieldContext", () =>
 
     [
         {
-            label: 'attaches field to DOM with previous element',
-            prev_element: 'div',
-            expected: '<dl><input type="text" id="foo_bar"><div></div></dl>'
+            label: 'attaches text field to DOM with next element',
+            next_element: 'div',
+            element_id: 'qcontainer_baz',
+            expected:
+                '<dl>' +
+                    '<dt id="qlabel_baz">Baz</dt>' +
+                    '<dd id="qcontainer_baz">' +
+                        '<input type="text" id="foo_baz_0" data-index="0">' +
+                    '</dd>' +
+                    '<div></div>' +
+                '</dl>'
         },
         {
-            label: 'attaches field to DOM w/out previous element',
-            prev_element: null,
-            expected: '<dl><input type="text" id="foo_bar"></dl>'
+            label: 'attaches text field to DOM w/out next element',
+            next_element: null,
+            element_id: 'qcontainer_baz',
+            expected:
+                '<dl>' +
+                    '<dt id="qlabel_baz">Baz</dt>' +
+                    '<dd id="qcontainer_baz">' +
+                        '<input type="text" id="foo_baz_0" data-index="0">' +
+                    '</dd>' +
+                '</dl>'
         },
-    ].forEach( ( { label, prev_element, expected } ) => {
+        {
+            label: 'attaches checkbox field to DOM with next element',
+            next_element: 'div',
+            element_id: 'qcontainer_checkbox_foo',
+            expected:
+                '<dl>' +
+                    '<dt id="qlabel_checkbox_foo">Foo</dt>' +
+                    '<dd id="qcontainer_checkbox_foo">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_0" data-index="0">' +
+                    '<input type="checkbox" id="q_checkbox_foo_y_0" data-index="0">' +
+                    '</dd>' +
+                    '<div></div>' +
+                '</dl>'
+        }
+    ].forEach( ( { label, next_element, element_id, expected } ) => {
         it( label, () => {
 
             const group_content = getGroupContent();
-            const content = group_content.querySelector("#foo_bar");
+            const content = group_content.querySelector( "#" + element_id );
             const name = 'foo';
             const sut = new Sut(
                 name,
@@ -146,63 +224,15 @@ describe( "FieldContext", () =>
             );
 
             const to_content = document.createElement("dl");
-            let dummy_prev_element = null;
-            if ( prev_element !== null )
+            let dummy_next_element = null;
+            if ( next_element !== null )
             {
-                dummy_prev_element = document.createElement( prev_element );
-                to_content.appendChild( dummy_prev_element );
+                dummy_next_element = document.createElement( next_element );
+                to_content.appendChild( dummy_next_element );
             }
 
-            sut.attach( to_content, dummy_prev_element );
-            expect( to_content.contains( content ) ).to.be.true;
+            sut.attach( to_content, dummy_next_element );
             expect( to_content.outerHTML ).to.equal( expected );
-        } )
-    } );
-
-
-    [
-        {
-            label: 'attaches field and sibling to DOM',
-            prev_element: 'div',
-            element_id: 'qcontainer_checkbox_foo',
-            expected:
-                '<dl>' +
-                    '<dt id="qlabel_checkbox_foo">Foo</dt>' +
-                    '<dd id="qcontainer_checkbox_foo">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
-                    '<input type="checkbox" id="q_checkbox_foo_y_0">' +
-                    '</dd>' +
-                    '<div></div>' +
-                '</dl>'
-        }
-    ].forEach( ( {
-                     label,
-                     prev_element,
-                     element_id,
-                     expected } ) => {
-        it( label, () => {
-
-            const group_content = getGroupContent();
-            let content = group_content.querySelector( "#" + element_id );
-            const name = 'foo';
-            const sut = new Sut(
-                name,
-                <PositiveInteger>0,
-                <PositiveInteger>0,
-                <ContextContent>content
-            );
-
-            const dummy_parent = document.createElement("dl");
-            let dummy_prev_element = null;
-            if ( prev_element !== null )
-            {
-                dummy_prev_element = document.createElement( prev_element );
-                dummy_parent.appendChild( dummy_prev_element );
-            }
-
-            sut.attach( dummy_parent, dummy_prev_element );
-            expect( dummy_parent.contains( content ) ).to.be.true;
-            expect( dummy_parent.outerHTML ).to.equal( expected );
         } )
     } );
 
@@ -353,21 +383,30 @@ function getGroupContent()
     var group = document.createElement( "dl" );
 
     group.innerHTML =
-        '<dt id="qlabel_checkbox_foo" >Foo</dt>' +
+        '<dt id="qlabel_checkbox_foo">Foo</dt>' +
         '<dd id="qcontainer_checkbox_foo">' +
             '<input type="checkbox" id="q_checkbox_foo_n_0">' +
             '<input type="checkbox" id="q_checkbox_foo_y_0">' +
+        '</dd>' +
         '<dd id="qcontainer_checkbox_no_label">' +
             '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
         '</dd>' +
-        '<dt id="qlabel_foo_bar_long_name" >Bar</dt>' +
+        '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
         '<dd id="qcontainer_foo_bar_long_name">' +
-            '<input type="text" id="foo_bar" >' +
+            '<input type="text" id="foo_bar_0" >' +
         '</dd>' +
-        '<select id="q_bi_risk_type_0">' +
-            '<option id="q_foo_subfield_0" value="Bar">Foo</option>' +
-        '</select>';
-
+        '<dt id="qlabel_subfield" >Foo</dt>' +
+        '<dd id="qcontainer_subfield">' +
+            '<select id="q_bi_risk_type_0">' +
+                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+                '<option id="q_qux_subfield_0" value="Qux">Quz</option>' +
+            '</select>' +
+        '</dd>' +
+        '<dt id="qlabel_baz">Baz</dt>' +
+        '<dd id="qcontainer_baz">' +
+            '<input type="text" id="foo_baz_0">' +
+        '</dd>';
 
     return group;
 }

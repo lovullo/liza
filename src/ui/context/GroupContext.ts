@@ -188,17 +188,20 @@ export class GroupContext
         index: PositiveInteger
     ): NullableContextContent
     {
-        let position = this._field_context_cache[ field_name ][ index ].getPosition();
+        const field_context = this._field_context_cache[ field_name ][ index ];
+        let position: PositiveInteger = field_context.getPosition();
 
-        for ( let i = position++; i < this._field_positions.length; i++ )
+        position++;
+
+        for ( let i = position; i < this._field_positions.length; i++ )
         {
             let next_element_name = this._field_positions[ i ];
-            let field_context = this._field_context_cache[ next_element_name ];
+            let next_context = this._field_context_cache[ next_element_name ];
 
-            if ( field_context[ index ] !== undefined
-                && field_context[ index ].isAttached() )
+            if ( next_context[ index ] !== undefined
+                && next_context[ index ].isAttached() )
             {
-                return field_context[ index ].getFirstOfContentSet();
+                return next_context[ index ].getFirstOfContentSet();
             }
 
         }
