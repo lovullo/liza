@@ -221,7 +221,7 @@ describe( "FieldContext", () =>
 
         expect( from_content.contains( content ) ).to.be.true;
         expect( from_content.contains( sibling ) ).to.be.true;
-        sut.detach( from_content );
+        sut.detach();
         expect( from_content.contains( content ) ).to.be.false;
         expect( from_content.contains( sibling ) ).to.be.false;
     } )
@@ -238,7 +238,7 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
-        sut.detach( from_content );
+        sut.detach();
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
     } )
@@ -257,7 +257,7 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
-        sut.detach( from_content );
+        sut.detach();
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
     } )
@@ -279,7 +279,7 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
-        sut.detach( from_content );
+        sut.detach();
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
     } ),
@@ -357,7 +357,6 @@ function getGroupContent()
         '<dd id="qcontainer_checkbox_foo">' +
             '<input type="checkbox" id="q_checkbox_foo_n_0">' +
             '<input type="checkbox" id="q_checkbox_foo_y_0">' +
-        '</dd>' +
         '<dd id="qcontainer_checkbox_no_label">' +
             '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
         '</dd>' +
@@ -368,6 +367,7 @@ function getGroupContent()
         '<select id="q_bi_risk_type_0">' +
             '<option id="q_foo_subfield_0" value="Bar">Foo</option>' +
         '</select>';
+
 
     return group;
 }

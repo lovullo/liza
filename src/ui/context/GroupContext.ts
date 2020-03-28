@@ -126,12 +126,10 @@ export class GroupContext
      *
      * @param field_name - to detach from DOM
      * @param index - field index
-     * @param from - parent context
      */
     detach(
         field_name: string,
-        index: PositiveInteger,
-        from: ContextContent
+        index: PositiveInteger
     ): void
     {
         // If field name was never added, do nothing
@@ -142,7 +140,7 @@ export class GroupContext
 
         const field_context = this._fromCache( field_name, index );
 
-        field_context.detach( from );
+        field_context.detach();
     }
 
 

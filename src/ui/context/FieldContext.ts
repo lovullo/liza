@@ -187,21 +187,17 @@ export class FieldContext
 
     /**
      * Detach the field from the DOM
-     *
-     * @param from - Parent to detach from
      */
-    detach( from: ContextContent ): void
+    detach(): void
     {
-        if ( this._content.parentElement &&
-            this._content.parentElement === from )
+        if ( this._content.parentElement )
         {
-            from.removeChild( this._content );
+            this._content.parentElement.removeChild( this._content );
 
             if ( this._sibling !== null &&
-                this._sibling.parentElement &&
-                this._sibling.parentElement === from )
+                this._sibling.parentElement )
             {
-                from.removeChild( this._sibling );
+                this._sibling.parentElement.removeChild( this._sibling );
             }
         }
     }

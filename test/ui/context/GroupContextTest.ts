@@ -40,9 +40,9 @@ describe( "GroupContext", () =>
         let factory_field_position: number[] = [];
 
         const parser = <ContextParser>{
-            'parse':( _element_id: string, _: any ) => {
+            'parse': ( _element_id: any, __: any ) => {
                 parser_fields.push( _element_id );
-                return document.createElement( "dd" );
+                return <ContextContent>document.createElement( "dd" );
             },
         };
 
@@ -100,11 +100,7 @@ describe( "GroupContext", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
-        const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return document.createElement( "dd" );
-            },
-        };
+        const parser = getContextParserStub();
 
         let detach_is_called = false;
         const stub = getFieldContextStub();
@@ -114,16 +110,15 @@ describe( "GroupContext", () =>
             },
         };
 
-        stub.detach = ( from: ContextContent ) =>
+        stub.detach = () =>
         {
-            expect( from ).to.equal( dummy_content );
             detach_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
-        sut.detach( 'foo', <PositiveInteger>0, dummy_content );
+        sut.detach( 'foo', <PositiveInteger>0 );
         expect( detach_is_called ).to.be.true;
     } );
 
@@ -132,11 +127,7 @@ describe( "GroupContext", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
-        const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return document.createElement( "dd" );
-            },
-        };
+        const parser = getContextParserStub();
 
         let detach_is_called = false;
 
@@ -147,16 +138,15 @@ describe( "GroupContext", () =>
             },
         };
 
-        stub.detach = ( from: ContextContent ) =>
+        stub.detach = () =>
         {
-            expect( from ).to.equal( dummy_content );
             detach_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
-        sut.detach( 'bar', <PositiveInteger>0, dummy_content );
+        sut.detach( 'bar', <PositiveInteger>0 );
         expect( detach_is_called ).to.be.false;
     } );
 
@@ -173,11 +163,7 @@ describe( "GroupContext", () =>
         }
 
         let attach_is_called = false;
-        const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return document.createElement( "dd" );
-            },
-        };
+        const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
             'create': ( field: string, __: any, ___:any, ____:any ) => {
@@ -231,11 +217,7 @@ describe( "GroupContext", () =>
         let get_sibling_clone_is_called = false;
         let get_position_is_called = false;
 
-        const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return document.createElement( "dd" );
-            },
-        };
+        const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
             'create': ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
@@ -289,11 +271,7 @@ describe( "GroupContext", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
-        const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return document.createElement( "dd" );
-            },
-        };
+        const parser = getContextParserStub();
 
         let attach_is_called = false;
 
@@ -313,13 +291,23 @@ describe( "GroupContext", () =>
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
 
-        sut.detach( 'bar', <PositiveInteger>0, dummy_content );
+        sut.detach( 'bar', <PositiveInteger>0 );
 
         expect( attach_is_called ).to.be.false;
     } );
 
 
 } );
+
+
+function getContextParserStub()
+{
+    return <ContextParser>{
+        'parse': ( _: any, __: any ) => {
+            return <ContextContent>document.createElement("dd");
+        },
+    };
+}
 
 
 function getFieldContextStub(
