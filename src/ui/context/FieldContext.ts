@@ -48,14 +48,14 @@ export class FieldContext
      *
      * @param _name field name
      * @param _index field index
-     * @param _position position index of content in the group
+     * @param _position field position
      * @param _content field content
      * @param _sibling sibling field content
      */
     constructor(
         private readonly _name: string,
         private readonly _index: PositiveInteger,
-        private readonly _position: PositiveInteger,
+        private _position: PositiveInteger,
         private readonly _content: ContextContent,
         private _sibling: NullableContextContent = null
     )
@@ -81,6 +81,8 @@ export class FieldContext
             this._content_clone = <ContextContent>this._content.cloneNode( true );
 
             this.setSiblingContent();
+
+            this._setContentPosition();
         }
     }
 
@@ -150,6 +152,25 @@ export class FieldContext
 
             element.setAttribute( 'data-index', this._index.toString()  );
         }
+    }
+
+
+    /**
+     * Sets the position of the content
+     * in relation to the parent node.
+     *
+     * Used by GroupContext when re-attaching
+     *
+     * This should only be called on the first index
+     * of a specific field to capture the original position
+     */
+    private _setContentPosition()
+    {
+        const content = <ContextContent>this.getFirstOfContentSet();
+        const parent = content.parentNode;
+
+        this._position = <PositiveInteger>Array.prototype.indexOf
+            .call( parent?.children, content );
     }
 
 

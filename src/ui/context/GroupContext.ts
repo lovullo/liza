@@ -69,9 +69,9 @@ export class GroupContext
         for ( let i = 0; i < fields.length; i++ )
         {
             let field = fields[ i ];
-            let position = <PositiveInteger>i;
 
-            // Initial fields have 0 index
+            // Initial fields will have 0 index and position
+            // The FieldContext will reset its position
             let index = <PositiveInteger>0;
 
             let field_content = this._parser.parse( field, content );
@@ -79,7 +79,9 @@ export class GroupContext
             if ( field_content !== null )
             {
                 let field_context = this._field_context_factory
-                    .create( field, index, position, field_content );
+                    .create( field, index, index, field_content );
+
+                let position = field_context.getPosition();
 
                 this._field_positions[ position ] = field;
 
@@ -113,9 +115,17 @@ export class GroupContext
 
         if ( field_context.isAttached() === false )
         {
+            let next_element = this._getNextElement( field_name, index );
+            const next_element_id = next_element?.getAttribute( 'id' ) || '';
+
+            if ( next_element_id !== '' )
+            {
+                next_element = to.querySelector( "#" + next_element_id );
+            }
+
             field_context.attach(
                 to,
-                this._getNextElement( field_name, index )
+                next_element
             );
         }
     }
@@ -195,15 +205,17 @@ export class GroupContext
 
         for ( let i = position; i < this._field_positions.length; i++ )
         {
-            let next_element_name = this._field_positions[ i ];
-            let next_context = this._field_context_cache[ next_element_name ];
-
-            if ( next_context[ index ] !== undefined
-                && next_context[ index ].isAttached() )
+            if ( this._field_positions[ i ] !== undefined )
             {
-                return next_context[ index ].getFirstOfContentSet();
-            }
+                let next_element_name = this._field_positions[ i ];
+                let next_context = this._field_context_cache[ next_element_name ];
 
+                if ( next_context[ index ] !== undefined
+                    && next_context[ index ].isAttached() )
+                {
+                    return next_context[ index ].getFirstOfContentSet();
+                }
+            }
         }
 
         return null;

@@ -32,11 +32,17 @@ describe( "FieldContextFactory", () =>
     {
         const sut = new Sut();
 
-        const content = document.createElement( "div" );
-        content.innerHTML = '<dt></dt>';
+        const parent = document.createElement( "div" );
+        parent.innerHTML =
+            '<dl class="">' +
+                '<dt id="qlabel_checkbox_foo" >Foo</dt>' +
+                '<dd id="qcontainer_checkbox_foo">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
+                '</dd>' +
+            '</dl>';
 
-        const sibling = document.createElement( "div" );
-        sibling.innerHTML = '<dd></dd>';
+        const content = parent.querySelector( "#qcontainer_checkbox_foo" );
+        const sibling = parent.querySelector( "#qlabel_checkbox_foo" );
 
         const given = sut.create(
             'foo',
@@ -49,3 +55,4 @@ describe( "FieldContextFactory", () =>
         expect( given ).to.be.instanceOf( FieldContext );
     } );
 } );
+

@@ -34,10 +34,18 @@ describe( "GroupContext", () =>
     it( "createFieldCache calls parser and field context factory for each field", () =>
     {
         const fields          = [ 'foo', 'baz' ];
-        const field_positions = [ 0, 1 ];
+        const field_positions = [ 0, 0 ];
+
+        let stubs = <ContextCache>{
+            'foo': [ getFieldContextStub( 'foo', 0, false ) ],
+            'baz': [ getFieldContextStub( 'baz', 0, false ) ],
+        }
 
         let parser_fields: string[] = [];
         let factory_field_position: number[] = [];
+
+        let foo_position_is_called = false;
+        let baz_position_is_called = false;
 
         const parser = <ContextParser>{
             'parse': ( _element_id: any, __: any ) => {
@@ -47,10 +55,27 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, position: PositiveInteger, ___:any ) => {
+            'create': (
+                field: string,
+                index: PositiveInteger,
+                position: PositiveInteger,
+                _:any ) =>
+            {
                 factory_field_position.push( position );
-                return getFieldContextStub();
+                return stubs[ field ][ index ];
             },
+        };
+
+        stubs[ 'foo' ][ 0 ].getPosition = () =>
+        {
+            foo_position_is_called = true;
+            return <PositiveInteger>0;
+        };
+
+        stubs[ 'baz' ][ 0 ].getPosition = () =>
+        {
+            baz_position_is_called = true;
+            return <PositiveInteger>0;
         };
 
         const sut = new Sut( parser, factory );
@@ -62,8 +87,11 @@ describe( "GroupContext", () =>
         expect( parser_fields )
             .to.deep.equal( fields );
 
-        expect( factory_field_position )
-            .to.deep.equal( field_positions );
+        expect( field_positions )
+            .to.deep.equal( factory_field_position );
+
+        expect( foo_position_is_called ).to.be.true;
+        expect( baz_position_is_called ).to.be.true;
     } );
 
 

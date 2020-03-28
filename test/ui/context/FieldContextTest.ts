@@ -258,6 +258,7 @@ describe( "FieldContext", () =>
 
 
     it( 'detaches field from DOM when attached', () => {
+
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );
@@ -274,11 +275,11 @@ describe( "FieldContext", () =>
     } )
 
 
-    it( 'detaches field from DOM when not attached', () => {
+    it( 'does not detach field from DOM after already detached', () => {
 
-        // do not append the child
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
+        from_content.appendChild( child );
 
         const sut = new Sut(
             '',
@@ -286,6 +287,9 @@ describe( "FieldContext", () =>
             <PositiveInteger>0,
             <ContextContent>child
         );
+
+        // now simulate detaching
+        from_content.removeChild( child );
 
         sut.detach();
         expect( from_content.contains( child ) ).to.be.false;
@@ -293,44 +297,29 @@ describe( "FieldContext", () =>
     } )
 
 
-    it( 'detaches field from DOM when attached to different parent', () => {
-
-        // do not append the child
-        const from_content = document.createElement("dl");
-
-        const from_another_content = document.createElement("span");
-        const child = document.createElement( "div" );
-        from_another_content.appendChild( child );
-
-        const sut = new Sut(
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
-            <ContextContent>child
-        );
-
-        sut.detach();
-        expect( from_content.contains( child ) ).to.be.false;
-        expect( from_content.outerHTML).to.equal( '<dl></dl>' );
-    } ),
-
-
     it( 'isAttached is false when not attached to DOM', () => {
-        // do not append the child
+        const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
+        from_content.appendChild( child );
+
         const sut = new Sut(
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
             <ContextContent>child
         );
+
+        // now detach
+        sut.detach();
+
         expect( sut.isAttached() ).to.be.false;
     } );
 
 
     it( 'isAttached is true when attached to DOM', () => {
-        const parent = document.createElement("dl");
+        const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
+        from_content.appendChild( child );
 
         const sut = new Sut(
             '',
@@ -339,22 +328,23 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
-        sut.attach( parent, null );
         expect( sut.isAttached() ).to.be.true;
     } );
 
 
     it( 'getFirstOfContentSet returns the field content', () => {
-        const content = document.createElement( "div" );
+        const from_content = document.createElement("dl");
+        const child = document.createElement( "div" );
+        from_content.appendChild( child );
 
         const sut = new Sut(
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
-            <ContextContent>content
+            <ContextContent>child
         );
 
-        expect( sut.getFirstOfContentSet() ).to.equal( content );
+        expect( sut.getFirstOfContentSet() ).to.equal( child );
     } );
 
 
