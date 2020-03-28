@@ -37,33 +37,113 @@ describe( "ContextParser", () =>
 {
     [
         {
+            label: "parses content and finds container",
             element_id: 'foo_bar',
-            expected: '<input type="text" id="foo_bar">'
+            expected:
+                '<dd id="qcontainer_foo_bar_long_name">' +
+                    '<input type="text" id="foo_bar" data-field-name="foo_bar">' +
+                '</dd>'
         },
         {
-            element_id: 'foo_subfield',
-            expected: '<option id="q_foo_subfield_0" value="Bar">Foo</option>'
+            label: "parses content and finds container",
+            element_id: 'baz_subfield',
+            expected:
+                '<dd id="qcontainer_subfield">' +
+                    '<select id="q_subfield_0">' +
+                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                        '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux">Quz</option>' +
+                    '</select>' +
+                '</dd>'
         },
         {
+            label: "parses content and finds container",
+            element_id: 'bar_subfield',
+            expected:
+                '<dd id="qcontainer_subfield">' +
+                    '<select id="q_subfield_0">' +
+                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                        '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux">Quz</option>' +
+                    '</select>' +
+                '</dd>'
+        },
+        {
+            label: "parses content and finds container",
+            element_id: 'very_deep_subfield',
+            expected:
+                '<dd id="qcontainer_very_deep_subfield">' +
+                    '<div>' +
+                        '<span>' +
+                            '<ul>' +
+                                '<li>' +
+                                    '<select id="q_very_deep_subfield_0">' +
+                                        '<option id="q_very_deep_subfield_0" value="Bar">Bar</option>' +
+                                        '<option id="q_very_deep_subfield_0" value="Baz">Baz</option>' +
+                                    '</select>' +
+                                '</li>' +
+                            '</ul>' +
+                        '</span>' +
+                    '</div>' +
+                '</dd>'
+        },
+        {
+            label: "parses content and finds table row",
+            element_id: 'foo_row',
+            expected:
+                '<td>' +
+                    '<input type="text" id="q_foo_row_0">' +
+                '</td>'
+        },
+        {
+            label: "parses content and finds table row",
+            element_id: 'deep_table_row',
+            expected:
+                '<td>' +
+                    '<div>' +
+                        '<label>' +
+                            '<input type="checkbox" data-field-name="deep_table_row"> No' +
+                        '</label>' +
+                    '</div>' +
+                '</td>'
+        },
+        {
+            label: "parses content and finds answer using data-field-name first",
+            element_id: 'answer_foo_bar',
+            expected:
+                '<dd id="answer_foo_bar_value">' +
+                    '<span id="answer_baz" data-field-name="answer_foo_bar">None</span>' +
+                '</dd>'
+        },
+        {
+            label: "parses content that is already a container",
             element_id: 'checkbox_foo',
-            expected: '<dd id="qcontainer_checkbox_foo">' +
+            expected:
+                '<dd id="qcontainer_checkbox_foo">' +
                     '<input type="checkbox" id="q_checkbox_foo_n_0">' +
                     '<input type="checkbox" id="q_checkbox_foo_y_0">' +
                 '</dd>'
         },
         {
+            label: "parses content that is already a container",
             element_id: 'checkbox_no_label',
-            expected: '<dd id="qcontainer_checkbox_no_label">' +
+            expected:
+                '<dd id="qcontainer_checkbox_no_label">' +
                     '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
                 '</dd>'
         },
-    ].forEach( ( { element_id, expected } ) =>
+        {
+            label: "parses content that is a label",
+            element_id: 'only_label',
+            expected: '<dt id="only_label">Only Label</dt>'
+        },
+    ].forEach( ( { label, element_id, expected } ) =>
     {
-        it( "parses content by element id " + element_id, () =>
+        it( label + " for " + element_id, () =>
         {
             const sut = new Sut();
 
-            const given: NullableContextContent = sut.parse( element_id, getContent() );
+            const given: NullableContextContent = sut.parse( element_id, getContentToParse() );
 
             expect( ( given?.outerHTML as string ) ).to.equal( expected );
         } );
@@ -76,7 +156,7 @@ describe( "ContextParser", () =>
 
         const element_id = 'external_no_field_exists';
 
-        const given: NullableContextContent = sut.parse( element_id, getContent() );
+        const given: NullableContextContent = sut.parse( element_id, getContentToParse() );
 
         expect( given ).to.equal( null );
     } );
@@ -84,11 +164,12 @@ describe( "ContextParser", () =>
 } );
 
 
-function getContent()
+function getContentToParse()
 {
     var elem = document.createElement( "div" );
 
     elem.innerHTML = '<dl class="">' +
+        '<dt id="only_label">Only Label</dt>' +
         '<dt id="qlabel_checkbox_foo" >Foo</dt>' +
         '<dd id="qcontainer_checkbox_foo">' +
             '<input type="checkbox" id="q_checkbox_foo_n_0">' +
@@ -99,12 +180,49 @@ function getContent()
         '</dd>' +
         '<dt id="qlabel_foo_bar_long_name" >Foo</dt>' +
         '<dd id="qcontainer_foo_bar_long_name">' +
-            '<input type="text" id="foo_bar" >' +
+            '<input type="text" id="foo_bar" data-field-name="foo_bar">' +
         '</dd>' +
-        '<select id="q_bi_risk_type_0">' +
-            '<option id="q_foo_subfield_0" value="Bar">Foo</option>' +
-        '</select>' +
-    '</dl>';
+        '<dt id="answer_foo_bar">Answer Field</dt>' +
+        '<dd id="answer_foo_bar_value">' +
+            '<span id="answer_baz" data-field-name="answer_foo_bar">None</span>' +
+        '</dd>' +
+        '<dt id="qlabel_subfield" >Foo</dt>' +
+        '<dd id="qcontainer_subfield">' +
+            '<select id="q_subfield_0">' +
+                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+                '<option id="q_qux_subfield_0" value="Qux">Quz</option>' +
+            '</select>' +
+        '</dd>' +
+        '<dd id="qcontainer_very_deep_subfield">' +
+            '<div>' +
+                '<span>' +
+                    '<ul>' +
+                        '<li>' +
+                            '<select id="q_very_deep_subfield_0">' +
+                                '<option id="q_very_deep_subfield_0" value="Bar">Bar</option>' +
+                                '<option id="q_very_deep_subfield_0" value="Baz">Baz</option>' +
+                            '</select>' +
+                        '</li>' +
+                    '</ul>' +
+                '</span>' +
+           '</div>' +
+        '</dd>' +
+    '</dl>' +
+    '<table>' +
+        '<tr "id="q_deep_table_row_0">' +
+            '<td>' +
+                '<input type="text" id="q_foo_row_0">' +
+            '</td>' +
+            '<td>' +
+                '<div>' +
+                    '<label>' +
+                        '<input type="checkbox" data-field-name="deep_table_row"> No' +
+                    '</label>' +
+                '</div>' +
+            '</td>' +
+        '</tr>' +
+    '</table>';
 
     return elem;
 }
