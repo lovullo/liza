@@ -55,6 +55,11 @@ module.exports = Class( 'StackedGroupUi' )
         this._container = this.content.querySelector( 'div.stacked-container' );
 
         this._dl = this._container.querySelector( 'dl' );
+
+        this.fieldContentParent[ 0 ] = this._dl;
+
+        this.initGroupContext();
+
         this._dl.parentNode.removeChild( this._dl );
     },
 
@@ -72,7 +77,11 @@ module.exports = Class( 'StackedGroupUi' )
 
         const item = this._dl.cloneNode( true );
 
+        // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( item.getElementsByTagName( '*' ), index );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = item;
 
         // add the index to the row title
         item.querySelector( 'span.item-index' ).textContent = ' ' + ( index + 1 );

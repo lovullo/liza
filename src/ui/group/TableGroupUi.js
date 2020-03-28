@@ -52,8 +52,6 @@ module.exports = Class( 'TableGroupUi' )
      */
     'override protected processContent': function( quote )
     {
-        this.__super();
-
         // determine if we should lock this group down
         if ( this.$content.find( 'table' ).hasClass( 'locked' ) )
         {
@@ -223,6 +221,9 @@ module.exports = Class( 'TableGroupUi' )
 
         // increment row ids
         var new_index = this._incRow( $row_new );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ new_index ] = $row_new[ 0 ];
 
         // attach remove event
         var $del = $row_new.find( 'td.delrow' );

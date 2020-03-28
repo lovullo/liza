@@ -171,6 +171,12 @@ module.exports = Class( 'GroupUi' )
     'protected content': null,
 
     /**
+     * Array of direct parent of field content per index
+     * @type {Array.<HTMLElement>}
+     */
+    'protected fieldContentParent': [],
+
+    /**
      * jQuery object
      * @type {jQuery}
      */
@@ -217,12 +223,10 @@ module.exports = Class( 'GroupUi' )
 
     'public init': function( quote )
     {
-        const fields = this.group.getExclusiveFieldNames();
-        this.context.createFieldCache( fields, this.content );
-
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
+        this._hideCmatchFields();
 
         // in an attempt to prevent memory leaks
         this._emptyOnVisit = null;
@@ -339,10 +343,50 @@ module.exports = Class( 'GroupUi' )
     /**
      * Performs any necessary processing on the content before it's displayed
      *
+     * Subtypes may override this for custom functionality
+     *
      * @return undefined
      */
     'virtual protected processContent': function()
     {
+        // The first index parent is the first dl for most groups
+        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
+
+        this.initGroupContext();
+    },
+
+
+    /**
+     * Get the exclusive field names and create
+     * the field cache on GroupContext
+     *
+     * @return undefined
+     */
+    'protected initGroupContext': function()
+    {
+        const fields = this.group.getExclusiveFieldNames();
+        this.context.createFieldCache( fields, this.content );
+    },
+
+
+    /**
+     * Immediately hide fields with classifications
+     * This ensures that each cloned row/tab/etc
+     * will not contain hundreds of fields, which
+     * improves browser performance
+     *
+     * @return undefined
+     */
+    'private _hideCmatchFields': function()
+    {
+        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+
+        for ( let i = 0; i < cmatch_fields.length; i++ )
+        {
+            let field = cmatch_fields[ i ];
+
+            this.hideField( field, 0 );
+        }
     },
 
 
@@ -911,8 +955,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        this.rcontext.getFieldByName( field, index )
-            .applyStyle( this._naStyler );
+        this.context.hide( field, index );
     },
 
     /**
@@ -951,8 +994,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        this.rcontext.getFieldByName( field, index )
-            .revokeStyle( this._naStyler );
+        this.context.show( field, index, this.fieldContentParent[ index ] );
     },
 
 

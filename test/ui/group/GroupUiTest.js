@@ -50,9 +50,11 @@ describe( 'ui.group.GroupUi', () =>
                     getIndexFieldName: sinon.stub().returns( 'foo' ),
                     getUserFieldNames: sinon.stub().returns( fields ),
                     getExclusiveFieldNames: sinon.stub().returns( fields ),
+                    getExclusiveCmatchFieldNames: sinon.stub().returns( [] ),
                 }
 
                 const content = createContent();
+
                 const $content = {};
 
                 $content.hide = sinon.stub();
@@ -88,6 +90,7 @@ function createContent()
 {
     return {
         querySelector: sinon.stub(),
+        querySelectorAll: sinon.stub(),
         getAttribute: sinon.stub().returns( null )
     };
 }

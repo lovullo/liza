@@ -76,8 +76,6 @@ module.exports = Class( 'SideTableGroupUi' )
      */
     'override protected processContent': function()
     {
-        this.__super();
-
         // determine if we should lock this group down
         if ( this.$content.find( '.groupTable' ).hasClass( 'locked' ) )
         {
@@ -100,7 +98,13 @@ module.exports = Class( 'SideTableGroupUi' )
         this.$baseHeadColumn = this.$table.find( 'thead' )
             .find( 'th:not( .groupTableSide )' ).detach();
         this.$baseBodyColumn = this.$table.find( 'tbody' )
-            .find( 'td:not( .groupTableSide )' ).detach();
+            .find( 'td:not( .groupTableSide )' );
+
+        this.fieldContentParent[ 0 ] = this.$baseBodyColumn[ 0 ];
+
+        this.initGroupContext();
+
+        this.$baseBodyColumn.detach();
 
         this.subcolCount =  +( $( this.$baseHeadColumn[0] ).attr( 'colspan' ) );
 
@@ -166,6 +170,9 @@ module.exports = Class( 'SideTableGroupUi' )
         // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( col_head.getElementsByTagName( '*' ), index );
         this.setElementIdIndexes( col_body.getElementsByTagName( '*' ), index );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = col_body;
 
         // add the column headings
         $col_head.each( function( i, th )

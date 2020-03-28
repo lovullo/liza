@@ -64,8 +64,6 @@ module.exports = Class( 'TabbedGroupUi' )
      */
     'override protected processContent': function( quote )
     {
-        this.__super();
-
         // determine if we should lock this group down
         if ( this.$content.find( 'div.groupTabs' ).hasClass( 'locked' ) )
         {
@@ -103,7 +101,15 @@ module.exports = Class( 'TabbedGroupUi' )
 
         // the base content to be used for each of the tabs (detach() not
         // remove() to ensure the data remains)
-        this.$baseTabContent = $container.find( 'div:first' ).detach();
+        this.$baseTabContent = $container.find( 'div:first' );
+
+        const baseTabContent = this.$baseTabContent[ 0 ];
+
+        this.fieldContentParent[ 0 ] = baseTabContent.querySelector( 'dl' );
+
+        this.initGroupContext();
+
+        this.$baseTabContent.detach();
 
         // transform into tabbed div
         $container.tabs( {
@@ -226,6 +232,9 @@ module.exports = Class( 'TabbedGroupUi' )
 
         // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = content.querySelector( 'dl' );
 
         // append the content
         $container.append( $content );
