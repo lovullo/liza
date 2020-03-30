@@ -102,8 +102,12 @@ var Step          = require( '../step/Step' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
 
+const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
+const { GroupContext }         = require( '../ui/context/GroupContext' );
+const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
+
 
 const Class = require( 'easejs' ).Class;
 
@@ -296,43 +300,45 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, $content, styler, root_context, na_styler
+        group, content, styler, root_context, na_styler
     )
     {
         // default
         var obj = FlatGroupUi;
 
-        if ( $content.hasClass( 'table' ) )
+        if ( content.classList.contains( 'table' ) )
         {
             obj = TableGroupUi;
         }
-        else if ( $content.hasClass( 'sidetable' ) )
+        else if ( content.classList.contains( 'sidetable' ) )
         {
             obj = SideTableGroupUi;
         }
-        else if ( $content.hasClass( 'collapsetable' ) )
+        else if ( content.classList.contains( 'collapsetable' ) )
         {
             obj = CollapseTableGroupUi;
         }
-        else if ( $content.hasClass( 'tabbed' ) )
+        else if ( content.classList.contains( 'tabbed' ) )
         {
             obj = TabbedGroupUi;
         }
-        else if ( $content.hasClass( 'tabbedblock' ) )
+        else if ( content.classList.contains( 'tabbedblock' ) )
         {
             obj = TabbedBlockGroupUi;
         }
-        else if ( $content.hasClass( 'stacked' ) )
+        else if ( content.classList.contains( 'stacked' ) )
         {
             obj = StackedGroupUi;
         }
-        else if ( $content.hasClass( 'accordion' ) )
+        else if ( content.classList.contains( 'accordion' ) )
         {
             obj = AccordionGroupUi;
         }
 
+        const context = this.createGroupContext();
+
         return obj(
-            group, $content, styler, jQuery, root_context, na_styler
+            group, content, styler, jQuery, context, root_context, na_styler
         );
     },
 
@@ -340,6 +346,14 @@ module.exports = Class( 'ClientDependencyFactory',
     createNaFieldStyler: function()
     {
         return NaFieldStyler();
+    },
+
+    createGroupContext: function()
+    {
+        return new GroupContext(
+            new ContextParser(),
+            new FieldContextFactory()
+        );
     },
 
     createFormErrorBox: FormErrorBox,

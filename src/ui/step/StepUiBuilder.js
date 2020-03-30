@@ -208,7 +208,7 @@ module.exports = Class( 'StepUiBuilder' )
         // instantiate a group object for each of the groups within this step
         var $groups = $content.find( '.stepGroup' ).each( function()
         {
-            group    = _self._groupBuilder( $( this ), _self._elementStyler );
+            group    = _self._groupBuilder( this, _self._elementStyler );
             group_id = group.getGroupId();
 
             groups[ group_id ] = group;

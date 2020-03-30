@@ -1302,17 +1302,17 @@ module.exports = Class( 'Client' )
     /**
      * Builds a new group object from the given content
      *
-     * @param {jQuery}        $content  group content
-     * @param {ElementStyler} styler    styler to use for elements
-     * @param {FieldStyler}   na_styler N/A field styler
+     * @param {HTMlElement}     content   group content
+     * @param {ElementStyler}   styler    styler to use for elements
+     * @param {FieldStyler}     na_styler N/A field styler
      *
      * @return lovullo.program.Group new group object
      */
-    _buildGroup: function( $content, styler, na_styler )
+    _buildGroup: function( content, styler, na_styler )
     {
         var group = this._factory.createGroup(),
             ui    = this._factory.createGroupUi(
-                group, $content, styler, this._rootContext, na_styler
+                group, content, styler, this._rootContext, na_styler
             ),
             id               = ui.getId(),
             data             = this.groupData[id],
@@ -1370,10 +1370,10 @@ module.exports = Class( 'Client' )
             this._validatorFormatter,
 
             // group builder
-            function( $content, styler )
+            function( content, styler )
             {
                 return client._buildGroup(
-                    $content,
+                    content,
                     styler,
                     client._factory.createNaFieldStyler()
                 );
