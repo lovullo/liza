@@ -209,7 +209,7 @@ describe( "FieldContext", () =>
                     '</dd>' +
                     '<div></div>' +
                 '</dl>'
-        }
+        },
     ].forEach( ( { label, next_element, element_id, expected } ) => {
         it( label, () => {
 
@@ -233,6 +233,104 @@ describe( "FieldContext", () =>
 
             sut.attach( to_content, dummy_next_element );
             expect( to_content.outerHTML ).to.equal( expected );
+        } )
+    } );
+
+
+    [
+        {
+            label: 'attaches a subfield to its parent',
+            field_name: 'subfield_single',
+            element_id: 'qcontainer_subfield_single',
+            expected:
+                '<dd id="qcontainer_subfield_single">' +
+                    '<select id="q_subfield_single_type_0" class="foo widget" data-index="0">' +
+                        '<option id="q_subfield_single_0" value="Foo" data-index="0">Foo</option>' +
+                    '</select>' +
+                '</dd>'
+        },
+        {
+            label: 'attaches a subfield to its parent after its sibling subfields',
+            field_name: 'baz_subfield',
+            element_id: 'qcontainer_subfield',
+            expected:
+                '<dd id="qcontainer_subfield">' +
+                    '<select id="q_bi_risk_type_0" class="foo widget" data-index="0">' +
+                        '<option id="q_bar_subfield_0" value="Bar" data-index="0">Bar</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux" data-index="0">Qux</option>' +
+                        '<option id="q_baz_subfield_0" value="Baz" data-index="0">Baz</option>' +
+                     '</select>' +
+                '</dd>'
+        },
+    ].forEach( ( { label, field_name, element_id, expected } ) => {
+        it( label, () => {
+
+            const group_content = getGroupContent();
+            const content = group_content.querySelector( "#" + element_id );
+            const sut = new Sut(
+                field_name,
+                <PositiveInteger>0,
+                <PositiveInteger>0,
+                <ContextContent>content
+            );
+
+            // First detach it
+            sut.detach();
+
+            const to_content = document.createElement("dl");
+            sut.attach( to_content, null );
+
+            const final_content = sut.getFirstOfContentSet();
+            expect( final_content.outerHTML ).to.equal( expected );
+
+            // Ensure isAttached is true for subfield being attached
+            expect( sut.isAttached() ).to.be.true;
+        } )
+    } );
+
+
+    [
+        {
+            label: 'detaches a subfield from its parent',
+            field_name: 'subfield_single',
+            element_id: 'qcontainer_subfield_single',
+            expected:
+                '<dd id="qcontainer_subfield_single">' +
+                    '<select id="q_subfield_single_type_0" class="foo widget" data-index="0">' +
+                    '</select>' +
+                '</dd>'
+        },
+        {
+            label: 'detaches a subfield that has sibling subfields from its parent ',
+            field_name: 'baz_subfield',
+            element_id: 'qcontainer_subfield',
+            expected:
+                '<dd id="qcontainer_subfield">' +
+                    '<select id="q_bi_risk_type_0" class="foo widget" data-index="0">' +
+                        '<option id="q_bar_subfield_0" value="Bar" data-index="0">Bar</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux" data-index="0">Qux</option>' +
+                     '</select>' +
+                '</dd>'
+        },
+    ].forEach( ( { label, field_name, element_id, expected } ) => {
+        it( label, () => {
+
+            const group_content = getGroupContent();
+            const content = group_content.querySelector( "#" + element_id );
+            const sut = new Sut(
+                field_name,
+                <PositiveInteger>0,
+                <PositiveInteger>0,
+                <ContextContent>content
+            );
+
+            sut.detach();
+
+            const final_content = sut.getFirstOfContentSet();
+            expect( final_content.outerHTML ).to.equal( expected );
+
+            // Ensure isAttached is false when subfield is removed
+            expect( sut.isAttached() ).to.be.false;
         } )
     } );
 
@@ -381,16 +479,20 @@ function getGroupContent()
         '<dd id="qcontainer_checkbox_no_label">' +
             '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
         '</dd>' +
+        '<dd id="qcontainer_subfield">' +
+            '<select id="q_bi_risk_type_0" class="foo widget">' +
+                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+                '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+            '</select>' +
+        '</dd>' +
         '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
         '<dd id="qcontainer_foo_bar_long_name">' +
             '<input type="text" id="foo_bar_0" >' +
         '</dd>' +
-        '<dt id="qlabel_subfield" >Foo</dt>' +
-        '<dd id="qcontainer_subfield">' +
-            '<select id="q_bi_risk_type_0">' +
-                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
-                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
-                '<option id="q_qux_subfield_0" value="Qux">Quz</option>' +
+        '<dd id="qcontainer_subfield_single">' +
+            '<select id="q_subfield_single_type_0" class="foo widget">' +
+                '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
             '</select>' +
         '</dd>' +
         '<dt id="qlabel_baz">Baz</dt>' +

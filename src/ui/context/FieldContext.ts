@@ -42,6 +42,26 @@ export class FieldContext
      */
     private _sibling_clone: NullableContextContent = null;
 
+    /**
+     * Field element within the content
+     */
+    private _field_element: NullableContextContent = null;
+
+    /**
+     * Parent of field element within the content
+     */
+    private _field_parent_element: NullableContextContent = null;
+
+    /**
+     * Field element ID prefix
+     */
+    private _field_id_prefix: string = 'q_';
+
+    /**
+     * If field is a subfield
+     */
+    private _is_subfield: boolean = false;
+
 
     /**
      * Initialize FieldContext
@@ -84,6 +104,9 @@ export class FieldContext
 
             this._setContentPosition();
         }
+
+        // Set subfield flag for re-attaching
+        this._is_subfield = this._isSubField();
     }
 
 
@@ -220,11 +243,13 @@ export class FieldContext
 
 
     /**
-     * If the field is attached to the DOM
+     * If the field (or subfield) is attached to the DOM
      */
     isAttached(): boolean
     {
-        return ( this._content.parentElement !== null );
+        return ( this._is_subfield === true )
+            ? ( this._field_element?.parentElement !== null )
+            : ( this._content.parentElement !== null )
     }
 
 
@@ -236,6 +261,11 @@ export class FieldContext
      */
     attach( to: ContextContent, next_element: NullableContextContent ): void
     {
+        if ( this._is_subfield )
+        {
+            return this._attachSubField();
+        }
+
         to.insertBefore( this._content, next_element );
 
         if ( this._sibling !== null )
@@ -250,6 +280,11 @@ export class FieldContext
      */
     detach(): void
     {
+        if ( this._is_subfield )
+        {
+            return this._detachSubField();
+        }
+
         if ( this._content.parentElement )
         {
             this._content.parentElement.removeChild( this._content );
@@ -269,6 +304,59 @@ export class FieldContext
     getFirstOfContentSet(): ContextContent
     {
         return this._sibling || this._content;
+    }
+
+
+    /**
+     * Determine whether field element represents a sub-field
+     *
+     * A sub-field is a field within a field; the distinction is important
+     * because we don't want operations on a sub-field affecting
+     * its parent.
+     */
+    private _isSubField(): boolean
+    {
+        const element_id = this._field_id_prefix + this._name + '_' + this._index;
+
+        this._field_element = this._content.querySelector( "#" + element_id );
+
+        if ( this._field_element === null )
+        {
+            return false;
+        }
+
+        const parent = this._field_element?.parentElement;
+
+        // A subfield's parent has a 'widget' class value
+        return !!( parent && /\bwidget\b/.test( parent.className ) );
+    }
+
+
+    /**
+     * Attach the subfield to its parent
+     */
+    private _attachSubField(): void
+    {
+        if ( this._field_element !== null
+            && this._field_parent_element !== null )
+        {
+            this._field_parent_element.appendChild( this._field_element );
+        }
+    }
+
+
+    /**
+     * Detach the subfield from its parent
+     */
+    private _detachSubField(): void
+    {
+        if ( this._field_element !== null
+            && this._field_element.parentElement !== null )
+        {
+            this._field_parent_element = this._field_element.parentElement;
+
+            this._field_parent_element.removeChild( this._field_element );
+        }
     }
 
 
