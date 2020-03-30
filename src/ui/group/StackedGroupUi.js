@@ -138,7 +138,10 @@ module.exports = Class( 'StackedGroupUi' )
             try {
                 const header = this._container.querySelectorAll( 'dl' )[ index ];
 
-                header.classList.add( 'hidden' );
+                if ( header !== undefined )
+                {
+                    header.classList.add( 'hidden' );
+                }
             }
             catch( e )
             {
@@ -162,7 +165,10 @@ module.exports = Class( 'StackedGroupUi' )
         {
             const header = this._container.querySelectorAll( 'dl' )[ index ];
 
-            header.classList.remove( 'hidden' );
+            if ( header !== undefined )
+            {
+                header.classList.remove( 'hidden' );
+            }
         }
 
     }
