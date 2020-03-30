@@ -174,7 +174,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
             this._createElement( 'div',
                 {
                     classList: [ 'group-pending', 'hidden' ],
-                    innerText: 'Please wait...'
+                    elems: [
+                        this._createElement( 'div', { classList: [ 'spinny' ] } ),
+                        this._createElement( 'p', { innerText: 'Please wait...' } )
+                    ]
                 }
             )
         );
@@ -207,6 +210,11 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         if ( Array.isArray( attributes.classList ) )
         {
             attributes.classList.forEach( c => elem.classList.add( c ) );
+        }
+
+        if ( Array.isArray( attributes.elems ) )
+        {
+            attributes.elems.forEach( e => elem.appendChild( e ) );
         }
 
         if ( typeof attributes.innerText === 'string' )
