@@ -108,7 +108,7 @@ describe( "FieldContext", () =>
                 <ContextContent>content
             );
 
-            const sibling       = <ContextContent>sut.getSiblingContent();
+            const sibling       = <ContextContent>sut.getFirstOfContentSet();
             const sibling_clone = <ContextContent>sut.getSiblingContentClone();
             const content_clone = <ContextContent>sut.getContentClone();
 
@@ -117,6 +117,7 @@ describe( "FieldContext", () =>
             expect( ( content_clone?.outerHTML as string ) ).to.equal( expected_content );
         } );
     } );
+
 
     it( "sibling is null when label does not exist", () =>
     {
@@ -130,9 +131,13 @@ describe( "FieldContext", () =>
             <ContextContent>content
         );
 
-        const given = <ContextContent>sut.getSiblingContent();
+        const expected_content = '<dd id="qcontainer_checkbox_no_label">' +
+                '<input type="checkbox" id="q_checkbox_no_label_n_0" data-index="0">' +
+            '</dd>';
 
-        expect( given ).to.equal( null );
+        const given = <ContextContent>sut.getFirstOfContentSet();
+
+        expect( ( given?.outerHTML as string ) ).to.equal( expected_content );
     } );
 
 

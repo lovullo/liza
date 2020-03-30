@@ -111,15 +111,6 @@ export class FieldContext
 
 
     /**
-     * Return sibling content
-     */
-    getSiblingContent(): NullableContextContent
-    {
-        return this._sibling;
-    }
-
-
-    /**
      * Capture the sibling label content if it exists
      *
      * This sibling content and its logic could be removed if the HTML structure

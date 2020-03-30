@@ -347,7 +347,6 @@ function getFieldContextStub(
     return <FieldContext>{
         'getName': () => { return name },
         'setSiblingContent': () => {},
-        'getSiblingContent': () => {},
         'getContentClone': () => {},
         'getSiblingContentClone': () => {},
         'getPosition': () => { return position; },
