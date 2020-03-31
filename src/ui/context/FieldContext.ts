@@ -24,6 +24,13 @@ import { PositiveInteger } from "../../numeric";
 export type ContextContent = Element;
 export type NullableContextContent = ContextContent | null;
 
+export type FieldOptions = FieldOption[];
+export type FieldOption = {
+    value: string,
+    label: string,
+    label_id: string
+}
+
 
 /**
  * Context responsible for a specific field in the DOM
@@ -255,6 +262,40 @@ export class FieldContext
         return ( this._is_subfield === true )
             ? ( this._field_element?.parentElement !== null )
             : ( this._content.parentElement !== null )
+    }
+
+
+    /**
+     * Set Options on Select elements
+     *
+     * @param options - list of options to set
+     * @param value - value to set once options exist
+     */
+    setOptions( options: FieldOptions, value?: string ): void
+    {
+        const element_id = this._field_id_prefix + this._name + '_' + this._index;
+        const field_element = <HTMLSelectElement>this._content.querySelector( "select#" + element_id );
+
+        if ( field_element === null )
+        {
+            return;
+        }
+
+        // if new value is not provided reset the old value
+        const value_to_set = value || field_element?.value;
+        field_element.innerHTML = '';
+
+        for ( let item in options )
+        {
+            let opt_value = options[ item ]?.value;
+            const option_value = opt_value || '';
+            const opt = document.createElement( 'option' );
+            opt.value = option_value;
+            opt.text = options[ item ].label;
+            field_element.appendChild( opt );
+        }
+
+        field_element.value = value_to_set;
     }
 
 

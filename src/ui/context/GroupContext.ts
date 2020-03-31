@@ -20,7 +20,7 @@
  */
 
 import { ContextParser } from "./ContextParser";
-import { FieldContext, ContextContent, NullableContextContent } from "./FieldContext";
+import { FieldContext, ContextContent, NullableContextContent, FieldOptions } from "./FieldContext";
 import { FieldContextFactory } from "./FieldContextFactory";
 import { PositiveInteger } from "../../numeric";
 
@@ -91,6 +91,31 @@ export class GroupContext
         }
     }
 
+
+    /**
+     * Set Options on Select elements
+     *
+     * @param field_name - to attach options to
+     * @param index - field index
+     * @param options - list of options to set
+     * @param value - value to set once options exist
+     */
+    setOptions(
+        field_name: string,
+        index: PositiveInteger,
+        options: FieldOptions,
+        val: string
+    ): void
+    {
+        // If field name was never added, do nothing
+        if ( this._field_context_cache[ field_name ] === undefined )
+        {
+            return;
+        }
+
+        const field_context = this._fromCache( field_name, index );
+        field_context.setOptions( options, val );
+    }
 
     /**
      * Attach field to DOM

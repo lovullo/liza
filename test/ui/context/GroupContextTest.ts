@@ -325,6 +325,50 @@ describe( "GroupContext", () =>
     } );
 
 
+    [
+        {
+            label: 'setOptions sets options when field is cached',
+            fields: [ 'foo', 'bar' ],
+            field_to_set: 'bar',
+            call_expected: true
+        },
+        {
+            label: 'setOptions sets options when field is cached',
+            fields: [ 'foo', 'bar' ],
+            field_to_set: 'baz',
+            call_expected: false
+        },
+    ].forEach( ( { label, fields, field_to_set, call_expected } ) => {
+    it( label, () =>
+    {
+        const stub_options = [ { value: 'foo', label: 'foo', label_id: 'foo' } ];
+        const stub_value = 'bar';
+
+        const parser = getContextParserStub();
+        const stub = getFieldContextStub();
+
+        const factory = <FieldContextFactory>{
+            'create': ( _: string, __: any, ___:any ) => {
+                return stub;
+            },
+        };
+
+        let set_options_is_called = false;
+        stub.setOptions = ( options :any, value :any ) =>
+        {
+            expect( options ).to.equal( stub_options );
+            expect( value ).to.equal( stub_value );
+            set_options_is_called = true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+        sut.setOptions( field_to_set, <PositiveInteger>0, stub_options, stub_value );
+        expect( set_options_is_called ).to.equal( call_expected );
+        } );
+    } );
+
 } );
 
 

@@ -467,6 +467,60 @@ describe( "FieldContext", () =>
     } );
 
 
+    [
+        {
+            label: 'setOptions sets new value',
+            options: [
+                { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
+                { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
+                { value: 'baz', label: 'Baz goes here', label_id: 'baz_label' },
+            ],
+            value: 'baz',
+            expected: '<dd id="qcontainer_select_element">' +
+                '<select id="q_select_element_0" data-index="0">' +
+                    '<option value="foo">Foo goes here</option>' +
+                    '<option value="bar">Bar goes here</option>' +
+                    '<option value="baz">Baz goes here</option>' +
+                '</select>' +
+                '</dd>',
+            expected_val: 'baz'
+        },
+        {
+            label: 'setOptions sets previous value',
+            options: [
+                { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
+                { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
+            ],
+            value: undefined,
+            expected: '<dd id="qcontainer_select_element">' +
+                '<select id="q_select_element_0" data-index="0">' +
+                    '<option value="foo">Foo goes here</option>' +
+                    '<option value="bar">Bar goes here</option>' +
+                '</select>' +
+                '</dd>',
+            expected_val: 'bar'
+        },
+    ].forEach( ( { label, options, value, expected, expected_val } ) => {
+        it( label, () => {
+
+            const group_content = getGroupContent();
+            const content = group_content.querySelector( "#qcontainer_select_element" );
+            const sut = new Sut(
+                'select_element',
+                <PositiveInteger>0,
+                <PositiveInteger>0,
+                <ContextContent>content
+            );
+
+            sut.setOptions( options, value );
+
+            const final_content = sut.getFirstOfContentSet();
+            const selected_option = <HTMLSelectElement>final_content.querySelector( '#q_select_element_0' );
+            expect( final_content.outerHTML ).to.equal( expected );
+            expect( selected_option?.value ).to.equal( expected_val );
+        } )
+    } );
+
 } );
 
 
@@ -503,6 +557,11 @@ function getGroupContent()
         '<dt id="qlabel_baz">Baz</dt>' +
         '<dd id="qcontainer_baz">' +
             '<input type="text" id="foo_baz_0">' +
+        '</dd>' +
+        '<dd id="qcontainer_select_element">' +
+            '<select id="q_select_element_0">' +
+                '<option value="bar" default="true">Existing option bar</option>'
+            '</select>' +
         '</dd>';
 
     return group;
