@@ -167,15 +167,14 @@ export class GroupContext
         index: PositiveInteger
     ): void
     {
-        // If field name was never added, do nothing
-        if ( this._field_context_cache[ field_name ] === undefined )
+        // If FieldContext was never added to cache, do nothing
+        if ( this._field_context_cache[ field_name ] === undefined
+            || this._field_context_cache[ field_name ][ index ] === undefined )
         {
             return;
         }
 
-        const field_context = this._fromCache( field_name, index );
-
-        field_context.detach();
+        this._field_context_cache[ field_name ][ index ].detach();
     }
 
 

@@ -50,6 +50,16 @@ export class FieldContext
     private _sibling_clone: NullableContextContent = null;
 
     /**
+     * If content has been cloned
+     */
+    private _content_cloned: boolean = false;
+
+    /**
+     * If sibling content has been cloned
+     */
+    private _sibling_cloned: boolean = false;
+
+    /**
      * Field element within the content
      */
     private _field_element: NullableContextContent = null;
@@ -100,17 +110,15 @@ export class FieldContext
      */
     processContent(): void
     {
-        this._setElementIdIndexes( this._content );
-        this._setElementIdIndexes( this._sibling );
-
         if ( this._index === 0 )
         {
-            this._content_clone = <ContextContent>this._content.cloneNode( true );
-
             this.setSiblingContent();
 
             this._setContentPosition();
         }
+
+        this._setElementIdIndexes( this._content );
+        this._setElementIdIndexes( this._sibling );
 
         // Set subfield flag for re-attaching
         this._is_subfield = this._isSubField();
@@ -131,12 +139,6 @@ export class FieldContext
             const sibling: ContextContent = this._content.previousElementSibling;
             const node_name = sibling.nodeName.toUpperCase();
             this._sibling = ( sibling !== null && node_name === 'DT' ) ? sibling : null;
-
-            if ( this._sibling !== null )
-            {
-                this._setElementIdIndexes( this._sibling );
-                this._sibling_clone = <ContextContent>this._sibling.cloneNode( true );
-            }
         }
     }
 
@@ -198,13 +200,14 @@ export class FieldContext
     /**
      * Return content clone
      *
-     * Create new clone each time method is called
+     * Create new clone from base clone each time method is called
      */
-    getContentClone(): NullableContextContent
+    getContentClone(): ContextContent
     {
-        if ( this._content_clone === null )
+        if ( !this._content_cloned
+            || this._content_clone === null  )
         {
-            return null;
+            this._content_clone = this._setContentBaseClone();
         }
 
         return <ContextContent>this._content_clone.cloneNode( true );
@@ -214,16 +217,75 @@ export class FieldContext
     /**
      * Return sibling content clone
      *
-     * Create new clone each time method is called
+     * Create new clone from base clone each time method is called
      */
     getSiblingContentClone(): NullableContextContent
     {
+        if ( !this._sibling_cloned )
+        {
+            this._sibling_clone = this._setSiblingContentBaseClone();
+        }
+
         if ( this._sibling_clone === null )
         {
             return null;
         }
 
         return <ContextContent>this._sibling_clone.cloneNode( true );
+    }
+
+
+    /**
+     * Set base clone for content and sibling
+     *
+     * This should only be done once and only
+     * on the first index of a field
+     * since cloneNode is not very performant.
+     */
+    private _setContentClones(): void
+    {
+        if ( this._index > 0
+            && this._content_cloned
+            && this._sibling_cloned )
+        {
+            return;
+        }
+
+        this._content_clone = this._setContentBaseClone();
+        this._sibling_clone = this._setSiblingContentBaseClone();
+    }
+
+
+    /**
+     * Set base clone for content
+     *
+     * This should only be done for the first index
+     * of a field since cloneNode is not very performant.
+     */
+    private _setContentBaseClone(): ContextContent
+    {
+        this._content_cloned = true;
+
+        return <ContextContent>this._content.cloneNode( true );
+    }
+
+
+    /**
+     * Set base clone for sibling
+     *
+     * This should only be done for the first index
+     * of a field since cloneNode is not very performant.
+     */
+    private _setSiblingContentBaseClone(): NullableContextContent
+    {
+        this._sibling_cloned = true;
+
+        if ( this._sibling === null )
+        {
+            return null;
+        }
+
+        return <ContextContent>this._sibling.cloneNode( true );
     }
 
 
@@ -307,6 +369,9 @@ export class FieldContext
      */
     attach( to: ContextContent, next_element: NullableContextContent ): void
     {
+        // Create content clones if not set
+        this._setContentClones();
+
         if ( this._is_subfield )
         {
             return this._attachSubField();
