@@ -190,19 +190,33 @@ export class FieldContext
 
     /**
      * Return content clone
+     *
+     * Create new clone each time method is called
      */
     getContentClone(): NullableContextContent
     {
-        return this._content_clone;
+        if ( this._content_clone === null )
+        {
+            return null;
+        }
+
+        return <ContextContent>this._content_clone.cloneNode( true );
     }
 
 
     /**
      * Return sibling content clone
+     *
+     * Create new clone each time method is called
      */
     getSiblingContentClone(): NullableContextContent
     {
-        return this._sibling_clone;
+        if ( this._sibling_clone === null )
+        {
+            return null;
+        }
+
+        return <ContextContent>this._sibling_clone.cloneNode( true );
     }
 
 
