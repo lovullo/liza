@@ -30,7 +30,7 @@ describe( "FieldContextFactory", () =>
 {
     it( "creates new FieldContext", () =>
     {
-        const sut = new Sut();
+        const sut = new Sut( document );
 
         const parent = document.createElement( "div" );
         parent.innerHTML =

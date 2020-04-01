@@ -26,6 +26,16 @@ import { PositiveInteger } from "../../numeric";
 export class FieldContextFactory
 {
     /**
+     * Initialize FieldContextFactory
+     *
+     * @param _document
+     */
+    constructor(
+        private readonly _document: Document,
+    ) {}
+
+
+    /**
      * Creates a new FieldContext
      *
      * @param name - field name
@@ -43,6 +53,7 @@ export class FieldContextFactory
     ): FieldContext
     {
         return new FieldContext(
+            this._document,
             name,
             index,
             position,

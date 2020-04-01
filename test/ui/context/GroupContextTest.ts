@@ -59,7 +59,8 @@ describe( "GroupContext", () =>
                 field: string,
                 index: PositiveInteger,
                 position: PositiveInteger,
-                _:any ) =>
+                _:any,
+                __:any ) =>
             {
                 factory_field_position.push( position );
                 return stubs[ field ][ index ];
@@ -108,7 +109,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any ) => {
+            'create': ( _: string, __: any, ___:any, ____:any, _____:any ) => {
                 factory_call_count++;
                 return getFieldContextStub();
             },
@@ -132,11 +133,7 @@ describe( "GroupContext", () =>
 
         let detach_is_called = false;
         const stub = getFieldContextStub();
-        const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any ) => {
-                return stub;
-            },
-        };
+        const factory = getFieldContextFactory( stub );
 
         stub.detach = () =>
         {
@@ -160,11 +157,7 @@ describe( "GroupContext", () =>
         let detach_is_called = false;
 
         const stub = getFieldContextStub();
-        const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any ) => {
-                return stub;
-            },
-        };
+        const factory = getFieldContextFactory( stub );
 
         stub.detach = () =>
         {
@@ -194,7 +187,7 @@ describe( "GroupContext", () =>
         const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
-            'create': ( field: string, __: any, ___:any, ____:any ) => {
+            'create': ( field: string, __:any, ___:any, ____:any, _____:any ) => {
                 return stubs[ field ][ 0 ];
             },
         };
@@ -248,7 +241,7 @@ describe( "GroupContext", () =>
         const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
-            'create': ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
+            create: ( field: string, index: PositiveInteger, ___:any, ____:any, _____:any ) => {
                 return stubs[ field ][ index ];
             },
         };
@@ -304,11 +297,7 @@ describe( "GroupContext", () =>
         let attach_is_called = false;
 
         const stub = getFieldContextStub();
-        const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any, ____:any ) => {
-                return stub;
-            },
-        };
+        const factory = getFieldContextFactory( stub );
 
         stub.attach = ( _:any, __:any ) =>
         {
@@ -348,7 +337,7 @@ describe( "GroupContext", () =>
         const stub = getFieldContextStub();
 
         const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any ) => {
+            create: ( _: string, __: any, ___:any, ____:any, _____:any ) => {
                 return stub;
             },
         };
@@ -381,6 +370,15 @@ function getContextParserStub()
     };
 }
 
+
+function getFieldContextFactory( stub: FieldContext )
+{
+    return <FieldContextFactory>{
+        'create': ( _: any, __:any, ___:any, ____:any, _____:any ) => {
+            return stub;
+        },
+    };
+}
 
 function getFieldContextStub(
     name: string = '',

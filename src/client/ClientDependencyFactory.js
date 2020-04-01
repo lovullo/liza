@@ -115,6 +115,13 @@ const Class = require( 'easejs' ).Class;
 module.exports = Class( 'ClientDependencyFactory',
 {
     /**
+     * DOM
+     * @type {Document}
+     */
+    _document: null,
+
+
+    /**
      * Creates a new ElementStyler instance
      *
      * @return {ElementStyler}
@@ -137,6 +144,17 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createHashNav: HashNav,
+
+
+    /**
+     * Instantiates ClientDependencyFactory
+     *
+     * @param {Document} _document DOM
+     */
+    __construct: function( _document )
+    {
+        this._document = _document;
+    },
 
 
     createDataApiManager: function()
@@ -352,7 +370,7 @@ module.exports = Class( 'ClientDependencyFactory',
     {
         return new GroupContext(
             new ContextParser(),
-            new FieldContextFactory()
+            new FieldContextFactory( this._document  )
         );
     },
 

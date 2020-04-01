@@ -61,6 +61,7 @@ describe( "FieldContext", () =>
             const content = group_content.querySelector( "#" + element_id );
 
             const sut = new Sut(
+                document,
                 '',
                 <PositiveInteger>index,
                 <PositiveInteger>position,
@@ -102,6 +103,7 @@ describe( "FieldContext", () =>
             const content = group_content.querySelector( "#" + element_id );
 
             const sut = new Sut(
+                document,
                 '',
                 <PositiveInteger>index,
                 <PositiveInteger>position,
@@ -125,6 +127,7 @@ describe( "FieldContext", () =>
         const group_content = getGroupContent();
         const content = group_content.querySelector( "#" + element_id );
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -148,6 +151,7 @@ describe( "FieldContext", () =>
         const content = group_content.querySelector( "#" + element_id );
         const name = 'foo';
         const sut = new Sut(
+            document,
             name,
             <PositiveInteger>55,
             <PositiveInteger>0,
@@ -165,6 +169,7 @@ describe( "FieldContext", () =>
         const content = group_content.querySelector( "#" + element_id );
         const index = <PositiveInteger>4;
         const sut = new Sut(
+            document,
             'baz',
             index,
             <PositiveInteger>0,
@@ -222,6 +227,7 @@ describe( "FieldContext", () =>
             const content = group_content.querySelector( "#" + element_id );
             const name = 'foo';
             const sut = new Sut(
+                document,
                 name,
                 <PositiveInteger>0,
                 <PositiveInteger>0,
@@ -273,6 +279,7 @@ describe( "FieldContext", () =>
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
             const sut = new Sut(
+                document,
                 field_name,
                 <PositiveInteger>0,
                 <PositiveInteger>0,
@@ -323,6 +330,7 @@ describe( "FieldContext", () =>
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
             const sut = new Sut(
+                document,
                 field_name,
                 <PositiveInteger>0,
                 <PositiveInteger>0,
@@ -346,6 +354,7 @@ describe( "FieldContext", () =>
         let content = from_content.querySelector( "#qcontainer_checkbox_foo" );
         let sibling = from_content.querySelector( "#qlabel_checkbox_foo" );
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -366,6 +375,7 @@ describe( "FieldContext", () =>
         const child = document.createElement( "div" );
         from_content.appendChild( child );
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -385,6 +395,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
 
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -406,6 +417,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
 
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -425,6 +437,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
 
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -441,6 +454,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
 
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -457,6 +471,7 @@ describe( "FieldContext", () =>
         let sibling = group_content.querySelector( "#qlabel_checkbox_foo" );
 
         const sut = new Sut(
+            document,
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
@@ -506,6 +521,7 @@ describe( "FieldContext", () =>
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#qcontainer_select_element" );
             const sut = new Sut(
+                document,
                 'select_element',
                 <PositiveInteger>0,
                 <PositiveInteger>0,
