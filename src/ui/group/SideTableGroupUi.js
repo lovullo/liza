@@ -171,9 +171,6 @@ module.exports = Class( 'SideTableGroupUi' )
         this.setElementIdIndexes( col_head.getElementsByTagName( '*' ), index );
         this.setElementIdIndexes( col_body.getElementsByTagName( '*' ), index );
 
-        // Set field content parent for this index
-        this.fieldContentParent[ index ] = col_body;
-
         // add the column headings
         $col_head.each( function( i, th )
         {
@@ -209,6 +206,9 @@ module.exports = Class( 'SideTableGroupUi' )
         this.styler
             .apply( $col_head )
             .apply( $col_body );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = col_body;
 
         // raise event
         this.postAddRow( $col_head, index )

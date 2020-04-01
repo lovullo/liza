@@ -1324,6 +1324,7 @@ module.exports = Class( 'Client' )
             .setFieldNames( this.program.groupFields[ id ] || [] )
             .setExclusiveFieldNames( exclusive_fields )
             .setExclusiveCmatchFieldNames( cmatch_fields )
+            .setInternal( this._isInternal )
             .setUserFieldNames(
                 this.program.groupUserFields[ id ] || []
             );
