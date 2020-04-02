@@ -114,8 +114,6 @@ export class FieldContext
     {
         if ( this._index === 0 )
         {
-            this.setSiblingContent();
-
             this._setContentPosition();
         }
 
@@ -124,24 +122,6 @@ export class FieldContext
 
         // Set subfield flag for re-attaching
         this._is_subfield = this._isSubField();
-    }
-
-
-    /**
-     * Capture the sibling label content if it exists
-     *
-     * This sibling content and its logic could be removed if the HTML structure
-     * changed so that fields and labels have unique container elements.
-     */
-    setSiblingContent(): void
-    {
-        if ( this._content !== null
-            && this._content.previousElementSibling != null )
-        {
-            const sibling: ContextContent = this._content.previousElementSibling;
-            const node_name = sibling.nodeName.toUpperCase();
-            this._sibling = ( sibling !== null && node_name === 'DT' ) ? sibling : null;
-        }
     }
 
 

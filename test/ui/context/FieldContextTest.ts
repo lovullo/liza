@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FieldContext as Sut, ContextContent } from "../../../src/ui/context/FieldContext";
+import { FieldContext as Sut, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
@@ -78,6 +78,7 @@ describe( "FieldContext", () =>
     [
         {
             element_id: 'qcontainer_checkbox_foo',
+            sibling_id: 'qlabel_checkbox_foo',
             index: 0,
             position: 1,
             expected_content: '<dd id="qcontainer_checkbox_foo">' +
@@ -88,6 +89,7 @@ describe( "FieldContext", () =>
         },
         {
             element_id: 'qcontainer_foo_bar_long_name',
+            sibling_id: 'qlabel_foo_bar_long_name',
             index: 0,
             position: 2,
             expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
@@ -95,22 +97,23 @@ describe( "FieldContext", () =>
                 '</dd>',
             expected_sibling: '<dt id="qlabel_foo_bar_long_name">Bar</dt>'
         },
-    ].forEach( ( { element_id, index, position, expected_content, expected_sibling } ) =>
+    ].forEach( ( { element_id, sibling_id, index, position, expected_content, expected_sibling } ) =>
     {
-        it( "sets sibling content and cloned content with element indexes for " + element_id, () =>
+        it( "sets clones for content and sibling with element indexes for " + element_id, () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
+            const sibling = group_content.querySelector( "#" + sibling_id );
 
             const sut = new Sut(
                 document,
                 '',
                 <PositiveInteger>index,
                 <PositiveInteger>position,
-                <ContextContent>content
+                <ContextContent>content,
+                <NullableContextContent>sibling,
             );
 
-            const sibling       = <ContextContent>sut.getFirstOfContentSet();
             const sibling_clone = <ContextContent>sut.getSiblingContentClone();
             const content_clone = <ContextContent>sut.getContentClone();
 
@@ -185,6 +188,7 @@ describe( "FieldContext", () =>
             label: 'attaches text field to DOM with next element',
             next_element: 'div',
             element_id: 'qcontainer_baz',
+            sibling_id: 'qlabel_baz',
             expected:
                 '<dl>' +
                     '<dt id="qlabel_baz">Baz</dt>' +
@@ -198,6 +202,7 @@ describe( "FieldContext", () =>
             label: 'attaches text field to DOM w/out next element',
             next_element: null,
             element_id: 'qcontainer_baz',
+            sibling_id: 'qlabel_baz',
             expected:
                 '<dl>' +
                     '<dt id="qlabel_baz">Baz</dt>' +
@@ -210,6 +215,7 @@ describe( "FieldContext", () =>
             label: 'attaches checkbox field to DOM with next element',
             next_element: 'div',
             element_id: 'qcontainer_checkbox_foo',
+            sibling_id: 'qlabel_checkbox_foo',
             expected:
                 '<dl>' +
                     '<dt id="qlabel_checkbox_foo">Foo</dt>' +
@@ -220,18 +226,20 @@ describe( "FieldContext", () =>
                     '<div></div>' +
                 '</dl>'
         },
-    ].forEach( ( { label, next_element, element_id, expected } ) => {
+    ].forEach( ( { label, next_element, element_id, sibling_id, expected } ) => {
         it( label, () => {
 
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
+            const sibling = group_content.querySelector( "#" + sibling_id );
             const name = 'foo';
             const sut = new Sut(
                 document,
                 name,
                 <PositiveInteger>0,
                 <PositiveInteger>0,
-                <ContextContent>content
+                <ContextContent>content,
+                <NullableContextContent>sibling
             );
 
             const to_content = document.createElement("dl");
@@ -358,7 +366,8 @@ describe( "FieldContext", () =>
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
-            <ContextContent>content
+            <ContextContent>content,
+            <NullableContextContent>sibling
         );
 
         expect( from_content.contains( content ) ).to.be.true;
@@ -475,7 +484,8 @@ describe( "FieldContext", () =>
             '',
             <PositiveInteger>0,
             <PositiveInteger>0,
-            <ContextContent>content
+            <ContextContent>content,
+            <NullableContextContent>sibling
         );
 
         expect( sut.getFirstOfContentSet() ).to.equal( sibling );

@@ -44,6 +44,7 @@ describe( "GroupContext", () =>
         let parser_fields: string[] = [];
         let factory_field_position: number[] = [];
 
+        let find_sibling_called = false;
         let foo_position_is_called = false;
         let baz_position_is_called = false;
 
@@ -51,6 +52,10 @@ describe( "GroupContext", () =>
             'parse': ( _element_id: any, __: any ) => {
                 parser_fields.push( _element_id );
                 return <ContextContent>document.createElement( "dd" );
+            },
+            'findSiblingContent': ( _: any ) => {
+                find_sibling_called = true;
+                return <ContextContent>document.createElement("dt");
             },
         };
 
@@ -87,6 +92,8 @@ describe( "GroupContext", () =>
 
         expect( parser_fields )
             .to.deep.equal( fields );
+
+        expect( find_sibling_called ).to.be.true;
 
         expect( field_positions )
             .to.deep.equal( factory_field_position );
@@ -367,6 +374,9 @@ function getContextParserStub()
         'parse': ( _: any, __: any ) => {
             return <ContextContent>document.createElement("dd");
         },
+        'findSiblingContent': ( _: any ) => {
+            return <ContextContent>document.createElement("dt");
+        },
     };
 }
 
@@ -388,7 +398,6 @@ function getFieldContextStub(
 {
     return <FieldContext>{
         'getName': () => { return name },
-        'setSiblingContent': () => {},
         'getContentClone': () => {},
         'getSiblingContentClone': () => {},
         'getPosition': () => { return position; },

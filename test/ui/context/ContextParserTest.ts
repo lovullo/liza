@@ -20,7 +20,7 @@
  */
 
 import { ContextParser as Sut } from "../../../src/ui/context/ContextParser";
-import { NullableContextContent} from "../../../src/ui/context/FieldContext";
+import { ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
 
 import { expect } from 'chai';
 
@@ -150,7 +150,7 @@ describe( "ContextParser", () =>
     } );
 
 
-    it( "returns null when element not found", () =>
+    it( "returns null when content is not found", () =>
     {
         const sut = new Sut();
 
@@ -159,6 +159,46 @@ describe( "ContextParser", () =>
         const given: NullableContextContent = sut.parse( element_id, getContentToParse() );
 
         expect( given ).to.equal( null );
+    } );
+
+
+    [
+        {
+            element_id: 'qcontainer_checkbox_foo',
+            expected_sibling: '<dt id="qlabel_checkbox_foo">Foo</dt>'
+        },
+        {
+            element_id: 'qcontainer_foo_bar_long_name',
+            expected_sibling: '<dt id="qlabel_foo_bar_long_name">Foo</dt>'
+        },
+    ].forEach( ( { element_id, expected_sibling } ) =>
+    {
+        it( "return sibling content for " + element_id, () =>
+        {
+            const group_content = getContentToParse();
+            const content = <ContextContent>group_content.querySelector( "#" + element_id );
+
+            const sut = new Sut();
+
+            const sibling = sut.findSiblingContent( content );
+
+            expect( ( sibling?.outerHTML as string ) ).to.equal( expected_sibling );
+        } );
+    } );
+
+
+    it( "returns null when sibling is not found", () =>
+    {
+        const sut = new Sut();
+
+        const element_id = 'qcontainer_checkbox_no_label';
+
+        const group_content = getContentToParse();
+        const content = <ContextContent>group_content.querySelector( "#" + element_id );
+
+        const sibling = sut.findSiblingContent( content );
+
+        expect( sibling ).to.equal( null );
     } );
 
 } );

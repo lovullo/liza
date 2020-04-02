@@ -74,12 +74,14 @@ export class GroupContext
             // The FieldContext will reset its position
             let index = <PositiveInteger>0;
 
-            let field_content = this._parser.parse( field, content );
+            let field_content   = this._parser.parse( field, content );
 
             if ( field_content !== null )
             {
+                let sibling_content = this._parser.findSiblingContent( field_content );
+
                 let field_context = this._field_context_factory
-                    .create( field, index, index, field_content );
+                    .create( field, index, index, field_content, sibling_content );
 
                 let position = field_context.getPosition();
 

@@ -51,6 +51,25 @@ export class ContextParser
 
 
     /**
+     * Find the sibling label content if it exists
+     *
+     * This sibling content and its logic could be removed if the HTML structure
+     * changed so that fields and labels have unique container elements.
+     */
+    findSiblingContent( content: ContextContent ): NullableContextContent
+    {
+        if ( content.previousElementSibling === null )
+        {
+            return null;
+        }
+
+        const sibling: ContextContent = content.previousElementSibling;
+        const node_name = sibling.nodeName.toUpperCase();
+        return ( sibling !== null && node_name === 'DT' ) ? sibling : null;
+    }
+
+
+    /**
      * Fallback query for sub-questions,
      * displays, answers, stand-alone labels
      * and static elements
