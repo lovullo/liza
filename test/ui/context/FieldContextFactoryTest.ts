@@ -21,9 +21,11 @@
 
 import { FieldContextFactory as Sut } from "../../../src/ui/context/FieldContextFactory";
 import { FieldContext, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
+import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
 import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
+
 
 
 describe( "FieldContextFactory", () =>
@@ -53,6 +55,31 @@ describe( "FieldContextFactory", () =>
         );
 
         expect( given ).to.be.instanceOf( FieldContext );
+    } );
+
+
+    it( "creates new FieldContextStore", () =>
+    {
+        const sut = new Sut( document );
+
+        const parent = document.createElement( "div" );
+        parent.innerHTML =
+            '<dl class="">' +
+                '<dt id="qlabel_checkbox_foo" >Foo</dt>' +
+                '<dd id="qcontainer_checkbox_foo">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
+                '</dd>' +
+            '</dl>';
+
+        const content = parent.querySelector( "#qcontainer_checkbox_foo" );
+        const sibling = parent.querySelector( "#qlabel_checkbox_foo" );
+
+        const given = sut.createStore(
+            <ContextContent>content,
+            <NullableContextContent>sibling
+        );
+
+        expect( given ).to.be.instanceOf( FieldContextStore );
     } );
 } );
 

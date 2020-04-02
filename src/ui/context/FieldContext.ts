@@ -38,28 +38,6 @@ export type FieldOption = {
 export class FieldContext
 {
     /**
-     * Cloned content
-     * Needed for additional indexes
-     */
-    private _content_clone: NullableContextContent = null;
-
-    /**
-     * Cloned sibling content
-     * Needed for additional indexes
-     */
-    private _sibling_clone: NullableContextContent = null;
-
-    /**
-     * If content has been cloned
-     */
-    private _content_cloned: boolean = false;
-
-    /**
-     * If sibling content has been cloned
-     */
-    private _sibling_cloned: boolean = false;
-
-    /**
      * Field element within the content
      */
     private _field_element: NullableContextContent = null;
@@ -99,175 +77,9 @@ export class FieldContext
         private _sibling: NullableContextContent = null
     )
     {
-        this.processContent();
-    }
-
-
-    /**
-     * Each element in the content need unique element ids
-     *
-     * FieldContexts with indexes higher than 0 will need
-     * cloned nodes of the original content and the sibling
-     * so the nodes are unique
-     */
-    processContent(): void
-    {
-        if ( this._index === 0 )
-        {
-            this._setContentPosition();
-        }
-
-        this._setElementIdIndexes( this._content );
-        this._setElementIdIndexes( this._sibling );
-
-        // Set subfield flag for re-attaching
+        // Determine if this is a subfield
+        // Todo - move logic subfield logic to subclass
         this._is_subfield = this._isSubField();
-    }
-
-
-    /**
-     * Sets the index (for the name attribute) of all given elements
-     *
-     * The name format is expected to be: name_i, where i is the index.
-     *
-     * @param content - the content
-     */
-    private _setElementIdIndexes( content: NullableContextContent ): void
-    {
-        if ( content === null )
-        {
-            return;
-        }
-
-        const elements = content.getElementsByTagName( "*" );
-
-        for ( let i = 0; i < elements.length; i++ )
-        {
-            let element = elements[ i ];
-            let id      = element.getAttribute( 'id' ) || '';
-
-            let element_data: RegExpMatchArray | null = null;
-
-            // grab the index from the id if found
-            if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
-            {
-                // regenerate the id
-                element.setAttribute( 'id', element_data[ 1 ] + this._index );
-            }
-
-            element.setAttribute( 'data-index', this._index.toString()  );
-        }
-    }
-
-
-    /**
-     * Sets the position of the content
-     * in relation to the parent node.
-     *
-     * Used by GroupContext when re-attaching
-     *
-     * This should only be called on the first index
-     * of a specific field to capture the original position
-     */
-    private _setContentPosition()
-    {
-        const content = <ContextContent>this.getFirstOfContentSet();
-        const parent = content.parentNode;
-
-        this._position = <PositiveInteger>Array.prototype.indexOf
-            .call( parent?.children, content );
-    }
-
-
-    /**
-     * Return content clone
-     *
-     * Create new clone from base clone each time method is called
-     */
-    getContentClone(): ContextContent
-    {
-        if ( !this._content_cloned
-            || this._content_clone === null  )
-        {
-            this._content_clone = this._setContentBaseClone();
-        }
-
-        return <ContextContent>this._content_clone.cloneNode( true );
-    }
-
-
-    /**
-     * Return sibling content clone
-     *
-     * Create new clone from base clone each time method is called
-     */
-    getSiblingContentClone(): NullableContextContent
-    {
-        if ( !this._sibling_cloned )
-        {
-            this._sibling_clone = this._setSiblingContentBaseClone();
-        }
-
-        if ( this._sibling_clone === null )
-        {
-            return null;
-        }
-
-        return <ContextContent>this._sibling_clone.cloneNode( true );
-    }
-
-
-    /**
-     * Set base clone for content and sibling
-     *
-     * This should only be done once and only
-     * on the first index of a field
-     * since cloneNode is not very performant.
-     */
-    private _setContentClones(): void
-    {
-        if ( this._index > 0
-            && this._content_cloned
-            && this._sibling_cloned )
-        {
-            return;
-        }
-
-        this._content_clone = this._setContentBaseClone();
-        this._sibling_clone = this._setSiblingContentBaseClone();
-    }
-
-
-    /**
-     * Set base clone for content
-     *
-     * This should only be done for the first index
-     * of a field since cloneNode is not very performant.
-     */
-    private _setContentBaseClone(): ContextContent
-    {
-        this._content_cloned = true;
-
-        return <ContextContent>this._content.cloneNode( true );
-    }
-
-
-    /**
-     * Set base clone for sibling
-     *
-     * This should only be done for the first index
-     * of a field since cloneNode is not very performant.
-     */
-    private _setSiblingContentBaseClone(): NullableContextContent
-    {
-        this._sibling_cloned = true;
-
-        if ( this._sibling === null )
-        {
-            return null;
-        }
-
-        return <ContextContent>this._sibling.cloneNode( true );
     }
 
 
@@ -351,9 +163,6 @@ export class FieldContext
      */
     attach( to: ContextContent, next_element: NullableContextContent ): void
     {
-        // Create content clones if not set
-        this._setContentClones();
-
         if ( this._is_subfield )
         {
             return this._attachSubField();

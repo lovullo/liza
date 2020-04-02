@@ -20,6 +20,7 @@
  */
 
 import { FieldContext, ContextContent, NullableContextContent } from "./FieldContext";
+import { FieldContextStore } from "./FieldContextStore";
 import { PositiveInteger } from "../../numeric";
 
 
@@ -57,6 +58,24 @@ export class FieldContextFactory
             name,
             index,
             position,
+            content,
+            sibling
+        );
+    }
+
+
+    /**
+     * Creates a new FieldContextStore
+     *
+     * @param content - field HTML content
+     * @param sibling - field HTML sibling content
+     */
+    createStore(
+        content: ContextContent,
+        sibling: NullableContextContent = null
+    ): FieldContextStore
+    {
+        return new FieldContextStore(
             content,
             sibling
         );

@@ -19,8 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContextCache, GroupContext as Sut } from "../../../src/ui/context/GroupContext";
+import { ContextCache, ContextStores, GroupContext as Sut } from "../../../src/ui/context/GroupContext";
 import { FieldContextFactory } from "../../../src/ui/context/FieldContextFactory";
+import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
 import { ContextContent, FieldContext, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { ContextParser } from "../../../src/ui/context/ContextParser";
 import { PositiveInteger } from "../../../src/numeric";
@@ -40,6 +41,13 @@ describe( "GroupContext", () =>
             'foo': [ getFieldContextStub( 'foo', 0, false ) ],
             'baz': [ getFieldContextStub( 'baz', 0, false ) ],
         }
+
+        let stores = <ContextStores>{
+            'foo': getFieldContextStoreStub( 0 ),
+            'baz': getFieldContextStoreStub( 1 ),
+        }
+
+        let store_index = 0;
 
         let parser_fields: string[] = [];
         let factory_field_position: number[] = [];
@@ -70,18 +78,23 @@ describe( "GroupContext", () =>
                 factory_field_position.push( position );
                 return stubs[ field ][ index ];
             },
+            'createStore': ( _: any, __:any ) => {
+                const store = stores[ fields[ store_index ] ];
+                store_index++;
+                return store;
+            }
         };
 
-        stubs[ 'foo' ][ 0 ].getPosition = () =>
+        stores[ 'foo' ].getPosition = () =>
         {
             foo_position_is_called = true;
             return <PositiveInteger>0;
         };
 
-        stubs[ 'baz' ][ 0 ].getPosition = () =>
+        stores[ 'baz' ].getPosition = () =>
         {
             baz_position_is_called = true;
-            return <PositiveInteger>0;
+            return <PositiveInteger>1;
         };
 
         const sut = new Sut( parser, factory );
@@ -120,6 +133,9 @@ describe( "GroupContext", () =>
                 factory_call_count++;
                 return getFieldContextStub();
             },
+            'createStore': ( _: any, __:any ) => {
+                return getFieldContextStoreStub();
+            }
         };
 
         const sut = new Sut( parser, factory );
@@ -190,13 +206,29 @@ describe( "GroupContext", () =>
             'qux': [ getFieldContextStub( 'qux', 4,  true ) ]
         }
 
+        let stores = <ContextStores>{
+            'moo': getFieldContextStoreStub( 0 ),
+            'foo': getFieldContextStoreStub( 1 ),
+            'bar': getFieldContextStoreStub( 2 ),
+            'baz': getFieldContextStoreStub( 3 ),
+            'qux': getFieldContextStoreStub( 4 ),
+        }
+
+        let store_index = 0;
+
         let attach_is_called = false;
+
         const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
             'create': ( field: string, __:any, ___:any, ____:any, _____:any ) => {
                 return stubs[ field ][ 0 ];
             },
+            'createStore': ( _: any, __:any ) => {
+                const store = stores[ fields[ store_index ] ];
+                store_index++;
+                return store;
+            }
         };
 
         const baz_content = document.createElement( "div" );
@@ -246,12 +278,33 @@ describe( "GroupContext", () =>
         let get_position_is_called = false;
 
         const parser = getContextParserStub();
-
+        const store = getFieldContextStoreStub();
         const factory = <FieldContextFactory>{
             create: ( field: string, index: PositiveInteger, ___:any, ____:any, _____:any ) => {
                 return stubs[ field ][ index ];
             },
+            'createStore': ( _: any, __:any ) => {
+                return store;
+            }
         };
+
+        store.getSiblingContentClone = ( _:any ) =>
+        {
+            get_sibling_clone_is_called = true;
+            return null;
+        }
+
+        store.getContentClone = ( _:any ) =>
+        {
+            get_clone_is_called = true;
+            return <ContextContent>{};
+        }
+
+        store.getPosition = () =>
+        {
+            get_position_is_called = true;
+            return <PositiveInteger>1;
+        }
 
         stubs[ 'bar' ][ 1 ].attach = (
             to: ContextContent,
@@ -262,24 +315,6 @@ describe( "GroupContext", () =>
             // There is no next element with index 1
             expect( next_element ).to.equal( null );
             attach_is_called = true;
-        };
-
-        stubs[ 'bar' ][ 0 ].getContentClone = () =>
-        {
-            get_clone_is_called = true;
-            return document.createElement( "dd" );
-        };
-
-        stubs[ 'bar' ][ 0 ].getSiblingContentClone = () =>
-        {
-            get_sibling_clone_is_called = true;
-            return document.createElement( "dd" );
-        };
-
-        stubs[ 'bar' ][ 0 ].getPosition = () =>
-        {
-            get_position_is_called = true;
-            return <PositiveInteger>1;
         };
 
         const dummy_content = document.createElement( "dl" );
@@ -342,12 +377,7 @@ describe( "GroupContext", () =>
 
         const parser = getContextParserStub();
         const stub = getFieldContextStub();
-
-        const factory = <FieldContextFactory>{
-            create: ( _: string, __: any, ___:any, ____:any, _____:any ) => {
-                return stub;
-            },
-        };
+        const factory = getFieldContextFactory( stub );
 
         let set_options_is_called = false;
         stub.setOptions = ( options :any, value :any ) =>
@@ -387,8 +417,22 @@ function getFieldContextFactory( stub: FieldContext )
         'create': ( _: any, __:any, ___:any, ____:any, _____:any ) => {
             return stub;
         },
+        'createStore': ( _: any, __:any ) => {
+            return getFieldContextStoreStub()
+        }
     };
 }
+
+
+function getFieldContextStoreStub( position = 0 )
+{
+    return <FieldContextStore><unknown>{
+        'getPosition': () => { return <PositiveInteger>position; },
+        'getContentClone': () => {},
+        'getSiblingContentClone': () => {},
+    }
+}
+
 
 function getFieldContextStub(
     name: string = '',
@@ -398,8 +442,6 @@ function getFieldContextStub(
 {
     return <FieldContext>{
         'getName': () => { return name },
-        'getContentClone': () => {},
-        'getSiblingContentClone': () => {},
         'getPosition': () => { return position; },
         'isAttached': () => { return is_attached; },
         'getFirstOfContentSet': () => {}

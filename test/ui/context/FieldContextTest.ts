@@ -35,95 +35,6 @@ after(function () {
 
 describe( "FieldContext", () =>
 {
-    [
-        {
-            element_id: 'qcontainer_checkbox_foo',
-            index: 10,
-            position: 1,
-            expected_content: '<dd id="qcontainer_checkbox_foo">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_10" data-index="10">' +
-                    '<input type="checkbox" id="q_checkbox_foo_y_10" data-index="10">' +
-                '</dd>',
-        },
-        {
-            element_id: 'qcontainer_foo_bar_long_name',
-            index: 324,
-            position: 2,
-            expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
-                    '<input type="text" id="foo_bar_324" data-index="324">' +
-                '</dd>',
-        },
-    ].forEach( ( { element_id, index, position, expected_content } ) =>
-    {
-        it( "sets element indexes for " + element_id, () =>
-        {
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
-
-            const sut = new Sut(
-                document,
-                '',
-                <PositiveInteger>index,
-                <PositiveInteger>position,
-                <ContextContent>content
-            );
-
-            const content_modified = <ContextContent>sut.getFirstOfContentSet();
-
-            expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content );
-        } );
-    } );
-
-
-    [
-        {
-            element_id: 'qcontainer_checkbox_foo',
-            sibling_id: 'qlabel_checkbox_foo',
-            index: 0,
-            position: 1,
-            expected_content: '<dd id="qcontainer_checkbox_foo">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_0" data-index="0">' +
-                    '<input type="checkbox" id="q_checkbox_foo_y_0" data-index="0">' +
-                '</dd>',
-            expected_sibling: '<dt id="qlabel_checkbox_foo">Foo</dt>'
-        },
-        {
-            element_id: 'qcontainer_foo_bar_long_name',
-            sibling_id: 'qlabel_foo_bar_long_name',
-            index: 0,
-            position: 2,
-            expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
-                    '<input type="text" id="foo_bar_0" data-index="0">' +
-                '</dd>',
-            expected_sibling: '<dt id="qlabel_foo_bar_long_name">Bar</dt>'
-        },
-    ].forEach( ( { element_id, sibling_id, index, position, expected_content, expected_sibling } ) =>
-    {
-        it( "sets clones for content and sibling with element indexes for " + element_id, () =>
-        {
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
-            const sibling = group_content.querySelector( "#" + sibling_id );
-
-            const sut = new Sut(
-                document,
-                '',
-                <PositiveInteger>index,
-                <PositiveInteger>position,
-                <ContextContent>content,
-                <NullableContextContent>sibling,
-            );
-
-            const sibling_clone = <ContextContent>sut.getSiblingContentClone();
-            const content_clone = <ContextContent>sut.getContentClone();
-
-            expect( ( sibling?.outerHTML as string ) ).to.equal( expected_sibling );
-            expect( ( sibling_clone?.outerHTML as string ) ).to.equal( expected_sibling );
-            expect( ( content_clone?.outerHTML as string ) ).to.equal( expected_content );
-        } );
-    } );
-
-
     it( "sibling is null when label does not exist", () =>
     {
         const element_id = 'qcontainer_checkbox_no_label';
@@ -138,7 +49,7 @@ describe( "FieldContext", () =>
         );
 
         const expected_content = '<dd id="qcontainer_checkbox_no_label">' +
-                '<input type="checkbox" id="q_checkbox_no_label_n_0" data-index="0">' +
+                '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
             '</dd>';
 
         const given = <ContextContent>sut.getFirstOfContentSet();
@@ -193,7 +104,7 @@ describe( "FieldContext", () =>
                 '<dl>' +
                     '<dt id="qlabel_baz">Baz</dt>' +
                     '<dd id="qcontainer_baz">' +
-                        '<input type="text" id="foo_baz_0" data-index="0">' +
+                        '<input type="text" id="foo_baz_0">' +
                     '</dd>' +
                     '<div></div>' +
                 '</dl>'
@@ -207,7 +118,7 @@ describe( "FieldContext", () =>
                 '<dl>' +
                     '<dt id="qlabel_baz">Baz</dt>' +
                     '<dd id="qcontainer_baz">' +
-                        '<input type="text" id="foo_baz_0" data-index="0">' +
+                        '<input type="text" id="foo_baz_0">' +
                     '</dd>' +
                 '</dl>'
         },
@@ -220,8 +131,8 @@ describe( "FieldContext", () =>
                 '<dl>' +
                     '<dt id="qlabel_checkbox_foo">Foo</dt>' +
                     '<dd id="qcontainer_checkbox_foo">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_0" data-index="0">' +
-                    '<input type="checkbox" id="q_checkbox_foo_y_0" data-index="0">' +
+                    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
+                    '<input type="checkbox" id="q_checkbox_foo_y_0">' +
                     '</dd>' +
                     '<div></div>' +
                 '</dl>'
@@ -263,8 +174,8 @@ describe( "FieldContext", () =>
             element_id: 'qcontainer_subfield_single',
             expected:
                 '<dd id="qcontainer_subfield_single">' +
-                    '<select id="q_subfield_single_type_0" class="foo widget" data-index="0">' +
-                        '<option id="q_subfield_single_0" value="Foo" data-index="0">Foo</option>' +
+                    '<select id="q_subfield_single_type_0" class="foo widget">' +
+                        '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
                     '</select>' +
                 '</dd>'
         },
@@ -274,10 +185,10 @@ describe( "FieldContext", () =>
             element_id: 'qcontainer_subfield',
             expected:
                 '<dd id="qcontainer_subfield">' +
-                    '<select id="q_bi_risk_type_0" class="foo widget" data-index="0">' +
-                        '<option id="q_bar_subfield_0" value="Bar" data-index="0">Bar</option>' +
-                        '<option id="q_qux_subfield_0" value="Qux" data-index="0">Qux</option>' +
-                        '<option id="q_baz_subfield_0" value="Baz" data-index="0">Baz</option>' +
+                    '<select id="q_bi_risk_type_0" class="foo widget">' +
+                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+                        '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
                      '</select>' +
                 '</dd>'
         },
@@ -316,7 +227,7 @@ describe( "FieldContext", () =>
             element_id: 'qcontainer_subfield_single',
             expected:
                 '<dd id="qcontainer_subfield_single">' +
-                    '<select id="q_subfield_single_type_0" class="foo widget" data-index="0">' +
+                    '<select id="q_subfield_single_type_0" class="foo widget">' +
                     '</select>' +
                 '</dd>'
         },
@@ -326,9 +237,9 @@ describe( "FieldContext", () =>
             element_id: 'qcontainer_subfield',
             expected:
                 '<dd id="qcontainer_subfield">' +
-                    '<select id="q_bi_risk_type_0" class="foo widget" data-index="0">' +
-                        '<option id="q_bar_subfield_0" value="Bar" data-index="0">Bar</option>' +
-                        '<option id="q_qux_subfield_0" value="Qux" data-index="0">Qux</option>' +
+                    '<select id="q_bi_risk_type_0" class="foo widget">' +
+                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+                        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
                      '</select>' +
                 '</dd>'
         },
@@ -502,7 +413,7 @@ describe( "FieldContext", () =>
             ],
             value: 'baz',
             expected: '<dd id="qcontainer_select_element">' +
-                '<select id="q_select_element_0" data-index="0">' +
+                '<select id="q_select_element_0">' +
                     '<option value="foo">Foo goes here</option>' +
                     '<option value="bar">Bar goes here</option>' +
                     '<option value="baz">Baz goes here</option>' +
@@ -518,7 +429,7 @@ describe( "FieldContext", () =>
             ],
             value: undefined,
             expected: '<dd id="qcontainer_select_element">' +
-                '<select id="q_select_element_0" data-index="0">' +
+                '<select id="q_select_element_0">' +
                     '<option value="foo">Foo goes here</option>' +
                     '<option value="bar">Bar goes here</option>' +
                 '</select>' +
@@ -573,7 +484,7 @@ function getGroupContent()
         '</dd>' +
         '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
         '<dd id="qcontainer_foo_bar_long_name">' +
-            '<input type="text" id="foo_bar_0" >' +
+            '<input type="text" id="foo_bar_0">' +
         '</dd>' +
         '<dd id="qcontainer_subfield_single">' +
             '<select id="q_subfield_single_type_0" class="foo widget">' +

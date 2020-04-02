@@ -21,11 +21,15 @@
 
 import { ContextParser } from "./ContextParser";
 import { FieldContext, ContextContent, NullableContextContent, FieldOptions } from "./FieldContext";
+import { FieldContextStore } from "./FieldContextStore";
 import { FieldContextFactory } from "./FieldContextFactory";
 import { PositiveInteger } from "../../numeric";
 
 
+
 export type ContextCache = Record<string, FieldContext[]>;
+
+export type ContextStores = Record<string, FieldContextStore>;
 
 /**
  * Context responsible for a group and its fields
@@ -36,6 +40,11 @@ export class GroupContext
      * Cache of FieldContexts
      */
     private _field_context_cache: ContextCache = {};
+
+    /**
+     * Object containing FieldContextStore for each field
+     */
+    private _field_context_stores: ContextStores = {};
 
     /**
      * Position of all cached fields
@@ -80,12 +89,19 @@ export class GroupContext
             {
                 let sibling_content = this._parser.findSiblingContent( field_content );
 
-                let field_context = this._field_context_factory
-                    .create( field, index, index, field_content, sibling_content );
+                // Create the FieldContextStore
+                let field_store = this._field_context_factory
+                    .createStore( field_content, sibling_content );
 
-                let position = field_context.getPosition();
+                let position = field_store.getPosition();
 
                 this._field_positions[ position ] = field;
+
+                this._field_context_stores[ field ] = field_store;
+
+                // Create the FieldContext for the first index
+                let field_context = this._field_context_factory
+                    .create( field, index, index, field_content, sibling_content );
 
                 this._field_context_cache[ field ] = [];
                 this._field_context_cache[ field ][ index ] = field_context;
@@ -197,12 +213,12 @@ export class GroupContext
             return this._field_context_cache[ field_name ][ index ];
         }
 
-        // Retrieve cloned nodes from first index of field
-        const first_context = this._field_context_cache[ field_name ][ 0 ];
+        // Retrieve cloned nodes from the FieldContextStore
+        const store = this._field_context_stores[ field_name ];
 
-        const field_content   = <ContextContent>first_context.getContentClone();
-        const sibling_content = first_context.getSiblingContentClone();
-        const position        = first_context.getPosition();
+        const field_content   = store.getContentClone( index );
+        const sibling_content = store.getSiblingContentClone( index );
+        const position        = store.getPosition();
 
         const field_context = this._field_context_factory
             .create( field_name, index, position, field_content, sibling_content );
@@ -224,8 +240,8 @@ export class GroupContext
         index: PositiveInteger
     ): NullableContextContent
     {
-        const field_context = this._field_context_cache[ field_name ][ index ];
-        let position: PositiveInteger = field_context.getPosition();
+        const store = this._field_context_stores[ field_name ];
+        let position: PositiveInteger = store.getPosition();
 
         position++;
 
