@@ -70,6 +70,22 @@ export class ContextParser
 
 
     /**
+     * Determine whether this Element represents a sub-field
+     *
+     * A sub-field is a field within a field; the distinction is important
+     * because we don't want operations on a sub-field affecting
+     * its parent.
+     */
+    isSubField( content: ContextContent ): boolean
+    {
+        const parent = content?.parentElement;
+
+        // A subfield's parent has a 'widget' class value
+        return !!( parent && /\bwidget\b/.test( parent.className ) );
+    }
+
+
+    /**
      * Fallback query for sub-questions,
      * displays, answers, stand-alone labels
      * and static elements
