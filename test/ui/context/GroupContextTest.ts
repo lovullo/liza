@@ -65,6 +65,7 @@ describe( "GroupContext", () =>
                 find_sibling_called = true;
                 return <ContextContent>document.createElement("dt");
             },
+            'isSubField': ( _: any ) => { return false }
         };
 
         const factory = <FieldContextFactory>{
@@ -406,6 +407,7 @@ function getContextParserStub()
         'findSiblingContent': ( _: any ) => {
             return <ContextContent>document.createElement("dt");
         },
+        'isSubField': ( _: any ) => { return false; }
     };
 }
 

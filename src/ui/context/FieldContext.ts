@@ -36,40 +36,20 @@ export type FieldOption = {
 export class FieldContext
 {
     /**
-     * Field element within the content
-     */
-    private _field_element: NullableContextContent = null;
-
-    /**
-     * Parent of field element within the content
-     */
-    private _field_parent_element: NullableContextContent = null;
-
-    /**
-     * If field is a subfield
-     */
-    private _is_subfield: boolean = false;
-
-
-    /**
      * Initialize FieldContext
      *
      * @param _document to create Document elements
-     * @param _element_id field identifier
-     * @param _content field content
-     * @param _sibling sibling field content
+     * @param element_id field identifier
+     * @param content field content
+     * @param sibling sibling field content
      */
     constructor(
         private readonly _document: Document,
-        private readonly _element_id: string,
-        private readonly _content: ContextContent,
-        private _sibling: NullableContextContent = null
+        protected readonly element_id: string,
+        protected content: ContextContent,
+        protected sibling: NullableContextContent = null
     )
-    {
-        // Determine if this is a subfield
-        // Todo - move logic subfield logic to subclass
-        this._is_subfield = this._isSubField();
-    }
+    {}
 
 
     /**
@@ -77,18 +57,16 @@ export class FieldContext
      */
     getElementId(): string
     {
-        return this._element_id;
+        return this.element_id;
     }
 
 
     /**
-     * If the field (or subfield) is attached to the DOM
+     * If the field is attached to the DOM
      */
     isAttached(): boolean
     {
-        return ( this._is_subfield === true )
-            ? ( this._field_element?.parentElement !== null )
-            : ( this._content.parentElement !== null )
+        return ( this.content.parentElement !== null );
     }
 
 
@@ -100,7 +78,7 @@ export class FieldContext
      */
     setOptions( options: FieldOptions, value?: string ): void
     {
-        const field_element = <HTMLSelectElement>this._content.querySelector( "select#" + this._element_id );
+        const field_element = <HTMLSelectElement>this.content.querySelector( "select#" + this.element_id );
 
         if ( field_element === null )
         {
@@ -133,16 +111,11 @@ export class FieldContext
      */
     attach( to: ContextContent, next_element: NullableContextContent ): void
     {
-        if ( this._is_subfield )
-        {
-            return this._attachSubField();
-        }
+        to.insertBefore( this.content, next_element );
 
-        to.insertBefore( this._content, next_element );
-
-        if ( this._sibling !== null )
+        if ( this.sibling !== null )
         {
-            to.insertBefore( this._sibling, this._content );
+            to.insertBefore( this.sibling, this.content );
         }
     }
 
@@ -152,19 +125,14 @@ export class FieldContext
      */
     detach(): void
     {
-        if ( this._is_subfield )
+        if ( this.content.parentElement )
         {
-            return this._detachSubField();
-        }
+            this.content.parentElement.removeChild( this.content );
 
-        if ( this._content.parentElement )
-        {
-            this._content.parentElement.removeChild( this._content );
-
-            if ( this._sibling !== null &&
-                this._sibling.parentElement )
+            if ( this.sibling !== null &&
+                this.sibling.parentElement )
             {
-                this._sibling.parentElement.removeChild( this._sibling );
+                this.sibling.parentElement.removeChild( this.sibling );
             }
         }
     }
@@ -175,59 +143,6 @@ export class FieldContext
      */
     getFirstOfContentSet(): ContextContent
     {
-        return this._sibling || this._content;
+        return this.sibling || this.content;
     }
-
-
-    /**
-     * Determine whether field element represents a sub-field
-     *
-     * A sub-field is a field within a field; the distinction is important
-     * because we don't want operations on a sub-field affecting
-     * its parent.
-     */
-    private _isSubField(): boolean
-    {
-        this._field_element = this._content.querySelector( "#" + this._element_id );
-
-        if ( this._field_element === null )
-        {
-            return false;
-        }
-
-        const parent = this._field_element?.parentElement;
-
-        // A subfield's parent has a 'widget' class value
-        return !!( parent && /\bwidget\b/.test( parent.className ) );
-    }
-
-
-    /**
-     * Attach the subfield to its parent
-     */
-    private _attachSubField(): void
-    {
-        if ( this._field_element !== null
-            && this._field_parent_element !== null )
-        {
-            this._field_parent_element.appendChild( this._field_element );
-        }
-    }
-
-
-    /**
-     * Detach the subfield from its parent
-     */
-    private _detachSubField(): void
-    {
-        if ( this._field_element !== null
-            && this._field_element.parentElement !== null )
-        {
-            this._field_parent_element = this._field_element.parentElement;
-
-            this._field_parent_element.removeChild( this._field_element );
-        }
-    }
-
-
 }

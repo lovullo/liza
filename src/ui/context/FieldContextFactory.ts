@@ -22,6 +22,7 @@
 import { FieldContext, ContextContent, NullableContextContent } from "./FieldContext";
 import { FieldContextStore } from "./FieldContextStore";
 import { PositiveInteger } from "../../numeric";
+import { SubFieldContext } from "./SubFieldContext";
 
 
 export class FieldContextFactory
@@ -35,7 +36,7 @@ export class FieldContextFactory
     /**
      * Initialize FieldContextFactory
      *
-     * @param _document
+     * @param _document - DOM
      */
     constructor(
         private readonly _document: Document,
@@ -48,18 +49,26 @@ export class FieldContextFactory
      * @param name - field name
      * @param index - field index
      * @param content - field HTML content
+     * @param is_subfield - field represents a subfield
      * @param sibling - field HTML sibling content
      */
     create(
         name: string,
         index: PositiveInteger,
         content: ContextContent,
+        is_subfield: boolean,
         sibling: NullableContextContent = null
     ): FieldContext
     {
         const element_id = this._field_id_prefix + name + '_' + index;
 
-        return new FieldContext(
+        // TODO: pass in cretain and instantiate a RetainFieldContext Object
+        let obj = FieldContext;
+        if ( is_subfield ) {
+            obj = SubFieldContext;
+        }
+
+        return new obj(
             this._document,
             element_id,
             content,
@@ -84,5 +93,4 @@ export class FieldContextFactory
             sibling
         );
     }
-
 }

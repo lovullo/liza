@@ -27,13 +27,11 @@ import { PositiveInteger } from "../../../src/numeric";
 import { expect } from 'chai';
 
 
-
 describe( "FieldContextFactory", () =>
 {
     it( "creates new FieldContext", () =>
     {
         const sut = new Sut( document );
-
         const parent = document.createElement( "div" );
         parent.innerHTML =
             '<dl class="">' +
@@ -50,6 +48,7 @@ describe( "FieldContextFactory", () =>
             'foo',
             <PositiveInteger>0,
             <ContextContent>content,
+            false,
             <NullableContextContent>sibling
         );
 
@@ -60,7 +59,6 @@ describe( "FieldContextFactory", () =>
     it( "creates new FieldContextStore", () =>
     {
         const sut = new Sut( document );
-
         const parent = document.createElement( "div" );
         parent.innerHTML =
             '<dl class="">' +

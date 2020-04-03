@@ -82,11 +82,12 @@ export class GroupContext
             // Initial fields will have 0 index
             let index = <PositiveInteger>0;
 
-            let field_content   = this._parser.parse( field, content );
+            let field_content = this._parser.parse( field, content );
 
             if ( field_content !== null )
             {
                 let sibling_content = this._parser.findSiblingContent( field_content );
+                let is_subfield = this._parser.isSubField( field_content );
 
                 // Create the FieldContextStore
                 let field_store = this._field_context_factory
@@ -100,7 +101,7 @@ export class GroupContext
 
                 // Create the FieldContext for the first index
                 let field_context = this._field_context_factory
-                    .create( field, index, field_content, sibling_content );
+                    .create( field, index, field_content, is_subfield, sibling_content );
 
                 this._field_context_cache[ field ] = [];
                 this._field_context_cache[ field ][ index ] = field_context;
@@ -218,8 +219,9 @@ export class GroupContext
         const field_content   = store.getContentClone( index );
         const sibling_content = store.getSiblingContentClone( index );
 
+        // TODO: add subfield attribute to store
         const field_context = this._field_context_factory
-            .create( field_name, index, field_content, sibling_content );
+            .create( field_name, index, field_content, false, sibling_content );
 
         this._field_context_cache[ field_name ][ index ] = field_context;
 
