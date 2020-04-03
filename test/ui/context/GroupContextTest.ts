@@ -148,6 +148,53 @@ describe( "GroupContext", () =>
     } );
 
 
+    it( "isFieldAttached returns false if field doesn't exist in cache", () =>
+    {
+        const fields = [ 'foo', 'baz' ];
+
+        const parser = getContextParserStub();
+
+        const stub = getFieldContextStub();
+        const factory = getFieldContextFactory( stub );
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+
+        const given = sut.isFieldAttached( 'bar', <PositiveInteger>0 );
+
+        expect( given ).to.be.false;
+    } );
+
+
+    it( "isFieldAttached returns true if field in cache is attached", () =>
+    {
+        const fields = [ 'foo', 'baz' ];
+
+        const parser = getContextParserStub();
+
+        let attached_is_called = false;
+
+        const stub = getFieldContextStub();
+        const factory = getFieldContextFactory( stub );
+
+        stub.isAttached = ( ) =>
+        {
+            attached_is_called = true;
+            return true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+
+        const given = sut.isFieldAttached( 'baz', <PositiveInteger>0 );
+
+        expect( attached_is_called ).to.be.true;
+        expect( given ).to.be.true;
+    } );
+
+
     it( "detaches field", () =>
     {
         const fields = [ 'foo', 'baz' ];

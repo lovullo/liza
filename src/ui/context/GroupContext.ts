@@ -111,6 +111,29 @@ export class GroupContext
 
 
     /**
+     * Return if the field is attached to the DOM
+     *
+     * @param field_name - field name
+     * @param index - field index
+     */
+    isFieldAttached(
+        field_name: string,
+        index: PositiveInteger,
+    ): boolean
+    {
+        if ( this._field_context_cache[ field_name ] === undefined
+            || this._field_context_cache[ field_name ][ index ] === undefined )
+        {
+            return false;
+        }
+
+        const field_context = this._fromCache( field_name, index );
+
+        return field_context.isAttached();
+    }
+
+
+    /**
      * Set Options on Select elements
      *
      * @param field_name - to attach options to
