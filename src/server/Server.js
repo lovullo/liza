@@ -33,6 +33,7 @@ const {
         bucket_filter,
         QuoteDataBucket,
         BucketSiblingDescriptor,
+        delta,
 
         diff: {
             StdBucketDiffContext,
@@ -50,6 +51,9 @@ const {
     server: {
         request: {
             DataProcessor: { DataProcessor },
+        },
+        service: {
+            RatingService: { RatingService },
         },
         encsvc: {
             QuoteDataBucketCipher,
@@ -124,9 +128,38 @@ module.exports = Class( 'Server' )
      */
     'private _progInit': null,
 
+    /**
+     * Constructs a timestamp
+     * @type {function}
+     */
+    'private _ts_ctor': null,
 
+
+    /**
+     * Rater
+     * @type {Rater}
+     */
+    'private _rater': null,
+
+
+    /**
+     *
+     * @param {JsonResponse}      response       server Response
+     * @param {ServerDao}         dao            server DAO
+     * @param {Logger}            logger         log manager
+     * @param {EncryptionService} encsvc         encryption service
+     * @param {DataProcessor}     data_processor data processor
+     * @param {ProgramInit}       init           program initializer
+     * @param {function}          ts_ctor        timestamp constructor
+     */
     'public __construct': function(
-        response, dao, logger, encsvc, data_processor, init
+        response,
+        dao,
+        logger,
+        encsvc,
+        data_processor,
+        init,
+        ts_ctor
     )
     {
         if ( !Class.isA( DataProcessor, data_processor ) )
@@ -140,11 +173,13 @@ module.exports = Class( 'Server' )
         this._encService    = encsvc;
         this._dataProcessor = data_processor;
         this._progInit      = init;
+        this._ts_ctor       = ts_ctor;
     },
 
 
     'public init': function( cache, rater )
     {
+        this._rater = rater;
         this._cache = cache;
 
         this._initDb();
@@ -154,6 +189,8 @@ module.exports = Class( 'Server' )
 
     'public reload': function( rater )
     {
+        this._rater = rater;
+
         var _self = this;
 
         rater.init(
@@ -333,10 +370,7 @@ module.exports = Class( 'Server' )
                     .setAgentName( quote_data.agentName || agent_name )
                     .setAgentEntityId( quote_data.agentEntityId || "" )
                     .setInitialRatedDate( quote_data.initialRatedDate || 0 )
-                    .setStartDate(
-                        quote_data.startDate
-                        || Math.round( new Date().getTime() / 1000 )
-                    )
+                    .setStartDate( quote_data.startDate || server._ts_ctor() )
                     .setImported( quote_data.importedInd || false )
                     .setBound( quote_data.boundInd || false )
                     .needsImport( quote_data.importDirty || false )
@@ -697,14 +731,14 @@ module.exports = Class( 'Server' )
         // data array to ensure that they can't spy on our internal data
         if ( request.getSession().isInternal() === false )
         {
-            for ( id in program.internal )
+            for ( var id in program.internal )
             {
                 delete data[ id ];
             }
         }
 
         // Expire quote as needed
-        if ( quote.hasExpired( new Date() ) )
+        if ( quote.hasExpired( this._ts_ctor() ) )
         {
             quote.setExplicitLock(
                 'This quote has expired and cannot be modified. ' +
@@ -1162,14 +1196,17 @@ module.exports = Class( 'Server' )
                             "rdelta.data": {
                                 data:            rdiff,
                                 concluding_save: ( concluding_save === 'true' ),
-                                timestamp:       Math.round(
-                                    new Date().getTime() / 1000
-                                ),
+                                timestamp:       server._ts_ctor(),
                             }
                         };
                     }
 
-                    server._monitorMetadataPromise( quote, dapis, meta_clear );
+                    server._monitorMetadataPromise(
+                        quote,
+                        dapis,
+                        meta_clear,
+                        request.getSession()
+                    );
                }
                 catch ( err )
                 {
@@ -1197,27 +1234,60 @@ module.exports = Class( 'Server' )
     },
 
 
-    'private _monitorMetadataPromise'( quote, dapis, meta_clear )
+    'private _monitorMetadataPromise'( quote, dapis, meta_clear, session )
     {
         quote.getMetabucket().setValues( meta_clear );
 
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
+            {
                 this.dao.saveQuoteMeta(
                     quote,
                     data,
                     null,
                     e => { throw e; }
-                )
-            )
+                );
+
+                return quote.setMetadata( data );
+            } )
+            .then( quote => this.dao.ensurePendingSuppliers( quote ) )
+            // We will need to lookup the rate retries directly from the
+            // dao because the dapi promises have an old version of the
+            // quote without the updated count
+            .then( quote => this.dao.updateQuoteRateRetries( quote ) )
+            .then( quote =>
+            {
+                rating_service = new RatingService(
+                    this.logger,
+                    this.dao,
+                    this._rater,
+                    delta.createDelta,
+                    this._ts_ctor
+                );
+
+                rating_service.request( session, quote, '', true );
+            } )
             .catch( e =>
-                this.logger.log(
-                    this.logger.PRIORITY_ERROR,
-                    "Failed to save metadata (quote id %d): %s",
-                    quote.getId(),
-                    e.message
-                )
-            )
+            {
+                if( /^Nothing pending/.test( e.message ) )
+                {
+                    this.logger.log(
+                        this.logger.PRIORITY_INFO,
+                        "Did not rate on DAPI return (quote id %d): %s",
+                        quote.getId(),
+                        e.message
+                    )
+                }
+                else if( !( /^Missing param/.test( e.message ) ) )
+                {
+                    this.logger.log(
+                        this.logger.PRIORITY_ERROR,
+                        "Failed to save metadata (quote id %d): %s",
+                        quote.getId(),
+                        e.message
+                    )
+                }
+            } )
         );
     },
 
@@ -1404,6 +1474,10 @@ module.exports = Class( 'Server' )
                             } );
                         } );
 
+                        break;
+
+                    // Handle this case only to avoid logging errors
+                    case 'rate':
                         break;
 
                     default:

@@ -26,20 +26,24 @@ import { PriorityLog } from "../log/PriorityLog";
 import { ProcessManager } from "../rater/ProcessManager";
 import { Program } from "../../program/Program";
 import { QuoteId } from "../../quote/Quote";
-import { Server } from "../Server";
 import { ServerDao } from "../db/ServerDao";
 import { ServerSideQuote } from "../quote/ServerSideQuote";
-import { UserRequest } from "../request/UserRequest";
-import { UserResponse } from "../request/UserResponse";
 import { DeltaConstructor } from "../../bucket/delta";
+import { UserSession } from "../request/UserSession";
 
 type RequestCallback = () => void;
 
-/** Result of rating */
-export type RateRequestResult = {
+/** Content result of rating */
+export type RateRequestContent = {
     data:             RateResult,
     initialRatedDate: UnixTimestamp,
     lastRatedDate:    UnixTimestamp,
+};
+
+/** Complete Rating Results */
+export type RateRequestResult = {
+    content: RateRequestContent,
+    actions: ClientActions,
 };
 
 
@@ -65,7 +69,6 @@ export class RatingService
      *
      * @param _logger        - logging system
      * @param _dao           - database connection
-     * @param _server        - server actions
      * @param _rater_manager - rating manager
      * @param _createDelta   - delta constructor
      * @param _ts_ctor       - a timestamp constructor
@@ -73,7 +76,6 @@ export class RatingService
     constructor(
         private readonly _logger:        PriorityLog,
         private readonly _dao:           ServerDao,
-        private readonly _server:        Server,
         private readonly _rater_manager: ProcessManager,
         private readonly _createDelta:   DeltaConstructor<number>,
         private readonly _ts_ctor:       () => UnixTimestamp,
@@ -86,48 +88,47 @@ export class RatingService
      * Note that the promise will be resolved after all data saving is
      * complete; the request will be sent back to the client before then.
      *
-     * @param request   - user request to satisfy
-     * @param _response - pending response
-     * @param quote     - quote to export
-     * @param cmd       - applicable of command request
+     * @param session - user session
+     * @param quote   - quote to export
+     * @param cmd     - applicable of command request
+     * @param force   - (optional) force a rate, overriding quote valid checks
      *
      * @return result promise
      */
     request(
-        request:   UserRequest,
-        _response: UserResponse,
-        quote:     ServerSideQuote,
-        cmd:       string,
+        session: UserSession,
+        quote:   ServerSideQuote,
+        cmd:     string,
+        force:   boolean = false,
     ): Promise<RateRequestResult>
     {
         return new Promise<RateRequestResult>( resolve =>
         {
             // cmd represents a request for a single rater
-            if ( !cmd && this._isQuoteValid( quote ) )
+            if ( !cmd && !force && this._isQuoteValid( quote ) )
             {
-                // send last rated data
-                this._server.sendResponse( request, quote, {
-                    data: quote.getRatingData(),
-                    initialRatedDate: quote.getRatedDate(),
-                    lastRatedDate: quote.getLastPremiumDate()
-                }, [] );
+                const actions: ClientActions = [];
+                const data                   = quote.getRatingData();
+                const program                = quote.getProgram();
 
-                // XXX: When this class is no longer responsible for
-                // sending the response to the server, this below data needs
-                // to represent the _current_ values, since as it is written
-                // now, it'll overwrite what is currently in the bucket
+                this._processRetries( program, quote, data, actions );
+
+                // send last rated data
                 return resolve( {
-                    data:             { _unavailable_all: '0' },
-                    initialRatedDate: <UnixTimestamp>0,
-                    lastRatedDate:    <UnixTimestamp>0,
+                    content: {
+                        data:             data,
+                        initialRatedDate: quote.getRatedDate(),
+                        lastRatedDate:    quote.getLastPremiumDate()
+                    },
+                    actions: actions
                 } );
             }
 
-            resolve( this._performRating( request, quote, cmd ) );
+            resolve( this._performRating( session, quote, cmd ) );
         } )
         .catch( err =>
         {
-            this._sendRatingError( request, quote, err );
+            this._logRatingError( quote, err );
             throw err;
         } );
     }
@@ -166,16 +167,16 @@ export class RatingService
     /**
      * Perform rating and process result
      *
-     * @param request - user request to satisfy
+     * @param session - user session
      * @param quote   - quote to process
      * @param indv    - individual supplier to rate (or empty)
      *
      * @return promise for results of rating
      */
     private _performRating(
-        request:  UserRequest,
-        quote:    ServerSideQuote,
-        indv:     string,
+        session: UserSession,
+        quote:   ServerSideQuote,
+        indv:    string,
     ): Promise<RateRequestResult>
     {
         return new Promise<RateRequestResult>( ( resolve, reject ) =>
@@ -191,19 +192,20 @@ export class RatingService
             // Only update the rate request timestamp on the first request made
             if( quote.getRetryAttempts() === 0 )
             {
-                const meta = { 'liza_timestamp_rate_request': [ this._ts_ctor() ] }
+                const ts   = this._ts_ctor();
+                const meta = { 'liza_timestamp_rate_request': [ ts ], }
 
                 quote.setMetadata( meta );
                 this._dao.saveQuoteMeta( quote, meta );
             }
 
-            rater.rate( quote, request.getSession(), indv,
+            rater.rate( quote, session, indv,
                 ( rate_data: RateResult, actions: ClientActions ) =>
                 {
                     actions = actions || [];
 
                     this.postProcessRaterData(
-                        request, rate_data, actions, quote.getProgram(), quote
+                        rate_data, actions, quote.getProgram(), quote
                     );
 
                     const class_dest = {};
@@ -220,24 +222,18 @@ export class RatingService
                     // post-processing); async
                     this._saveRatingData( quote, rate_data, indv, () =>
                     {
-                        const result = {
+                        const content = {
                             data:             cleaned,
                             initialRatedDate: quote.getRatedDate(),
                             lastRatedDate:    quote.getLastPremiumDate()
                         };
 
-                        this._server.sendResponse(
-                            request, quote, result, actions
-                        );
-
-                        resolve( result );
+                        resolve( { content: content, actions: actions } );
                     } );
                 },
                 ( message: string ) =>
                 {
-                    this._sendRatingError( request, quote,
-                        Error( message )
-                    );
+                    this._logRatingError( quote, Error( message ) );
 
                     reject( Error( message ) );
                 }
@@ -305,14 +301,12 @@ export class RatingService
     /**
      * Process rater data returned from a rater
      *
-     * @param _request - user request to satisfy
      * @param data     - rating data returned
      * @param actions  - actions to send to client
      * @param program  - program used to perform rating
      * @param quote    - quote used for rating
      */
     protected postProcessRaterData(
-        _request: UserRequest,
         data:     RateResult,
         actions:  ClientActions,
         program:  Program,
@@ -327,32 +321,7 @@ export class RatingService
         // rating worksheets are returned as metadata
         this._processWorksheetData( quote.getId(), data );
 
-        const {
-            pending_count,
-            timeout,
-            should_retry
-        } = this._processRetries( program, quote, data );
-
-        data[ '__rate_pending' ] = [ pending_count ];
-
-        if ( should_retry )
-        {
-            actions.push( {
-                'action':  'delay',
-                'seconds': this.RETRY_DELAY,
-                'then': {
-                    action: 'rate',
-                    indv:   'retry',
-                },
-            } );
-
-            quote.retryAttempted();
-            this._dao.saveQuoteRateRetries( quote );
-        }
-        else if ( timeout )
-        {
-            this._clearRetries( data );
-        }
+        this._processRetries( program, quote, data, actions );
 
         if ( ( program.ineligibleLockCount > 0 )
             && ( +meta.count_ineligible >= program.ineligibleLockCount )
@@ -402,12 +371,10 @@ export class RatingService
     /**
      * Send rating error to user and log
      *
-     * @param request - user request to satisfy
      * @param quote   - problem quote
      * @param err     - error
      */
-    private _sendRatingError(
-        request: UserRequest,
+    private _logRatingError(
         quote:   ServerSideQuote,
         err:     Error,
     ): void
@@ -419,43 +386,6 @@ export class RatingService
             quote.getProgramId(),
             err.message + '\n-!' + ( err.stack || "" ).replace( /\n/g, '\n-!' )
         );
-
-        this._server.sendError( request,
-            'There was a problem during the rating process. Unable to ' +
-            'continue. Please contact our support team for assistance.' +
-
-            // show details for internal users
-            ( ( request.getSession().isInternal() )
-                ? '<br /><br />[Internal] ' + err.message + '<br /><br />' +
-                    '<hr />' + ( err.stack || "" ).replace( /\n/g, '<br />' )
-                : ''
-            )
-        );
-    }
-
-
-    /**
-     * Retrieve the number of raters that are pending
-     *
-     * @param data Rating results
-     */
-    private _getRetryCount( data: RateResult ): number
-    {
-        const retry_pattern = /^(.+)__retry$/;
-
-        return Object.keys( data )
-            .filter( field =>
-            {
-                let value = Array.isArray( data[ field ] )
-
-                    // In case the data are in a nested array
-                    // e.g. data[ field ] === [ [ 0 ] ]
-                    ? Array.prototype.concat.apply( [], data[ field ] )
-                    : data[ field ];
-
-                return field.match( retry_pattern ) && !!value[ 0 ];
-            } )
-            .length;
     }
 
 
@@ -524,28 +454,21 @@ export class RatingService
 
 
     /**
-     * Serve worksheet data to user
+     * Get worksheet data
      *
-     * @param request  - user request to satisfy
      * @param quote    - quote from which to look up worksheet data
      * @param supplier - supplier name
      * @param index    - worksheet index
      */
-    serveWorksheet(
-        request:  UserRequest,
+    getWorksheet(
         quote:    ServerSideQuote,
         supplier: string,
         index:    PositiveInteger,
-    ): void
+    ): Promise<WorksheetData>
     {
         var qid = quote.getId();
 
-        this._dao.getWorksheet( qid, supplier, index, data =>
-        {
-            this._server.sendResponse( request, quote, {
-                data: data
-            } );
-        } );
+        return this._dao.getWorksheet( qid, supplier, index );
     }
 
 
@@ -590,20 +513,20 @@ export class RatingService
     /**
      * Process retry logic
      *
-     * @param program  - program used to perform rating
-     * @param quote    - quote used for rating
-     * @param data     - rating data returned
-     *
-     * @return an object with a retry flag, a timeout flag, and a pending count
+     * @param program - program used to perform rating
+     * @param quote   - quote used for rating
+     * @param data    - rating data returned
+     * @param actions - actions to sent to the client
      */
     private _processRetries(
         program: Program,
         quote:   ServerSideQuote,
-        data:    RateResult
-    ): Record<string, boolean|number>
+        data:    RateResult,
+        actions: ClientActions,
+    ): void
     {
         // Gather determinant factors
-        const pending_count  = this._getRetryCount( data );
+        const pending_count  = quote.getRetryCount( data );
         const retry_attempts = quote.getRetryAttempts();
         const step           = quote.getCurrentStepId();
         const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
@@ -613,14 +536,26 @@ export class RatingService
         const has_pending   = ( pending_count > 0 );
         const retry_on_step = ( retry_attempts > 0 ) ? is_rate_step : true;
 
-        return {
-            pending_count: pending_count,
-            timeout:       max_attempts,
-            should_retry:  (
-                has_pending &&
-                !max_attempts &&
-                retry_on_step
-            ),
+        data[ '__rate_pending' ] = [ pending_count ];
+
+        if ( has_pending && !max_attempts && retry_on_step )
+        {
+            // Set rate event value to -1 so that it will be in the background
+            actions.push( {
+                'action':  'delay',
+                'seconds': this.RETRY_DELAY,
+                'then':    {
+                    action: 'rate',
+                    value:  -1,
+                },
+            } );
+
+            quote.retryAttempted();
+            this._dao.saveQuoteRateRetries( quote );
+        }
+        else if ( max_attempts )
+        {
+            this._clearRetries( data );
         }
     }
 }

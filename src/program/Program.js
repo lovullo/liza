@@ -454,8 +454,10 @@ exports.Program = AbstractClass( 'Program' )
     },
 
 
-    visitStep: function( step_id, bucket )
+    visitStep: function( step_id, bucket, trigger_callback )
     {
+        trigger_callback = trigger_callback || function() {};
+
         // make sure that the step they're trying to load actually exists
         if ( this.eventData[ step_id ] === undefined )
         {
@@ -468,7 +470,7 @@ exports.Program = AbstractClass( 'Program' )
             return false;
         }
 
-        callback.call( this, function() {}, bucket );
+        callback.call( this, trigger_callback, bucket );
         return true;
     },
 

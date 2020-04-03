@@ -374,7 +374,7 @@ describe( 'BaseQuote', () =>
             const description        = "Expiration is correct for " + testCase.description;
             const start_date         = testCase.startDate;
             const initial_rated_date = testCase.initialRatedDate;
-            const current_date       = testCase.currentDate * 1000;
+            const current_date       = testCase.currentDate;
             const expiration_date    = ( typeof testCase.expirationDate === "number" )
                 ? testCase.expirationDate * 1000 : undefined;
             const expired            = testCase.expired;
@@ -398,7 +398,7 @@ describe( 'BaseQuote', () =>
                     expect( quote.getExpirationDate() ).to.equal( expiration_date );
                 }
 
-                expect( quote.hasExpired( new Date( current_date ) ) ).to.equal( expired );
+                expect( quote.hasExpired( current_date ) ).to.equal( expired );
             } );
         } );
     } );

@@ -63,7 +63,8 @@ describe( 'RateEventHandler', () =>
             };
 
             const step = {
-                invalidate: () => {}
+                invalidate:  () => {},
+                emptyBucket: () => {},
             };
 
             const ui = {
@@ -379,7 +380,8 @@ describe( 'RateEventHandler', () =>
             };
 
             const step = {
-                invalidate: () => {}
+                invalidate:  () => {},
+                emptyBucket: () => {},
             };
 
             const ui = {
@@ -431,5 +433,92 @@ describe( 'RateEventHandler', () =>
                 }
             )
         } )
+    } );
+
+    describe( "Hides waiting dialog ", () =>
+    {
+        it( "when value is set to -1", done =>
+        {
+            let show_dialog_called = false;
+
+            const quote = {
+                getExplicitLockStep: () => 0,
+                setLastPremiumDate:  () => {},
+                setInitialRatedDate: () => {},
+                getCurrentStepId:    () => 1,
+                refreshData:         () => {},
+                isLocked:            () => false,
+                getId:               () => "111111"
+            };
+
+            const step = {
+                invalidate:  () => {},
+                emptyBucket: () => {},
+            };
+
+            const ui = {
+                getStep: ( dest ) => step
+            };
+
+            const client = {
+                uiDialog: {
+                    showRatingInProgressDialog: () =>
+                    {
+                        show_dialog_called = true;
+                        return { close: () => {} }
+                    },
+                },
+                getQuote:                   () => quote,
+                isSaving:                   () => { return false; },
+                once:                       ( event, callback ) => callback(),
+                getUi:                      () => ui
+            };
+
+            const response = {
+                content: {
+                    data:             "Some Data",
+                    initialRatedDate: 111,
+                    lastRatedDate:    222
+                }
+            };
+
+            const error = null;
+
+            const proxy = {
+                get: ( url, callback ) => callback( response, error )
+            };
+
+            const sut = Sut( client, proxy );
+
+            const old_setTimeout = setTimeout;
+
+            setTimeout = ( callback, delay ) => {
+                callback.apply( this, arguments );
+            }
+
+            // this is necessary because if something breaks here, setTimeout
+            // will not be restored and will yield a false negative on other
+            // tests
+            try {
+                sut.handle(
+                    "",
+                    ( err, _ ) =>
+                    {
+                        expect( err ).to.equal( null );
+                        expect( show_dialog_called ).to.be.false;
+                        done();
+                    },
+                    {
+                        stepId: 1,
+                        value:  -1,
+                    }
+                )
+            }
+            catch( e ) { console.log( e ) }
+            finally
+            {
+                setTimeout = old_setTimeout;
+            }
+        } );
     } );
 } )

@@ -137,6 +137,26 @@ export interface ServerDao
 
 
     /**
+     * Updates the quote retry attempts
+     *
+     * @param quote - the quote to update
+     *
+     * @returns a promise with an updated quote
+     */
+    updateQuoteRateRetries( quote: ServerSideQuote ): Promise<ServerSideQuote>
+
+
+    /**
+     * Check if the quote has pending suppliers
+     *
+     * @param quote - the quote to update
+     *
+     * @returns a promise with the quote
+     */
+    ensurePendingSuppliers( quote: ServerSideQuote ): Promise<ServerSideQuote>
+
+
+    /**
      * Save document metadata (meta field on document)
      *
      * Only the provided indexes will be modified (that is---data will be
@@ -149,7 +169,7 @@ export interface ServerDao
      */
     saveQuoteMeta(
         quote:    ServerSideQuote,
-        new_meta: any,
+        new_meta: Record<string,any>,
         success?: Callback,
         failure?: Callback,
     ): void
@@ -186,15 +206,15 @@ export interface ServerDao
     /**
      * Retrieve worksheet data
      *
-     * @param qid      - quote identifier
-     * @param supplier - supplier id
-     * @param index    - worksheet index
-     * @param callback - callback
+     * @param qid      - the quote id
+     * @param supplier - the supplier to retrieve the worksheet for
+     * @param index    - the worksheet index
+     *
+     * @return Promise with worksheet data
      */
     getWorksheet(
         qid:      QuoteId,
         supplier: string,
         index:    PositiveInteger,
-        callback: ( data: WorksheetData | null ) => void,
-    ): void;
+    ): Promise<WorksheetData>;
 }

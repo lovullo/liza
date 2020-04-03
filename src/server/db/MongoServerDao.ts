@@ -61,12 +61,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     /**
      * Initializes DAO
      *
-     * @param _db  - mongo database connection
-     * @param _env - the name of the current environment
+     * @param _db      - mongo database connection
+     * @param _env     - the name of the current environment
+     * @param _ts_ctor - a timestamp constructor
      */
     constructor(
-        private readonly _db:  MongoDb,
-        private readonly _env: string,
+        private readonly _db:      MongoDb,
+        private readonly _env:     string,
+        private readonly _ts_ctor: () => UnixTimestamp,
     )
     {
         super();
@@ -321,9 +323,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.explicitLockStepId = quote.getExplicitLockStep();
         save_data.importedInd        = +quote.isImported();
         save_data.boundInd           = +quote.isBound();
-        save_data.lastUpdate         = Math.round(
-            ( new Date() ).getTime() / 1000
-        );
+        save_data.lastUpdate         = this._ts_ctor();
 
         // meta will eventually take over for much of the above data
         meta.liza_timestamp_initial_rated = [ quote.getRatedDate() ];
@@ -505,6 +505,110 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         return this.mergeData(
             quote, update, success, failure
         );
+    }
+
+
+    /**
+     * Updates the quote retry attempts
+     *
+     * @param quote - the quote to update
+     *
+     * @returns a promise with an updated quote
+     */
+    updateQuoteRateRetries( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    {
+        return new Promise<ServerSideQuote>( resolve =>
+        {
+            this._collection!.find(
+                { id: quote.getId() },
+                {
+                    limit:  <PositiveInteger>1,
+                    fields: { retryAttempts: 1 }
+                },
+                ( _err, cursor ) =>
+                {
+                    cursor.toArray( function( _err: NullableError, data: any[] )
+                    {
+                        // was the quote found?
+                        if ( data.length == 0 )
+                        {
+                            // Return the quote unchanged
+                            resolve( quote );
+                            return;
+                        }
+
+                        quote.setRetryAttempts( +data[ 0 ].retryAttempts );
+
+                        resolve( quote );
+                    });
+                }
+            );
+        } );
+    }
+
+
+    /**
+     * Check if the quote has pending suppliers
+     *
+     * @param quote - the quote to update
+     *
+     * @returns a promise with the quote
+     */
+    ensurePendingSuppliers( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    {
+        return new Promise<ServerSideQuote>( ( resolve, reject ) =>
+        {
+            this._collection!.find(
+                { id: quote.getId() },
+                {
+                    limit:  <PositiveInteger>1,
+                    fields: { 'data.__rate_pending': 1 }
+                },
+                ( _err, cursor ) =>
+                {
+                    cursor.toArray( function( _err: NullableError, data: any[] )
+                    {
+                        // was the quote found?
+                        if ( data.length == 0 )
+                        {
+                            // Return the quote unchanged
+                            reject(
+                                new Error(
+                                    'Could not find quote ' + quote.getId()
+                                )
+                            );
+                            return;
+                        }
+
+                        const bucket_data = data[ 0 ].data;
+
+                        if( !bucket_data )
+                        {
+                            reject(
+                                new Error(
+                                    'No ratedata for quote ' + quote.getId()
+                                )
+                            );
+                            return;
+                        }
+
+                        const pending = bucket_data.__rate_pending;
+
+                        if( !pending || !pending[ 0 ] )
+                        {
+                            reject(
+                                new Error(
+                                    'Nothing pending for quote ' + quote.getId()
+                                )
+                            );
+                            return;
+                        }
+
+                        resolve( quote );
+                    });
+                }
+            );
+        } );
     }
 
 
@@ -815,37 +919,50 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param qid      - the quote id
      * @param supplier - the supplier to retrieve the worksheet for
      * @param index    - the worksheet index
-     * @param callback - a function to call with the results of the lookup
+     *
+     * @return Promise with worksheet data
      */
     getWorksheet(
         qid:      QuoteId,
         supplier: string,
         index:    PositiveInteger,
-        callback: ( data: WorksheetData | null ) => void,
-    ): void
+    ): Promise<WorksheetData>
     {
-        this._collection!.find(
-            { id: qid },
-            { limit: <PositiveInteger>1 },
-            function( _err, cursor )
-            {
-                cursor.toArray( function( _err: NullableError, data: any[] )
+        return new Promise( ( resolve, reject ) =>
+        {
+            this._collection!.find(
+                { id: qid },
+                { limit: <PositiveInteger>1 },
+                function( err, cursor )
                 {
-                    // was the quote found?
-                    if ( ( data.length === 0 )
-                        || ( !data[ 0 ].worksheets )
-                        || ( !data[ 0 ].worksheets.data )
-                        || ( !data[ 0 ].worksheets.data[ supplier ] )
-                    )
+                    if ( err )
                     {
-                        callback( null );
+                        reject( err );
                         return;
                     }
 
-                    // return the quote data
-                    callback( data[ 0 ].worksheets.data[ supplier ][ index ] );
-                } );
-            }
-        );
+                    cursor.toArray( function( _err: NullableError, data: any[] )
+                    {
+                        // was the quote found?
+                        if ( ( data.length === 0 )
+                            || ( !data[ 0 ].worksheets )
+                            || ( !data[ 0 ].worksheets.data )
+                            || ( !data[ 0 ].worksheets.data[ supplier ] )
+                        )
+                        {
+                            reject( 'Worksheet data not found' );
+                            return;
+                        }
+
+                        // return the quote data
+                        const worksheet_data: WorksheetData = {
+                            data: data[ 0 ].worksheets.data[ supplier ][ index ]
+                        }
+
+                        resolve( worksheet_data );
+                    } );
+                }
+            );
+        } );
     }
 };
