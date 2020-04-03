@@ -31,35 +31,45 @@ describe( "FieldContextStore", () =>
     [
         {
             element_id: 'qcontainer_checkbox_foo',
+            sibling_id: 'qlabel_checkbox_foo',
             index: 10,
-            expected_content: '<dd id="qcontainer_checkbox_foo">' +
+            expected_content:
+                '<dd id="qcontainer_checkbox_foo" data-index="10">' +
                     '<input type="checkbox" id="q_checkbox_foo_n_10" data-index="10">' +
                     '<input type="checkbox" id="q_checkbox_foo_y_10" data-index="10">' +
                 '</dd>',
+            expected_sibling:
+                '<dt id="qlabel_checkbox_foo" data-index="10">Foo</dt>'
         },
         {
             element_id: 'qcontainer_foo_bar_long_name',
+            sibling_id: 'qlabel_foo_bar_long_name',
             index: 324,
-            expected_content: '<dd id="qcontainer_foo_bar_long_name">' +
+            expected_content:
+                '<dd id="qcontainer_foo_bar_long_name" data-index="324">' +
                     '<input type="text" id="foo_bar_324" data-index="324">' +
                 '</dd>',
+             expected_sibling:
+                '<dt id="qlabel_foo_bar_long_name" data-index="324">Bar</dt>'
         },
-    ].forEach( ( { element_id, index, expected_content } ) =>
+    ].forEach( ( { element_id, sibling_id, index, expected_content, expected_sibling } ) =>
     {
-        it( "creates a clone of the content", () =>
+        it( "creates a clone of the content and sets the element index for " + element_id, () =>
         {
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
-
+            const sibling = group_content.querySelector( "#" + sibling_id );
 
             const sut = new Sut(
                 <ContextContent>content,
-                null
+                <ContextContent>sibling,
             );
 
             const content_modified = <ContextContent>sut.getContentClone( <PositiveInteger>index );
+            const sibling_modified = <ContextContent>sut.getSiblingContentClone( <PositiveInteger>index );
 
             expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content );
+            expect( ( sibling_modified?.outerHTML as string ) ).to.equal( expected_sibling );
         } );
     } );
 

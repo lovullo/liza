@@ -121,8 +121,17 @@ export class FieldContextStore
         index: PositiveInteger
     ): ContextContent
     {
+        let elements = [];
 
-        const elements = content.getElementsByTagName( "*" );
+        const children = content.getElementsByTagName( "*" );
+
+        for ( let i = 0; i < children.length; i++ )
+        {
+            elements.push( children[ i ] );
+        }
+
+        // Add the content element to the array
+        elements.push( content );
 
         for ( let i = 0; i < elements.length; i++ )
         {
