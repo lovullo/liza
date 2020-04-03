@@ -27,6 +27,12 @@ import { PositiveInteger } from "../../numeric";
 export class FieldContextFactory
 {
     /**
+     * Field element ID prefix
+     */
+    private _field_id_prefix: string = 'q_';
+
+
+    /**
      * Initialize FieldContextFactory
      *
      * @param _document
@@ -41,23 +47,21 @@ export class FieldContextFactory
      *
      * @param name - field name
      * @param index - field index
-     * @param position - position index of content in the group
      * @param content - field HTML content
      * @param sibling - field HTML sibling content
      */
     create(
         name: string,
         index: PositiveInteger,
-        position: PositiveInteger,
         content: ContextContent,
         sibling: NullableContextContent = null
     ): FieldContext
     {
+        const element_id = this._field_id_prefix + name + '_' + index;
+
         return new FieldContext(
             this._document,
-            name,
-            index,
-            position,
+            element_id,
             content,
             sibling
         );

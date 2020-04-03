@@ -49,7 +49,6 @@ describe( "FieldContextFactory", () =>
         const given = sut.create(
             'foo',
             <PositiveInteger>0,
-            <PositiveInteger>0,
             <ContextContent>content,
             <NullableContextContent>sibling
         );

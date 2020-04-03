@@ -34,12 +34,11 @@ describe( "GroupContext", () =>
 {
     it( "createFieldCache calls parser and field context factory for each field", () =>
     {
-        const fields          = [ 'foo', 'baz' ];
-        const field_positions = [ 0, 0 ];
+        const fields = [ 'foo', 'baz' ];
 
         let stubs = <ContextCache>{
-            'foo': [ getFieldContextStub( 'foo', 0, false ) ],
-            'baz': [ getFieldContextStub( 'baz', 0, false ) ],
+            'foo': [ getFieldContextStub( 'foo', false ) ],
+            'baz': [ getFieldContextStub( 'baz', false ) ],
         }
 
         let stores = <ContextStores>{
@@ -49,8 +48,9 @@ describe( "GroupContext", () =>
 
         let store_index = 0;
 
+        let factory_called_num_times = 0;
+
         let parser_fields: string[] = [];
-        let factory_field_position: number[] = [];
 
         let find_sibling_called = false;
         let foo_position_is_called = false;
@@ -71,11 +71,10 @@ describe( "GroupContext", () =>
             'create': (
                 field: string,
                 index: PositiveInteger,
-                position: PositiveInteger,
                 _:any,
                 __:any ) =>
             {
-                factory_field_position.push( position );
+                factory_called_num_times++;
                 return stubs[ field ][ index ];
             },
             'createStore': ( _: any, __:any ) => {
@@ -106,10 +105,10 @@ describe( "GroupContext", () =>
         expect( parser_fields )
             .to.deep.equal( fields );
 
-        expect( find_sibling_called ).to.be.true;
+        expect( factory_called_num_times )
+            .to.equal( fields.length );
 
-        expect( field_positions )
-            .to.deep.equal( factory_field_position );
+        expect( find_sibling_called ).to.be.true;
 
         expect( foo_position_is_called ).to.be.true;
         expect( baz_position_is_called ).to.be.true;
@@ -129,7 +128,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any, ____:any, _____:any ) => {
+            'create': ( _: string, __: any, ___:any, ____:any ) => {
                 factory_call_count++;
                 return getFieldContextStub();
             },
@@ -199,11 +198,11 @@ describe( "GroupContext", () =>
     {
         const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];
         let stubs = <ContextCache>{
-            'moo': [ getFieldContextStub( 'moo', 0, false ) ],
-            'foo': [ getFieldContextStub( 'foo', 1, false ) ],
-            'bar': [ getFieldContextStub( 'bar', 2, false ) ],
-            'baz': [ getFieldContextStub( 'baz', 3,  true ) ],
-            'qux': [ getFieldContextStub( 'qux', 4,  true ) ]
+            'moo': [ getFieldContextStub( 'moo', false ) ],
+            'foo': [ getFieldContextStub( 'foo', false ) ],
+            'bar': [ getFieldContextStub( 'bar', false ) ],
+            'baz': [ getFieldContextStub( 'baz', true ) ],
+            'qux': [ getFieldContextStub( 'qux', true ) ]
         }
 
         let stores = <ContextStores>{
@@ -221,7 +220,7 @@ describe( "GroupContext", () =>
         const parser = getContextParserStub();
 
         const factory = <FieldContextFactory>{
-            'create': ( field: string, __:any, ___:any, ____:any, _____:any ) => {
+            'create': ( field: string, __:any, ___:any, ____:any ) => {
                 return stubs[ field ][ 0 ];
             },
             'createStore': ( _: any, __:any ) => {
@@ -264,12 +263,12 @@ describe( "GroupContext", () =>
         // but currently does not exist in context cache
         // No other fields exist yet for that index
         let stubs = <ContextCache>{
-            'foo': [ getFieldContextStub( 'foo', 0, false ) ],
+            'foo': [ getFieldContextStub( 'foo', false ) ],
             'bar': [
-                getFieldContextStub( 'bar', 1, false ),
-                getFieldContextStub( 'bar', 1, false )
+                getFieldContextStub( 'bar', false ),
+                getFieldContextStub( 'bar', false )
             ],
-            'baz': [ getFieldContextStub( 'baz', 2,  true ) ],
+            'baz': [ getFieldContextStub( 'baz', true ) ],
         }
 
         let attach_is_called = false;
@@ -280,8 +279,8 @@ describe( "GroupContext", () =>
         const parser = getContextParserStub();
         const store = getFieldContextStoreStub();
         const factory = <FieldContextFactory>{
-            create: ( field: string, index: PositiveInteger, ___:any, ____:any, _____:any ) => {
-                return stubs[ field ][ index ];
+            create: ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
+                return stubs[ field ][ index ]
             },
             'createStore': ( _: any, __:any ) => {
                 return store;
@@ -414,7 +413,7 @@ function getContextParserStub()
 function getFieldContextFactory( stub: FieldContext )
 {
     return <FieldContextFactory>{
-        'create': ( _: any, __:any, ___:any, ____:any, _____:any ) => {
+        'create': ( _: any, __:any, ___:any, ____:any ) => {
             return stub;
         },
         'createStore': ( _: any, __:any ) => {
@@ -435,14 +434,12 @@ function getFieldContextStoreStub( position = 0 )
 
 
 function getFieldContextStub(
-    name: string = '',
-    position = 0,
+    element_id: string = '',
     is_attached = false
 )
 {
     return <FieldContext>{
-        'getName': () => { return name },
-        'getPosition': () => { return position; },
+        'getElementId': () => { return element_id },
         'isAttached': () => { return is_attached; },
         'getFirstOfContentSet': () => {}
     };

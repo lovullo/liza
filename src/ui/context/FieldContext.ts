@@ -19,8 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { PositiveInteger } from "../../numeric";
-
 export type ContextContent = Element;
 export type NullableContextContent = ContextContent | null;
 
@@ -48,11 +46,6 @@ export class FieldContext
     private _field_parent_element: NullableContextContent = null;
 
     /**
-     * Field element ID prefix
-     */
-    private _field_id_prefix: string = 'q_';
-
-    /**
      * If field is a subfield
      */
     private _is_subfield: boolean = false;
@@ -61,18 +54,14 @@ export class FieldContext
     /**
      * Initialize FieldContext
      *
-     * @param _name field name
-     * @param _index field index
-     * @param _position field position
+     * @param _document to create Document elements
+     * @param _element_id field identifier
      * @param _content field content
      * @param _sibling sibling field content
-     * @param _document to create Document elements
      */
     constructor(
         private readonly _document: Document,
-        private readonly _name: string,
-        private readonly _index: PositiveInteger,
-        private _position: PositiveInteger,
+        private readonly _element_id: string,
         private readonly _content: ContextContent,
         private _sibling: NullableContextContent = null
     )
@@ -84,29 +73,11 @@ export class FieldContext
 
 
     /**
-     * Return the field name
+     * Return the field identifier as used on the DOM
      */
-    getName(): string
+    getElementId(): string
     {
-        return this._name;
-    }
-
-
-    /**
-     * Return the field index
-     */
-    getIndex(): PositiveInteger
-    {
-        return this._index;
-    }
-
-
-    /**
-     * Return position index
-     */
-    getPosition(): PositiveInteger
-    {
-        return this._position;
+        return this._element_id;
     }
 
 
@@ -129,8 +100,7 @@ export class FieldContext
      */
     setOptions( options: FieldOptions, value?: string ): void
     {
-        const element_id = this._field_id_prefix + this._name + '_' + this._index;
-        const field_element = <HTMLSelectElement>this._content.querySelector( "select#" + element_id );
+        const field_element = <HTMLSelectElement>this._content.querySelector( "select#" + this._element_id );
 
         if ( field_element === null )
         {
@@ -218,9 +188,7 @@ export class FieldContext
      */
     private _isSubField(): boolean
     {
-        const element_id = this._field_id_prefix + this._name + '_' + this._index;
-
-        this._field_element = this._content.querySelector( "#" + element_id );
+        this._field_element = this._content.querySelector( "#" + this._element_id );
 
         if ( this._field_element === null )
         {

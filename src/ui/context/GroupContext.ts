@@ -79,8 +79,7 @@ export class GroupContext
         {
             let field = fields[ i ];
 
-            // Initial fields will have 0 index and position
-            // The FieldContext will reset its position
+            // Initial fields will have 0 index
             let index = <PositiveInteger>0;
 
             let field_content   = this._parser.parse( field, content );
@@ -101,7 +100,7 @@ export class GroupContext
 
                 // Create the FieldContext for the first index
                 let field_context = this._field_context_factory
-                    .create( field, index, index, field_content, sibling_content );
+                    .create( field, index, field_content, sibling_content );
 
                 this._field_context_cache[ field ] = [];
                 this._field_context_cache[ field ][ index ] = field_context;
@@ -218,10 +217,9 @@ export class GroupContext
 
         const field_content   = store.getContentClone( index );
         const sibling_content = store.getSiblingContentClone( index );
-        const position        = store.getPosition();
 
         const field_context = this._field_context_factory
-            .create( field_name, index, position, field_content, sibling_content );
+            .create( field_name, index, field_content, sibling_content );
 
         this._field_context_cache[ field_name ][ index ] = field_context;
 

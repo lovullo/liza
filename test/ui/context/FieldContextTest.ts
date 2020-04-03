@@ -20,7 +20,6 @@
  */
 
 import { FieldContext as Sut, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
-import { PositiveInteger } from "../../../src/numeric";
 
 import { expect } from 'chai';
 
@@ -42,9 +41,7 @@ describe( "FieldContext", () =>
         const content = group_content.querySelector( "#" + element_id );
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            element_id,
             <ContextContent>content
         );
 
@@ -58,39 +55,18 @@ describe( "FieldContext", () =>
     } );
 
 
-    it( 'gets field name', () =>
+    it( 'gets element ID', () =>
     {
         const element_id = 'qcontainer_checkbox_no_label';
         const group_content = getGroupContent();
         const content = group_content.querySelector( "#" + element_id );
-        const name = 'foo';
         const sut = new Sut(
             document,
-            name,
-            <PositiveInteger>55,
-            <PositiveInteger>0,
+            element_id,
             <ContextContent>content
         );
 
-        expect( sut.getName() ).to.equal( name );
-    } );
-
-
-    it( 'gets field index', () =>
-    {
-        const element_id = 'qcontainer_checkbox_no_label';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-        const index = <PositiveInteger>4;
-        const sut = new Sut(
-            document,
-            'baz',
-            index,
-            <PositiveInteger>0,
-            <ContextContent>content
-        );
-
-        expect( sut.getIndex() ).to.equal( index );
+        expect( sut.getElementId() ).to.equal( element_id );
     } );
 
 
@@ -143,12 +119,9 @@ describe( "FieldContext", () =>
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#" + element_id );
             const sibling = group_content.querySelector( "#" + sibling_id );
-            const name = 'foo';
             const sut = new Sut(
                 document,
-                name,
-                <PositiveInteger>0,
-                <PositiveInteger>0,
+                element_id,
                 <ContextContent>content,
                 <NullableContextContent>sibling
             );
@@ -170,8 +143,8 @@ describe( "FieldContext", () =>
     [
         {
             label: 'attaches a subfield to its parent',
-            field_name: 'subfield_single',
-            element_id: 'qcontainer_subfield_single',
+            content_element_id: 'qcontainer_subfield_single',
+            element_id: 'q_subfield_single_0',
             expected:
                 '<dd id="qcontainer_subfield_single">' +
                     '<select id="q_subfield_single_type_0" class="foo widget">' +
@@ -181,8 +154,8 @@ describe( "FieldContext", () =>
         },
         {
             label: 'attaches a subfield to its parent after its sibling subfields',
-            field_name: 'baz_subfield',
-            element_id: 'qcontainer_subfield',
+            content_element_id: 'qcontainer_subfield',
+            element_id: 'q_baz_subfield_0',
             expected:
                 '<dd id="qcontainer_subfield">' +
                     '<select id="q_bi_risk_type_0" class="foo widget">' +
@@ -192,16 +165,14 @@ describe( "FieldContext", () =>
                      '</select>' +
                 '</dd>'
         },
-    ].forEach( ( { label, field_name, element_id, expected } ) => {
+    ].forEach( ( { label, content_element_id, element_id, expected } ) => {
         it( label, () => {
 
             const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
+            const content = group_content.querySelector( "#" + content_element_id );
             const sut = new Sut(
                 document,
-                field_name,
-                <PositiveInteger>0,
-                <PositiveInteger>0,
+                element_id,
                 <ContextContent>content
             );
 
@@ -223,8 +194,8 @@ describe( "FieldContext", () =>
     [
         {
             label: 'detaches a subfield from its parent',
-            field_name: 'subfield_single',
-            element_id: 'qcontainer_subfield_single',
+            content_element_id: 'qcontainer_subfield_single',
+            element_id: 'q_subfield_single_0',
             expected:
                 '<dd id="qcontainer_subfield_single">' +
                     '<select id="q_subfield_single_type_0" class="foo widget">' +
@@ -233,8 +204,8 @@ describe( "FieldContext", () =>
         },
         {
             label: 'detaches a subfield that has sibling subfields from its parent ',
-            field_name: 'baz_subfield',
-            element_id: 'qcontainer_subfield',
+            content_element_id: 'qcontainer_subfield',
+            element_id: 'q_baz_subfield_0',
             expected:
                 '<dd id="qcontainer_subfield">' +
                     '<select id="q_bi_risk_type_0" class="foo widget">' +
@@ -243,16 +214,14 @@ describe( "FieldContext", () =>
                      '</select>' +
                 '</dd>'
         },
-    ].forEach( ( { label, field_name, element_id, expected } ) => {
+    ].forEach( ( { label, content_element_id, element_id, expected } ) => {
         it( label, () => {
 
             const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
+            const content = group_content.querySelector( "#" + content_element_id );
             const sut = new Sut(
                 document,
-                field_name,
-                <PositiveInteger>0,
-                <PositiveInteger>0,
+                element_id,
                 <ContextContent>content
             );
 
@@ -274,9 +243,7 @@ describe( "FieldContext", () =>
         let sibling = from_content.querySelector( "#qlabel_checkbox_foo" );
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'q_checkbox_foo_n_0',
             <ContextContent>content,
             <NullableContextContent>sibling
         );
@@ -296,9 +263,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'foo',
             <ContextContent>child
         );
 
@@ -316,9 +281,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'foo',
             <ContextContent>child
         );
 
@@ -338,9 +301,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'foo',
             <ContextContent>child
         );
 
@@ -358,9 +319,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'foo',
             <ContextContent>child
         );
 
@@ -375,9 +334,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'foo',
             <ContextContent>child
         );
 
@@ -392,9 +349,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
-            '',
-            <PositiveInteger>0,
-            <PositiveInteger>0,
+            'q_checkbox_foo_n_0',
             <ContextContent>content,
             <NullableContextContent>sibling
         );
@@ -443,9 +398,7 @@ describe( "FieldContext", () =>
             const content = group_content.querySelector( "#qcontainer_select_element" );
             const sut = new Sut(
                 document,
-                'select_element',
-                <PositiveInteger>0,
-                <PositiveInteger>0,
+                'q_select_element_0',
                 <ContextContent>content
             );
 
