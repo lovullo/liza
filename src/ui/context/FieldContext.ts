@@ -38,13 +38,13 @@ export class FieldContext
     /**
      * Initialize FieldContext
      *
-     * @param _document to create Document elements
+     * @param document to create Document elements
      * @param element_id field identifier
      * @param content field content
      * @param sibling sibling field content
      */
     constructor(
-        private readonly _document: Document,
+        protected readonly document: Document,
         protected readonly element_id: string,
         protected content: ContextContent,
         protected sibling: NullableContextContent = null
@@ -93,7 +93,7 @@ export class FieldContext
         {
             let opt_value = options[ item ]?.value;
             const option_value = opt_value || '';
-            const opt = this._document.createElement( 'option' );
+            const opt = this.document.createElement( 'option' );
             opt.value = option_value;
             opt.text = options[ item ].label;
             field_element.appendChild( opt );

@@ -122,6 +122,40 @@ describe( "RetainFieldContext", () =>
         } )
     } );
 
+
+    it( 'isAttached is false when not attached to DOM', () => {
+        const from_content = document.createElement("dl");
+        const child = document.createElement( "div" );
+        from_content.appendChild( child );
+
+        const sut = new Sut(
+            document,
+            'foo',
+            <ContextContent>child
+        );
+
+        // now detach
+        sut.detach();
+
+        expect( sut.isAttached() ).to.be.false;
+    } );
+
+
+    it( 'isAttached is true when attached to DOM', () => {
+        const from_content = document.createElement("dl");
+        const child = document.createElement( "div" );
+        from_content.appendChild( child );
+
+        const sut = new Sut(
+            document,
+            'foo',
+            <ContextContent>child
+        );
+
+        expect( sut.isAttached() ).to.be.true;
+    } );
+
+
 } );
 
 

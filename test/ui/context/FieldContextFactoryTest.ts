@@ -23,42 +23,57 @@ import { FieldContextFactory as Sut } from "../../../src/ui/context/FieldContext
 import { FieldContext, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
 import { PositiveInteger } from "../../../src/numeric";
+import { RetainFieldContext } from "../../../src/ui/context/RetainFieldContext";
+import { SubFieldContext } from "../../../src/ui/context/SubFieldContext";
 
 import { expect } from 'chai';
 
 
 describe( "FieldContextFactory", () =>
 {
-    it( "creates new FieldContext", () =>
-    {
-        const sut = new Sut( document );
-        const parent = document.createElement( "div" );
-        parent.innerHTML =
-            '<dl class="">' +
-                '<dt id="qlabel_checkbox_foo" >Foo</dt>' +
-                '<dd id="qcontainer_checkbox_foo">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
-                '</dd>' +
-            '</dl>';
+    [
+        {
+            label: 'creates new FieldContext',
+            is_subfield: false,
+            cretain: { 'foo_retain': 'bar' },
+            field_name: 'baz',
+            expected: FieldContext
+        },
+        {
+            label: 'creates new SubFieldContext',
+            is_subfield: true,
+            cretain: { 'foo_retain': 'bar' },
+            field_name: 'baz',
+            expected: SubFieldContext
+        },
+        {
+            label: 'creates new RetainFieldContext',
+            is_subfield: false,
+            cretain: { 'foo_retain': 'bar' },
+            field_name: 'foo_retain',
+            expected: RetainFieldContext
+        },
+    ].forEach( ( { label, is_subfield, cretain, field_name, expected } ) => {
+        it ( label, () =>
+        {
+            const sut = new Sut( document, cretain );
+            const content = document.createElement("div");
 
-        const content = parent.querySelector( "#qcontainer_checkbox_foo" );
-        const sibling = parent.querySelector( "#qlabel_checkbox_foo" );
+            const given = sut.create(
+                field_name,
+                <PositiveInteger>0,
+                <ContextContent>content,
+                is_subfield
+            );
 
-        const given = sut.create(
-            'foo',
-            <PositiveInteger>0,
-            <ContextContent>content,
-            false,
-            <NullableContextContent>sibling
-        );
-
-        expect( given ).to.be.instanceOf( FieldContext );
+            expect( given ).to.be.instanceOf( expected );
+        } );
     } );
-
 
     it( "creates new FieldContextStore", () =>
     {
-        const sut = new Sut( document );
+        const cretain = { 'foo': 'bar' };
+        const sut = new Sut( document, cretain );
         const parent = document.createElement( "div" );
         parent.innerHTML =
             '<dl class="">' +

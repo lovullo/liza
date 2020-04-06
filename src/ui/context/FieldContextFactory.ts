@@ -23,6 +23,8 @@ import { FieldContext, ContextContent, NullableContextContent } from "./FieldCon
 import { FieldContextStore } from "./FieldContextStore";
 import { PositiveInteger } from "../../numeric";
 import { SubFieldContext } from "./SubFieldContext";
+import { ClassificationRetain } from "../../program/Program";
+import { RetainFieldContext } from "./RetainFieldContext";
 
 
 export class FieldContextFactory
@@ -37,9 +39,11 @@ export class FieldContextFactory
      * Initialize FieldContextFactory
      *
      * @param _document - DOM
+     * @param _cretain - fields whose values must be retained
      */
     constructor(
         private readonly _document: Document,
+        private readonly _cretain: ClassificationRetain
     ) {}
 
 
@@ -62,10 +66,12 @@ export class FieldContextFactory
     {
         const element_id = this._field_id_prefix + name + '_' + index;
 
-        // TODO: pass in cretain and instantiate a RetainFieldContext Object
         let obj = FieldContext;
         if ( is_subfield ) {
             obj = SubFieldContext;
+        } else if ( !!this._cretain[ name ] )
+        {
+            obj = RetainFieldContext;
         }
 
         return new obj(
