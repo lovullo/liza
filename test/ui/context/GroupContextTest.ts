@@ -403,6 +403,72 @@ describe( "GroupContext", () =>
     } );
 
 
+
+    it( "removeIndex removes last index from ContextCache", () =>
+    {
+        const fields = [ 'foo', 'bar' ];
+
+        let get_clone_called_num_times = 0;
+
+        let stubs = <ContextCache>{
+            'foo': [
+                getFieldContextStub( 'foo', false ),
+                getFieldContextStub( 'foo', false )
+            ],
+            'bar': [
+                getFieldContextStub( 'bar', false ),
+                getFieldContextStub( 'bar', false )
+            ],
+        }
+
+        const parser = getContextParserStub();
+        const store = getFieldContextStoreStub();
+        const factory = <FieldContextFactory>{
+            create: ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
+                return stubs[ field ][ index ]
+            },
+            'createStore': ( _: any, __:any ) => {
+                return store;
+            }
+        };
+
+        stubs[ 'foo' ][ 1 ].attach = ( _:any, __:any ) => { };
+
+        stubs[ 'foo' ][ 1 ].isAttached = () => {
+            return false;
+        };
+
+        stubs[ 'bar' ][ 1 ].attach = ( _:any, __:any ) => { };
+
+        stubs[ 'bar' ][ 1 ].isAttached = () => {
+            return false;
+        };
+
+        store.getContentClone = ( _:any ) =>
+        {
+            get_clone_called_num_times++;
+            return <ContextContent>{};
+        }
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+
+        // Simulate index 1 elements being added to ContextCache
+        sut.attach( 'foo', <PositiveInteger>1, dummy_content );
+        sut.attach( 'bar', <PositiveInteger>1, dummy_content );
+
+        sut.removeIndex( fields );
+
+        // now that index is removed, attach the content back
+        // which will re-add them to the ContextCache
+        sut.attach( 'foo', <PositiveInteger>1, dummy_content );
+        sut.attach( 'bar', <PositiveInteger>1, dummy_content );
+
+        expect( get_clone_called_num_times ).to.equal( 4 );
+    } );
+
+
     [
         {
             label: 'setOptions sets options when field is cached',

@@ -111,6 +111,28 @@ export class GroupContext
 
 
     /**
+     * Remove the last index from the field context cache
+     *
+     * @param fields - exclusive field names of group
+     */
+    removeIndex( fields: string[] ): void
+    {
+        for ( let i = 0; i < fields.length; i++ )
+        {
+            let field = fields[ i ];
+
+            if ( this._field_context_cache[ field ] === undefined )
+            {
+                continue;
+            }
+
+            // Remove the last index
+            this._field_context_cache[ field ].pop();
+        }
+    }
+
+
+    /**
      * Return if the field is attached to the DOM
      *
      * @param field_name - field name
