@@ -60,6 +60,8 @@ module.exports = Class( 'StackedGroupUi' )
 
         this.initGroupContext();
 
+        this.hideCmatchFields();
+
         this._dl.parentNode.removeChild( this._dl );
     },
 
@@ -80,11 +82,11 @@ module.exports = Class( 'StackedGroupUi' )
         // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( item.getElementsByTagName( '*' ), index );
 
-        // Set field content parent for this index
-        this.fieldContentParent[ index ] = item;
-
         // add the index to the row title
         item.querySelector( 'span.item-index' ).textContent = ' ' + ( index + 1 );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = item;
 
         this._container.appendChild( item );
 

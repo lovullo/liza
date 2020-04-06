@@ -226,7 +226,6 @@ module.exports = Class( 'GroupUi' )
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
-        this._hideCmatchFields();
 
         // in an attempt to prevent memory leaks
         this._emptyOnVisit = null;
@@ -353,6 +352,8 @@ module.exports = Class( 'GroupUi' )
         this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
 
         this.initGroupContext();
+
+        this.hideCmatchFields();
     },
 
 
@@ -365,7 +366,7 @@ module.exports = Class( 'GroupUi' )
     'protected initGroupContext': function()
     {
         const fields = this.group.getExclusiveFieldNames();
-        this.context.createFieldCache( fields, this.content );
+        this.context.createFieldStores( fields, this.content );
     },
 
 
@@ -377,16 +378,10 @@ module.exports = Class( 'GroupUi' )
      *
      * @return undefined
      */
-    'private _hideCmatchFields': function()
+    'protected hideCmatchFields': function()
     {
         const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
-
-        for ( let i = 0; i < cmatch_fields.length; i++ )
-        {
-            let field = cmatch_fields[ i ];
-
-            this.hideField( field, 0 );
-        }
+        this.context.detachStoreContent( cmatch_fields );
     },
 
 

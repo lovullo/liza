@@ -115,6 +115,8 @@ module.exports = Class( 'CollapseTableGroupUi' )
 
         this.initGroupContext();
 
+        this.hideCmatchFields();
+
         this._$baseRows.detach();
 
         this._calcColumnWidths();

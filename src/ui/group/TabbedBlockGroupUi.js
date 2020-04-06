@@ -166,8 +166,8 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var content = this._box.querySelector( '.tab-content' );
 
         this.fieldContentParent[ 0 ] = content;
-
         this.initGroupContext();
+        this.hideCmatchFields();
 
         this._tabItem     = tab.parentElement.removeChild( tab );
         this._contentItem = content.parentElement.removeChild( content );

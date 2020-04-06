@@ -109,6 +109,8 @@ module.exports = Class( 'TabbedGroupUi' )
 
         this.initGroupContext();
 
+        this.hideCmatchFields();
+
         this.$baseTabContent.detach();
 
         // transform into tabbed div

@@ -40,10 +40,11 @@ describe( 'ui.group.GroupUi', () =>
                 let context_called = false;
 
                 const context = {
-                    createFieldCache: function()
+                    createFieldStores: function()
                     {
                         context_called = true;
-                    }
+                    },
+                    detachStoreContent: function(){}
                 };
 
                 const group = {
@@ -89,34 +90,11 @@ describe( 'ui.group.GroupUi', () =>
 
 function createContent()
 {
-    const content = {
+    return {
         querySelector: sinon.stub(),
         querySelectorAll: sinon.stub(),
         getAttribute: sinon.stub().returns( null )
     };
-
-    const group_content = {
-        querySelectorAll: sinon.stub(),
-        parentNode: {
-            removeChild:  sinon.stub()
-        }
-    };
-
-    const group_element = {
-        classList: {
-            remove: sinon.stub(),
-        },
-    };
-
-    group_content.querySelectorAll
-        .withArgs( '.hidden.i' )
-        .returns( [ group_element, group_element ] );
-
-    content.querySelector
-        .withArgs( 'dl' )
-        .returns( group_content );
-
-    return content;
 }
 
 

@@ -127,6 +127,9 @@ module.exports = Class( 'TableGroupUi' )
                 groupui.$baseRow = $( this ).detach();
             }
         );
+
+        this.initGroupContext();
+        this.hideCmatchFields();
     },
 
 

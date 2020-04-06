@@ -104,6 +104,8 @@ module.exports = Class( 'SideTableGroupUi' )
 
         this.initGroupContext();
 
+        this.hideCmatchFields();
+
         this.$baseBodyColumn.detach();
 
         this.subcolCount =  +( $( this.$baseHeadColumn[0] ).attr( 'colspan' ) );
