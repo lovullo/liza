@@ -618,6 +618,8 @@ module.exports = Class( 'GroupUi' )
             cached !== undefined && cached.pop();
         }
 
+        this.context.removeIndex( fields );
+
         this._indexCount--;
         this._recalcFieldCount( -1, index );
 
