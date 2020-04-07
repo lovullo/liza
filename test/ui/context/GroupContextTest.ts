@@ -173,14 +173,14 @@ describe( "GroupContext", () =>
 
         const parser = getContextParserStub();
 
-        let attached_is_called = false;
+        let show_is_called = false;
 
         const stub = getFieldContextStub();
         const factory = getFieldContextFactory( stub );
 
         stub.isAttached = ( ) =>
         {
-            attached_is_called = true;
+            show_is_called = true;
             return true;
         };
 
@@ -190,67 +190,67 @@ describe( "GroupContext", () =>
 
         const given = sut.isFieldAttached( 'baz', <PositiveInteger>0 );
 
-        expect( attached_is_called ).to.be.true;
+        expect( show_is_called ).to.be.true;
         expect( given ).to.be.true;
     } );
 
 
-    it( "detaches field", () =>
+    it( "hides field", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
         const parser = getContextParserStub();
 
-        let detach_is_called = false;
+        let hide_is_called = false;
         const stub = getFieldContextStub();
         const factory = getFieldContextFactory( stub );
 
-        stub.detach = () =>
+        stub.hide = () =>
         {
-            detach_is_called = true;
+            hide_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
-        sut.detach( 'foo', <PositiveInteger>0 );
-        expect( detach_is_called ).to.be.true;
+        sut.hide( 'foo', <PositiveInteger>0 );
+        expect( hide_is_called ).to.be.true;
     } );
 
 
-    it( "does not detach field if field doesn't exist in cache", () =>
+    it( "does not hide field if field doesn't exist in cache", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
         const parser = getContextParserStub();
 
-        let detach_is_called = false;
+        let hide_is_called = false;
 
         const stub = getFieldContextStub();
         const factory = getFieldContextFactory( stub );
 
-        stub.detach = () =>
+        stub.hide = () =>
         {
-            detach_is_called = true;
+            hide_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
-        sut.detach( 'bar', <PositiveInteger>0 );
-        expect( detach_is_called ).to.be.false;
+        sut.hide( 'bar', <PositiveInteger>0 );
+        expect( hide_is_called ).to.be.false;
     } );
 
 
-    it( "attach field supplies previous element to attach to", () =>
+    it( "show field supplies previous element to attach to", () =>
     {
         const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];
         let stubs = <ContextCache>{
-            'moo': [ getFieldContextStub( 'moo', false ) ],
-            'foo': [ getFieldContextStub( 'foo', false ) ],
-            'bar': [ getFieldContextStub( 'bar', false ) ],
-            'baz': [ getFieldContextStub( 'baz', true ) ],
-            'qux': [ getFieldContextStub( 'qux', true ) ]
+            'moo': [ getFieldContextStub( 'moo', false, false ) ],
+            'foo': [ getFieldContextStub( 'foo', false, false ) ],
+            'bar': [ getFieldContextStub( 'bar', false, false ) ],
+            'baz': [ getFieldContextStub( 'baz', true, true ) ],
+            'qux': [ getFieldContextStub( 'qux', true, true ) ]
         }
 
         let stores = <ContextStores>{
@@ -263,7 +263,7 @@ describe( "GroupContext", () =>
 
         let store_index = 0;
 
-        let attach_is_called = false;
+        let show_is_called = false;
 
         const parser = getContextParserStub();
 
@@ -279,12 +279,13 @@ describe( "GroupContext", () =>
         };
 
         const baz_content = document.createElement( "div" );
+
         stubs[ 'baz' ][ 0 ].getFirstOfContentSet = () =>
         {
             return baz_content;
         };
 
-        stubs[ 'foo' ][ 0 ].attach = (
+        stubs[ 'foo' ][ 0 ].show = (
             to: ContextContent,
             next_element: NullableContextContent
         ) =>
@@ -292,18 +293,18 @@ describe( "GroupContext", () =>
             expect( to ).to.equal( dummy_content );
             // it should be attaching to baz which is the next attached element
             expect( next_element ).to.equal( baz_content );
-            attach_is_called = true;
+            show_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
-        sut.attach( 'foo', <PositiveInteger>0, dummy_content );
-        expect( attach_is_called ).to.be.true;
+        sut.show( 'foo', <PositiveInteger>0, dummy_content );
+        expect( show_is_called ).to.be.true;
     } );
 
 
-    it( "attach field creates new FieldContext when not created yet for a new index", () =>
+    it( "show field creates new FieldContext when not created yet for a new index", () =>
     {
         const fields = [ 'foo', 'bar', 'baz' ];
 
@@ -319,7 +320,7 @@ describe( "GroupContext", () =>
             'baz': [ getFieldContextStub( 'baz', true ) ],
         }
 
-        let attach_is_called = false;
+        let show_is_called = false;
         let get_clone_is_called = false;
         let get_sibling_clone_is_called = false;
         let get_position_is_called = false;
@@ -353,7 +354,7 @@ describe( "GroupContext", () =>
             return <PositiveInteger>1;
         }
 
-        stubs[ 'bar' ][ 1 ].attach = (
+        stubs[ 'bar' ][ 1 ].show = (
             to: ContextContent,
             next_element: NullableContextContent
         ) =>
@@ -361,45 +362,45 @@ describe( "GroupContext", () =>
             expect( to ).to.equal( dummy_content );
             // There is no next element with index 1
             expect( next_element ).to.equal( null );
-            attach_is_called = true;
+            show_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
 
-        sut.attach( 'bar', <PositiveInteger>1, dummy_content );
+        sut.show( 'bar', <PositiveInteger>1, dummy_content );
 
-        expect( attach_is_called ).to.be.true;
+        expect( show_is_called ).to.be.true;
         expect( get_clone_is_called ).to.be.true;
         expect( get_sibling_clone_is_called ).to.be.true;
         expect( get_position_is_called ).to.be.true;
     } );
 
 
-    it( "does not attach field if field doesn't exist in cache", () =>
+    it( "does not show field if field doesn't exist in cache", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
         const parser = getContextParserStub();
 
-        let attach_is_called = false;
+        let show_is_called = false;
 
         const stub = getFieldContextStub();
         const factory = getFieldContextFactory( stub );
 
-        stub.attach = ( _:any, __:any ) =>
+        stub.show = ( _:any, __:any ) =>
         {
-            attach_is_called = true;
+            show_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.createFieldCache( fields, dummy_content );
 
-        sut.detach( 'bar', <PositiveInteger>0 );
+        sut.hide( 'bar', <PositiveInteger>0 );
 
-        expect( attach_is_called ).to.be.false;
+        expect( show_is_called ).to.be.false;
     } );
 
 
@@ -432,15 +433,15 @@ describe( "GroupContext", () =>
             }
         };
 
-        stubs[ 'foo' ][ 1 ].attach = ( _:any, __:any ) => { };
+        stubs[ 'foo' ][ 1 ].show = ( _:any, __:any ) => { };
 
-        stubs[ 'foo' ][ 1 ].isAttached = () => {
+        stubs[ 'foo' ][ 1 ].isVisible = () => {
             return false;
         };
 
-        stubs[ 'bar' ][ 1 ].attach = ( _:any, __:any ) => { };
+        stubs[ 'bar' ][ 1 ].show = ( _:any, __:any ) => { };
 
-        stubs[ 'bar' ][ 1 ].isAttached = () => {
+        stubs[ 'bar' ][ 1 ].isVisible = () => {
             return false;
         };
 
@@ -455,15 +456,15 @@ describe( "GroupContext", () =>
         sut.createFieldCache( fields, dummy_content );
 
         // Simulate index 1 elements being added to ContextCache
-        sut.attach( 'foo', <PositiveInteger>1, dummy_content );
-        sut.attach( 'bar', <PositiveInteger>1, dummy_content );
+        sut.show( 'foo', <PositiveInteger>1, dummy_content );
+        sut.show( 'bar', <PositiveInteger>1, dummy_content );
 
         sut.removeIndex( fields );
 
         // now that index is removed, attach the content back
         // which will re-add them to the ContextCache
-        sut.attach( 'foo', <PositiveInteger>1, dummy_content );
-        sut.attach( 'bar', <PositiveInteger>1, dummy_content );
+        sut.show( 'foo', <PositiveInteger>1, dummy_content );
+        sut.show( 'bar', <PositiveInteger>1, dummy_content );
 
         expect( get_clone_called_num_times ).to.equal( 4 );
     } );
@@ -550,11 +551,13 @@ function getFieldContextStoreStub( position = 0 )
 
 function getFieldContextStub(
     element_id: string = '',
+    is_visible = false,
     is_attached = false
 )
 {
     return <FieldContext>{
         'getElementId': () => { return element_id },
+        'isVisible': () => { return is_visible; },
         'isAttached': () => { return is_attached; },
         'getFirstOfContentSet': () => {}
     };

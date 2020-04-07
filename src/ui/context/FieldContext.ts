@@ -36,6 +36,18 @@ export type FieldOption = {
 export class FieldContext
 {
     /**
+     * Is attached on the DOM
+     */
+    protected is_attached: boolean = true;
+
+
+    /**
+     * Is field visible to the user
+     */
+    protected is_visible: boolean = true;
+
+
+    /**
      * Initialize FieldContext
      *
      * @param document to create Document elements
@@ -66,7 +78,16 @@ export class FieldContext
      */
     isAttached(): boolean
     {
-        return ( this.content.parentElement !== null );
+        return this.is_attached;
+    }
+
+
+    /**
+     * If the field is visible
+     */
+    isVisible(): boolean
+    {
+        return this.is_visible;
     }
 
 
@@ -104,12 +125,24 @@ export class FieldContext
 
 
     /**
-     * Attach the field to the DOM
+     * Show the field
      *
      * @param to - Parent to attach to
      * @param next_element - Next element to attach before
      */
-    attach( to: ContextContent, next_element: NullableContextContent ): void
+    show( to: ContextContent, next_element: NullableContextContent ): void
+    {
+        this.attach( to, next_element );
+    }
+
+
+    /**
+     * Show the field
+     *
+     * @param to - Parent to attach to
+     * @param next_element - Next element to attach before
+     */
+    protected attach( to: ContextContent, next_element: NullableContextContent ): void
     {
         to.insertBefore( this.content, next_element );
 
@@ -117,13 +150,25 @@ export class FieldContext
         {
             to.insertBefore( this.sibling, this.content );
         }
+
+        this.is_attached = true;
+        this.is_visible  = true;
+    }
+
+
+    /**
+     * Hide the field
+     */
+    hide(): void
+    {
+        this.detach();
     }
 
 
     /**
      * Detach the field from the DOM
      */
-    detach(): void
+    protected detach()
     {
         if ( this.content.parentElement )
         {
@@ -135,6 +180,9 @@ export class FieldContext
                 this.sibling.parentElement.removeChild( this.sibling );
             }
         }
+
+        this.is_attached = false;
+        this.is_visible  = false;
     }
 
 

@@ -73,11 +73,11 @@ describe( "SubFieldContext", () => {
             );
 
             // First detach it
-            sut.detach();
+            sut.hide();
             expect( sut.isAttached() ).to.be.false;
 
             const to_content = document.createElement("dl");
-            sut.attach( to_content, null );
+            sut.show( to_content, null );
 
             const final_content = sut.getFirstOfContentSet();
             expect( final_content.outerHTML ).to.equal( expected );
@@ -124,7 +124,7 @@ describe( "SubFieldContext", () => {
 
             expect( sut.isAttached() ).to.be.true;
 
-            sut.detach();
+            sut.hide();
             const final_content = sut.getFirstOfContentSet();
             expect( final_content.outerHTML ).to.equal( expected );
 

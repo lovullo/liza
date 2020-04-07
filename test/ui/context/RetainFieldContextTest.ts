@@ -36,7 +36,7 @@ describe( "RetainFieldContext", () =>
 
     [
         {
-            label: 'attach removes hidden class for content',
+            label: 'show removes hidden class for content',
             element_id: 'qcontainer_field',
             sibling_id: 'not_found',
             expected:
@@ -47,7 +47,7 @@ describe( "RetainFieldContext", () =>
                 '</dd>',
         },
         {
-            label: 'attach removes hidden class for sibling',
+            label: 'show removes hidden class for sibling',
             element_id: 'qcontainer_field',
             sibling_id: 'qlabel_field',
             expected:
@@ -71,7 +71,7 @@ describe( "RetainFieldContext", () =>
 
             const to = document.createElement("dl");
 
-            sut.attach( to, null );
+            sut.show( to, null );
 
             const given = sut.getFirstOfContentSet();
             expect( given.outerHTML ).to.equal( expected );
@@ -82,7 +82,7 @@ describe( "RetainFieldContext", () =>
 
     [
         {
-            label: 'detach adds hidden class for content',
+            label: 'hide adds hidden class for content',
             element_id: 'qcontainer_field',
             sibling_id: 'not_found',
             expected:
@@ -93,7 +93,7 @@ describe( "RetainFieldContext", () =>
                 '</dd>',
         },
         {
-            label: 'detach adds hidden class for sibling',
+            label: 'hide adds hidden class for sibling',
             element_id: 'qcontainer_field',
             sibling_id: 'qlabel_field',
             expected:
@@ -115,7 +115,7 @@ describe( "RetainFieldContext", () =>
                 <NullableContextContent>sibling
             );
 
-            sut.detach();
+            sut.hide();
 
             const given = sut.getFirstOfContentSet();
             expect( given.outerHTML ).to.equal( expected );
@@ -123,7 +123,7 @@ describe( "RetainFieldContext", () =>
     } );
 
 
-    it( 'isAttached is false when not attached to DOM', () => {
+    it( 'isAttached is true even when hide is called', () => {
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );
@@ -134,14 +134,14 @@ describe( "RetainFieldContext", () =>
             <ContextContent>child
         );
 
-        // now detach
-        sut.detach();
+        // now hide
+        sut.hide();
 
-        expect( sut.isAttached() ).to.be.false;
+        expect( sut.isAttached() ).to.be.true;
     } );
 
 
-    it( 'isAttached is true when attached to DOM', () => {
+    it( 'isAttached is true', () => {
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );

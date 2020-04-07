@@ -39,17 +39,6 @@ export class SubFieldContext extends FieldContext
 
 
     /**
-     * If the subfield is attached to the DOM
-     */
-    isAttached(): boolean
-    {
-        const field_element = this.content.querySelector( "#" + this.element_id );
-
-        return ( !!field_element?.parentElement );
-    }
-
-
-    /**
      * Attach the subfield to its parent
      *
      * @param to - Parent to attach to
@@ -62,6 +51,9 @@ export class SubFieldContext extends FieldContext
         {
             this._field_parent_element.appendChild( this._field_element );
         }
+
+        this.is_attached = true;
+        this.is_visible  = true;
     }
 
 
@@ -80,5 +72,8 @@ export class SubFieldContext extends FieldContext
 
             this._field_parent_element.removeChild( this._field_element );
         }
+
+        this.is_attached = false;
+        this.is_visible  = false;
     }
 }

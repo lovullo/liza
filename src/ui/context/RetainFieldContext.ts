@@ -28,22 +28,12 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 export class RetainFieldContext extends FieldContext
 {
     /**
-     * Retain fields will never be detached from the DOM so use
-     * its visibility
-     */
-    isAttached(): boolean
-    {
-        return ( this.content.classList.contains( 'hidden' ) === false );
-    }
-
-
-    /**
      * Attach the field to the DOM or make it visible if already attached
      *
      * @param _to - Parent to attach to
      * @param _next_element - Next element to attach before
      */
-    attach( _to: ContextContent, _next_element: NullableContextContent ): void
+    show( _to: ContextContent, _next_element: NullableContextContent ): void
     {
         this.content.classList.remove( "hidden" );
 
@@ -51,13 +41,15 @@ export class RetainFieldContext extends FieldContext
         {
             this.sibling.classList.remove( "hidden" );
         }
+
+        this.is_visible = true;
      }
 
 
     /**
      * Hide field on DOM, retainable fields must not be detached
      */
-    detach(): void
+    hide(): void
     {
         this.content.classList.add( "hidden" );
 
@@ -65,5 +57,7 @@ export class RetainFieldContext extends FieldContext
         {
             this.sibling.classList.add( "hidden" );
         }
+
+        this.is_visible = false;
     }
 }

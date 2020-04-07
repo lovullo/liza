@@ -134,7 +134,7 @@ describe( "FieldContext", () =>
                 to_content.appendChild( dummy_next_element );
             }
 
-            sut.attach( to_content, dummy_next_element );
+            sut.show( to_content, dummy_next_element );
             expect( to_content.outerHTML ).to.equal( expected );
         } )
     } );
@@ -154,7 +154,7 @@ describe( "FieldContext", () =>
 
         expect( from_content.contains( content ) ).to.be.true;
         expect( from_content.contains( sibling ) ).to.be.true;
-        sut.detach();
+        sut.hide();
         expect( from_content.contains( content ) ).to.be.false;
         expect( from_content.contains( sibling ) ).to.be.false;
     } )
@@ -171,7 +171,7 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
-        sut.detach();
+        sut.hide();
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
     } )
@@ -192,13 +192,13 @@ describe( "FieldContext", () =>
         // now simulate detaching
         from_content.removeChild( child );
 
-        sut.detach();
+        sut.hide();
         expect( from_content.contains( child ) ).to.be.false;
         expect( from_content.outerHTML).to.equal( '<dl></dl>' );
     } )
 
 
-    it( 'isAttached is false when not attached to DOM', () => {
+    it( 'isAttached and isVisible is false when not attached to DOM', () => {
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );
@@ -210,13 +210,15 @@ describe( "FieldContext", () =>
         );
 
         // now detach
-        sut.detach();
+        sut.hide();
 
         expect( sut.isAttached() ).to.be.false;
+
+        expect( sut.isVisible() ).to.be.false;
     } );
 
 
-    it( 'isAttached is true when attached to DOM', () => {
+    it( 'isAttached and isVisible is true when attached to DOM', () => {
         const from_content = document.createElement("dl");
         const child = document.createElement( "div" );
         from_content.appendChild( child );
@@ -228,6 +230,8 @@ describe( "FieldContext", () =>
         );
 
         expect( sut.isAttached() ).to.be.true;
+
+        expect( sut.isVisible() ).to.be.true;
     } );
 
 

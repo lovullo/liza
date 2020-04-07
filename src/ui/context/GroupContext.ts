@@ -181,13 +181,13 @@ export class GroupContext
     }
 
     /**
-     * Attach field to DOM
+     * Show field on the DOM
      *
      * @param field_name - to attach to DOM
      * @param index - field index
      * @param to - parent context
      */
-    attach(
+    show(
         field_name: string,
         index: PositiveInteger,
         to: ContextContent
@@ -201,7 +201,7 @@ export class GroupContext
 
         const field_context = this._fromCache( field_name, index );
 
-        if ( field_context.isAttached() === false )
+        if ( field_context.isVisible() === false )
         {
             let next_element = this._getNextElement( field_name, index );
             const next_element_id = next_element?.getAttribute( 'id' ) || '';
@@ -211,7 +211,7 @@ export class GroupContext
                 next_element = to.querySelector( "#" + next_element_id );
             }
 
-            field_context.attach(
+            field_context.show(
                 to,
                 next_element
             );
@@ -220,12 +220,12 @@ export class GroupContext
 
 
     /**
-     * Detach field from DOM
+     * Hide field from DOM
      *
      * @param field_name - to detach from DOM
      * @param index - field index
      */
-    detach(
+    hide(
         field_name: string,
         index: PositiveInteger
     ): void
@@ -237,7 +237,7 @@ export class GroupContext
             return;
         }
 
-        this._field_context_cache[ field_name ][ index ].detach();
+        this._field_context_cache[ field_name ][ index ].hide();
     }
 
 
