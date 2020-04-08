@@ -543,7 +543,7 @@ function doRoute( program, request, data, resolve, reject )
                 rating_service.request( request.getSession(), quote, alias )
                     .then( ( result ) =>
                     {
-                        server.sendResponse(
+                        return server.sendResponse(
                             request,
                             quote,
                             result.content,

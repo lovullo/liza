@@ -126,4 +126,11 @@ export declare class ServerSideQuote extends BaseQuote
      * @return the number of retries pending
      */
     getRetryCount( data?: Record<string, any> ): number;
+
+    /**
+     * Sets the quote's initial rated date
+     *
+     * @param time initial rated date as a Unix timestamp
+     */
+    setInitialRatedDate( time: number ): this;
 }

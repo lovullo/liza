@@ -137,23 +137,23 @@ export interface ServerDao
 
 
     /**
-     * Updates the quote retry attempts
+     * Updates the quote retry attempts and intial rated date
      *
      * @param quote - the quote to update
      *
      * @returns a promise with an updated quote
      */
-    updateQuoteRateRetries( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    updateQuoteInfo( quote: ServerSideQuote ): Promise<ServerSideQuote>
 
 
     /**
-     * Check if the quote has pending suppliers
+     * Ensure the quote has been rated before
      *
-     * @param quote - the quote to update
+     * @param quote - the quote to validate
      *
      * @returns a promise with the quote
      */
-    ensurePendingSuppliers( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    ensurePriorRate( quote: ServerSideQuote ): Promise<ServerSideQuote>
 
 
     /**
