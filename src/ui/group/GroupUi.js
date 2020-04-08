@@ -1269,9 +1269,19 @@ module.exports = Class( 'GroupUi' )
 
     'public setOptions': function( name, index, options, val )
     {
-        this.styler.setOptions(
-            name, index, options, val, this.getContentByIndex( name, index )
-        );
+        // non-cmatch fields should continue to use the styler
+        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+        if ( cmatch_fields.indexOf( name ) === -1 )
+        {
+            this.styler.setOptions(
+                name, index, options, val, this.getContentByIndex( name, index )
+            );
+        }
+        else
+        {
+            this.context.setOptions( name, index, options, val );
+        }
+
         return this;
     },
 
