@@ -147,6 +147,41 @@ describe( "GroupContext", () =>
     } );
 
 
+    it( "detach FieldContextStore content", () =>
+    {
+        const fields        = [ 'foo', 'baz', 'bar' ];
+        const cmatch_fields = [ 'foo', 'bar' ];
+
+        let detach_is_called_num_times = 0;
+
+        const parser = getContextParserStub();
+        const store = getFieldContextStoreStub();
+
+        const factory = <FieldContextFactory>{
+            'create': ( _: string, __: any, ___:any, ____:any ) => {
+                return getFieldContextStub();
+            },
+            'createStore': ( _: any, __:any, ___:any ) => {
+                return store;
+            }
+        };
+
+        store.detach = () =>
+        {
+            detach_is_called_num_times++;
+            return;
+        }
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldCache( fields, dummy_content );
+
+        sut.detachStoreContent( cmatch_fields );
+
+        expect( detach_is_called_num_times ).to.equal( cmatch_fields.length );
+    } );
+
+
     it( "isFieldAttached returns false if field doesn't exist in cache", () =>
     {
         const fields = [ 'foo', 'baz' ];
@@ -543,7 +578,8 @@ function getFieldContextStoreStub( position = 0 )
         'getPosition': () => { return <PositiveInteger>position; },
         'getContentClone': () => {},
         'getSiblingContentClone': () => {},
-        'isSubField': () => { return false; }
+        'isSubField': () => { return false; },
+        'detach': () => {}
     }
 }
 

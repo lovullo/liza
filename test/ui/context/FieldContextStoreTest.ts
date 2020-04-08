@@ -95,6 +95,28 @@ describe( "FieldContextStore", () =>
     } );
 
 
+    it( "detaches the content and sibling from the parent", () =>
+    {
+        const element_id = 'qcontainer_foo_bar_long_name';
+        const sibling_id = 'qlabel_foo_bar_long_name';
+
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+        const sibling = group_content.querySelector( "#" + sibling_id );
+
+        const sut = new Sut(
+            'foo',
+            <ContextContent>content,
+            <ContextContent>sibling,
+        );
+
+        sut.detach();
+
+        expect( content?.parentElement ).to.equal( null );
+        expect( sibling?.parentElement ).to.equal( null );
+    } );
+
+
     it( "determines the position of the sibling when not null", () =>
     {
         const element_id = 'qlabel_foo_bar_long_name';

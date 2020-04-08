@@ -111,6 +111,38 @@ export class GroupContext
 
 
     /**
+     * Detaches content from the FieldContextStores
+     * for specific fields that have cmatches
+     *
+     * The purpose of this is to reduce the number of
+     * DOM elements in the parent of the content
+     * in the FieldContextStore before the parent
+     * is cloned for each index
+     *
+     * This method can be optionally called by
+     * GroupUi and its subtypes to improve performance
+     *
+     * @param fields - cmatch field names of group
+     */
+    detachStoreContent(
+        fields: string[],
+    ): void
+    {
+        for ( let i = 0; i < fields.length; i++ )
+        {
+            let field = fields[ i ];
+
+            let store = this._field_context_stores[ field ];
+
+            if ( store !== null )
+            {
+                store.detach();
+            }
+        }
+    }
+
+
+    /**
      * Remove the last index from the field context cache
      *
      * @param fields - exclusive field names of group

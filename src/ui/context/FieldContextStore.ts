@@ -93,6 +93,26 @@ export class FieldContextStore
 
 
     /**
+     * Detaches content and sibling from its parent
+     *
+     * The content will stay in memory so it can be cloned
+     */
+    detach(): void
+    {
+        if ( this._content.parentElement )
+        {
+            this._content.parentElement.removeChild( this._content );
+
+            if ( this._sibling !== null &&
+                this._sibling.parentElement )
+            {
+                this._sibling.parentElement.removeChild( this._sibling );
+            }
+        }
+    }
+
+
+    /**
      * Return position index
      */
     getPosition(): PositiveInteger
