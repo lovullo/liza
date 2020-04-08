@@ -193,4 +193,13 @@ export class FieldContext
     {
         return this.sibling || this.content;
     }
+
+
+    /**
+     * Get the field content
+     */
+    getContent(): ContextContent
+    {
+        return this.content;
+    }
 }

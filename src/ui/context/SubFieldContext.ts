@@ -46,8 +46,12 @@ export class SubFieldContext extends FieldContext
      */
     attach( _to: ContextContent, _next_element: NullableContextContent ): void
     {
-        if ( this._field_element !== null
-            && this._field_parent_element !== null )
+        if ( this._field_element === null )
+        {
+            this._field_element = this._setFieldElement();
+        }
+
+        if ( this._field_parent_element !== null )
         {
             this._field_parent_element.appendChild( this._field_element );
         }
@@ -62,10 +66,12 @@ export class SubFieldContext extends FieldContext
      */
     detach(): void
     {
-        this._field_element = this.content.querySelector( "#" + this.element_id );
+        if ( this._field_element === null )
+        {
+            this._field_element = this._setFieldElement();
+        }
 
-        if ( this._field_element !== null
-            && this._field_element.parentElement !== null )
+        if ( this._field_element.parentElement !== null )
         {
             // save its parent before detaching
             this._field_parent_element = this._field_element.parentElement;
@@ -75,5 +81,14 @@ export class SubFieldContext extends FieldContext
 
         this.is_attached = false;
         this.is_visible  = false;
+    }
+
+
+    /**
+     * Query to get the field element
+     */
+    private _setFieldElement(): ContextContent
+    {
+        return <ContextContent>this.content.querySelector( "#" + this.element_id );
     }
 }

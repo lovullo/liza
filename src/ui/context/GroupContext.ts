@@ -89,9 +89,12 @@ export class GroupContext
                 let field_store = this._field_context_factory
                     .createStore( field, field_content, sibling_content );
 
-                let position = field_store.getPosition();
-
-                this._field_positions[ position ] = field;
+                // Only non-subfields should store the position in GroupContext
+                if ( field_store.isSubField() === false )
+                {
+                    let position = field_store.getPosition();
+                    this._field_positions[ position ] = field;
+                }
 
                 this._field_context_stores[ field ] = field_store;
             }
@@ -244,6 +247,30 @@ export class GroupContext
         index: PositiveInteger
     ): void
     {
+        // If field name was never added to a store, do nothing
+        if ( this._field_context_stores[ field_name ] === undefined )
+        {
+            return;
+        }
+
+        const store = this._field_context_stores[ field_name ];
+
+        // If the field is a subfield, we need its parent
+        // context to be created and then the subfield,
+        // so it can be detached
+        if ( store.isSubField() === true )
+        {
+            // Get the parent field context
+            const parent_name = store.getSubFieldParentName();
+
+            // create the parent field context if not defined
+            this._fromCache( parent_name, index );
+
+            const subfield_context = this._fromCache( field_name, index );
+
+            subfield_context.hide();
+        }
+
         // If FieldContext was never added to cache, do nothing
         if ( this._field_context_cache[ field_name ] === undefined
             || this._field_context_cache[ field_name ][ index ] === undefined )
@@ -276,9 +303,18 @@ export class GroupContext
         // Retrieve cloned nodes from the FieldContextStore
         const store = this._field_context_stores[ field_name ];
 
-        const field_content   = store.getContentClone( index );
+        let field_content     = store.getContentClone( index );
         const sibling_content = store.getSiblingContentClone( index );
         const is_subfield     = store.isSubField();
+
+        // If it's a subfield, grab the content from its parent
+        // We don't want a new clone in this scenario
+        if ( is_subfield === true )
+        {
+            const parent_name = store.getSubFieldParentName();
+            field_content = this._field_context_cache[ parent_name ][ index ]
+                .getContent();
+        }
 
         const field_context = this._field_context_factory
             .create( field_name, index, field_content, is_subfield, sibling_content );

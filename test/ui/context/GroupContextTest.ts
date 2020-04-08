@@ -34,20 +34,18 @@ describe( "GroupContext", () =>
 {
     it( "createFieldStores calls parser and creates a store for each field", () =>
     {
-        const fields = [ 'foo', 'baz' ];
+        const fields = [ 'foo', 'baz_subfield' ];
 
         let stores = <ContextStores>{
             'foo': getFieldContextStoreStub( 0 ),
-            'baz': getFieldContextStoreStub( 1 ),
+            'baz_subfield': getFieldContextStoreStub( 0 ),
         }
-
-        let store_index = 0;
 
         let parser_fields: string[] = [];
 
         let find_sibling_called = false;
         let foo_position_is_called = false;
-        let baz_position_is_called = false;
+        let baz_subfield_position_is_called = false;
 
         const parser = <ContextParser>{
             'parse': ( _element_id: any, __: any ) => {
@@ -62,10 +60,8 @@ describe( "GroupContext", () =>
 
         const factory = <FieldContextFactory>{
             'create': ( _:any, __:any, ___:any, ____:any ) => {},
-            'createStore': ( _: any, __:any, ___:any ) => {
-                const store = stores[ fields[ store_index ] ];
-                store_index++;
-                return store;
+            'createStore': ( field: any, __:any, ___:any ) => {
+                return stores[ field ];
             }
         };
 
@@ -75,10 +71,15 @@ describe( "GroupContext", () =>
             return <PositiveInteger>0;
         };
 
-        stores[ 'baz' ].getPosition = () =>
+        stores[ 'baz_subfield' ].isSubField = () =>
         {
-            baz_position_is_called = true;
-            return <PositiveInteger>1;
+            return true;
+        };
+
+        stores[ 'baz_subfield' ].getPosition = () =>
+        {
+            baz_subfield_position_is_called = true;
+            return <PositiveInteger>0;
         };
 
         const sut = new Sut( parser, factory );
@@ -93,7 +94,7 @@ describe( "GroupContext", () =>
         expect( find_sibling_called ).to.be.true;
 
         expect( foo_position_is_called ).to.be.true;
-        expect( baz_position_is_called ).to.be.true;
+        expect( baz_subfield_position_is_called ).to.be.false;
     } );
 
 
@@ -269,6 +270,67 @@ describe( "GroupContext", () =>
     } );
 
 
+    it( "hides subfield and creates parent context is not defined", () =>
+    {
+        const fields = [ 'baz', 'baz_subfield' ];
+
+        let stubs = <ContextCache>{
+            'baz': [ getFieldContextStub( 'baz', false ) ],
+            'baz_subfield': [ getFieldContextStub( 'baz_subfield', false ) ],
+        }
+
+        let stores = <ContextStores>{
+            'baz': getFieldContextStoreStub( 0 ),
+            'baz_subfield': getFieldContextStoreStub( 1 ),
+        }
+
+        const parser = getContextParserStub();
+
+        let hide_is_called = false;
+        let get_content_called = false;
+
+        const factory = <FieldContextFactory>{
+            'create': ( field: string, __:any, ___:any, ____:any ) => {
+                return stubs[ field ][ 0 ];
+            },
+            'createStore': ( field: string, __:any, ___:any ) => {
+                return stores[ field ];
+            }
+        };
+
+        stores[ 'baz_subfield' ].isSubField = () =>
+        {
+            return true;
+        };
+
+        stores[ 'baz_subfield' ].getSubFieldParentName = () =>
+        {
+            return 'baz';
+        };
+
+        stubs[ 'baz_subfield' ][ 0 ].hide = () =>
+        {
+            hide_is_called = true;
+        };
+
+        stubs[ 'baz' ][ 0 ].getContent = () =>
+        {
+            get_content_called = true;
+            return <ContextContent>{};
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.createFieldStores( fields, dummy_content );
+
+        sut.hide( 'baz_subfield', <PositiveInteger>0 );
+
+        expect( hide_is_called ).to.be.true
+        expect( get_content_called ).to.be.true;
+    } );
+
+
+
     it( "show field supplies previous element to attach to", () =>
     {
         const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];
@@ -288,8 +350,6 @@ describe( "GroupContext", () =>
             'qux': getFieldContextStoreStub( 4 ),
         }
 
-        let store_index = 0;
-
         let show_is_called = false;
 
         const parser = getContextParserStub();
@@ -298,10 +358,8 @@ describe( "GroupContext", () =>
             'create': ( field: string, __:any, ___:any, ____:any ) => {
                 return stubs[ field ][ 0 ];
             },
-            'createStore': ( _: any, __:any, ___:any ) => {
-                const store = stores[ fields[ store_index ] ];
-                store_index++;
-                return store;
+            'createStore': ( field: string, __:any, ___:any ) => {
+                return stores[ field ];
             }
         };
 
@@ -582,7 +640,8 @@ function getFieldContextStoreStub( position = 0 )
         'getContentClone': () => {},
         'getSiblingContentClone': () => {},
         'isSubField': () => { return false; },
-        'detach': () => {}
+        'detach': () => {},
+        'getSubFieldParentName': () => {},
     }
 }
 

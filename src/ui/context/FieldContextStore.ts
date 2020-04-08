@@ -44,6 +44,11 @@ export class FieldContextStore
      */
     private _subfield_determined: boolean = false;
 
+    /**
+     * The name of the parent field for a subfield
+     */
+    private _subfield_parent_name: string = '';
+
 
     /**
      * Initialize FieldContextStore
@@ -156,6 +161,18 @@ export class FieldContextStore
 
 
     /**
+     * Return the sub-field's parent name
+     *
+     * This is used by GroupContext to find
+     * the parent FieldContext of a sub-field
+     */
+    getSubFieldParentName(): string
+    {
+        return this._subfield_parent_name;
+    }
+
+
+    /**
      * Determine whether the field in the content represents a sub-field
      *
      * A sub-field is a field within a field; the distinction is important
@@ -177,6 +194,12 @@ export class FieldContextStore
 
         // A subfield's parent has a 'widget' class value
         this._is_subfield = !!( parent && /\bwidget\b/.test( parent.className ) );
+
+        if ( this._is_subfield === true && parent !== null )
+        {
+            // capture the subfield's parent field name
+            this._subfield_parent_name = parent.getAttribute( 'data-field-name' ) || '';
+        }
 
         return this._is_subfield;
     }

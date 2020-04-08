@@ -174,6 +174,29 @@ describe( "FieldContextStore", () =>
             expect( given ).to.equal( expected );
         } )
     } );
+
+
+    it( "returns the subfield parent field name", () =>
+    {
+        const expected_parent = 'bi_risk_type';
+
+        const element_id = 'q_baz_subfield_0';
+        const content_id = 'qcontainer_subfield';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + content_id );
+
+        const sut = new Sut(
+            element_id,
+            <ContextContent>content,
+            null,
+        );
+
+        sut.isSubField();
+
+        const given = sut.getSubFieldParentName();
+
+        expect( given ).to.equal( expected_parent );
+    } );
 } );
 
 
@@ -194,7 +217,7 @@ function getGroupContent()
             '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
         '</dd>' +
         '<dd id="qcontainer_subfield" class="foo widget">' +
-            '<select id="q_bi_risk_type_0" class="foo widget">' +
+            '<select id="q_bi_risk_type_0" data-field-name="bi_risk_type" class="foo widget">' +
                 '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
                 '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
                 '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
