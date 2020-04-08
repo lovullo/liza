@@ -75,10 +75,10 @@ describe( "RetainFieldContext", () =>
 
             const given = sut.getFirstOfContentSet();
             expect( given.outerHTML ).to.equal( expected );
+            expect( sut.isVisible() ).to.be.true;
+
         } )
     } );
-
-
 
     [
         {
@@ -119,40 +119,52 @@ describe( "RetainFieldContext", () =>
 
             const given = sut.getFirstOfContentSet();
             expect( given.outerHTML ).to.equal( expected );
+            expect( sut.isVisible() ).to.be.false;
         } )
     } );
 
 
-    it( 'isAttached is true even when hide is called', () => {
-        const from_content = document.createElement("dl");
-        const child = document.createElement( "div" );
-        from_content.appendChild( child );
+    it( 'shows field and attaches to DOM when show is called', () => {
+        const group = getHiddenGroupContent();
+        const content = group.querySelector( "#q_field_0" );
 
         const sut = new Sut(
             document,
-            'foo',
-            <ContextContent>child
+            'q_field_0',
+            <ContextContent>content
         );
 
-        // now hide
-        sut.hide();
+        // our content should not be attached or visible yet, we just created it
+        expect( sut.isAttached() ).to.be.false;
+        expect( sut.isVisible() ).to.be.false;
+
+        const to = document.createElement("dl");
+        sut.show( to, null );
 
         expect( sut.isAttached() ).to.be.true;
+        expect( sut.isVisible() ).to.be.true;
     } );
 
 
-    it( 'isAttached is true', () => {
-        const from_content = document.createElement("dl");
-        const child = document.createElement( "div" );
-        from_content.appendChild( child );
+    it( 'hides field and attaches to DOM when hide is called', () => {
+        const group = getVisibleGroupContent();
+        const content = group.querySelector( "#q_field_0" );
 
         const sut = new Sut(
             document,
-            'foo',
-            <ContextContent>child
+            'q_field_0',
+            <ContextContent>content
         );
 
+        // our content should not be attached yet, we just created it
+        expect( sut.isAttached() ).to.be.false;
+        expect( sut.isVisible() ).to.be.false;
+
+        sut.hide();
+
+        // element should be attached now but still not visible
         expect( sut.isAttached() ).to.be.true;
+        expect( sut.isVisible() ).to.be.false;
     } );
 
 

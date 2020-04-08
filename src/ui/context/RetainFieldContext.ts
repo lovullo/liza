@@ -28,31 +28,22 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 export class RetainFieldContext extends FieldContext
 {
     /**
-     * Field should always be attached
-     */
-    isAttached(): boolean
-    {
-        return true;
-    }
-
-
-    /**
      * Attach the field to the DOM or make it visible if already attached
      *
-     * @param _to - Parent to attach to
-     * @param _next_element - Next element to attach before
+     * @param to - Parent to attach to
+     * @param next_element - Next element to attach before
      */
-    show( _to: ContextContent, _next_element: NullableContextContent ): void
+    show( to: ContextContent, next_element: NullableContextContent): void
     {
         this.content.classList.remove( "hidden" );
 
-        if ( this.sibling !== null )
-        {
+        if (this.sibling !== null) {
             this.sibling.classList.remove( "hidden" );
         }
 
         this.is_visible = true;
-     }
+        this._attach( to, next_element );
+    }
 
 
     /**
@@ -62,11 +53,27 @@ export class RetainFieldContext extends FieldContext
     {
         this.content.classList.add( "hidden" );
 
-        if ( this.sibling !== null )
+        if (this.sibling !== null)
         {
             this.sibling.classList.add( "hidden" );
         }
 
+        this._attach( <ContextContent>this.content.parentElement, null );
         this.is_visible = false;
+    }
+
+
+    /**
+     * Retain fields should always be attached to the DOM
+     *
+     * @param to - Parent to attach to
+     * @param next_element - Next element to attach before
+     */
+    private _attach( to: ContextContent, next_element: NullableContextContent ): void
+    {
+        if ( this.isAttached() === false )
+        {
+            this.attach( to, next_element );
+        }
     }
 }
