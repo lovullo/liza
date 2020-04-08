@@ -229,6 +229,10 @@ describe( "FieldContext", () =>
             <ContextContent>child
         );
 
+        const to_content = document.createElement("dl");
+
+        sut.show( to_content, null );
+
         expect( sut.isAttached() ).to.be.true;
 
         expect( sut.isVisible() ).to.be.true;

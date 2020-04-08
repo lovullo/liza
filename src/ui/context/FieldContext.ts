@@ -38,13 +38,13 @@ export class FieldContext
     /**
      * Is attached on the DOM
      */
-    protected is_attached: boolean = true;
+    protected is_attached: boolean = false;
 
 
     /**
      * Is field visible to the user
      */
-    protected is_visible: boolean = true;
+    protected is_visible: boolean = false;
 
 
     /**

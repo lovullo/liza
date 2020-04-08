@@ -122,8 +122,6 @@ describe( "SubFieldContext", () => {
                 <ContextContent>content
             );
 
-            expect( sut.isAttached() ).to.be.true;
-
             sut.hide();
             const final_content = sut.getFirstOfContentSet();
             expect( final_content.outerHTML ).to.equal( expected );

@@ -28,6 +28,15 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 export class RetainFieldContext extends FieldContext
 {
     /**
+     * Field should always be attached
+     */
+    isAttached(): boolean
+    {
+        return true;
+    }
+
+
+    /**
      * Attach the field to the DOM or make it visible if already attached
      *
      * @param _to - Parent to attach to

@@ -32,14 +32,9 @@ import { expect } from 'chai';
 
 describe( "GroupContext", () =>
 {
-    it( "createFieldCache calls parser and field context factory for each field", () =>
+    it( "createFieldStores calls parser and creates a store for each field", () =>
     {
         const fields = [ 'foo', 'baz' ];
-
-        let stubs = <ContextCache>{
-            'foo': [ getFieldContextStub( 'foo', false ) ],
-            'baz': [ getFieldContextStub( 'baz', false ) ],
-        }
 
         let stores = <ContextStores>{
             'foo': getFieldContextStoreStub( 0 ),
@@ -47,8 +42,6 @@ describe( "GroupContext", () =>
         }
 
         let store_index = 0;
-
-        let factory_called_num_times = 0;
 
         let parser_fields: string[] = [];
 
@@ -68,15 +61,7 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': (
-                field: string,
-                index: PositiveInteger,
-                _:any,
-                __:any ) =>
-            {
-                factory_called_num_times++;
-                return stubs[ field ][ index ];
-            },
+            'create': ( _:any, __:any, ___:any, ____:any ) => {},
             'createStore': ( _: any, __:any, ___:any ) => {
                 const store = stores[ fields[ store_index ] ];
                 store_index++;
@@ -100,13 +85,10 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
 
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         expect( parser_fields )
             .to.deep.equal( fields );
-
-        expect( factory_called_num_times )
-            .to.equal( fields.length );
 
         expect( find_sibling_called ).to.be.true;
 
@@ -115,7 +97,7 @@ describe( "GroupContext", () =>
     } );
 
 
-    it( "createFieldCache does not call field factory when parser returns null", () =>
+    it( "createFieldStores does not create store when parser returns null", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
@@ -128,11 +110,9 @@ describe( "GroupContext", () =>
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _: string, __: any, ___:any, ____:any ) => {
-                factory_call_count++;
-                return getFieldContextStub();
-            },
+            'create': ( _:any, __:any, ___:any, ____:any ) => {},
             'createStore': ( _: any, __:any, ___:any ) => {
+                factory_call_count++;
                 return getFieldContextStoreStub();
             }
         };
@@ -141,7 +121,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
 
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         expect( factory_call_count ).to.equal( 0 );
     } );
@@ -174,7 +154,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         sut.detachStoreContent( cmatch_fields );
 
@@ -193,7 +173,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         const given = sut.isFieldAttached( 'bar', <PositiveInteger>0 );
 
@@ -218,9 +198,13 @@ describe( "GroupContext", () =>
             return true;
         };
 
+        stub.show = ( _: any, __: any) => { };
+
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
+
+        sut.show( 'baz', <PositiveInteger>0, dummy_content );
 
         const given = sut.isFieldAttached( 'baz', <PositiveInteger>0 );
 
@@ -229,7 +213,7 @@ describe( "GroupContext", () =>
     } );
 
 
-    it( "hides field", () =>
+    it( "hides field when the field exists in the cache", () =>
     {
         const fields = [ 'foo', 'baz' ];
 
@@ -239,6 +223,8 @@ describe( "GroupContext", () =>
         const stub = getFieldContextStub();
         const factory = getFieldContextFactory( stub );
 
+        stub.show = ( _: any, __: any) => { };
+
         stub.hide = () =>
         {
             hide_is_called = true;
@@ -246,8 +232,14 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
+
+        // show to put the field in the cache
+        sut.show( 'foo', <PositiveInteger>0, dummy_content );
+
+        // now hide
         sut.hide( 'foo', <PositiveInteger>0 );
+
         expect( hide_is_called ).to.be.true;
     } );
 
@@ -270,7 +262,8 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
+
         sut.hide( 'bar', <PositiveInteger>0 );
         expect( hide_is_called ).to.be.false;
     } );
@@ -330,10 +323,20 @@ describe( "GroupContext", () =>
             show_is_called = true;
         };
 
+        stubs[ 'moo' ][ 0 ].show = ( _:any, __: any ) => {};
+        stubs[ 'baz' ][ 0 ].show = ( _:any, __: any ) => {};
+
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
+
+        // first add two fields, and baz added before foo
+        sut.show( 'moo', <PositiveInteger>0, dummy_content );
+        sut.show( 'baz', <PositiveInteger>0, dummy_content );
+
+        // now add the foo field to assert on
         sut.show( 'foo', <PositiveInteger>0, dummy_content );
+
         expect( show_is_called ).to.be.true;
     } );
 
@@ -401,7 +404,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         sut.show( 'bar', <PositiveInteger>1, dummy_content );
 
@@ -430,7 +433,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         sut.hide( 'bar', <PositiveInteger>0 );
 
@@ -487,7 +490,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
 
         // Simulate index 1 elements being added to ContextCache
         sut.show( 'foo', <PositiveInteger>1, dummy_content );
@@ -537,7 +540,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldCache( fields, dummy_content );
+        sut.createFieldStores( fields, dummy_content );
         sut.setOptions( field_to_set, <PositiveInteger>0, stub_options, stub_value );
         expect( set_options_is_called ).to.equal( call_expected );
         } );
@@ -594,6 +597,6 @@ function getFieldContextStub(
         'getElementId': () => { return element_id },
         'isVisible': () => { return is_visible; },
         'isAttached': () => { return is_attached; },
-        'getFirstOfContentSet': () => {}
+        'getFirstOfContentSet': () => {},
     };
 }

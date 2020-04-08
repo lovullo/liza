@@ -65,12 +65,12 @@ export class GroupContext
 
 
     /**
-     * Create cache of field contexts
+     * Create cache of field context stores
      *
      * @param fields - exclusive field names of group
      * @param content - group content
      */
-    createFieldCache(
+    createFieldStores(
         fields: string[],
         content: ContextContent
     ): void
@@ -78,9 +78,6 @@ export class GroupContext
         for ( let i = 0; i < fields.length; i++ )
         {
             let field = fields[ i ];
-
-            // Initial fields will have 0 index
-            let index = <PositiveInteger>0;
 
             let field_content = this._parser.parse( field, content );
 
@@ -92,19 +89,11 @@ export class GroupContext
                 let field_store = this._field_context_factory
                     .createStore( field, field_content, sibling_content );
 
-                let position    = field_store.getPosition();
-                let is_subfield = field_store.isSubField();
+                let position = field_store.getPosition();
 
                 this._field_positions[ position ] = field;
 
                 this._field_context_stores[ field ] = field_store;
-
-                // Create the FieldContext for the first index
-                let field_context = this._field_context_factory
-                    .create( field, index, field_content, is_subfield, sibling_content );
-
-                this._field_context_cache[ field ] = [];
-                this._field_context_cache[ field ][ index ] = field_context;
             }
         }
     }
@@ -202,8 +191,8 @@ export class GroupContext
         val: string
     ): void
     {
-        // If field name was never added, do nothing
-        if ( this._field_context_cache[ field_name ] === undefined )
+        // If field name was never added to a store, do nothing
+        if ( this._field_context_stores[ field_name ] === undefined )
         {
             return;
         }
@@ -226,8 +215,8 @@ export class GroupContext
         to: ContextContent
     ): void
     {
-        // If field name was never added, do nothing
-        if ( this._field_context_cache[ field_name ] === undefined )
+        // If field name was never added to a store, do nothing
+        if ( this._field_context_stores[ field_name ] === undefined )
         {
             return;
         }
@@ -236,17 +225,9 @@ export class GroupContext
 
         if ( field_context.isVisible() === false )
         {
-            let next_element = this._getNextElement( field_name, index );
-            const next_element_id = next_element?.getAttribute( 'id' ) || '';
-
-            if ( next_element_id !== '' )
-            {
-                next_element = to.querySelector( "#" + next_element_id );
-            }
-
             field_context.show(
                 to,
-                next_element
+                this._getNextElement( field_name, index )
             );
         }
     }
@@ -286,7 +267,8 @@ export class GroupContext
         index: PositiveInteger
     ): FieldContext
     {
-        if ( this._field_context_cache[ field_name ][ index ] !== undefined )
+        if ( this._field_context_cache[ field_name ] !== undefined
+            && this._field_context_cache[ field_name ][ index ] !== undefined )
         {
             return this._field_context_cache[ field_name ][ index ];
         }
@@ -300,6 +282,11 @@ export class GroupContext
 
         const field_context = this._field_context_factory
             .create( field_name, index, field_content, is_subfield, sibling_content );
+
+        if ( this._field_context_cache[ field_name ] === undefined )
+        {
+            this._field_context_cache[ field_name ] = [];
+        }
 
         this._field_context_cache[ field_name ][ index ] = field_context;
 
@@ -330,7 +317,8 @@ export class GroupContext
                 let next_element_name = this._field_positions[ i ];
                 let next_context = this._field_context_cache[ next_element_name ];
 
-                if ( next_context[ index ] !== undefined
+                if ( next_context !== undefined
+                    && next_context[ index ] !== undefined
                     && next_context[ index ].isAttached() )
                 {
                     return next_context[ index ].getFirstOfContentSet();
