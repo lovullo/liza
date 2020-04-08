@@ -87,13 +87,13 @@ export class GroupContext
             if ( field_content !== null )
             {
                 let sibling_content = this._parser.findSiblingContent( field_content );
-                let is_subfield = this._parser.isSubField( field_content );
 
                 // Create the FieldContextStore
                 let field_store = this._field_context_factory
-                    .createStore( field_content, sibling_content );
+                    .createStore( field, field_content, sibling_content );
 
-                let position = field_store.getPosition();
+                let position    = field_store.getPosition();
+                let is_subfield = field_store.isSubField();
 
                 this._field_positions[ position ] = field;
 
@@ -180,6 +180,7 @@ export class GroupContext
         field_context.setOptions( options, val );
     }
 
+
     /**
      * Show field on the DOM
      *
@@ -263,10 +264,10 @@ export class GroupContext
 
         const field_content   = store.getContentClone( index );
         const sibling_content = store.getSiblingContentClone( index );
+        const is_subfield     = store.isSubField();
 
-        // TODO: add subfield attribute to store
         const field_context = this._field_context_factory
-            .create( field_name, index, field_content, false, sibling_content );
+            .create( field_name, index, field_content, is_subfield, sibling_content );
 
         this._field_context_cache[ field_name ][ index ] = field_context;
 

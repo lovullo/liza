@@ -87,6 +87,7 @@ describe( "FieldContextFactory", () =>
         const sibling = parent.querySelector( "#qlabel_checkbox_foo" );
 
         const given = sut.createStore(
+            'foo',
             <ContextContent>content,
             <NullableContextContent>sibling
         );

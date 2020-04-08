@@ -200,40 +200,6 @@ describe( "ContextParser", () =>
 
         expect( sibling ).to.equal( null );
     } );
-
-
-    [
-        {
-            label: 'isSubField is true when parent is a widget',
-            content:
-                '<dd id="qcontainer_foo">' +
-                '<select id="q_foo_0" class="foo widget">' +
-                    '<option id="q_bar_0" value="Bar">Bar</option>' +
-                '</select>' +
-                '</dd>',
-            expected: true,
-        },
-        {
-            label: 'isSubField is false when parent is not a widget',
-            content:
-                '<dd id="qcontainer_foo">' +
-                '<select id="q_foo_0" class="foo">' +
-                '<option id="q_bar_0" value="Bar">Bar</option>' +
-                '</select>' +
-                '</dd>',
-            expected: false,
-        },
-    ].forEach( ( { label, content, expected } ) => {
-        it( label, () => {
-
-            const sut = new Sut();
-            var group_content = document.createElement( "div" );
-            group_content.innerHTML = content;
-            const element = <ContextContent>group_content.querySelector( "#q_bar_0" );
-            const given = sut.isSubField( element );
-            expect( given ).to.equal( expected );
-        } )
-    } );
 } );
 
 

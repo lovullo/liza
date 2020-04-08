@@ -86,15 +86,20 @@ export class FieldContextFactory
     /**
      * Creates a new FieldContextStore
      *
+     * @param name - field name
      * @param content - field HTML content
      * @param sibling - field HTML sibling content
      */
     createStore(
+        name: string,
         content: ContextContent,
         sibling: NullableContextContent = null
     ): FieldContextStore
     {
+        const element_id = this._field_id_prefix + name + '_0';
+
         return new FieldContextStore(
+            element_id,
             content,
             sibling
         );

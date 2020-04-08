@@ -65,7 +65,6 @@ describe( "GroupContext", () =>
                 find_sibling_called = true;
                 return <ContextContent>document.createElement("dt");
             },
-            'isSubField': ( _: any ) => { return false }
         };
 
         const factory = <FieldContextFactory>{
@@ -78,7 +77,7 @@ describe( "GroupContext", () =>
                 factory_called_num_times++;
                 return stubs[ field ][ index ];
             },
-            'createStore': ( _: any, __:any ) => {
+            'createStore': ( _: any, __:any, ___:any ) => {
                 const store = stores[ fields[ store_index ] ];
                 store_index++;
                 return store;
@@ -133,7 +132,7 @@ describe( "GroupContext", () =>
                 factory_call_count++;
                 return getFieldContextStub();
             },
-            'createStore': ( _: any, __:any ) => {
+            'createStore': ( _: any, __:any, ___:any ) => {
                 return getFieldContextStoreStub();
             }
         };
@@ -271,7 +270,7 @@ describe( "GroupContext", () =>
             'create': ( field: string, __:any, ___:any, ____:any ) => {
                 return stubs[ field ][ 0 ];
             },
-            'createStore': ( _: any, __:any ) => {
+            'createStore': ( _: any, __:any, ___:any ) => {
                 const store = stores[ fields[ store_index ] ];
                 store_index++;
                 return store;
@@ -331,7 +330,7 @@ describe( "GroupContext", () =>
             create: ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
                 return stubs[ field ][ index ]
             },
-            'createStore': ( _: any, __:any ) => {
+            'createStore': ( _: any, __:any, ___:any ) => {
                 return store;
             }
         };
@@ -428,7 +427,7 @@ describe( "GroupContext", () =>
             create: ( field: string, index: PositiveInteger, ___:any, ____:any ) => {
                 return stubs[ field ][ index ]
             },
-            'createStore': ( _: any, __:any ) => {
+            'createStore': ( _: any, __:any, ___:any ) => {
                 return store;
             }
         };
@@ -521,7 +520,6 @@ function getContextParserStub()
         'findSiblingContent': ( _: any ) => {
             return <ContextContent>document.createElement("dt");
         },
-        'isSubField': ( _: any ) => { return false; }
     };
 }
 
@@ -532,7 +530,7 @@ function getFieldContextFactory( stub: FieldContext )
         'create': ( _: any, __:any, ___:any, ____:any ) => {
             return stub;
         },
-        'createStore': ( _: any, __:any ) => {
+        'createStore': ( _: any, __:any, ___:any ) => {
             return getFieldContextStoreStub()
         }
     };
@@ -545,6 +543,7 @@ function getFieldContextStoreStub( position = 0 )
         'getPosition': () => { return <PositiveInteger>position; },
         'getContentClone': () => {},
         'getSiblingContentClone': () => {},
+        'isSubField': () => { return false; }
     }
 }
 

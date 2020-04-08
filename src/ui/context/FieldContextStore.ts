@@ -34,14 +34,26 @@ export class FieldContextStore
      */
     private _position: PositiveInteger = <PositiveInteger>0;
 
+    /**
+     * Whether field is a subfield
+     */
+    private _is_subfield: boolean = false;
+
+    /**
+     * Whether subfield determination has happened
+     */
+    private _subfield_determined: boolean = false;
+
 
     /**
      * Initialize FieldContextStore
      *
-     * @param _content field content
-     * @param _sibling sibling field content
+     * @param _element_id field identifier
+     * @param _content    field content
+     * @param _sibling    sibling field content
      */
     constructor(
+        private readonly _element_id: string,
         private readonly _content: ContextContent,
         private readonly _sibling: NullableContextContent = null
     ) {
@@ -106,6 +118,47 @@ export class FieldContextStore
 
         this._position = <PositiveInteger>Array.prototype.indexOf
             .call( parent?.children, content );
+    }
+
+
+    /**
+     * Return whether the field in the content represents a sub-field
+     */
+    isSubField(): boolean
+    {
+        if ( this._subfield_determined === true )
+        {
+            return this._is_subfield;
+        }
+
+        return this._getSubFieldIndicator();
+    }
+
+
+    /**
+     * Determine whether the field in the content represents a sub-field
+     *
+     * A sub-field is a field within a field; the distinction is important
+     * because we don't want operations on a sub-field affecting
+     * its parent.
+     */
+    private _getSubFieldIndicator(): boolean
+    {
+        const field_element = this._content.querySelector( "#" + this._element_id );
+
+        this._subfield_determined = true;
+
+        if ( field_element === null )
+        {
+            return this._is_subfield;
+        }
+
+        const parent = field_element.parentElement;
+
+        // A subfield's parent has a 'widget' class value
+        this._is_subfield = !!( parent && /\bwidget\b/.test( parent.className ) );
+
+        return this._is_subfield;
     }
 
 

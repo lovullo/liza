@@ -61,6 +61,7 @@ describe( "FieldContextStore", () =>
             const sibling = group_content.querySelector( "#" + sibling_id );
 
             const sut = new Sut(
+                'foo',
                 <ContextContent>content,
                 <ContextContent>sibling,
             );
@@ -83,6 +84,7 @@ describe( "FieldContextStore", () =>
         const expected_position = 1;
 
         const sut = new Sut(
+            'foo',
             <ContextContent>content,
             null
         );
@@ -104,6 +106,7 @@ describe( "FieldContextStore", () =>
         const expected_position = 5;
 
         const sut = new Sut(
+            'foo',
             <ContextContent>content,
             <ContextContent>sibling,
         );
@@ -111,6 +114,43 @@ describe( "FieldContextStore", () =>
         const given = sut.getPosition();
 
         expect( given ).to.equal( expected_position );
+    } );
+
+
+    [
+        {
+            label: 'isSubField is true when parent is a widget',
+            element_id: 'q_subfield_single_0',
+            content_id: 'qcontainer_subfield_single',
+            expected: true,
+        },
+        {
+            label: 'isSubField is true when parent is a widget',
+            element_id: 'q_baz_subfield_0',
+            content_id: 'qcontainer_subfield',
+            expected: true,
+        },
+        {
+            label: 'isSubField is false when parent is not a widget',
+            element_id: 'q_foo_bar_0',
+            content_id: 'qcontainer_foo_bar',
+            expected: false,
+        },
+    ].forEach( ( { label, element_id, content_id, expected } ) => {
+        it( label, () => {
+
+            const group_content = getGroupContent();
+            const content = group_content.querySelector( "#" + content_id );
+
+            const sut = new Sut(
+                element_id,
+                <ContextContent>content,
+                null,
+            );
+
+            const given = sut.isSubField();
+            expect( given ).to.equal( expected );
+        } )
     } );
 } );
 
@@ -131,7 +171,7 @@ function getGroupContent()
         '<dd id="qcontainer_checkbox_no_label">' +
             '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
         '</dd>' +
-        '<dd id="qcontainer_subfield">' +
+        '<dd id="qcontainer_subfield" class="foo widget">' +
             '<select id="q_bi_risk_type_0" class="foo widget">' +
                 '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
                 '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
@@ -142,7 +182,7 @@ function getGroupContent()
         '<dd id="qcontainer_foo_bar_long_name">' +
             '<input type="text" id="foo_bar_0" >' +
         '</dd>' +
-        '<dd id="qcontainer_subfield_single">' +
+        '<dd id="qcontainer_subfield_single" class="foo widget">' +
             '<select id="q_subfield_single_type_0" class="foo widget">' +
                 '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
             '</select>' +
@@ -150,6 +190,10 @@ function getGroupContent()
         '<dt id="qlabel_baz">Baz</dt>' +
         '<dd id="qcontainer_baz">' +
             '<input type="text" id="foo_baz_0">' +
+        '</dd>' +
+        '<dt id="qlabel_foo_bar">Baz</dt>' +
+        '<dd id="qcontainer_foo_bar">' +
+            '<input type="text" id="q_foo_bar_0">' +
         '</dd>' +
         '<dd id="qcontainer_select_element">' +
             '<select id="q_select_element_0">' +
