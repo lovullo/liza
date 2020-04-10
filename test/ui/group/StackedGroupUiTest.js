@@ -188,7 +188,8 @@ function createSut( content, field )
     jquery.withArgs( content )
         .returns( $content );
 
-    return Sut( group, content, null, jquery, context, rcontext, null );
+    const feature_flag = { getDomPerfFlag: () => { return false; } };
+    return Sut( group, content, null, jquery, context, rcontext, null, feature_flag );
 }
 
 

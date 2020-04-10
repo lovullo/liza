@@ -106,8 +106,8 @@ const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 const { GroupContext }         = require( '../ui/context/GroupContext' );
+const { FeatureFlag }          = require( '../ui/FeatureFlag' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
-
 
 const Class = require( 'easejs' ).Class;
 
@@ -354,9 +354,9 @@ module.exports = Class( 'ClientDependencyFactory',
         }
 
         const context = this.createGroupContext( cretain );
-
+        const feature_flag = new FeatureFlag();
         return obj(
-            group, content, styler, jQuery, context, root_context, na_styler
+            group, content, styler, jQuery, context, root_context, na_styler, feature_flag
         );
     },
 
