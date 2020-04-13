@@ -58,14 +58,8 @@ export class ContextParser
      */
     findSiblingContent( content: ContextContent ): NullableContextContent
     {
-        if ( content.previousElementSibling === null )
-        {
-            return null;
-        }
-
-        const sibling: ContextContent = content.previousElementSibling;
-        const node_name = sibling.nodeName.toUpperCase();
-        return ( sibling !== null && node_name === 'DT' ) ? sibling : null;
+        const sibling = content.previousElementSibling;
+        return ( sibling !== null && sibling.tagName === 'DT' ) ? sibling : null;
     }
 
 
@@ -94,7 +88,7 @@ export class ContextParser
         }
 
         // Some elements are standalone labels
-        if ( 'DT' === element.nodeName.toUpperCase() )
+        if ( element.tagName === 'DT' )
         {
             return element;
         }
@@ -108,11 +102,16 @@ export class ContextParser
      *
      * @param element - HTML element
      */
-    private _getContentParent( element: ContextContent ): ContextContent
+    private _getContentParent( element: ContextContent ): NullableContextContent
     {
-        const parent = <ContextContent>element.parentElement;
+        const parent = element.parentElement;
 
-        switch ( parent.nodeName.toUpperCase() )
+        if ( parent === null )
+        {
+            return null;
+        }
+
+        switch ( parent.tagName )
         {
             case 'DD':
             case 'TD':

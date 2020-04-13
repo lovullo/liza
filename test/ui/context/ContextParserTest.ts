@@ -150,6 +150,18 @@ describe( "ContextParser", () =>
     } );
 
 
+    it( "returns null when content does not have parent with DD or TD node", () =>
+    {
+        const sut = new Sut();
+
+        const element_id = 'atypical_parent';
+
+        const given: NullableContextContent = sut.parse( element_id, getContentToParse() );
+
+        expect( given ).to.equal( null );
+    } );
+
+
     it( "returns null when content is not found", () =>
     {
         const sut = new Sut();
@@ -248,6 +260,9 @@ function getContentToParse()
            '</div>' +
         '</dd>' +
     '</dl>' +
+    '<div>' +
+        '<div id="atypical_parent" value="Atypical parent">Atypical parent</div>' +
+    '</div>' +
     '<table>' +
         '<tr "id="q_deep_table_row_0">' +
             '<td>' +
