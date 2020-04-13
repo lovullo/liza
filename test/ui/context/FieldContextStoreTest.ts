@@ -71,6 +71,12 @@ describe( "FieldContextStore", () =>
 
             expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content );
             expect( ( sibling_modified?.outerHTML as string ) ).to.equal( expected_sibling );
+
+            const content_original = <ContextContent>sut.content;
+            const sibling_original = <ContextContent>sut.siblingContent;
+
+            expect( ( content_original?.outerHTML as string ) ).to.equal( ( content?.outerHTML as string ) );
+            expect( ( sibling_original?.outerHTML as string ) ).to.equal( ( sibling?.outerHTML as string ) );
         } );
     } );
 

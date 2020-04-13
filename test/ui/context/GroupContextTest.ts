@@ -81,6 +81,61 @@ describe( "GroupContext", () =>
     } );
 
 
+    it( "createFieldCache creates fieldcontext for each field", () =>
+    {
+        const fields = [ 'foo', 'baz_subfield' ];
+
+        let stubs = <ContextCache>{
+            'foo': [ getFieldContextStub( 'foo', false, false ) ],
+            'baz_subfield': [ getFieldContextStub( 'baz_subfield', false, false ) ],
+        }
+
+        let stores = <ContextStores>{
+            'foo': getFieldContextStoreStub( 0 ),
+            'baz_subfield': getFieldContextStoreStub( 0 ),
+        }
+
+        let create_field_call_count = 0;
+        let is_subfield_call_count = 0;
+
+        const parser = <ContextParser>{
+            'parse': ( _: any, __: any ) => {
+                return <ContextContent>document.createElement( "dd" );
+            },
+            'findSiblingContent': ( _: any ) => {
+                return <ContextContent>document.createElement("dt");
+            },
+        };
+
+        const factory = <FieldContextFactory>{
+            'create': ( field:any, __:any, ___:any, ____:any ) => {
+                create_field_call_count++;
+                return stubs[ field ][ 0 ];
+            },
+            'createStore': ( field: any, __:any, ___:any ) => {
+                return stores[ field ];
+            }
+        };
+
+        stores[ 'baz_subfield' ].isSubField = () =>
+        {
+            is_subfield_call_count++;
+            return true;
+        };
+
+        const sut = new Sut( parser, factory );
+
+        const dummy_content = document.createElement( "dl" );
+
+        sut.createFieldStores( fields, dummy_content );
+
+        sut.createFieldCache();
+
+        expect( create_field_call_count ).to.equal( fields.length );
+        expect( is_subfield_call_count ).to.equal( 2 );
+    } );
+
+
     it( "createFieldStores does not create store when parser returns null", () =>
     {
         const fields = [ 'foo', 'baz' ];

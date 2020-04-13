@@ -67,6 +67,28 @@ export class FieldContextStore
 
 
     /**
+     * Return content
+     *
+     * @returns content
+     */
+    get content(): ContextContent
+    {
+        return this._content;
+    }
+
+
+    /**
+     * Return sibling content
+     *
+     * @returns sibling content
+     */
+    get siblingContent(): NullableContextContent
+    {
+        return this._sibling;
+    }
+
+
+    /**
      * Return content clone
      *
      * @param index - index of content

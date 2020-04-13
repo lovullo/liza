@@ -103,6 +103,30 @@ export class GroupContext
 
 
     /**
+     * Create cache of field contexts
+     */
+    createFieldCache(): void
+    {
+        for ( let field in this._field_context_stores  )
+        {
+            const store = this._field_context_stores[ field ];
+
+            // Index is 0 for the initial fields
+            const index = <PositiveInteger>0;
+
+            const is_subfield = store.isSubField();
+
+            const field_context = this._field_context_factory
+                .create( field, index, store.content, is_subfield, store.siblingContent );
+
+            this._field_context_cache[ field ] = [];
+
+            this._field_context_cache[ field ][ index ] = field_context;
+        }
+    }
+
+
+    /**
      * Detaches content from the FieldContextStores
      * for specific fields that have cmatches
      *
@@ -126,7 +150,7 @@ export class GroupContext
 
             let store = this._field_context_stores[ field ];
 
-            if ( store !== null )
+            if ( store !== undefined )
             {
                 store.detach();
             }
