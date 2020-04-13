@@ -89,7 +89,7 @@ describe( "FieldContextStore", () =>
             null
         );
 
-        const given = sut.getPosition();
+        const given = sut.position;
 
         expect( given ).to.equal( expected_position );
     } );
@@ -133,7 +133,7 @@ describe( "FieldContextStore", () =>
             <ContextContent>sibling,
         );
 
-        const given = sut.getPosition();
+        const given = sut.position;
 
         expect( given ).to.equal( expected_position );
     } );
@@ -193,7 +193,7 @@ describe( "FieldContextStore", () =>
 
         sut.isSubField();
 
-        const given = sut.getSubFieldParentName();
+        const given = sut.subFieldParentName;
 
         expect( given ).to.equal( expected_parent );
     } );

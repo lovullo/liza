@@ -92,7 +92,7 @@ export class GroupContext
                 // Only non-subfields should store the position in GroupContext
                 if ( field_store.isSubField() === false )
                 {
-                    let position = field_store.getPosition();
+                    let position = field_store.position;
                     this._field_positions[ position ] = field;
                 }
 
@@ -261,7 +261,7 @@ export class GroupContext
         if ( store.isSubField() === true )
         {
             // Get the parent field context
-            const parent_name = store.getSubFieldParentName();
+            const parent_name = store.subFieldParentName;
 
             // create the parent field context if not defined
             this._fromCache( parent_name, index );
@@ -311,7 +311,7 @@ export class GroupContext
         // We don't want a new clone in this scenario
         if ( is_subfield === true )
         {
-            const parent_name = store.getSubFieldParentName();
+            const parent_name = store.subFieldParentName;
             field_content = this._field_context_cache[ parent_name ][ index ]
                 .getContent();
         }
@@ -342,7 +342,7 @@ export class GroupContext
     ): NullableContextContent
     {
         const store = this._field_context_stores[ field_name ];
-        let position: PositiveInteger = store.getPosition();
+        let position: PositiveInteger = store.position;
 
         position++;
 

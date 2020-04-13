@@ -119,8 +119,10 @@ export class FieldContextStore
 
     /**
      * Return position index
+     *
+     * @return position index
      */
-    getPosition(): PositiveInteger
+    get position(): PositiveInteger
     {
         return this._position;
     }
@@ -165,8 +167,10 @@ export class FieldContextStore
      *
      * This is used by GroupContext to find
      * the parent FieldContext of a sub-field
+     *
+     * @return sub-field's parent name
      */
-    getSubFieldParentName(): string
+    get subFieldParentName(): string
     {
         return this._subfield_parent_name;
     }
