@@ -70,6 +70,8 @@ export class FieldContextStore
      * Return content clone
      *
      * @param index - index of content
+     *
+     * @returns clone
      */
     getContentClone( index: PositiveInteger ): ContextContent
     {
@@ -83,6 +85,8 @@ export class FieldContextStore
      * Return sibling content clone
      *
      * @param index - index of content
+     *
+     * @returns sibling clone
      */
     getSiblingContentClone( index: PositiveInteger ): NullableContextContent
     {
@@ -132,7 +136,7 @@ export class FieldContextStore
      * Sets the position of the content
      * in relation to the parent node.
      */
-    private _setContentPosition()
+    private _setContentPosition(): void
     {
         let content = <ContextContent>this._sibling;
 
@@ -158,7 +162,7 @@ export class FieldContextStore
             return this._is_subfield;
         }
 
-        return this._getSubFieldIndicator();
+        return this._isSubFieldIndicator();
     }
 
 
@@ -183,7 +187,7 @@ export class FieldContextStore
      * because we don't want operations on a sub-field affecting
      * its parent.
      */
-    private _getSubFieldIndicator(): boolean
+    private _isSubFieldIndicator(): boolean
     {
         const field_element = this._content.querySelector( "#" + this._element_id );
 
@@ -215,6 +219,8 @@ export class FieldContextStore
      * The name format is expected to be: name_i, where i is the index.
      *
      * @param content - the content
+     *
+     * @returns modified content
      */
     private _setElementIdIndexes(
         content: ContextContent,

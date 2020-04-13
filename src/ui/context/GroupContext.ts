@@ -288,6 +288,8 @@ export class GroupContext
      *
      * @param field_name - field name
      * @param index - field index
+     *
+     * @returns cached FieldContext
      */
     private _fromCache(
         field_name: string,
@@ -335,6 +337,8 @@ export class GroupContext
      *
      * @param field_name - of element to find next element
      * @param index - field index
+     *
+     * @returns the Context of the next visible element
      */
     private _getNextElement(
         field_name: string,

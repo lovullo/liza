@@ -65,7 +65,9 @@ export class FieldContext
 
 
     /**
-     * Return the field identifier as used on the DOM
+     * Return the element identifier as used on the DOM
+     *
+     * @returns identifier
      */
     getElementId(): string
     {
@@ -168,7 +170,7 @@ export class FieldContext
     /**
      * Detach the field from the DOM
      */
-    protected detach()
+    protected detach(): void
     {
         if ( this.content.parentElement )
         {
@@ -188,6 +190,8 @@ export class FieldContext
 
     /**
      * Get the field content or sibling if it exists
+     *
+     * @returns first in set
      */
     getFirstOfContentSet(): ContextContent
     {
@@ -197,6 +201,8 @@ export class FieldContext
 
     /**
      * Get the field content
+     *
+     * @returns content
      */
     getContent(): ContextContent
     {
