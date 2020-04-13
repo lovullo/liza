@@ -201,7 +201,8 @@ export class FieldContextStore
         const parent = field_element.parentElement;
 
         // A subfield's parent has a 'widget' class value
-        this._is_subfield = !!( parent && /\bwidget\b/.test( parent.className ) );
+        this._is_subfield = !!( parent && parent.classList.contains( 'widget' ) );
+
 
         if ( this._is_subfield === true && parent !== null )
         {
