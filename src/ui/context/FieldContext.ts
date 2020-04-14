@@ -89,7 +89,7 @@ export class FieldContext
      */
     isVisible(): boolean
     {
-        return this.is_visible;
+        return this.is_attached && this.is_visible;
     }
 
 
