@@ -228,14 +228,7 @@ export class FieldContextStore
         index: PositiveInteger
     ): ContextContent
     {
-        let elements = [];
-
-        const children = content.getElementsByTagName( "*" );
-
-        for ( let i = 0; i < children.length; i++ )
-        {
-            elements.push( children[ i ] );
-        }
+        const elements: Element[] = [].slice.call( content.getElementsByTagName( '*' ) );
 
         // Add the content element to the array
         elements.push( content );
@@ -247,8 +240,9 @@ export class FieldContextStore
 
             let element_data: RegExpMatchArray | null = null;
 
+
             // grab the index from the id if found
-            if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
+            if ( element_data = id.match( /^(.*?)(\d+)$/ ) )
             {
                 // regenerate the id
                 element.setAttribute( 'id', element_data[ 1 ] + index );

@@ -457,7 +457,7 @@ module.exports = Class( 'GroupUi' )
             var element_data = 0;
 
             // grab the index from the id if found
-            if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
+            if ( element_data = id.match( /^(.*?)(\d+)$/ ) )
             {
                 // regenerate the id
                 element.setAttribute( 'id', element_data[1] + index );
