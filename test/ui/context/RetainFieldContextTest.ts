@@ -134,10 +134,6 @@ describe( "RetainFieldContext", () =>
             <ContextContent>content
         );
 
-        // our content should not be attached or visible yet, we just created it
-        expect( sut.isAttached() ).to.be.false;
-        expect( sut.isVisible() ).to.be.false;
-
         const to = document.createElement("dl");
         sut.show( to, null );
 
@@ -155,10 +151,6 @@ describe( "RetainFieldContext", () =>
             'q_field_0',
             <ContextContent>content
         );
-
-        // our content should not be attached yet, we just created it
-        expect( sut.isAttached() ).to.be.false;
-        expect( sut.isVisible() ).to.be.false;
 
         sut.hide();
 

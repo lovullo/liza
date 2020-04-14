@@ -61,7 +61,9 @@ export class FieldContext
         protected content: ContextContent,
         protected sibling: NullableContextContent = null
     )
-    {}
+    {
+        this.setFieldAttached();
+    }
 
 
     /**
@@ -90,6 +92,21 @@ export class FieldContext
     isVisible(): boolean
     {
         return this.is_attached && this.is_visible;
+    }
+
+
+    /**
+     * If the content has a parent element,
+     * we can safely assume the content
+     * is attached to the DOM
+     */
+    protected setFieldAttached(): void
+    {
+        if ( this.content.parentElement !== null )
+        {
+            this.is_attached = true;
+            this.is_visible = true;
+        }
     }
 
 

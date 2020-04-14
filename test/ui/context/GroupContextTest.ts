@@ -32,7 +32,7 @@ import { expect } from 'chai';
 
 describe( "GroupContext", () =>
 {
-    it( "createFieldStores calls parser and creates a store for each field", () =>
+    it( "init calls parser and creates a store for each field", () =>
     {
         const fields = [ 'foo', 'baz_subfield' ];
 
@@ -72,12 +72,42 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
 
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         expect( parser_fields )
             .to.deep.equal( fields );
 
         expect( find_sibling_called ).to.be.true;
+    } );
+
+
+    it( "init does not create store when parser returns null", () =>
+    {
+        const fields = [ 'foo', 'baz' ];
+
+        let factory_call_count  = 0;
+
+        const parser = <ContextParser>{
+            'parse':( _: any, __: any ) => {
+                return null;
+            },
+        };
+
+        const factory = <FieldContextFactory>{
+            'create': ( _:any, __:any, ___:any, ____:any ) => {},
+            'createStore': ( _: any, __:any, ___:any ) => {
+                factory_call_count++;
+                return getFieldContextStoreStub();
+            }
+        };
+
+        const sut = new Sut( parser, factory );
+
+        const dummy_content = document.createElement( "dl" );
+
+        sut.init( fields, fields, dummy_content );
+
+        expect( factory_call_count ).to.equal( 0 );
     } );
 
 
@@ -127,7 +157,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
 
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.createFieldCache();
 
@@ -136,33 +166,62 @@ describe( "GroupContext", () =>
     } );
 
 
-    it( "createFieldStores does not create store when parser returns null", () =>
+    it( "addIndex clones content for non-cmatch fields by index and shows them", () =>
     {
         const fields = [ 'foo', 'baz' ];
+        const cmatch_fields = [ 'baz' ];
 
-        let factory_call_count  = 0;
+        let stubs = <ContextCache>{
+            'foo': [ getFieldContextStub( 'foo', false, false ) ],
+            'baz': [ getFieldContextStub( 'baz', false, false ) ],
+        }
+
+        let stores = <ContextStores>{
+            'foo': getFieldContextStoreStub( 0 ),
+            'baz': getFieldContextStoreStub( 0 ),
+        }
+
+        let foo_show_called = false;
+        let baz_show_called = false;
+
+        const dummy_content = document.createElement( "dl" );
 
         const parser = <ContextParser>{
-            'parse':( _: any, __: any ) => {
-                return null;
+            'parse': ( _: any, __: any ) => {
+                return <ContextContent>document.createElement( "dd" );
+            },
+            'findSiblingContent': ( _: any ) => {
+                return <ContextContent>document.createElement("dt");
             },
         };
 
         const factory = <FieldContextFactory>{
-            'create': ( _:any, __:any, ___:any, ____:any ) => {},
-            'createStore': ( _: any, __:any, ___:any ) => {
-                factory_call_count++;
-                return getFieldContextStoreStub();
+            'create': ( field:any, __:any, ___:any, ____:any ) => {
+                return stubs[ field ][ 0 ];
+            },
+            'createStore': ( field: any, __:any, ___:any ) => {
+                return stores[ field ];
             }
+        };
+
+        stubs[ 'foo' ][ 0 ].show = ( _: any, __:any ) =>
+        {
+            foo_show_called = true;
+        };
+
+        stubs[ 'baz' ][ 0 ].show = (  _: any, __:any ) =>
+        {
+            baz_show_called = true;
         };
 
         const sut = new Sut( parser, factory );
 
-        const dummy_content = document.createElement( "dl" );
+        sut.init( fields, cmatch_fields, dummy_content );
 
-        sut.createFieldStores( fields, dummy_content );
+        sut.addIndex( <PositiveInteger>0, dummy_content );
 
-        expect( factory_call_count ).to.equal( 0 );
+        expect( foo_show_called ).to.be.true;
+        expect( baz_show_called ).to.be.false;
     } );
 
 
@@ -193,7 +252,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, cmatch_fields, dummy_content );
 
         sut.detachStoreContent( cmatch_fields );
 
@@ -212,7 +271,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         const given = sut.isFieldAttached( 'bar', <PositiveInteger>0 );
 
@@ -241,7 +300,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.show( 'baz', <PositiveInteger>0, dummy_content );
 
@@ -271,7 +330,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         // show to put the field in the cache
         sut.show( 'foo', <PositiveInteger>0, dummy_content );
@@ -301,7 +360,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.hide( 'bar', <PositiveInteger>0 );
         expect( hide_is_called ).to.be.false;
@@ -354,7 +413,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.hide( 'baz_subfield', <PositiveInteger>0 );
 
@@ -419,7 +478,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         // first add two fields, and baz added before foo
         sut.show( 'moo', <PositiveInteger>0, dummy_content );
@@ -488,7 +547,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.show( 'bar', <PositiveInteger>1, dummy_content );
 
@@ -516,7 +575,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         sut.hide( 'bar', <PositiveInteger>0 );
 
@@ -573,7 +632,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
 
         // Simulate index 1 elements being added to ContextCache
         sut.show( 'foo', <PositiveInteger>1, dummy_content );
@@ -623,7 +682,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
-        sut.createFieldStores( fields, dummy_content );
+        sut.init( fields, fields, dummy_content );
         sut.setOptions( field_to_set, <PositiveInteger>0, stub_options, stub_value );
         expect( set_options_is_called ).to.equal( call_expected );
         } );
@@ -681,6 +740,7 @@ function getFieldContextStub(
         'getElementId': () => { return element_id },
         'isVisible': () => { return is_visible; },
         'isAttached': () => { return is_attached; },
+        'show': ( _: any, __:any ) => {},
         'getFirstOfContentSet': () => {},
     };
 }

@@ -51,6 +51,21 @@ export class GroupContext
      */
     private _field_positions: string[] = [];
 
+    /**
+     * Exclusive field names
+     */
+    private _exclusive_fields: string[] = [];
+
+    /**
+     * Cmatch field names
+     */
+    private _cmatch_fields: string[] = [];
+
+    /**
+     * Non-cmatch field names
+     */
+    private _non_cmatch_fields: string[] = [];
+
 
     /**
      * Initialize GroupContext
@@ -66,15 +81,25 @@ export class GroupContext
 
     /**
      * Create cache of field context stores
+     * and initialize field arrays
      *
      * @param fields - exclusive field names of group
+     * @param cmatch_fields - exclusive cmatch field names of group
      * @param content - group content
      */
-    createFieldStores(
+    init(
         fields: string[],
+        cmatch_fields: string[],
         content: ContextContent
     ): void
     {
+        this._exclusive_fields = fields;
+        this._cmatch_fields = cmatch_fields;
+
+        this._non_cmatch_fields = this._exclusive_fields.filter(
+            field => this._cmatch_fields.indexOf( field ) === -1
+        );
+
         for ( let i = 0; i < fields.length; i++ )
         {
             let field = fields[ i ];
@@ -122,6 +147,28 @@ export class GroupContext
             this._field_context_cache[ field ] = [];
 
             this._field_context_cache[ field ][ index ] = field_context;
+        }
+    }
+
+
+    /**
+     * Shows default fields for a new index
+     *
+     * Only non-cmatch fields should be attached initially
+     *
+     * @param index - field index
+     * @param to - parent content
+     */
+    addIndex(
+        index: PositiveInteger,
+        to: ContextContent
+    ): void
+    {
+        for ( let i = 0; i < this._non_cmatch_fields.length; i++ )
+        {
+            const field_name = this._non_cmatch_fields[ i ];
+
+            this.show( field_name, index, to );
         }
     }
 
@@ -234,7 +281,7 @@ export class GroupContext
      *
      * @param field_name - to attach to DOM
      * @param index - field index
-     * @param to - parent context
+     * @param to - parent content
      */
     show(
         field_name: string,
