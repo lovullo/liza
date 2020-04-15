@@ -181,7 +181,7 @@ function createSut( content, field )
 
     $content.hide = sinon.stub();
     $content.find = sinon.stub()
-        .returns( { click: sinon.stub() });
+        .returns( { live: sinon.stub() });
 
     const jquery = sinon.stub();
 

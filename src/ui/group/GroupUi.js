@@ -390,7 +390,7 @@ module.exports = Class( 'GroupUi' )
     {
         var _self = this;
 
-        this.$content.find( '.action' ).click( function( e )
+        this.$content.find( '.action' ).live( 'click', function( e )
         {
             e.preventDefault();
 

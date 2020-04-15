@@ -65,7 +65,7 @@ describe( 'ui.group.GroupUi', () =>
 
                 $content.hide = sinon.stub();
                 $content.find = sinon.stub()
-                    .returns( { click: sinon.stub() });
+                    .returns( { live: sinon.stub() });
 
                 const jquery = sinon.stub();
 
@@ -138,7 +138,7 @@ describe( 'ui.group.GroupUi', () =>
 
             $content.hide = sinon.stub();
             $content.find = sinon.stub()
-                .returns( { click: sinon.stub() });
+                .returns( { live: sinon.stub() });
 
             const jquery = sinon.stub();
             jquery.withArgs( content ).returns( $content );
