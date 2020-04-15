@@ -165,10 +165,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var tab     = this._box.querySelector( 'li' );
         var content = this._box.querySelector( '.tab-content' );
 
-        this.fieldContentParent[ 0 ] = content;
-        this.initGroupContext();
-        this.hideCmatchFields();
-
         this._tabItem     = tab.parentElement.removeChild( tab );
         this._contentItem = content.parentElement.removeChild( content );
 
@@ -580,9 +576,14 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _createTabContent': function( index )
     {
-        return this._finalizeContent( index,
-            $( this._contentItem.cloneNode( true ) )
-        );
+        const item = this._contentItem.cloneNode( true );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = item.querySelector( 'dl' );
+
+        this.context.addIndex( index, this.fieldContentParent[ index ] );
+
+        return this._finalizeContent( index, $( item ) );
     },
 
 
@@ -592,9 +593,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
-
-        // Set field content parent for this index
-        this.fieldContentParent[ index ] = content;
 
         this.styler.apply( $content );
 

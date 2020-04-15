@@ -105,12 +105,6 @@ module.exports = Class( 'TabbedGroupUi' )
 
         const baseTabContent = this.$baseTabContent[ 0 ];
 
-        this.fieldContentParent[ 0 ] = baseTabContent.querySelector( 'dl' );
-
-        this.initGroupContext();
-
-        this.hideCmatchFields();
-
         this.$baseTabContent.detach();
 
         // transform into tabbed div
@@ -237,6 +231,8 @@ module.exports = Class( 'TabbedGroupUi' )
 
         // Set field content parent for this index
         this.fieldContentParent[ index ] = content.querySelector( 'dl' );
+
+        this.context.addIndex( index, this.fieldContentParent[ index ] );
 
         // append the content
         $container.append( $content );

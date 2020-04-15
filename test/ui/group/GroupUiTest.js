@@ -40,7 +40,7 @@ describe( 'ui.group.GroupUi', () =>
                 let context_called = false;
 
                 const context = {
-                    createFieldStores: function()
+                    init: function()
                     {
                         context_called = true;
                     },
@@ -231,7 +231,7 @@ function getRContext() {
 function getFieldContext()
 {
     return {
-        createFieldStores: function(){},
+        init: function(){},
         detachStoreContent: function(){},
         show: function(){},
         detachFields: function(){},

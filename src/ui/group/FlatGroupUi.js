@@ -30,6 +30,31 @@ module.exports = Class( 'FlatGroupUi' )
     .extend( GroupUi,
 {
     /**
+     * Process group before initial display
+     *
+     * @return {undefined}
+     */
+    'protected override processContent': function()
+    {
+        // Sets the parent element
+        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
+
+        this.context.createFieldCache();
+    },
+
+
+    /**
+     * This group does not support multiple indexes
+     *
+     * @return {boolean}
+     */
+    'protected override supportsMultipleIndex': function()
+    {
+        return false;
+    },
+
+
+    /**
      * Permit adding only a single index
      *
      * @param {number} index index that has been added

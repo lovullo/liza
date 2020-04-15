@@ -231,6 +231,17 @@ module.exports = Class( 'GroupUi' )
 
     'public init': function( quote )
     {
+        const fields = this.group.getExclusiveFieldNames();
+        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+
+        this.context.init( fields, cmatch_fields, this.content );
+
+        if ( this._feature_flag.getDomPerfFlag() === true )
+        {
+            const detach_fields = ( this.supportsMultipleIndex() ) ? fields : cmatch_fields;
+            this.context.detachStoreContent( detach_fields );
+        }
+
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
@@ -356,43 +367,17 @@ module.exports = Class( 'GroupUi' )
      */
     'virtual protected processContent': function()
     {
-        // The first index parent is the first dl for most groups
-        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
-
-        this.initGroupContext();
-
-        this.hideCmatchFields();
     },
 
 
     /**
-     * Get the exclusive field names and create
-     * the field cache on GroupContext
+     * Group types that can support multiple index
      *
-     * @return undefined
+     * @return {boolean}
      */
-    'protected initGroupContext': function()
+    'virtual protected supportsMultipleIndex': function()
     {
-        const fields = this.group.getExclusiveFieldNames();
-        this.context.createFieldStores( fields, this.content );
-    },
-
-
-    /**
-     * Immediately hide fields with classifications
-     * This ensures that each cloned row/tab/etc
-     * will not contain hundreds of fields, which
-     * improves browser performance
-     *
-     * @return undefined
-     */
-    'protected hideCmatchFields': function()
-    {
-        if ( this._feature_flag.getDomPerfFlag() === true )
-        {
-            const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
-            this.context.detachStoreContent( cmatch_fields );
-        }
+        return true;
     },
 
 

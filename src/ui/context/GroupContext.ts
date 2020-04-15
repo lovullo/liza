@@ -129,6 +129,9 @@ export class GroupContext
 
     /**
      * Create cache of field contexts
+     *
+     * This should only be called by Groups that do not
+     * support multiple indexes
      */
     createFieldCache(): void
     {

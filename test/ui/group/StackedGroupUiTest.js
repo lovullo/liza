@@ -162,7 +162,7 @@ function createSut( content, field )
     };
 
     const context = {
-        createFieldStores: function(){},
+        init: function(){},
         detachStoreContent: function(){},
         show: function(){},
         detachFields: function(){},
