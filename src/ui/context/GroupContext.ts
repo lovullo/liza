@@ -385,8 +385,8 @@ export class GroupContext
         if ( is_subfield === true )
         {
             const parent_name = store.subFieldParentName;
-            field_content = this._field_context_cache[ parent_name ][ index ]
-                .getContent();
+            const parent_context = this._fromCache( parent_name, index );
+            field_content = parent_context.getContent();
         }
 
         const field_context = this._field_context_factory
