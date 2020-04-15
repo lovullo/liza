@@ -24,7 +24,6 @@
 import { Program } from "../../program/Program";
 import { BaseQuote } from "../../quote/BaseQuote";
 import { QuoteDataBucket } from "../../bucket/QuoteDataBucket";
-import { RateResult } from "../rater/Rater";
 
 
 export declare class ServerSideQuote extends BaseQuote
@@ -68,7 +67,7 @@ export declare class ServerSideQuote extends BaseQuote
      *
      * @return rating data
      */
-    getRatingData(): RateResult;
+    getRatingData(): Record<string, any>;
 
 
     /**
@@ -117,13 +116,4 @@ export declare class ServerSideQuote extends BaseQuote
      * @return {ServerSideQuote} self
      */
     retryAttempted(): this;
-
-    /**
-     * Retrieve the number of raters that are pending
-     *
-     * @param data (optional) Rate data
-     *
-     * @return the number of retries pending
-     */
-    getRetryCount( data?: Record<string, any> ): number;
 }

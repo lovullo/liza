@@ -173,49 +173,4 @@ describe( 'ServerSideQuote', () =>
             expect( called ).to.equal( true );
         } );
     } );
-
-    ( [
-        [
-            "The retry counts are found",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 1 ],
-                'supplier-c__retry': [ 1 ],
-                'supplier-d__retry': [ 0 ],
-            },
-            2,
-        ],
-        [
-            "Nested arrays are handled",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 0 ],
-                'supplier-c__retry': [ 0 ],
-                'supplier-d__retry': [ [ 0 ] ],
-            },
-            0,
-        ],
-        [
-            "Only counts retries and not other data",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 0 ],
-                'supplier-c__reetry': [ 1 ],
-                'supplier-d__retry': [ 1 ],
-            },
-            1,
-        ],
-    ] ).forEach( ([
-        label,
-        data,
-        expected_count,
-    ]) =>
-    {
-        it( label, () =>
-        {
-            const sut = Sut();
-
-            expect( sut.getRetryCount( data ) ).to.equal( expected_count );
-        } );
-    } );
 } );

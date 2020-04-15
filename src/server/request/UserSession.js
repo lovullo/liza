@@ -38,7 +38,7 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
 
     /**
      * Memcache client
-     * @type {memcache.Client}
+     * @tyep {memcache.Client}
      */
     'private _memcache': null,
 

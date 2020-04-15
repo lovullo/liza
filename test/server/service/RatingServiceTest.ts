@@ -29,8 +29,11 @@ import { PriorityLog } from "../../../src/server/log/PriorityLog";
 import { ProcessManager } from "../../../src/server/rater/ProcessManager";
 import { Program } from "../../../src/program/Program";
 import { QuoteId } from "../../../src/quote/Quote";
-import { Rater, RateResult, WorksheetData } from "../../../src/server/rater/Rater";
+import { Rater, RateResult } from "../../../src/server/rater/Rater";
+import { Server } from "../../../src/server/Server";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
+import { UserRequest } from "../../../src/server/request/UserRequest";
+import { UserResponse } from "../../../src/server/request/UserResponse";
 import { UserSession } from "../../../src/server/request/UserSession";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
 import { PositiveInteger } from "../../../src/numeric";
@@ -51,27 +54,26 @@ describe( 'RatingService', () =>
     {
         const {
             logger,
+            server,
             raters,
             dao,
-            session,
+            request,
+            response,
             quote,
             stub_rate_data,
             createDelta,
             ts_ctor,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
         const expected = {
-            content: {
-                data:             stub_rate_data,
-                initialRatedDate: quote.getRatedDate(),
-                lastRatedDate:    quote.getLastPremiumDate(),
-            },
-            actions: [],
+            data:             stub_rate_data,
+            initialRatedDate: quote.getRatedDate(),
+            lastRatedDate:    quote.getLastPremiumDate(),
         };
 
-        return expect( sut.request( session, quote, "" ) )
+        return expect( sut.request( request, response, quote, "" ) )
             .to.eventually.deep.equal( expected );
     } );
 
@@ -79,9 +81,11 @@ describe( 'RatingService', () =>
     {
         const {
             logger,
+            server,
             raters,
             dao,
-            session,
+            request,
+            response,
             quote,
             stub_rate_data,
             createDelta,
@@ -90,6 +94,7 @@ describe( 'RatingService', () =>
 
         let last_premium_date_call_count = 0;
         let initial_date_call_count = 0;
+        let send_is_called = false;
 
         const initial_date = <UnixTimestamp>2345;
         const cur_date     = <UnixTimestamp>Math.round(
@@ -109,88 +114,51 @@ describe( 'RatingService', () =>
             return initial_date;
         };
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
-
-        return sut.request( session, quote, "" )
-            .then( ( result: RateRequestResult ) =>
-            {
-                expect( result.content.initialRatedDate ).to.equal( initial_date );
-                expect( result.content.lastRatedDate ).to.equal( cur_date );
-                expect( result.content.data ).to.equal( stub_rate_data );
-                expect( last_premium_date_call_count ).to.equal( 2 );
-                expect( initial_date_call_count ).to.equal( 1 );
-            } );
-    } );
-
-
-    it( "Invalidates a quote with a meta bucket updated after last rate", () =>
-    {
-        const {
-            logger,
-            raters,
-            dao,
-            session,
-            quote,
-            stub_rate_data,
-            createDelta,
-            ts_ctor,
-        } = getStubs();
-
-        let last_premium_date_call_count = 0;
-        let initial_date_call_count = 0;
-
-        const initial_date = <UnixTimestamp>2345;
-        const cur_date     = <UnixTimestamp>Math.round(
-            ( ( new Date() ).getTime() / 1000 )
-        );
-
-        // setup recent last prem date to ensure quote is valid
-        quote.getLastPremiumDate = () =>
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
+        server.sendResponse = (
+            _request: any,
+            _quote:   any,
+            resp:     RateRequestResult,
+            _actions: any
+        ) =>
         {
-            last_premium_date_call_count++;
-            return cur_date;
+            expect( resp.initialRatedDate ).to.equal( initial_date );
+            expect( resp.lastRatedDate ).to.equal( cur_date );
+            expect( resp.data ).to.equal( stub_rate_data );
+            expect( last_premium_date_call_count ).to.equal( 2 );
+            expect( initial_date_call_count ).to.equal( 1 );
+            send_is_called = true;
+            return server;
         };
 
-        quote.getRatedDate = () =>
-        {
-            initial_date_call_count++;
-            return initial_date;
-        };
-
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
-
-        return sut.request( session, quote, "" )
-            .then( ( result: RateRequestResult ) =>
-            {
-                expect( result.content.initialRatedDate ).to.equal( initial_date );
-                expect( result.content.lastRatedDate ).to.equal( cur_date );
-                expect( result.content.data ).to.equal( stub_rate_data );
-                expect( last_premium_date_call_count ).to.equal( 2 );
-                expect( initial_date_call_count ).to.equal( 1 );
-            } );
+        return sut.request( request, response, quote, "" )
+            .then( _=> expect( send_is_called ).to.be.true );
     } );
-
 
     it( "updates rating dates before serving to client", () =>
     {
         const {
             logger,
+            server,
             raters,
             dao,
-            session,
+            request,
+            response,
             quote,
             stub_rate_data,
             createDelta,
             ts_ctor,
         } = getStubs();
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
         let last_prem_called  = false;
         let rated_date_called = false;
 
         let stub_last_prem_ts  = <UnixTimestamp>0;
         let stub_rated_date_ts = <UnixTimestamp>0;
+
+        let sent = false;
 
         quote.setLastPremiumDate = () =>
         {
@@ -207,34 +175,44 @@ describe( 'RatingService', () =>
         quote.getLastPremiumDate = () => stub_last_prem_ts;
         quote.getRatedDate       = () => stub_rated_date_ts;
 
-        const expected = {
-            content: {
-                data:             stub_rate_data,
-                initialRatedDate: stub_rated_date_ts,
-                lastRatedDate:    stub_last_prem_ts,
-            },
-            actions: [],
+        server.sendResponse = (
+            _request: any,
+            _quote:   any,
+            resp:     RateRequestResult,
+            _actions: ClientActions
+        ) =>
+        {
+            expect( resp.initialRatedDate ).to.equal( stub_rated_date_ts );
+            expect( resp.lastRatedDate ).to.equal( stub_last_prem_ts );
+
+            expect( last_prem_called ).to.be.true;
+            expect( rated_date_called ).to.be.true;
+
+            sent = true;
+
+            return server;
         };
 
-        return expect( sut.request( session, quote, "" ) )
-            .to.eventually.deep.equal( expected )
-            .then( ( result: RateRequestResult ) =>
-            {
-                expect( result.content.initialRatedDate ).to.equal( stub_rated_date_ts );
-                expect( result.content.lastRatedDate ).to.equal( stub_last_prem_ts );
+        const expected = {
+            data:             stub_rate_data,
+            initialRatedDate: stub_rated_date_ts,
+            lastRatedDate:    stub_last_prem_ts,
+        };
 
-                expect( last_prem_called ).to.be.true;
-                expect( rated_date_called ).to.be.true;
-            } );
+        return expect( sut.request( request, response, quote, "" ) )
+            .to.eventually.deep.equal( expected )
+            .then( () => expect( sent ).to.be.true );
     } );
 
     it( "saves rate data to its own field", () =>
     {
         const {
             logger,
+            server,
             raters,
             dao,
-            session,
+            request,
+            response,
             quote,
             stub_rate_data,
             createDelta,
@@ -259,9 +237,9 @@ describe( 'RatingService', () =>
             return dao;
         };
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
-        return sut.request( session, quote, "" )
+        return sut.request( request, response, quote, "" )
             .then( () =>
             {
                 expect( saved_rates ).to.be.true;
@@ -273,9 +251,11 @@ describe( 'RatingService', () =>
     {
         const {
             logger,
+            server,
             raters,
             dao,
-            session,
+            request,
+            response,
             quote,
             stub_rate_delta,
             createDelta,
@@ -309,9 +289,9 @@ describe( 'RatingService', () =>
             return dao;
         };
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
-        return sut.request( session, quote, "" )
+        return sut.request( request, response, quote, "" )
             .then( () => { expect( saved_quote ).to.be.true; } );
     } );
 
@@ -325,7 +305,9 @@ describe( 'RatingService', () =>
             quote,
             rater,
             raters,
-            session,
+            request,
+            response,
+            server,
             createDelta,
             ts_ctor,
         } = getStubs();
@@ -334,7 +316,7 @@ describe( 'RatingService', () =>
 
         rater.rate = () => { throw expected_error; };
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
         let logged = false;
 
@@ -359,7 +341,7 @@ describe( 'RatingService', () =>
             return logger;
         };
 
-        return expect( sut.request( session, quote, "" ) )
+        return expect( sut.request( request, response, quote, "" ) )
             .to.eventually.rejectedWith( expected_error )
             .then( () => expect( logged ).to.be.true );
     } );
@@ -373,14 +355,16 @@ describe( 'RatingService', () =>
             quote,
             rater,
             raters,
-            session,
+            request,
+            response,
+            server,
             createDelta,
             ts_ctor,
         } = getStubs();
 
         const expected_message = 'expected foo';
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
         rater.rate = (
             _quote:   ServerSideQuote,
@@ -394,7 +378,7 @@ describe( 'RatingService', () =>
             return rater;
         };
 
-        return expect( sut.request( session, quote, "" ) )
+        return expect( sut.request( request, response, quote, "" ) )
             .to.eventually.rejectedWith( Error, expected_message );
     } );
 
@@ -409,32 +393,46 @@ describe( 'RatingService', () =>
             logger,
             quote,
             raters,
-            session,
+            request,
+            response,
+            server,
             stub_rate_data,
             createDelta,
             ts_ctor,
         } = getStubs();
 
+        let sent = false;
+
         stub_rate_data._cmpdata = {
             deferred: [ 'supp1', 'supp2' ],
         };
 
-        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        server.sendResponse = (
+            _request: any,
+            _quote: any,
+            _resp: any,
+            actions: ClientActions
+        ) =>
+        {
+            expect( actions ).to.deep.equal( [
+                { action: 'indvRate', id: 'supp1' },
+                { action: 'indvRate', id: 'supp2' },
+            ] );
 
-        return sut.request( session, quote, "" )
-            .then( ( result: RateRequestResult ) =>
-            {
-                expect( result.actions ).to.deep.equal( [
-                    { action: 'indvRate', id: 'supp1' },
-                    { action: 'indvRate', id: 'supp2' },
-                ] );
-            } );
+            sent = true;
+
+            return server;
+        };
+
+        const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
+
+        return sut.request( request, response, quote, "" )
+            .then( () => expect( sent ).to.be.true );
     } );
 
     ( <[
         string,
         Record<string, any>,
-        number,
         number[],
         boolean,
         boolean[],
@@ -450,7 +448,6 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 0 ],
             },
-            2,
             [ 2 ],
             true,
             [ true ],
@@ -466,7 +463,6 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 0 ],
                 'supplier-d__retry': [ [ 0 ] ],
             },
-            0,
             [ 0 ],
             false,
             [ true ],
@@ -482,7 +478,6 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 1 ],
             },
-            2,
             [ 2 ],
             false,
             undefined,
@@ -498,7 +493,6 @@ describe( 'RatingService', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 1 ],
             },
-            2,
             [ 0 ],
             false,
             undefined,
@@ -509,7 +503,6 @@ describe( 'RatingService', () =>
     ] ).forEach( ([
         label,
         supplier_data,
-        retry_count,
         expected_count,
         expected_delay_action,
         rate_steps,
@@ -525,16 +518,53 @@ describe( 'RatingService', () =>
                 logger,
                 quote,
                 raters,
-                session,
+                request,
+                response,
+                server,
                 stub_rate_data,
                 createDelta,
                 program,
                 ts_ctor,
             } = getStubs();
 
+            let sent             = false;
             let meta_save_called = false;
 
             Object.assign( stub_rate_data, supplier_data );
+
+            server.sendResponse = (
+                _request: any,
+                _quote:   any,
+                resp:     RateRequestResult,
+                actions:  ClientActions
+            ) =>
+            {
+                const expected_action = {
+                    "action":    "delay",
+                    "seconds":   5,
+                    "then":      {
+                        action: "rate",
+                        indv:   "retry",
+                    },
+                };
+
+                ( expected_delay_action )
+                    ? expect( actions ).to.deep.equal( [ expected_action ] )
+                    : expect( actions ).to.not.equal( [ expected_action ] );
+
+                expect( resp.data[ '__rate_pending' ] )
+                    .to.deep.equal( expected_count );
+
+                if( expected_count === [ 0 ] )
+                {
+                    supplier_data.forEach( ( datum: number[] ) => {
+                        expect( datum[ 0 ] ).to.equal( 0 );
+                    });
+                }
+
+                sent = true;
+                return server;
+            };
 
             if( expected_save_meta )
             {
@@ -557,35 +587,10 @@ describe( 'RatingService', () =>
             quote.getProgram       = () => { return program; };
             quote.getCurrentStepId = () => { return step_id; };
             quote.getRetryAttempts = () => { return attempts; };
-            quote.getRetryCount    = () => { return retry_count; };
 
-            const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
-            return sut.request( session, quote, "" )
-                .then( ( result: RateRequestResult ) =>
-                {
-                    const expected_action = {
-                        "action":    "delay",
-                        "seconds":   5,
-                        "then":      {
-                            action:  "rate",
-                            value:  -1,
-                        },
-                    };
-
-                    ( expected_delay_action )
-                        ? expect( result.actions ).to.deep.equal( [ expected_action ] )
-                        : expect( result.actions ).to.not.equal( [ expected_action ] );
-
-                    expect( result.content.data[ '__rate_pending' ] )
-                        .to.deep.equal( expected_count );
-
-                    if( expected_count === [ 0 ] )
-                    {
-                        supplier_data.forEach( ( datum: number[] ) => {
-                            expect( datum[ 0 ] ).to.equal( 0 );
-                        });
-                    }
-                } )
+            const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
+            return sut.request( request, response, quote, "" )
+                .then( () => expect( sent ).to.be.true )
                 .then( () => expect( meta_save_called ).to.be.true );
         } );
     } );
@@ -598,9 +603,11 @@ describe( 'RatingService', () =>
 
             const {
                 logger,
+                server,
                 raters,
                 dao,
-                session,
+                request,
+                response,
                 quote,
                 createDelta,
                 ts_ctor,
@@ -620,12 +627,12 @@ describe( 'RatingService', () =>
                 {
                     processed = true;
                 }
-            }( logger, dao, raters, createDelta, ts_ctor );
+            }( logger, dao, server, raters, createDelta, ts_ctor );
 
-            sut.request( session, quote, 'something' );
+            sut.request( request, response, quote, 'something' );
         } );
 
-        it( "calls getLastPremiumDate during #_performRating", () =>
+        it( "calls getLastPremiumDate during #_performRating", done =>
         {
             let getLastPremiumDateCallCount = 0;
 
@@ -634,9 +641,11 @@ describe( 'RatingService', () =>
 
             const {
                 logger,
+                server,
                 raters,
                 dao,
-                session,
+                request,
+                response,
                 quote,
                 createDelta,
                 ts_ctor,
@@ -650,15 +659,20 @@ describe( 'RatingService', () =>
 
             quote.getRatedDate = () => initial_date;
 
-            const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+            const sut = new Sut( logger, dao, server, raters, createDelta, ts_ctor );
 
-            return sut.request( session, quote, "" )
-                .then( ( result: RateRequestResult ) =>
-                {
-                    expect( getLastPremiumDateCallCount ).to.equal( 2 );
-                    expect( result.content.initialRatedDate ).to.equal( initial_date );
-                    expect( result.content.lastRatedDate ).to.equal( last_date );
-                } );
+            server.sendResponse = ( _request: any, _quote: any, resp: any, _actions: any ) =>
+            {
+                expect( getLastPremiumDateCallCount ).to.equal( 2 );
+                expect( resp.initialRatedDate ).to.equal( initial_date );
+                expect( resp.lastRatedDate ).to.equal( last_date );
+
+                done();
+
+                return server;
+            };
+
+            sut.request( request, response, quote, "" );
         } );
     } );
 } );
@@ -729,6 +743,11 @@ function getStubs()
         }
     };
 
+    const server = <Server>{
+        sendResponse: () => server,
+        sendError:    () => server,
+    };
+
     const dao = new class implements ServerDao
     {
         saveQuote(
@@ -768,20 +787,6 @@ function getStubs()
             return this;
         }
 
-        updateQuoteRateRetries(
-            quote: ServerSideQuote
-        ): Promise<ServerSideQuote>
-        {
-            return Promise.resolve( quote );
-        }
-
-        ensurePendingSuppliers(
-            quote: ServerSideQuote
-        ): Promise<ServerSideQuote>
-        {
-            return Promise.resolve( quote );
-        }
-
         saveQuoteMeta( _: any, __:any, ___:any, ____:any ): this
         {
             return this;
@@ -797,7 +802,7 @@ function getStubs()
             throw new Error( "Unused method" );
         }
 
-        getWorksheet(): Promise<WorksheetData>
+        getWorksheet(): this
         {
             throw new Error( "Unused method" );
         }
@@ -806,6 +811,13 @@ function getStubs()
     const session = <UserSession>{
         isInternal: () => false,
     };
+
+    const request = <UserRequest>{
+        getSession:       () => session,
+        getSessionIdName: () => {},
+    };
+
+    const response = <UserResponse>{};
 
     const quote = <ServerSideQuote>{
         getProgramId:          () => program_id,
@@ -822,7 +834,6 @@ function getStubs()
         getRatingData:         () => stub_rate_data,
         getBucket:             () => new QuoteDataBucket(),
         getMetabucket:         () => new QuoteDataBucket(),
-        getMetaUpdatedDate:    () => <UnixTimestamp>0,
         getProgramVersion:     () => 'Foo',
         getExplicitLockReason: () => 'Reason',
         getExplicitLockStep:   () => <PositiveInteger>1,
@@ -834,7 +845,6 @@ function getStubs()
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
-        getRetryCount:         () => 0,
     };
 
     const ts_ctor = () => { return <UnixTimestamp>2592001 };
@@ -847,8 +857,11 @@ function getStubs()
         rater:           rater,
         raters:          raters,
         logger:          logger,
+        server:          server,
         dao:             dao,
         session:         session,
+        request:         request,
+        response:        response,
         quote:           quote,
         ts_ctor:         ts_ctor,
     };

@@ -688,25 +688,6 @@ module.exports = Class( 'Client' )
 
 
     /**
-     * Retrieve function to handle visit triggers
-     *
-     * @return {Function} trigger handler
-     */
-    'private _getVisitTriggerHandler': function()
-    {
-        var client = this;
-        return function( event_name, element_name, value, indexes )
-        {
-            client.handleEvent( event_name, {
-                elementName: element_name,
-                indexes:     indexes,
-                value:       value
-            } );
-        };
-    },
-
-
-    /**
      * Retrieves the program ID from the URL
      *
      * @return String program id
@@ -1107,11 +1088,7 @@ module.exports = Class( 'Client' )
             // run any visit hooks
             client._quote.visitData( function( bucket )
             {
-                client.program.visitStep(
-                    step_id,
-                    bucket,
-                    client._getVisitTriggerHandler()
-                );
+                client.program.visitStep( step_id, bucket );
             } );
 
             // Just let the server know we're visiting this step (we don't even
@@ -1917,16 +1894,14 @@ module.exports = Class( 'Client' )
             client._quote.visitData( function( bucket )
             {
                 client.program.beforeLoadStep( event.stepId, bucket,
-                    function( event_name, element_name, value, indexes )
+                    function( event_name, _, value )
                     {
                         event_count++;
 
                         client.handleEvent( event_name,
                             {
-                                stepId:      event.stepId,
-                                elementName: element_name,
-                                indexes:     indexes,
-                                value:       value,
+                                stepId: event.stepId,
+                                value:  value,
                             },
                             function()
                             {

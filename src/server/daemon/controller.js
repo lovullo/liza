@@ -125,34 +125,31 @@ exports.post_rate_publish = {};
 
 exports.init = function( logger, enc_service, conf, env )
 {
-    var   db      = _createDB( logger );
-    const ts_ctor = () => { return Math.floor( new Date().getTime() / 1000 ); };
-    const dao     = new MongoServerDao( db, env, ts_ctor );
+    var db    = _createDB( logger );
+    const dao = new MongoServerDao( db, env );
 
     db.collection( 'quotes', function( err, collection )
     {
-        _createDocumentServer(
-            dao,
-            logger,
-            enc_service,
-            conf,
-            collection,
-            ts_ctor
-        ).then( srv =>
+        _createDocumentServer( dao, logger, enc_service, conf, collection ).then( srv =>
         {
             server = srv;
 
             server_cache = _createCache( server );
             server.init( server_cache, exports.rater );
 
+            const ts_ctor = () =>
+            {
+                return Math.floor( new Date().getTime() / 1000 );
+            };
+
             rating_service = new RatingService(
-                logger, dao, exports.rater, delta.createDelta, ts_ctor
+                logger, dao, server, exports.rater, delta.createDelta, ts_ctor
             );
 
-            // TODO: exports.init needs to support callbacks; this will work,
-            // but only because it's unlikely that we'll get a request within
+            // TODO: exports.init needs to support callbacks; this will work, but
+            // only because it's unlikely that we'll get a request within
             // milliseconds of coming online
-            _initExportService( collection, ts_ctor, function( service )
+            _initExportService( collection, function( service )
             {
                 c1_export_service = service;
             } );
@@ -214,14 +211,7 @@ function _createDB( logger )
     return db;
 }
 
-function _createDocumentServer(
-    dao,
-    logger,
-    enc_service,
-    conf,
-    collection,
-    ts_ctor
-)
+function _createDocumentServer( dao, logger, enc_service, conf, collection )
 {
     const origin_url = process.env.HTTP_ORIGIN_URL || '';
 
@@ -236,13 +226,12 @@ function _createDocumentServer(
         );
     }
 
-    return DocumentServer().create(
-        dao, logger, enc_service, origin_url, conf, collection, ts_ctor
-    );
+    return DocumentServer()
+        .create( dao, logger, enc_service, origin_url, conf, collection );
 }
 
 
-function _initExportService( collection, ts_ctor, callback )
+function _initExportService( collection, callback )
 {
     var spoof_host = (
         ''+(
@@ -258,7 +247,7 @@ function _initExportService( collection, ts_ctor, callback )
         ExportService
             .use( TokenedService(
                 'c1import',
-                new MongoTokenDao( collection, "exports", ts_ctor ),
+                new MongoTokenDao( collection, "exports", getUnixTimestamp ),
                 function tokgen()
                 {
                     var shasum = crypto.createHash( 'sha1' );
@@ -275,6 +264,15 @@ function _initExportService( collection, ts_ctor, callback )
             ) )
             ( spoof )
     );
+}
+
+
+/**
+ * Retrieve current date as a Unix timestamp
+ */
+function getUnixTimestamp()
+{
+    return Math.floor( ( new Date() ).getTime() / 1000 );
 }
 
 
@@ -540,30 +538,10 @@ function doRoute( program, request, data, resolve, reject )
 
             handleRequest( function( quote )
             {
-                rating_service.request( request.getSession(), quote, alias )
-                    .then( ( result ) =>
-                    {
-                        server.sendResponse(
-                            request,
-                            quote,
-                            result.content,
-                            result.actions
-                        );
-                    } )
-                    .catch( ( err ) =>
-                    {
-                        server.sendError( request,
-                            'There was a problem during the rating process. Unable to ' +
-                            'continue. Please contact our support team for assistance.' +
+                var response = UserResponse( request );
 
-                            // show details for internal users
-                            ( ( request.getSession().isInternal() )
-                                ? '<br /><br />[Internal] ' + err.message + '<br /><br />' +
-                                    '<hr />' + ( err.stack || "" ).replace( /\n/g, '<br />' )
-                                : ''
-                            )
-                        );
-                    } )
+                rating_service.request( request, response, quote, alias )
+                    .catch( () => {} )
                     .then( () => free() );
             } );
         }, true );
@@ -576,12 +554,7 @@ function doRoute( program, request, data, resolve, reject )
 
         handleRequest( function( quote )
         {
-            rating_service.getWorksheet( quote, supplier, index )
-                .then( ( data ) =>
-                {
-                    server.sendResponse( request, quote, data );
-                } )
-                .catch( err => reject( err ) );
+            rating_service.serveWorksheet( request, quote, supplier, index );
         } );
     }
     else if ( /^export\//.test( cmd ) )

@@ -35,7 +35,7 @@ describe( 'ClientQuote', () =>
     const agent_name         = 'John Doe';
     const agent_entity_id    = 12434300;
     const initial_rated_date = 1531507748;
-    const last_prem_date     = 1531508748;
+    const last_rated_date    = 1531508748;
     const quote              = ClientQuote(
               base_quote,
               {
@@ -44,7 +44,7 @@ describe( 'ClientQuote', () =>
                   agentName:        agent_name,
                   agentEntityId:    agent_entity_id,
                   initialRatedDate: initial_rated_date,
-                  lastPremDate:     last_prem_date,
+                  lastRatedDate:    last_rated_date,
               },
               bucket => bucket
           );
@@ -76,6 +76,6 @@ describe( 'ClientQuote', () =>
 
     it( 'getLastPremiumDate returns base quote lastRatedDate', () =>
     {
-        expect( quote.getLastPremiumDate() ).to.equal( last_prem_date );
+        expect( quote.getLastPremiumDate() ).to.equal( last_rated_date );
     } );
 } );
