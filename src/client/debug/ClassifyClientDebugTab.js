@@ -216,21 +216,6 @@ module.exports = Class( 'AssertionClientDebugTab' )
                     }
                 )
             )
-            .append( $( '<input>' )
-                .attr( 'type', 'checkbox' )
-                .attr( 'id', 'classify-nohide' )
-                .change( function()
-                {
-                    // trigger toggle event
-                    _self.emit( 'classifyNoHideToggle',
-                        $( this ).is( ':checked' )
-                    );
-                } )
-            )
-            .append( $( '<label>' )
-                .attr( 'for', 'classify-nohide' )
-                .text( 'Inhibit field hiding by classifications' )
-            )
             .append( this._$list );
     }
 

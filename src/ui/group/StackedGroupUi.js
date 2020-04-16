@@ -55,6 +55,13 @@ module.exports = Class( 'StackedGroupUi' )
         this._container = this.content.querySelector( 'div.stacked-container' );
 
         this._dl = this._container.querySelector( 'dl' );
+
+        this.fieldContentParent[ 0 ] = this._dl;
+
+        this.initGroupContext();
+
+        this.hideCmatchFields();
+
         this._dl.parentNode.removeChild( this._dl );
     },
 
@@ -72,10 +79,14 @@ module.exports = Class( 'StackedGroupUi' )
 
         const item = this._dl.cloneNode( true );
 
+        // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( item.getElementsByTagName( '*' ), index );
 
         // add the index to the row title
         item.querySelector( 'span.item-index' ).textContent = ' ' + ( index + 1 );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = item;
 
         this._container.appendChild( item );
 
@@ -129,7 +140,10 @@ module.exports = Class( 'StackedGroupUi' )
             try {
                 const header = this._container.querySelectorAll( 'dl' )[ index ];
 
-                header.classList.add( 'hidden' );
+                if ( header !== undefined )
+                {
+                    header.classList.add( 'hidden' );
+                }
             }
             catch( e )
             {
@@ -153,7 +167,10 @@ module.exports = Class( 'StackedGroupUi' )
         {
             const header = this._container.querySelectorAll( 'dl' )[ index ];
 
-            header.classList.remove( 'hidden' );
+            if ( header !== undefined )
+            {
+                header.classList.remove( 'hidden' );
+            }
         }
 
     }

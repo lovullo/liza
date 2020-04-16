@@ -81,7 +81,6 @@ module.exports = Class( 'Group',
      */
     'private _userFields': [],
 
-
     /**
      * The id of the field that will determine the number of indexes in the
      * group
@@ -89,6 +88,13 @@ module.exports = Class( 'Group',
      * @type {string}
      */
     'private _indexFieldName': '',
+
+    /**
+     * If the group should display internal fields
+     *
+     * @type {boolean}
+     */
+    'private _isInternal': false,
 
 
     /**
@@ -249,6 +255,32 @@ module.exports = Class( 'Group',
     'public getUserFieldNames': function()
     {
         return this._userFields;
+    },
+
+
+    /**
+     * Set flag to display internal fields
+     *
+     * @param {boolean} internal internal flag
+     *
+     * @return {Group} self
+     */
+    'public setInternal': function( internal )
+    {
+        this._isInternal = !!internal;
+
+        return this;
+    },
+
+
+    /**
+     * Get flag to display internal fields
+     *
+     * @return {boolean}
+     */
+    'public isInternal': function()
+    {
+        return this._isInternal;
     },
 
 

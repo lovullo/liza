@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContextContent } from "./FieldContext";
+import { ContextContent, NullableContextContent } from "./FieldContext";
 
 
 export class ContextParser
@@ -35,7 +35,7 @@ export class ContextParser
     parse(
         element_id: string,
         content: ContextContent
-    ): ContextContent
+    ): NullableContextContent
     {
         if ( content === null )
         {
@@ -43,9 +43,83 @@ export class ContextParser
         }
 
         return content.querySelector( '#qcontainer_' + element_id )
-            || content.querySelector( '#' + element_id )
-            || content.querySelector( '#q_' + element_id + "_0" )
+            || this._fallbackQuery( content, '[data-field-name="' + element_id + '"]' )
+            || this._fallbackQuery( content, '#' + element_id  )
+            || this._fallbackQuery( content, '#q_' + element_id + "_0" )
             || null;
+    }
+
+
+    /**
+     * Find the sibling label content if it exists
+     *
+     * This sibling content and its logic could be removed if the HTML structure
+     * changed so that fields and labels have unique container elements.
+     */
+    findSiblingContent( content: ContextContent ): NullableContextContent
+    {
+        const sibling = content.previousElementSibling;
+        return ( sibling !== null && sibling.tagName === 'DT' ) ? sibling : null;
+    }
+
+
+    /**
+     * Fallback query for sub-questions,
+     * displays, answers, stand-alone labels
+     * and static elements
+     *
+     * If the content query returns an element,
+     * return the parent of the element
+     * unless it's a stand-alone label (DT)
+     *
+     * @param content - HTML content
+     * @param query - query string
+     */
+    private _fallbackQuery(
+        content: ContextContent,
+        query: string
+    ): NullableContextContent
+    {
+        const element: NullableContextContent = content.querySelector( query );
+
+        if ( element === null )
+        {
+            return null;
+        }
+
+        // Some elements are standalone labels
+        if ( element.tagName === 'DT' )
+        {
+            return element;
+        }
+
+        return this._getContentParent( element );
+    }
+
+
+    /**
+     * Get the content parent (either a DD or a TD)
+     *
+     * @param element - HTML element
+     */
+    private _getContentParent( element: ContextContent ): NullableContextContent
+    {
+        const parent = element.parentElement;
+
+        if ( parent === null )
+        {
+            return null;
+        }
+
+        switch ( parent.tagName )
+        {
+            case 'DD':
+            case 'TD':
+                return parent;
+        }
+
+        // otherwise, keep looking
+        return this._getContentParent( parent );
     }
 
 }

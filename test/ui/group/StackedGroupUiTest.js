@@ -71,6 +71,10 @@ describe( 'ui.group.StackedGroupUi', () =>
 
                 const quote = createQuote();
 
+                content.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
+
                 sut.init( quote );
                 sut.showField( field, index );
 
@@ -124,6 +128,10 @@ describe( 'ui.group.StackedGroupUi', () =>
 
                 const quote = createQuote();
 
+                content.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
+
                 sut.init( quote );
                 sut.hideField( field, index );
 
@@ -154,13 +162,18 @@ function createSut( content, field )
     };
 
     const context = {
-        createFieldCache: function(){},
+        createFieldStores: function(){},
+        detachStoreContent: function(){},
+        show: function(){},
+        detachFields: function(){},
+        hide: function(){},
     };
 
     const group = {
         getIndexFieldName: sinon.stub().returns( field ),
         getUserFieldNames: sinon.stub().returns( [ field ] ),
         getExclusiveFieldNames: sinon.stub().returns( [] ),
+        getExclusiveCmatchFieldNames: sinon.stub().returns( [] ),
     }
 
     // Mock jquery content object
@@ -175,7 +188,8 @@ function createSut( content, field )
     jquery.withArgs( content )
         .returns( $content );
 
-    return Sut( group, content, null, jquery, context, rcontext, null );
+    const feature_flag = { getDomPerfFlag: () => { return false; } };
+    return Sut( group, content, null, jquery, context, rcontext, null, feature_flag );
 }
 
 
@@ -183,6 +197,7 @@ function createContent()
 {
     return {
         querySelector: sinon.stub(),
+        querySelectorAll: sinon.stub(),
         getAttribute: sinon.stub().returns( null )
     };
 }

@@ -110,7 +110,14 @@ module.exports = Class( 'CollapseTableGroupUi' )
     {
         this._$baseRows = this.$content
             .find( 'tbody > tr:not(.footer)' )
-            .detach();
+
+        this.fieldContentParent[ 0 ] = this._$baseRows[ 0 ];
+
+        this.initGroupContext();
+
+        this.hideCmatchFields();
+
+        this._$baseRows.detach();
 
         this._calcColumnWidths();
 
@@ -324,6 +331,9 @@ module.exports = Class( 'CollapseTableGroupUi' )
 
         // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( unit.getElementsByTagName( '*' ), index );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = unit;
 
         // add the index to the row title
         $unit.find( 'span.rowindex' ).text( ' ' + ( index + 1 ) );

@@ -1312,7 +1312,7 @@ module.exports = Class( 'Client' )
     {
         var group = this._factory.createGroup(),
             ui    = this._factory.createGroupUi(
-                group, content, styler, this._rootContext, na_styler
+                group, content, styler, this._rootContext, na_styler, this.program.cretain
             ),
             id               = ui.getId(),
             data             = this.groupData[id],
@@ -1324,6 +1324,7 @@ module.exports = Class( 'Client' )
             .setFieldNames( this.program.groupFields[ id ] || [] )
             .setExclusiveFieldNames( exclusive_fields )
             .setExclusiveCmatchFieldNames( cmatch_fields )
+            .setInternal( this._isInternal )
             .setUserFieldNames(
                 this.program.groupUserFields[ id ] || []
             );

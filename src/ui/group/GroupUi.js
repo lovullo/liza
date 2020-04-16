@@ -171,6 +171,12 @@ module.exports = Class( 'GroupUi' )
     'protected content': null,
 
     /**
+     * Array of direct parent of field content per index
+     * @type {Array.<HTMLElement>}
+     */
+    'protected fieldContentParent': [],
+
+    /**
      * jQuery object
      * @type {jQuery}
      */
@@ -182,24 +188,31 @@ module.exports = Class( 'GroupUi' )
      */
     'private _naStyler': null,
 
+    /**
+     * Access feature flags for new UI features
+     * @type {FeatureFlag}
+     */
+    'private _feature_flag': null,
+
 
     /**
      * Initializes GroupUi
      *
      * @todo remove root (DOM) context, and na field styler!
      *
-     * @param {Group}         group     group to style
-     * @param {HTMLElement}   content   the group content
-     * @param {ElementStyler} styler    styler to use to style elements
-     * @param {jQuery}        jquery    jQuery-compatible object
-     * @param {GroupContext}  context   group context
-     * @param {DomContext}    rcontext  root context
-     * @param {FieldStyler}   na_styler styler for fields that are N/A
+     * @param {Group}         group         group to style
+     * @param {HTMLElement}   content       the group content
+     * @param {ElementStyler} styler        styler to use to style elements
+     * @param {jQuery}        jquery        jQuery-compatible object
+     * @param {GroupContext}  context       group context
+     * @param {DomContext}    rcontext      root context
+     * @param {FieldStyler}   na_styler    styler for fields that are N/A
+     * @param {FeatureFlag}   feature_flag toggle access to new UI features
      *
      * @return  {undefined}
      */
     'public __construct': function(
-        group, content, styler, jquery, context, rcontext, na_styler
+        group, content, styler, jquery, context, rcontext, na_styler, feature_flag
     )
     {
         this.group     = group;
@@ -209,6 +222,7 @@ module.exports = Class( 'GroupUi' )
         this.context   = context;
         this.rcontext  = rcontext;
         this._naStyler = na_styler;
+        this._feature_flag = feature_flag;
 
         // Todo: Transition away from jQuery
         this.$content   = this.jquery( content );
@@ -217,9 +231,6 @@ module.exports = Class( 'GroupUi' )
 
     'public init': function( quote )
     {
-        const fields = this.group.getExclusiveFieldNames();
-        this.context.createFieldCache( fields, this.content );
-
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
@@ -339,10 +350,49 @@ module.exports = Class( 'GroupUi' )
     /**
      * Performs any necessary processing on the content before it's displayed
      *
+     * Subtypes may override this for custom functionality
+     *
      * @return undefined
      */
     'virtual protected processContent': function()
     {
+        // The first index parent is the first dl for most groups
+        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
+
+        this.initGroupContext();
+
+        this.hideCmatchFields();
+    },
+
+
+    /**
+     * Get the exclusive field names and create
+     * the field cache on GroupContext
+     *
+     * @return undefined
+     */
+    'protected initGroupContext': function()
+    {
+        const fields = this.group.getExclusiveFieldNames();
+        this.context.createFieldStores( fields, this.content );
+    },
+
+
+    /**
+     * Immediately hide fields with classifications
+     * This ensures that each cloned row/tab/etc
+     * will not contain hundreds of fields, which
+     * improves browser performance
+     *
+     * @return undefined
+     */
+    'protected hideCmatchFields': function()
+    {
+        if ( this._feature_flag.getDomPerfFlag() === true )
+        {
+            const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+            this.context.detachStoreContent( cmatch_fields );
+        }
     },
 
 
@@ -407,7 +457,7 @@ module.exports = Class( 'GroupUi' )
             var element_data = 0;
 
             // grab the index from the id if found
-            if ( element_data = id.match( /^([a-zA-Z0-9_]+)([0-9]+)$/ ) )
+            if ( element_data = id.match( /^(.*?)(\d+)$/ ) )
             {
                 // regenerate the id
                 element.setAttribute( 'id', element_data[1] + index );
@@ -573,6 +623,8 @@ module.exports = Class( 'GroupUi' )
 
             cached !== undefined && cached.pop();
         }
+
+        this.context.removeIndex( fields );
 
         this._indexCount--;
         this._recalcFieldCount( -1, index );
@@ -844,6 +896,7 @@ module.exports = Class( 'GroupUi' )
     'virtual protected postAddRow': function( $element, index )
     {
         this.emit( this.__self.$('EVENT_POST_ADD_ROW'), $element, index );
+
         return this;
     },
 
@@ -910,8 +963,9 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        this.rcontext.getFieldByName( field, index )
-            .applyStyle( this._naStyler );
+        ( this._feature_flag.getDomPerfFlag() === true )
+            ? this.context.hide( field, index )
+            : this.rcontext.getFieldByName( field, index ).applyStyle( this._naStyler );
     },
 
     /**
@@ -950,8 +1004,9 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        this.rcontext.getFieldByName( field, index )
-            .revokeStyle( this._naStyler );
+        ( this._feature_flag.getDomPerfFlag() === true )
+            ? this.context.show( field, index, this.fieldContentParent[ index ] )
+            : this.rcontext.getFieldByName( field, index ).revokeStyle( this._naStyler );
     },
 
 
@@ -1224,9 +1279,28 @@ module.exports = Class( 'GroupUi' )
 
     'public setOptions': function( name, index, options, val )
     {
-        this.styler.setOptions(
-            name, index, options, val, this.getContentByIndex( name, index )
-        );
+        if ( this._feature_flag.getDomPerfFlag() === false )
+        {
+            this.styler.setOptions(
+                name, index, options, val, this.getContentByIndex( name, index )
+            );
+
+            return this;
+        }
+
+        // non-cmatch fields should continue to use the styler
+        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+        if ( cmatch_fields.indexOf( name ) === -1 )
+        {
+            this.styler.setOptions(
+                name, index, options, val, this.getContentByIndex( name, index )
+            );
+        }
+        else
+        {
+            this.context.setOptions( name, index, options, val );
+        }
+
         return this;
     },
 

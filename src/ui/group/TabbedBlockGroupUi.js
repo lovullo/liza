@@ -112,8 +112,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'override protected processContent': function( quote )
     {
-        this.__super();
-
         this._box = this.$content.find( '.groupTabbedBlock' )[ 0 ];
 
         // determine if we should lock this group down
@@ -166,6 +164,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         var tab     = this._box.querySelector( 'li' );
         var content = this._box.querySelector( '.tab-content' );
+
+        this.fieldContentParent[ 0 ] = content;
+        this.initGroupContext();
+        this.hideCmatchFields();
 
         this._tabItem     = tab.parentElement.removeChild( tab );
         this._contentItem = content.parentElement.removeChild( content );
@@ -588,8 +590,12 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     {
         var content = $content[ 0 ];
 
-        // apply styling and id safeguards
+        // properly name the elements to prevent id conflicts
         this.setElementIdIndexes( content.getElementsByTagName( '*' ), index );
+
+        // Set field content parent for this index
+        this.fieldContentParent[ index ] = content;
+
         this.styler.apply( $content );
 
         // allow hooks to perform their magic on our content

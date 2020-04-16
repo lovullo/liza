@@ -106,14 +106,21 @@ const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 const { GroupContext }         = require( '../ui/context/GroupContext' );
+const { FeatureFlag }          = require( '../ui/FeatureFlag' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
-
 
 const Class = require( 'easejs' ).Class;
 
 
 module.exports = Class( 'ClientDependencyFactory',
 {
+    /**
+     * DOM
+     * @type {Document}
+     */
+    _document: null,
+
+
     /**
      * Creates a new ElementStyler instance
      *
@@ -137,6 +144,17 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createHashNav: HashNav,
+
+
+    /**
+     * Instantiates ClientDependencyFactory
+     *
+     * @param {Document} _document DOM
+     */
+    __construct: function( _document )
+    {
+        this._document = _document;
+    },
 
 
     createDataApiManager: function()
@@ -300,7 +318,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, content, styler, root_context, na_styler
+        group, content, styler, root_context, na_styler, cretain
     )
     {
         // default
@@ -335,10 +353,10 @@ module.exports = Class( 'ClientDependencyFactory',
             obj = AccordionGroupUi;
         }
 
-        const context = this.createGroupContext();
-
+        const context = this.createGroupContext( cretain );
+        const feature_flag = new FeatureFlag();
         return obj(
-            group, content, styler, jQuery, context, root_context, na_styler
+            group, content, styler, jQuery, context, root_context, na_styler, feature_flag
         );
     },
 
@@ -348,11 +366,11 @@ module.exports = Class( 'ClientDependencyFactory',
         return NaFieldStyler();
     },
 
-    createGroupContext: function()
+    createGroupContext: function( cretain )
     {
         return new GroupContext(
             new ContextParser(),
-            new FieldContextFactory()
+            new FieldContextFactory( this._document, cretain )
         );
     },
 
