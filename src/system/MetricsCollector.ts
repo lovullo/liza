@@ -25,8 +25,6 @@ import { Histogram, Pushgateway, Counter, Gauge } from 'prom-client';
 import { EventEmitter } from 'events';
 import { PrometheusFactory, PrometheusConfig } from './PrometheusFactory';
 
-const client = require( 'prom-client' )
-
 
 export type MetricTimer = (
     _start_time?: [ number, number ]
@@ -69,32 +67,35 @@ export class MetricsCollector
     /**
      * Initialize delta logger
      *
-     * @param _factory - A factory to create prometheus components
-     * @param _conf    - Prometheus configuration
-     * @param _emitter - Event emitter
-     * @param _timer   - A timer function to create a tuple timestamp
+     * @param _client   - A prometheus client
+     * @param _factory  - A factory to create prometheus components
+     * @param _conf     - Prometheus configuration
+     * @param _emitter  - Event emitter
+     * @param _timer    - A timer function to create a tuple timestamp
      */
     constructor(
-        private readonly _factory: PrometheusFactory,
-        private readonly _conf:    PrometheusConfig,
-        private readonly _emitter: EventEmitter,
-        private readonly _timer:   MetricTimer,
+        private readonly _client:   any,
+        private readonly _factory:  PrometheusFactory,
+        private readonly _conf:     PrometheusConfig,
+        private readonly _emitter:  EventEmitter,
+        private readonly _timer:    MetricTimer,
     ) {
         // Set labels
-        client.register.setDefaultLabels( {
-            env:     this._conf.env,
-            service: 'delta_processor',
+        this._client.register.setDefaultLabels( {
+            env:      this._conf.env,
+            instance: this._conf.instance,
+            service:  'delta_processor',
         } );
 
         // Create metrics
         this._gateway = this._factory.createGateway(
-            client,
+            this._client,
             this._conf.hostname,
             this._conf.port,
         );
 
         this._process_time = this._factory.createHistogram(
-            client,
+            this._client,
             this._process_time_name,
             this._process_time_help,
             this._conf.buckets_start,
@@ -103,19 +104,19 @@ export class MetricsCollector
         );
 
         this._total_error = this._factory.createCounter(
-            client,
+            this._client,
             this._total_error_name,
             this._total_error_help,
         );
 
         this._current_error = this._factory.createGauge(
-            client,
+            this._client,
             this._current_error_name,
             this._current_error_help,
         );
 
         this._total_processed = this._factory.createCounter(
-            client,
+            this._client,
             this._total_processed_name,
             this._total_processed_help,
         );

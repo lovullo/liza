@@ -27,6 +27,9 @@ export declare type PrometheusConfig = {
     /** The hostname to connect to */
     hostname: string;
 
+    /** The host the processor is running on */
+    instance: string;
+
     /** The port to connect to */
     port: number;
 
@@ -55,11 +58,13 @@ export declare type PrometheusConfig = {
  * @return the prometheus configuration
  */
 export function createPrometheusConfig(
-    env: NodeJS.ProcessEnv
+    env:      NodeJS.ProcessEnv,
+    hostname: string,
 ): PrometheusConfig
 {
     return <PrometheusConfig>{
         hostname:         env.PROM_HOST,
+        instance:         hostname,
         port:             +( env.PROM_PORT || 0 ),
         env:              process.env.NODE_ENV,
         push_interval_ms: +( process.env.PROM_PUSH_INTERVAL_MS || 10000 ),

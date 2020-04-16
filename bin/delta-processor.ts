@@ -41,11 +41,14 @@ import {
 } from '../src/system/PrometheusFactory';
 import { AmqpConnection } from '../src/system/amqp/AmqpConnection';
 import { parse as avro_parse } from 'avro-js';
+import { hostname } from 'os';
+import * as PromClient from 'prom-client';
+
 
 require('dotenv-flow').config();
 
 const amqp_conf           = createAmqpConfig( process.env );
-const prom_conf           = createPrometheusConfig( process.env );
+const prom_conf           = createPrometheusConfig( process.env, hostname() );
 const db_conf             = createMongoConfig( process.env );
 const db                  = createMongoDB( db_conf );
 const process_interval_ms = +( process.env.PROCESS_INTERVAL_MS || 10000 );
@@ -69,6 +72,7 @@ const publisher = new DeltaPublisher(
 // Prometheus Metrics
 const prom_factory = new PrometheusFactory();
 const metrics      = new MetricsCollector(
+    PromClient,
     prom_factory,
     prom_conf,
     emitter,

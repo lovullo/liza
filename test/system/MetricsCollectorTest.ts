@@ -43,12 +43,13 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
         const emitter = new EventEmitter();
         const conf    = createMockConfig();
         const timer   = createMockTimer();
+        const client  = createMockClient();
         const factory = createMockFactory( {
             histogram_cb: () => { histogram_called = true },
             counter_cb:   () => { counter_called   = true },
         } );
 
-        const sut = new Sut( factory, conf, emitter, timer );
+        const sut = new Sut( client, factory, conf, emitter, timer );
 
         emitter.emit( 'delta-process-end' );
 
@@ -66,11 +67,12 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
         const emitter = new EventEmitter();
         const conf    = createMockConfig();
         const timer   = createMockTimer();
+        const client  = createMockClient();
         const factory = createMockFactory( {
             counter_cb: () => { counter_called = true },
         } );
 
-        const sut = new Sut( factory, conf, emitter, timer );
+        const sut = new Sut( client, factory, conf, emitter, timer );
 
         emitter.emit( 'error' );
 
@@ -90,11 +92,12 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
         const emitter       = new EventEmitter();
         const conf          = createMockConfig();
         const timer         = createMockTimer( start_time_ns, end_time_ns );
+        const client        = createMockClient();
         const factory       = createMockFactory( {
             histogram_cb: ( n: number ) => { actual_ms = n },
         } );
 
-        const sut = new Sut( factory, conf, emitter, timer );
+        const sut = new Sut( client, factory, conf, emitter, timer );
 
         emitter.emit( 'delta-process-start', uid );
         emitter.emit( 'delta-process-end', uid );
@@ -103,7 +106,49 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
 
         sut.stop();
     } );
+
+
+    it( 'sets hostname as default instance label', () =>
+    {
+        let actual_labels = {};
+
+        const hostname = 'foobar';
+        const emitter  = new EventEmitter();
+        const conf     = createMockConfig();
+        const timer    = createMockTimer( 0, 0 );
+        const factory  = createMockFactory( {} );
+        const client   = createMockClient();
+
+        conf.instance = hostname;
+
+        const expected_labels = {
+            env:      'test',
+            service:  'delta_processor',
+            instance: hostname,
+        };
+
+        client.register.setDefaultLabels = ( labels: any ) =>
+        {
+            actual_labels = labels;
+        };
+
+        const sut = new Sut( client, factory, conf, emitter, timer );
+
+        expect( expected_labels ).to.deep.equal( actual_labels );
+
+        sut.stop();
+    } );
 } );
+
+
+function createMockClient()
+{
+    return {
+        register: {
+            setDefaultLabels: ( _: any ) => {},
+        },
+    };
+}
 
 
 function createMockFactory(
@@ -144,6 +189,7 @@ function createMockConfig(): PrometheusConfig
 {
     return <PrometheusConfig>{
         hostname:         'foo.com',
+        instance:         'foo',
         port:             123,
         env:              'test',
         push_interval_ms: 1000,
