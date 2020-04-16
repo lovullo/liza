@@ -80,13 +80,6 @@ export class MetricsCollector
         private readonly _emitter:  EventEmitter,
         private readonly _timer:    MetricTimer,
     ) {
-        // Set labels
-        this._client.register.setDefaultLabels( {
-            env:      this._conf.env,
-            instance: this._conf.instance,
-            service:  'delta_processor',
-        } );
-
         // Create metrics
         this._gateway = this._factory.createGateway(
             this._client,
@@ -121,11 +114,21 @@ export class MetricsCollector
             this._total_processed_help,
         );
 
+        // Create grouping key
+        const groupings = {
+            env:      this._conf.env,
+            instance: this._conf.instance + '_' + this._conf.env,
+            service:  'delta_processor',
+        };
+
         // Push metrics on a specific interval
         this._push_interval = setInterval( () =>
             {
                 this._gateway.pushAdd(
-                    { jobName: 'liza_delta_metrics' },
+                    {
+                        jobName:   'liza_delta_metrics',
+                        groupings: groupings
+                    },
                     this.getPushCallback( this )
                 );
             }, this._conf.push_interval_ms
