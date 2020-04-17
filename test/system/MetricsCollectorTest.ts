@@ -110,33 +110,65 @@ describe( 'system.MetricsCollector captures events and pushes metrics', () =>
 
     it( 'sets hostname as default instance label', () =>
     {
-        let actual_labels = {};
+        let actual_push = {};
+        let cb_called   = false;
 
         const hostname = 'foobar';
+        const env      = 'test123';
         const emitter  = new EventEmitter();
         const conf     = createMockConfig();
         const timer    = createMockTimer( 0, 0 );
-        const factory  = createMockFactory( {} );
+        const factory  = createMockFactory( {
+            gateway_cb: ( push_obj: any ) =>
+            {
+                cb_called   = true;
+                actual_push = push_obj;
+            }
+        } );
         const client   = createMockClient();
 
         conf.instance = hostname;
+        conf.env      = env;
 
-        const expected_labels = {
-            env:      'test',
-            service:  'delta_processor',
-            instance: hostname,
+        const expected_push = {
+            jobName:   'liza_delta_metrics',
+            groupings: {
+                env:      env,
+                service:  'delta_processor',
+                instance: hostname + '_' + env,
+            },
         };
 
-        client.register.setDefaultLabels = ( labels: any ) =>
+        let sut;
+
+        const old_setInterval = global.setInterval;
+
+        global.setInterval = (
+            callback: (...args: any[]) => void,
+            _: number
+        ) =>
         {
-            actual_labels = labels;
-        };
+            callback();
 
-        const sut = new Sut( client, factory, conf, emitter, timer );
+            return new NodeJS.Timeout();
+        }
 
-        expect( expected_labels ).to.deep.equal( actual_labels );
+        try {
+            sut = new Sut( client, factory, conf, emitter, timer );
+        }
+        catch( e ) {}
+        finally
+        {
+            global.setInterval = old_setInterval;
 
-        sut.stop();
+            if( sut )
+            {
+                sut.stop();
+            }
+        }
+
+        expect( cb_called ).to.be.true;
+        expect( expected_push ).to.deep.equal( actual_push );
     } );
 } );
 
@@ -153,13 +185,13 @@ function createMockClient()
 
 function createMockFactory(
     {
-        gateway_cb   = () => {},
+        gateway_cb   = ( _: any = {} ) => {},
         counter_cb   = () => {},
         histogram_cb = ( _n: number = 0 ) => {},
         gauge_cb     = ( _n: number = 0 ) => {},
     }:
     {
-        gateway_cb   ?: () => void;
+        gateway_cb   ?: ( _: any ) => void;
         counter_cb   ?: () => void;
         histogram_cb ?: ( _n: number ) => void;
         gauge_cb     ?: ( _n: number ) => void;
