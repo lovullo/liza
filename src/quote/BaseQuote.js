@@ -329,7 +329,8 @@ module.exports = Class( 'BaseQuote' )
     /**
      * Returns whether the quote has expired or not
      *
-     * @param {Date} current_date current date to determine if expiration date has passed
+     * @param {number} current_date current timestamp in seconds to determine
+     *                              if expiration date has passed
      *
      * @return {boolean} flag indicating if the quote has expired
      */
@@ -356,7 +357,8 @@ module.exports = Class( 'BaseQuote' )
         var expiration_date = new Date( expiration_timestamp );
         expiration_date.setDate( expiration_date.getDate() + +( grace_period ));
 
-        return current_date.getTime() > expiration_date.getTime();
+        // Multiply current_date to get ms
+        return ( current_date * 1000 ) > expiration_date.getTime();
     },
 
 

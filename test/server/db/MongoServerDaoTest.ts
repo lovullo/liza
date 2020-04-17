@@ -68,6 +68,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -102,6 +103,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -132,6 +134,7 @@ describe( 'MongoServerDao', () =>
                         }
                     ),
                     'test',
+                    () => { return <UnixTimestamp>123; },
                 );
 
                 sut.init( () =>
@@ -228,6 +231,7 @@ function createStubQuote( metadata: Record<string, any> )
         isBound:               () => false,
         getTopVisitedStepId:   () => <PositiveInteger>1,
         getTopSavedStepId:     () => <PositiveInteger>1,
+        getMetaUpdatedDate:    () => <UnixTimestamp>0,
         setRatedDate:          () => quote,
         setRateBucket:         () => quote,
         setRatingData:         () => quote,
@@ -241,6 +245,7 @@ function createStubQuote( metadata: Record<string, any> )
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
+        getRetryCount:         () => 0,
     };
 
     return quote;

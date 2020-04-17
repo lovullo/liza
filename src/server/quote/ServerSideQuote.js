@@ -255,5 +255,35 @@ module.exports = Class( 'ServerSideQuote' )
 
         return this;
     },
+
+
+    /**
+     * Retrieve the number of raters that are pending
+     *
+     * @param {Object.<string,Array>} data (optional) Rate data
+     *
+     * @return {number} the number of retries pending
+     */
+    'public getRetryCount': function( data )
+    {
+        // if no data is specified then use internal rate data
+        data = data || this._rate_bucket.getData();
+
+        const retry_pattern = /^(.+)__retry$/;
+
+        return Object.keys( data )
+            .filter( field =>
+            {
+                var value = Array.isArray( data[ field ] )
+
+                    // In case the data are in a nested array
+                    // e.g. data[ field ] === [ [ 0 ] ]
+                    ? Array.prototype.concat.apply( [], data[ field ] )
+                    : data[ field ];
+
+                return field.match( retry_pattern ) && !!value[ 0 ];
+            } )
+            .length;
+    },
 } );
 

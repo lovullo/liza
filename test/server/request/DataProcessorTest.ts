@@ -28,6 +28,7 @@ import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
 import {DataApiResult} from "../../../src/dapi/DataApi";
 import {ClassificationResult} from "../../../src/program/Program";
+import { RateResult } from "../../../src/server/rater/Rater";
 
 chai_use( require( 'chai-as-promised' ) );
 
@@ -713,7 +714,7 @@ function createStubQuote()
 
         getRatingData()
         {
-            return quote_data;
+            return <RateResult>quote_data;
         },
 
         getBucket()
@@ -723,6 +724,10 @@ function createStubQuote()
 
         getMetabucket(){
             return new QuoteDataBucket();
+        },
+
+        getMetaUpdatedDate(){
+            return <UnixTimestamp>123;
         },
 
         getProgramVersion(){
@@ -776,6 +781,11 @@ function createStubQuote()
         setMetadata()
         {
             return this;
+        },
+
+        getRetryCount()
+        {
+            return 0;
         },
     };
 }
