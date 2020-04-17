@@ -225,7 +225,10 @@ module.exports = Class( 'TableGroupUi' )
         // Set field content parent for this index
         this.fieldContentParent[ new_index ] = $row_new[ 0 ];
 
-        this.context.addIndex( new_index, this.fieldContentParent[ new_index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( new_index, this.fieldContentParent[ new_index ] );
+        }
 
         // attach remove event
         var $del = $row_new.find( 'td.delrow' );

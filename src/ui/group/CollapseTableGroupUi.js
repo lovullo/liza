@@ -329,7 +329,10 @@ module.exports = Class( 'CollapseTableGroupUi' )
         // Set field content parent for this index
         this.fieldContentParent[ index ] = unit;
 
-        this.context.addIndex( index, this.fieldContentParent[ index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         // add the index to the row title
         $unit.find( 'span.rowindex' ).text( ' ' + ( index + 1 ) );

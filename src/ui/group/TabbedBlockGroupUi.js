@@ -581,7 +581,10 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         // Set field content parent for this index
         this.fieldContentParent[ index ] = item.querySelector( 'dl' );
 
-        this.context.addIndex( index, this.fieldContentParent[ index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         return this._finalizeContent( index, $( item ) );
     },

@@ -82,7 +82,10 @@ module.exports = Class( 'StackedGroupUi' )
         // Set field content parent for this index
         this.fieldContentParent[ index ] = item;
 
-        this.context.addIndex( index, this.fieldContentParent[ index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         this._container.appendChild( item );
 

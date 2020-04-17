@@ -204,7 +204,10 @@ module.exports = Class( 'SideTableGroupUi' )
         // Set field content parent for this index
         this.fieldContentParent[ index ] = col_body;
 
-        this.context.addIndex( index, this.fieldContentParent[ index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         // raise event
         this.postAddRow( $col_head, index )

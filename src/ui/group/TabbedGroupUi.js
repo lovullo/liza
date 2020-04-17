@@ -232,7 +232,10 @@ module.exports = Class( 'TabbedGroupUi' )
         // Set field content parent for this index
         this.fieldContentParent[ index ] = content.querySelector( 'dl' );
 
-        this.context.addIndex( index, this.fieldContentParent[ index ] );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         // append the content
         $container.append( $content );
