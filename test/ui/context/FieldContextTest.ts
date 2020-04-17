@@ -274,14 +274,14 @@ describe( "FieldContext", () =>
         {
             label: 'setOptions sets new value',
             options: [
-                { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
+                { value: 0, label: 'Foo goes here', label_id: 'foo_label' },
                 { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
                 { value: 'baz', label: 'Baz goes here', label_id: 'baz_label' },
             ],
             value: 'baz',
             expected: '<dd id="qcontainer_select_element">' +
                 '<select id="q_select_element_0">' +
-                    '<option value="foo">Foo goes here</option>' +
+                    '<option value="0">Foo goes here</option>' +
                     '<option value="bar">Bar goes here</option>' +
                     '<option value="baz">Baz goes here</option>' +
                 '</select>' +

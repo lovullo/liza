@@ -24,7 +24,7 @@ export type NullableContextContent = ContextContent | null;
 
 export type FieldOptions = FieldOption[];
 export type FieldOption = {
-    value: string,
+    value: string | number,
     label: string,
     label_id: string
 }
@@ -132,9 +132,10 @@ export class FieldContext
         for ( let item in options )
         {
             let opt_value = options[ item ]?.value;
-            const option_value = opt_value || '';
+            opt_value = ''+(opt_value ?? '');
+
             const opt = this.document.createElement( 'option' );
-            opt.value = option_value;
+            opt.value = opt_value;
             opt.text = options[ item ].label;
             field_element.appendChild( opt );
         }
