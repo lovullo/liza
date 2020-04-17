@@ -234,6 +234,8 @@ module.exports = Class( 'TableGroupUi' )
             _self.destroyIndex( new_index );
         } );
 
+        this._postStyleDelRow( new_index );
+
         // append it to the group
         $group_table.find( 'tbody' ).append( $row_new );
 
@@ -286,6 +288,30 @@ module.exports = Class( 'TableGroupUi' )
         this.styler.apply( this._getTableRow( row_id ), true );
 
         return this;
+    },
+
+
+    /**
+     * Moves the delete row table cell to the end of the row
+     * after group fields are re-attached
+     *
+     * @param Integer row_id id of the row to be styled
+     *
+     * @return void
+     */
+    'private _postStyleDelRow' : function( row_id )
+    {
+        if ( this.getDomPerfFlag() === true )
+        {
+            const row = this.fieldContentParent[ row_id ];
+            const del = row.querySelector( 'td.delrow' );
+
+            if ( !!del )
+            {
+                // Move delete to end of row
+                del.parentNode.appendChild( del );
+            }
+        }
     },
 
 
@@ -354,6 +380,12 @@ module.exports = Class( 'TableGroupUi' )
 
     'override protected doHideField': function( field, index )
     {
+        if ( this.getDomPerfFlag() === true )
+        {
+            // Ensures FieldContext is created for this field
+            this.__super( field, index );
+        }
+
         var $element = this.getElementByName( field, index ),
             $parent  = $element.parents( 'td' ),
             cindex   = $parent.index();
@@ -370,12 +402,20 @@ module.exports = Class( 'TableGroupUi' )
 
     'override protected doShowField': function( field, index )
     {
+        if ( this.getDomPerfFlag() === true )
+        {
+            // Ensures FieldContext is created for this field
+            this.__super( field, index );
+        }
+
         var $element = this.getElementByName( field, index ),
             $parent  = $element.parents( 'td' ),
             cindex   = $parent.index();
 
         $parent.find( '.na' ).remove();
         $element.show();
+
+        this._postStyleDelRow( index );
 
         this._checkColumnVis( field, cindex );
     },

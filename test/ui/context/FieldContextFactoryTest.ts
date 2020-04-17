@@ -25,6 +25,7 @@ import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
 import { PositiveInteger } from "../../../src/numeric";
 import { RetainFieldContext } from "../../../src/ui/context/RetainFieldContext";
 import { SubFieldContext } from "../../../src/ui/context/SubFieldContext";
+import { TableCellFieldContext } from "../../../src/ui/context/TableCellFieldContext";
 
 import { expect } from 'chai';
 
@@ -69,6 +70,33 @@ describe( "FieldContextFactory", () =>
             expect( given ).to.be.instanceOf( expected );
         } );
     } );
+
+
+    it( "creates new TableCellFieldContext", () =>
+    {
+        const cretain = { 'foo': 'bar' };
+        const sut = new Sut( document, cretain );
+        const table = document.createElement( "table" );
+
+        table.innerHTML =
+            '<tr>' +
+                '<td>' +
+                    '<input type="text" id="q_field_0">' +
+                '</td>' +
+            '</tr>';
+
+        const content = table.querySelector( "td" );
+
+        const given = sut.create(
+            'q_field_0',
+            <PositiveInteger>0,
+            <ContextContent>content,
+            false
+        );
+
+        expect( given ).to.be.instanceOf( TableCellFieldContext );
+    } );
+
 
     it( "creates new FieldContextStore", () =>
     {

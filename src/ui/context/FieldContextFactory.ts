@@ -25,6 +25,7 @@ import { PositiveInteger } from "../../numeric";
 import { SubFieldContext } from "./SubFieldContext";
 import { ClassificationRetain } from "../../program/Program";
 import { RetainFieldContext } from "./RetainFieldContext";
+import { TableCellFieldContext } from "./TableCellFieldContext";
 
 
 export class FieldContextFactory
@@ -67,8 +68,11 @@ export class FieldContextFactory
         const element_id = this._field_id_prefix + name + '_' + index;
 
         let obj = FieldContext;
-        if ( is_subfield ) {
+        if ( is_subfield )
+        {
             obj = SubFieldContext;
+        } else if ( content.tagName === 'TD' ) {
+            obj = TableCellFieldContext;
         } else if ( !!this._cretain[ name ] )
         {
             obj = RetainFieldContext;
