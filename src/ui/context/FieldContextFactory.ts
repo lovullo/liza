@@ -23,8 +23,6 @@ import { FieldContext, ContextContent, NullableContextContent } from "./FieldCon
 import { FieldContextStore } from "./FieldContextStore";
 import { PositiveInteger } from "../../numeric";
 import { SubFieldContext } from "./SubFieldContext";
-import { ClassificationRetain } from "../../program/Program";
-import { RetainFieldContext } from "./RetainFieldContext";
 import { TableCellFieldContext } from "./TableCellFieldContext";
 
 
@@ -40,11 +38,9 @@ export class FieldContextFactory
      * Initialize FieldContextFactory
      *
      * @param _document - DOM
-     * @param _cretain - fields whose values must be retained
      */
     constructor(
-        private readonly _document: Document,
-        private readonly _cretain: ClassificationRetain
+        private readonly _document: Document
     ) {}
 
 
@@ -73,9 +69,6 @@ export class FieldContextFactory
             obj = SubFieldContext;
         } else if ( content.tagName === 'TD' ) {
             obj = TableCellFieldContext;
-        } else if ( !!this._cretain[ name ] )
-        {
-            obj = RetainFieldContext;
         }
 
         return new obj(

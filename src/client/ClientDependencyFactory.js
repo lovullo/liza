@@ -318,7 +318,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, content, styler, root_context, na_styler, cretain
+        group, content, styler, root_context, na_styler
     )
     {
         // default
@@ -353,7 +353,7 @@ module.exports = Class( 'ClientDependencyFactory',
             obj = AccordionGroupUi;
         }
 
-        const context = this.createGroupContext( cretain );
+        const context = this.createGroupContext();
         const feature_flag = new FeatureFlag();
         return obj(
             group, content, styler, jQuery, context, root_context, na_styler, feature_flag
@@ -366,11 +366,11 @@ module.exports = Class( 'ClientDependencyFactory',
         return NaFieldStyler();
     },
 
-    createGroupContext: function( cretain )
+    createGroupContext: function()
     {
         return new GroupContext(
             new ContextParser(),
-            new FieldContextFactory( this._document, cretain )
+            new FieldContextFactory( this._document )
         );
     },
 
