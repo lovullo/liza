@@ -154,21 +154,11 @@ module.exports = Class( 'HttpRater' )
                 callback( Error( 'Rating timeout' ), null );
             }, ( _self._timeout * 1000 ) );
 
-        function _clientErr( err )
-        {
-            clearTimeout( timeout );
-            callback( err, null );
-        };
-
-        function _cleanup()
-        {
-            clearTimeout( timeout );
-            _self._client.removeListener( 'error', _clientErr );
-        }
-
-        this._client.once( 'error', _clientErr );
-
-        req = this._client.request( 'POST', path, { host: this._host } )
+        req = this._client.request( {
+                method: 'POST',
+                path:   path,
+                host:   this._host
+            } )
             .on( 'response', function( response )
             {
                 var data = '';
@@ -182,18 +172,18 @@ module.exports = Class( 'HttpRater' )
                     } )
                     .on( 'end', function()
                     {
-                        _cleanup();
+                        clearTimeout( timeout );
                         _self._parseResponse( data, callback );
                     } )
                     .on( 'error', function( err )
                     {
-                        _cleanup();
+                        clearTimeout( timeout );
                         callback( err, null );
                     } )
             } )
-            .on( 'error', function( err )
+            .once( 'error', function( err )
             {
-                _cleanup();
+                clearTimeout( timeout );
                 callback( err, null );
             } )
             .end( JSON.stringify( args ) );
