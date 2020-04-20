@@ -23,7 +23,8 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 
 
 /**
- * Context responsible for a specific field in the DOM
+ * Context responsible for a specific field whose value is always retained
+ * and never detached from the DOM
  */
 export class RetainFieldContext extends FieldContext
 {

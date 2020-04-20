@@ -23,7 +23,7 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 
 
 /**
- * Context responsible for a specific field in the DOM
+ * Context responsible for a specific table cell (TD) field
  */
 export class TableCellFieldContext extends FieldContext
 {
