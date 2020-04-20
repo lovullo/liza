@@ -52,16 +52,6 @@ export class GroupContext
     private _field_positions: string[] = [];
 
     /**
-     * Exclusive field names
-     */
-    private _exclusive_fields: string[] = [];
-
-    /**
-     * Cmatch field names
-     */
-    private _cmatch_fields: string[] = [];
-
-    /**
      * Non-cmatch field names
      */
     private _non_cmatch_fields: string[] = [];
@@ -93,11 +83,10 @@ export class GroupContext
         content: ContextContent
     ): void
     {
-        this._exclusive_fields = fields;
-        this._cmatch_fields = cmatch_fields;
+        const cmatch_fields_set = new Set( cmatch_fields );
 
-        this._non_cmatch_fields = this._exclusive_fields.filter(
-            field => this._cmatch_fields.indexOf( field ) === -1
+        this._non_cmatch_fields = fields.filter(
+            field => !cmatch_fields_set.has( field )
         );
 
         for ( let i = 0; i < fields.length; i++ )
