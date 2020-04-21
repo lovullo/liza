@@ -1250,11 +1250,11 @@ module.exports = Class( 'Server' )
 
                 return quote.setMetadata( data );
             } )
-            .then( quote => this.dao.ensurePendingSuppliers( quote ) )
+            .then( quote => this.dao.ensurePriorRate( quote ) )
             // We will need to lookup the rate retries directly from the
             // dao because the dapi promises have an old version of the
             // quote without the updated count
-            .then( quote => this.dao.updateQuoteRateRetries( quote ) )
+            .then( quote => this.dao.updateQuoteInfo( quote ) )
             .then( quote =>
             {
                 rating_service = new RatingService(
@@ -1269,7 +1269,8 @@ module.exports = Class( 'Server' )
             } )
             .catch( e =>
             {
-                if( /^Nothing pending/.test( e.message ) )
+                if( /^No prior rate/.test( e.message ) ||
+                    /^No rated date/.test( e.message ) )
                 {
                     this.logger.log(
                         this.logger.PRIORITY_INFO,
@@ -1309,6 +1310,9 @@ module.exports = Class( 'Server' )
         {
             quote.setLastPremiumDate( 0 );
             quote.setRetryAttempts( 0 );
+            quote.setMetadata( {
+                liza_timestamp_rate_request: [ 0 ],
+            } );
         }
 
         server.quoteFill( quote, step_id, request.getSession(),
@@ -1436,8 +1440,6 @@ module.exports = Class( 'Server' )
 
                         if ( quote.getTopVisitedStepId() > step_id )
                         {
-                            quote.setTopVisitedStepId( step_id );
-
                             // knock them back to the step if they're currently
                             // further
                             if ( quote.getCurrentStepId() > step_id )
@@ -1447,31 +1449,27 @@ module.exports = Class( 'Server' )
                                     action: 'gostep',
                                     id:     step_id,
                                 } );
-
                             }
                         }
 
                         server.dao.mergeBucket( quote, retdata, function()
                         {
-                            server.dao.saveQuoteState( quote, function()
+                            // if we're not internal, strip any potential
+                            // internal data from the response
+                            // XXX: maybe we should do this in
+                            // sendResponse() to ensure consistency
+                            if ( internal === false )
                             {
-                                // if we're not internal, strip any potential
-                                // internal data from the response
-                                // XXX: maybe we should do this in
-                                // sendResponse() to ensure consistency
-                                if ( internal === false )
+                                for ( id in program.internal )
                                 {
-                                    for ( id in program.internal )
-                                    {
-                                        delete retdata[ id ];
-                                    }
+                                    delete retdata[ id ];
                                 }
+                            }
 
-                                // don't send the response until the state
-                                // is saved; we don't want a race condition
-                                // if they're speeding through steps!
-                                finish( retdata );
-                            } );
+                            // don't send the response until the bucket
+                            // is saved; we don't want a race condition
+                            // if they're speeding through steps!
+                            finish( retdata );
                         } );
 
                         break;

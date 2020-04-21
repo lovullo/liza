@@ -509,13 +509,13 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
 
     /**
-     * Updates the quote retry attempts
+     * Updates the quote retry attempts and intial rated date
      *
      * @param quote - the quote to update
      *
      * @returns a promise with an updated quote
      */
-    updateQuoteRateRetries( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    updateQuoteInfo( quote: ServerSideQuote ): Promise<ServerSideQuote>
     {
         return new Promise<ServerSideQuote>( resolve =>
         {
@@ -523,7 +523,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 { id: quote.getId() },
                 {
                     limit:  <PositiveInteger>1,
-                    fields: { retryAttempts: 1 }
+                    fields: {
+                        retryAttempts:    1,
+                        initialRatedDate: 1,
+                    }
                 },
                 ( _err, cursor ) =>
                 {
@@ -538,9 +541,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                         }
 
                         quote.setRetryAttempts( +data[ 0 ].retryAttempts );
+                        quote.setInitialRatedDate( +data[ 0 ].initialRatedDate );
 
                         resolve( quote );
-                    });
+                    } );
                 }
             );
         } );
@@ -548,13 +552,13 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
 
     /**
-     * Check if the quote has pending suppliers
+     * Ensure the quote has been rated before
      *
-     * @param quote - the quote to update
+     * @param quote - the quote to validate
      *
      * @returns a promise with the quote
      */
-    ensurePendingSuppliers( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    ensurePriorRate( quote: ServerSideQuote ): Promise<ServerSideQuote>
     {
         return new Promise<ServerSideQuote>( ( resolve, reject ) =>
         {
@@ -562,7 +566,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                 { id: quote.getId() },
                 {
                     limit:  <PositiveInteger>1,
-                    fields: { 'data.__rate_pending': 1 }
+                    fields: {
+                        'meta.liza_timestamp_rate_request': 1,
+                        'lastPremDate':                     1,
+                    }
                 },
                 ( _err, cursor ) =>
                 {
@@ -580,25 +587,33 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                             return;
                         }
 
-                        const bucket_data = data[ 0 ].data;
+                        if( data[ 0 ]?.lastPremDate > 0 )
+                        {
+                            resolve( quote );
+                            return;
+                        }
 
-                        if( !bucket_data )
+                        const meta = data[ 0 ].meta;
+
+                        if( !meta )
                         {
                             reject(
                                 new Error(
-                                    'No ratedata for quote ' + quote.getId()
+                                    'No meta data for quote ' + quote.getId()
                                 )
                             );
                             return;
                         }
 
-                        const pending = bucket_data.__rate_pending;
+                        const rate_request = meta.liza_timestamp_rate_request;
 
-                        if( !pending || !pending[ 0 ] )
+                        if( !rate_request ||
+                            rate_request.length === 0 ||
+                            +rate_request[ 0 ] === 0 )
                         {
                             reject(
                                 new Error(
-                                    'Nothing pending for quote ' + quote.getId()
+                                    'No prior rate for quote ' + quote.getId()
                                 )
                             );
                             return;
@@ -636,6 +651,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     }
 
 
+
     /**
      * Save document metadata (meta field on document)
      *
@@ -650,8 +666,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
     saveQuoteMeta(
         quote:    ServerSideQuote,
         new_meta: Record<string, any>,
-        success:  Callback,
-        failure:  Callback,
+        success: Callback = () => {},
+        failure: Callback = () => {},
     ): void
     {
         const update: MongoUpdate = {};

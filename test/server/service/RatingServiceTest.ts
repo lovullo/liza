@@ -768,14 +768,14 @@ function getStubs()
             return this;
         }
 
-        updateQuoteRateRetries(
+        updateQuoteInfo(
             quote: ServerSideQuote
         ): Promise<ServerSideQuote>
         {
             return Promise.resolve( quote );
         }
 
-        ensurePendingSuppliers(
+        ensurePriorRate(
             quote: ServerSideQuote
         ): Promise<ServerSideQuote>
         {
@@ -835,6 +835,7 @@ function getStubs()
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
         getRetryCount:         () => 0,
+        setInitialRatedDate:   () => quote,
     };
 
     const ts_ctor = () => { return <UnixTimestamp>2592001 };

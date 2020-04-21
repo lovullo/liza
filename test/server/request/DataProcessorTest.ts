@@ -787,6 +787,11 @@ function createStubQuote()
         {
             return 0;
         },
+
+        setInitialRatedDate()
+        {
+            return this;
+        },
     };
 }
 

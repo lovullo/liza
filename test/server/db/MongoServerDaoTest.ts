@@ -246,6 +246,7 @@ function createStubQuote( metadata: Record<string, any> )
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
         getRetryCount:         () => 0,
+        setInitialRatedDate:   () => quote,
     };
 
     return quote;
