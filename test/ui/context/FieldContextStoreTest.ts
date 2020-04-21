@@ -203,6 +203,49 @@ describe( "FieldContextStore", () =>
 
         expect( given ).to.equal( expected_parent );
     } );
+
+
+    it( "sets and returns the field value by index", () =>
+    {
+        const element_id = 'qlabel_foo_bar_long_name';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+
+        const value = "foo";
+        const index = <PositiveInteger>1;
+
+        const sut = new Sut(
+            element_id,
+            <ContextContent>content,
+            null,
+        );
+
+        sut.setValueByIndex( index, value );
+
+        const given = sut.getValueByIndex( index );
+
+        expect( given ).to.equal( value );
+    } );
+
+
+    it( "returns empty string when field value not set", () =>
+    {
+        const element_id = 'qlabel_foo_bar_long_name';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+
+        const index = <PositiveInteger>1;
+
+        const sut = new Sut(
+            element_id,
+            <ContextContent>content,
+            null,
+        );
+
+        const given = sut.getValueByIndex( index );
+
+        expect( given ).to.equal( "" );
+    } );
 } );
 
 

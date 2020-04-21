@@ -220,6 +220,37 @@ export class GroupContext
 
 
     /**
+     * Set the value if attached to the DOM
+     * or store the value so it can be used later
+     *
+     * @param field_name - field name
+     * @param index - field index
+     * @param value - field value
+     */
+    setValueByName(
+        field_name: string,
+        index: PositiveInteger,
+        value: string
+    ): void
+    {
+        if ( this.isFieldAttached( field_name, index ) )
+        {
+            const field_context = this._fromCache( field_name, index );
+            field_context.setValue( value );
+        }
+        else
+        {
+            const store = this._field_context_stores[ field_name ];
+
+            if ( store !== undefined )
+            {
+                store.setValueByIndex( index, value );
+            }
+        }
+    }
+
+
+    /**
      * Return if the field is attached to the DOM
      *
      * @param field_name - field name
@@ -383,6 +414,8 @@ export class GroupContext
 
         const field_context = this._field_context_factory
             .create( field_name, index, field_content, is_subfield, sibling_content );
+
+        field_context.setValue( store.getValueByIndex( index ) );
 
         if ( this._field_context_cache[ field_name ] === undefined )
         {

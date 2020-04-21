@@ -1244,10 +1244,17 @@ module.exports = Class( 'GroupUi' )
      */
     'virtual public setValueByName': function( name, index, value, change_event )
     {
-        this.styler.setValueByName(
-            name, index, value, change_event,
-            this.getContentByIndex( name, index )
-        );
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.setValueByName( name, index, value );
+        }
+        else
+        {
+            this.styler.setValueByName(
+                name, index, value, change_event,
+                this.getContentByIndex( name, index )
+            );
+        }
 
         return this;
     },

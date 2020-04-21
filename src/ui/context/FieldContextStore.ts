@@ -49,6 +49,11 @@ export class FieldContextStore
      */
     private _subfield_parent_name: string = '';
 
+    /**
+     * Field values by index
+     */
+    private _field_values: string[] = [];
+
 
     /**
      * Initialize FieldContextStore
@@ -151,6 +156,34 @@ export class FieldContextStore
     get position(): PositiveInteger
     {
         return this._position;
+    }
+
+
+    /**
+     * Set value of the field by index
+     * This is used to store the value
+     * when a FieldContext does not exist
+     * for this index
+     *
+     * @param index - index of field
+     * @param value - value to set
+     */
+    setValueByIndex( index: PositiveInteger, value: string ):void
+    {
+        this._field_values[ index ] = value;
+    }
+
+
+    /**
+     * Return value of the field by index
+     *
+     * @param index - index of field
+     */
+    getValueByIndex( index: PositiveInteger ):string
+    {
+        return ( this._field_values[ index ] !== undefined )
+            ? this._field_values[ index ]
+            : '';
     }
 
 

@@ -109,6 +109,17 @@ export class FieldContext
         }
     }
 
+    /**
+     * Set value of the field
+     *
+     * @param value - value to set
+     */
+    setValue( _value: any ):void
+    {
+        // TODO: call the new styler with the content
+        // this.styler.setValue( this.content, value );
+    }
+
 
     /**
      * Set Options on Select elements
