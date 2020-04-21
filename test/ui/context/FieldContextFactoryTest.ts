@@ -23,8 +23,8 @@ import { FieldContextFactory as Sut } from "../../../src/ui/context/FieldContext
 import { FieldContext, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
 import { PositiveInteger } from "../../../src/numeric";
-import { RetainFieldContext } from "../../../src/ui/context/RetainFieldContext";
 import { SubFieldContext } from "../../../src/ui/context/SubFieldContext";
+import { TableCellFieldContext } from "../../../src/ui/context/TableCellFieldContext";
 
 import { expect } from 'chai';
 
@@ -35,28 +35,19 @@ describe( "FieldContextFactory", () =>
         {
             label: 'creates new FieldContext',
             is_subfield: false,
-            cretain: { 'foo_retain': 'bar' },
             field_name: 'baz',
             expected: FieldContext
         },
         {
             label: 'creates new SubFieldContext',
             is_subfield: true,
-            cretain: { 'foo_retain': 'bar' },
             field_name: 'baz',
             expected: SubFieldContext
         },
-        {
-            label: 'creates new RetainFieldContext',
-            is_subfield: false,
-            cretain: { 'foo_retain': 'bar' },
-            field_name: 'foo_retain',
-            expected: RetainFieldContext
-        },
-    ].forEach( ( { label, is_subfield, cretain, field_name, expected } ) => {
+    ].forEach( ( { label, is_subfield, field_name, expected } ) => {
         it ( label, () =>
         {
-            const sut = new Sut( document, cretain );
+            const sut = new Sut( document );
             const content = document.createElement("div");
 
             const given = sut.create(
@@ -70,10 +61,35 @@ describe( "FieldContextFactory", () =>
         } );
     } );
 
+
+    it( "creates new TableCellFieldContext", () =>
+    {
+        const sut = new Sut( document );
+        const table = document.createElement( "table" );
+
+        table.innerHTML =
+            '<tr>' +
+                '<td>' +
+                    '<input type="text" id="q_field_0">' +
+                '</td>' +
+            '</tr>';
+
+        const content = table.querySelector( "td" );
+
+        const given = sut.create(
+            'q_field_0',
+            <PositiveInteger>0,
+            <ContextContent>content,
+            false
+        );
+
+        expect( given ).to.be.instanceOf( TableCellFieldContext );
+    } );
+
+
     it( "creates new FieldContextStore", () =>
     {
-        const cretain = { 'foo': 'bar' };
-        const sut = new Sut( document, cretain );
+        const sut = new Sut( document );
         const parent = document.createElement( "div" );
         parent.innerHTML =
             '<dl class="">' +

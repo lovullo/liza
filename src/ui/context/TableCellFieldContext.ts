@@ -1,5 +1,5 @@
 /**
- * Retain Field Context
+ * TableCellField Context
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -23,9 +23,9 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 
 
 /**
- * Context responsible for a specific field in the DOM
+ * Context responsible for a specific table cell (TD) field
  */
-export class RetainFieldContext extends FieldContext
+export class TableCellFieldContext extends FieldContext
 {
     /**
      * Attach the field to the DOM or make it visible if already attached
@@ -33,47 +33,25 @@ export class RetainFieldContext extends FieldContext
      * @param to - Parent to attach to
      * @param next_element - Next element to attach before
      */
-    show( to: ContextContent, next_element: NullableContextContent): void
+    show( to: ContextContent, next_element: NullableContextContent ): void
     {
-        this.content.classList.remove( "hidden" );
-
-        if (this.sibling !== null) {
-            this.sibling.classList.remove( "hidden" );
-        }
-
         this.is_visible = true;
-        this._attach( to, next_element );
-    }
 
-
-    /**
-     * Hide field on DOM, retainable fields must not be detached
-     */
-    hide(): void
-    {
-        this.content.classList.add( "hidden" );
-
-        if (this.sibling !== null)
-        {
-            this.sibling.classList.add( "hidden" );
-        }
-
-        this._attach( <ContextContent>this.content.parentElement, null );
-        this.is_visible = false;
-    }
-
-
-    /**
-     * Retain fields should always be attached to the DOM
-     *
-     * @param to - Parent to attach to
-     * @param next_element - Next element to attach before
-     */
-    private _attach( to: ContextContent, next_element: NullableContextContent ): void
-    {
         if ( this.isAttached() === false )
         {
             this.attach( to, next_element );
         }
+    }
+
+
+    /**
+     * Table cell fields must not be detached
+     *
+     * Only set the visibility flag
+     * and let the TableGroup do its thing
+     */
+    hide(): void
+    {
+        this.is_visible = false;
     }
 }

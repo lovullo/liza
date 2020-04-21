@@ -24,7 +24,7 @@ export type NullableContextContent = ContextContent | null;
 
 export type FieldOptions = FieldOption[];
 export type FieldOption = {
-    value: string,
+    value: string | number,
     label: string,
     label_id: string
 }
@@ -61,7 +61,9 @@ export class FieldContext
         protected content: ContextContent,
         protected sibling: NullableContextContent = null
     )
-    {}
+    {
+        this.setFieldAttached();
+    }
 
 
     /**
@@ -94,6 +96,21 @@ export class FieldContext
 
 
     /**
+     * If the content has a parent element,
+     * we can safely assume the content
+     * is attached to the DOM
+     */
+    protected setFieldAttached(): void
+    {
+        if ( this.content.parentElement !== null )
+        {
+            this.is_attached = true;
+            this.is_visible = true;
+        }
+    }
+
+
+    /**
      * Set Options on Select elements
      *
      * @param options - list of options to set
@@ -115,9 +132,10 @@ export class FieldContext
         for ( let item in options )
         {
             let opt_value = options[ item ]?.value;
-            const option_value = opt_value || '';
+            opt_value = ''+(opt_value ?? '');
+
             const opt = this.document.createElement( 'option' );
-            opt.value = option_value;
+            opt.value = opt_value;
             opt.text = options[ item ].label;
             field_element.appendChild( opt );
         }

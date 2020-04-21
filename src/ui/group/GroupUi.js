@@ -231,6 +231,17 @@ module.exports = Class( 'GroupUi' )
 
     'public init': function( quote )
     {
+        const fields = this.group.getExclusiveFieldNames();
+        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
+
+        this.context.init( fields, cmatch_fields, this.content );
+
+        if ( this.getDomPerfFlag() === true )
+        {
+            const detach_fields = ( this.supportsMultipleIndex() ) ? fields : cmatch_fields;
+            this.context.detachStoreContent( detach_fields );
+        }
+
         this._initActions();
         this._monitorIndexChange( quote );
         this.processContent( quote );
@@ -356,43 +367,28 @@ module.exports = Class( 'GroupUi' )
      */
     'virtual protected processContent': function()
     {
-        // The first index parent is the first dl for most groups
-        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
-
-        this.initGroupContext();
-
-        this.hideCmatchFields();
     },
 
 
     /**
-     * Get the exclusive field names and create
-     * the field cache on GroupContext
+     * Group types that can support multiple index
      *
-     * @return undefined
+     * @return {boolean}
      */
-    'protected initGroupContext': function()
+    'virtual protected supportsMultipleIndex': function()
     {
-        const fields = this.group.getExclusiveFieldNames();
-        this.context.createFieldStores( fields, this.content );
+        return true;
     },
 
 
     /**
-     * Immediately hide fields with classifications
-     * This ensures that each cloned row/tab/etc
-     * will not contain hundreds of fields, which
-     * improves browser performance
+     * Gets the DOM Performance Flag
      *
-     * @return undefined
+     * @return {boolean}
      */
-    'protected hideCmatchFields': function()
+    'public getDomPerfFlag': function()
     {
-        if ( this._feature_flag.getDomPerfFlag() === true )
-        {
-            const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
-            this.context.detachStoreContent( cmatch_fields );
-        }
+        return this._feature_flag.getDomPerfFlag();
     },
 
 
@@ -405,7 +401,7 @@ module.exports = Class( 'GroupUi' )
     {
         var _self = this;
 
-        this.$content.find( '.action' ).click( function( e )
+        this.$content.find( '.action' ).live( 'click', function( e )
         {
             e.preventDefault();
 
@@ -963,7 +959,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doHideField': function( field, index )
     {
-        ( this._feature_flag.getDomPerfFlag() === true )
+        ( this.getDomPerfFlag() === true )
             ? this.context.hide( field, index )
             : this.rcontext.getFieldByName( field, index ).applyStyle( this._naStyler );
     },
@@ -1004,7 +1000,7 @@ module.exports = Class( 'GroupUi' )
 
     'virtual protected doShowField': function( field, index )
     {
-        ( this._feature_flag.getDomPerfFlag() === true )
+        ( this.getDomPerfFlag() === true )
             ? this.context.show( field, index, this.fieldContentParent[ index ] )
             : this.rcontext.getFieldByName( field, index ).revokeStyle( this._naStyler );
     },
@@ -1279,18 +1275,7 @@ module.exports = Class( 'GroupUi' )
 
     'public setOptions': function( name, index, options, val )
     {
-        if ( this._feature_flag.getDomPerfFlag() === false )
-        {
-            this.styler.setOptions(
-                name, index, options, val, this.getContentByIndex( name, index )
-            );
-
-            return this;
-        }
-
-        // non-cmatch fields should continue to use the styler
-        const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
-        if ( cmatch_fields.indexOf( name ) === -1 )
+        if ( this.getDomPerfFlag() === false )
         {
             this.styler.setOptions(
                 name, index, options, val, this.getContentByIndex( name, index )

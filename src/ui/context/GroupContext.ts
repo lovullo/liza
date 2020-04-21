@@ -51,6 +51,11 @@ export class GroupContext
      */
     private _field_positions: string[] = [];
 
+    /**
+     * Non-cmatch field names
+     */
+    private _non_cmatch_fields: string[] = [];
+
 
     /**
      * Initialize GroupContext
@@ -66,15 +71,24 @@ export class GroupContext
 
     /**
      * Create cache of field context stores
+     * and initialize field arrays
      *
      * @param fields - exclusive field names of group
+     * @param cmatch_fields - exclusive cmatch field names of group
      * @param content - group content
      */
-    createFieldStores(
+    init(
         fields: string[],
+        cmatch_fields: string[],
         content: ContextContent
     ): void
     {
+        const cmatch_fields_set = new Set( cmatch_fields );
+
+        this._non_cmatch_fields = fields.filter(
+            field => !cmatch_fields_set.has( field )
+        );
+
         for ( let i = 0; i < fields.length; i++ )
         {
             let field = fields[ i ];
@@ -103,6 +117,55 @@ export class GroupContext
 
 
     /**
+     * Create cache of field contexts
+     *
+     * This should only be called by Groups that do not
+     * support multiple indexes
+     */
+    createFieldCache(): void
+    {
+        for ( let field in this._field_context_stores  )
+        {
+            const store = this._field_context_stores[ field ];
+
+            // Index is 0 for the initial fields
+            const index = <PositiveInteger>0;
+
+            const is_subfield = store.isSubField();
+
+            const field_context = this._field_context_factory
+                .create( field, index, store.content, is_subfield, store.siblingContent );
+
+            this._field_context_cache[ field ] = [];
+
+            this._field_context_cache[ field ][ index ] = field_context;
+        }
+    }
+
+
+    /**
+     * Shows default fields for a new index
+     *
+     * Only non-cmatch fields should be attached initially
+     *
+     * @param index - field index
+     * @param to - parent content
+     */
+    addIndex(
+        index: PositiveInteger,
+        to: ContextContent
+    ): void
+    {
+        for ( let i = 0; i < this._non_cmatch_fields.length; i++ )
+        {
+            const field_name = this._non_cmatch_fields[ i ];
+
+            this.show( field_name, index, to );
+        }
+    }
+
+
+    /**
      * Detaches content from the FieldContextStores
      * for specific fields that have cmatches
      *
@@ -126,7 +189,7 @@ export class GroupContext
 
             let store = this._field_context_stores[ field ];
 
-            if ( store !== null )
+            if ( store !== undefined )
             {
                 store.detach();
             }
@@ -210,7 +273,7 @@ export class GroupContext
      *
      * @param field_name - to attach to DOM
      * @param index - field index
-     * @param to - parent context
+     * @param to - parent content
      */
     show(
         field_name: string,
@@ -314,8 +377,8 @@ export class GroupContext
         if ( is_subfield === true )
         {
             const parent_name = store.subFieldParentName;
-            field_content = this._field_context_cache[ parent_name ][ index ]
-                .getContent();
+            const parent_context = this._fromCache( parent_name, index );
+            field_content = parent_context.getContent();
         }
 
         const field_context = this._field_context_factory

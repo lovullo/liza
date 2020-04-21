@@ -56,12 +56,6 @@ module.exports = Class( 'StackedGroupUi' )
 
         this._dl = this._container.querySelector( 'dl' );
 
-        this.fieldContentParent[ 0 ] = this._dl;
-
-        this.initGroupContext();
-
-        this.hideCmatchFields();
-
         this._dl.parentNode.removeChild( this._dl );
     },
 
@@ -87,6 +81,11 @@ module.exports = Class( 'StackedGroupUi' )
 
         // Set field content parent for this index
         this.fieldContentParent[ index ] = item;
+
+        if ( this.getDomPerfFlag() === true )
+        {
+            this.context.addIndex( index, this.fieldContentParent[ index ] );
+        }
 
         this._container.appendChild( item );
 

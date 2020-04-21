@@ -23,7 +23,7 @@ import { ContextContent, FieldContext, NullableContextContent } from "./FieldCon
 
 
 /**
- * Context responsible for a specific field in the DOM
+ * Context responsible for a specific sub field (option)
  */
 export class SubFieldContext extends FieldContext
 {

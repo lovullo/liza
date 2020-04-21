@@ -40,7 +40,7 @@ describe( 'ui.group.GroupUi', () =>
                 let context_called = false;
 
                 const context = {
-                    createFieldStores: function()
+                    init: function()
                     {
                         context_called = true;
                     },
@@ -65,7 +65,7 @@ describe( 'ui.group.GroupUi', () =>
 
                 $content.hide = sinon.stub();
                 $content.find = sinon.stub()
-                    .returns( { click: sinon.stub() });
+                    .returns( { live: sinon.stub() });
 
                 const jquery = sinon.stub();
 
@@ -138,7 +138,7 @@ describe( 'ui.group.GroupUi', () =>
 
             $content.hide = sinon.stub();
             $content.find = sinon.stub()
-                .returns( { click: sinon.stub() });
+                .returns( { live: sinon.stub() });
 
             const jquery = sinon.stub();
             jquery.withArgs( content ).returns( $content );
@@ -231,7 +231,7 @@ function getRContext() {
 function getFieldContext()
 {
     return {
-        createFieldStores: function(){},
+        init: function(){},
         detachStoreContent: function(){},
         show: function(){},
         detachFields: function(){},
