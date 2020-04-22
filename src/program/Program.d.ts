@@ -27,6 +27,7 @@ import { DataApiResult } from "../dapi/DataApi";
 export type DataApiDefinitions = any;
 export type ClassificationResult = { [ index: string ]: any };
 export type ClassificationRetain = Record<string, any>;
+export type QuestionTypes = Record<string, { type: string, dim: PositiveInteger }>;
 
 export declare abstract class Program
 {
@@ -38,12 +39,13 @@ export declare abstract class Program
 
     internal: Record<string, boolean>;
 
+
     meta: {
         arefs:  Record<string, string>,
         fields: Record<string, any>,
         groups: Record<string, { min: PositiveInteger, max: PositiveInteger }>,
         qdata:  Record<string, Record<string, string>>,
-        qtypes: Record<string, { type: string, dim: PositiveInteger }>,
+        qtypes: QuestionTypes
     };
 
     mapis: Record<string, string[]>;
