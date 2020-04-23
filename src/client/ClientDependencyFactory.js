@@ -108,6 +108,7 @@ const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 const { GroupContext }         = require( '../ui/context/GroupContext' );
 const { FeatureFlag }          = require( '../ui/FeatureFlag' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
+const { FieldStylerFactory }   = require( '../ui/context/styler/FieldStylerFactory' );
 
 const Class = require( 'easejs' ).Class;
 
@@ -318,7 +319,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, content, styler, root_context, na_styler
+        group, content, styler, root_context, na_styler, qtypes
     )
     {
         // default
@@ -353,7 +354,7 @@ module.exports = Class( 'ClientDependencyFactory',
             obj = AccordionGroupUi;
         }
 
-        const context = this.createGroupContext();
+        const context = this.createGroupContext( qtypes );
         const feature_flag = new FeatureFlag();
         return obj(
             group, content, styler, jQuery, context, root_context, na_styler, feature_flag
@@ -366,11 +367,11 @@ module.exports = Class( 'ClientDependencyFactory',
         return NaFieldStyler();
     },
 
-    createGroupContext: function()
+    createGroupContext: function( qtypes )
     {
         return new GroupContext(
             new ContextParser(),
-            new FieldContextFactory( this._document )
+            new FieldContextFactory( this._document, new FieldStylerFactory( qtypes ) )
         );
     },
 

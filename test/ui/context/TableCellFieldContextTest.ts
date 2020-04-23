@@ -21,6 +21,8 @@
 
 import { TableCellFieldContext as Sut } from "../../../src/ui/context/TableCellFieldContext";
 import { ContextContent } from "../../../src/ui/context/FieldContext";
+import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
+
 import { expect } from "chai";
 
 before(function () {
@@ -40,6 +42,7 @@ describe( "TableCellFieldContext", () =>
         const content = group.querySelector( "#q_table_row_0" );
         const sut = new Sut(
             document,
+            getStylerStub(),
             'q_field_0',
             <ContextContent>content
         );
@@ -58,6 +61,7 @@ describe( "TableCellFieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo_bar',
             <ContextContent>content
         );
@@ -79,6 +83,7 @@ describe( "TableCellFieldContext", () =>
         const content = group.querySelector( "#q_table_row_0" );
         const sut = new Sut(
             document,
+            getStylerStub(),
             'q_foo_row_0',
             <ContextContent>content
         );
@@ -88,6 +93,14 @@ describe( "TableCellFieldContext", () =>
         expect( sut.isVisible() ).to.be.false;
     } );
 } );
+
+
+function getStylerStub()
+{
+    return <FieldStyler>{
+        'setValue': ( _: any, __: any ) => {},
+    };
+}
 
 function getGroupContent()
 {

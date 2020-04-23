@@ -1335,7 +1335,9 @@ module.exports = Class( 'Client' )
     {
         var group = this._factory.createGroup(),
             ui    = this._factory.createGroupUi(
-                group, content, styler, this._rootContext, na_styler
+                group, content, styler, this._rootContext, na_styler,
+                    this.program.meta.qtypes
+
             ),
             id               = ui.getId(),
             data             = this.groupData[id],
