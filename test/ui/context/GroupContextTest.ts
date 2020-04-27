@@ -423,7 +423,7 @@ describe( "GroupContext", () =>
 
 
 
-    it( "show field supplies previous element to attach to", () =>
+    it( "show field supplies previous element to attach to and sets value", () =>
     {
         const fields = [ 'moo', 'foo', 'bar', 'baz', 'qux' ];
         let stubs = <ContextCache>{
@@ -444,6 +444,7 @@ describe( "GroupContext", () =>
 
         let show_is_called = false;
         let set_value_is_called = false;
+        let has_value_is_called = false;
 
         const foo_value = 'foo bar';
 
@@ -479,6 +480,11 @@ describe( "GroupContext", () =>
         // value is retrieved
         stores[ 'foo' ].getValueByIndex = ( _: any ) => { return foo_value; };
 
+        stores[ 'foo' ].hasValueByIndex = ( _: any ) => {
+            has_value_is_called = true;
+            return true;
+        };
+
         // value is set
         stubs[ 'foo' ][ 0 ].setValue = ( value: string ) =>
         {
@@ -500,8 +506,58 @@ describe( "GroupContext", () =>
         // now add the foo field to assert on
         sut.show( 'foo', <PositiveInteger>0, dummy_content );
 
+        expect( has_value_is_called ).to.be.true;
         expect( set_value_is_called ).to.be.true;
         expect( show_is_called ).to.be.true;
+    } );
+
+
+    it( "show field does not set the value if value does not exist", () =>
+    {
+        const fields = [ 'foo' ];
+        let stubs = <ContextCache>{
+            'foo': [ getFieldContextStub( 'foo', false, false ) ],
+        }
+
+        let stores = <ContextStores>{
+            'foo': getFieldContextStoreStub( 0 ),
+        }
+
+        const foo_value = 'foo bar';
+        const parser = getContextParserStub();
+        let has_value_is_called = false;
+        let set_value_is_called = false;
+
+        const factory = <FieldContextFactory>{
+            'create': ( field: string, __:any, ___:any, ____:any ) => {
+                return stubs[ field ][ 0 ];
+            },
+            'createStore': ( field: string, __:any, ___:any ) => {
+                return stores[ field ];
+            }
+        };
+
+        // value is retrieved
+        stores[ 'foo' ].getValueByIndex = ( _: any ) => { return foo_value; };
+
+        stores[ 'foo' ].hasValueByIndex = ( _: any ) => {
+            has_value_is_called = true;
+            return false;
+        };
+
+        stubs[ 'foo' ][ 0 ].setValue = ( _: any ) =>
+        {
+            set_value_is_called = true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.init( fields, fields, dummy_content );
+
+        sut.show( 'foo', <PositiveInteger>0, dummy_content );
+
+        expect( has_value_is_called ).to.be.true;
+        expect( set_value_is_called ).to.be.false;
     } );
 
 
@@ -815,6 +871,7 @@ function getFieldContextStoreStub( position = 0, parent_name = '' )
         'subFieldParentName': parent_name,
         'setValueByIndex': ( _: any, __: any ) => {},
         'getValueByIndex' : ( _: any ) => {},
+        'hasValueByIndex' : ( _: any ) => { return true; },
     }
 }
 

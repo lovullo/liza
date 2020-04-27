@@ -168,7 +168,7 @@ export class FieldContextStore
      * @param index - index of field
      * @param value - value to set
      */
-    setValueByIndex( index: PositiveInteger, value: string ):void
+    setValueByIndex( index: PositiveInteger, value: string ): void
     {
         this._field_values[ index ] = value;
     }
@@ -177,13 +177,33 @@ export class FieldContextStore
     /**
      * Return value of the field by index
      *
+     * Once returned, delete array key
+     * to avoid unnecessary calls to DOM
+     *
      * @param index - index of field
      */
-    getValueByIndex( index: PositiveInteger ):string
+    getValueByIndex( index: PositiveInteger ): string
     {
-        return ( this._field_values[ index ] !== undefined )
-            ? this._field_values[ index ]
-            : '';
+        const value = this._field_values[ index ];
+
+        if ( value !== undefined )
+        {
+            delete this._field_values[ index ];
+            return value;
+        }
+
+        return '';
+    }
+
+
+    /**
+     * Return true if field value was stored for index
+     *
+     * @param index - index of field
+     */
+    hasValueByIndex( index: PositiveInteger ): boolean
+    {
+        return this._field_values[ index ] !== undefined;
     }
 
 

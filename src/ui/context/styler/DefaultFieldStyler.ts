@@ -57,7 +57,7 @@ export class DefaultFieldStyler implements FieldStyler
      * @param content - field content
      * @param value - value to set
      */
-    setValue( content: ContextContent, value: string ):void
+    setValue( content: ContextContent, value: string ): void
     {
         const element = this._getElement( content );
 
@@ -86,6 +86,6 @@ export class DefaultFieldStyler implements FieldStyler
 
         // In case the element is not found by id, we can query by data-field-name.
         // The index is not needed because the content is at the field level
-        return <NullableFieldElement>content.querySelector( '[data-field-name="' + this.name + '"]' );
+        return <NullableFieldElement>content.querySelector( `[data-field-name="${this.name}"]` );
     }
 }

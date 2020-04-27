@@ -222,9 +222,13 @@ describe( "FieldContextStore", () =>
 
         sut.setValueByIndex( index, value );
 
-        const given = sut.getValueByIndex( index );
+        const first_result = sut.getValueByIndex( index );
 
-        expect( given ).to.equal( value );
+        // call it again, and it should be an empty string
+        const second_result = sut.getValueByIndex( index );
+
+        expect( first_result ).to.equal( value );
+        expect( second_result ).to.equal( '' );
     } );
 
 

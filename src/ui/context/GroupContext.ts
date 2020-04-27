@@ -302,6 +302,8 @@ export class GroupContext
     /**
      * Show field on the DOM
      *
+     * Set the value of the field if stored
+     *
      * @param field_name - to attach to DOM
      * @param index - field index
      * @param to - parent content
@@ -322,6 +324,13 @@ export class GroupContext
 
         if ( field_context.isVisible() === false )
         {
+            const store = this._field_context_stores[ field_name ];
+
+            if ( store.hasValueByIndex( index ) )
+            {
+                field_context.setValue( store.getValueByIndex( index ) );
+            }
+
             field_context.show(
                 to,
                 this._getNextElement( field_name, index )
@@ -414,8 +423,6 @@ export class GroupContext
 
         const field_context = this._field_context_factory
             .create( field_name, index, field_content, is_subfield, sibling_content );
-
-        field_context.setValue( store.getValueByIndex( index ) );
 
         if ( this._field_context_cache[ field_name ] === undefined )
         {

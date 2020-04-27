@@ -48,9 +48,9 @@ export class CheckboxFieldStyler implements FieldStyler
      * @param content - field content
      * @param value - value to set
      */
-    setValue( content: ContextContent, value: string ):void
+    setValue( content: ContextContent, value: string ): void
     {
-        const elements: NodeList = content.querySelectorAll( '[data-field-name="' + this.name + '"]' );
+        const elements: NodeList = content.querySelectorAll( `[data-field-name="${this.name}"]` );
 
         let i = elements.length;
         while ( i-- )
@@ -59,7 +59,7 @@ export class CheckboxFieldStyler implements FieldStyler
 
             if ( question )
             {
-                question.checked = ( question.value === ''+value );
+                question.checked = ( question.value === value );
             }
         }
     }

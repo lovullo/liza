@@ -47,12 +47,7 @@ export class FieldStylerFactory
      */
     create( name: string, index: PositiveInteger ): FieldStyler
     {
-        let qtype = '';
-
-        if ( this._qtypes[ name ] !== undefined )
-        {
-            qtype = this._qtypes[ name ].type;
-        }
+        const qtype = this._qtypes[ name ]?.type;
 
         switch ( qtype ) {
             case 'radio':
