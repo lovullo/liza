@@ -494,7 +494,7 @@ module.exports = AbstractClass( 'Daemon',
                     _self._debugLog,
                     _self._encService,
                     _self._conf,
-                    process.env.NODE_ENV
+                    process.env.NODE_ENV || 'local'
                 );
             }
         });
