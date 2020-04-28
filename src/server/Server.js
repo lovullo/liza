@@ -1254,7 +1254,7 @@ module.exports = Class( 'Server' )
             // We will need to lookup the rate retries directly from the
             // dao because the dapi promises have an old version of the
             // quote without the updated count
-            .then( quote => this.dao.updateQuoteInfo( quote ) )
+            .then( quote => this.dao.syncRatingState( quote ) )
             .then( quote =>
             {
                 rating_service = new RatingService(

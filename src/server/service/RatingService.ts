@@ -393,9 +393,12 @@ export class RatingService
      * Clear all pending retry attempts
      *
      * @param data Rating results
+     *
+     * @return only retry attempt fields
      */
-    private _clearRetries( data: RateResult ): void
+    private _clearRetries( data: RateResult ): RateResult
     {
+        let   cleared       = <RateResult>{};
         const retry_pattern = /^(.+)__retry$/;
 
         for ( let field in data )
@@ -406,10 +409,14 @@ export class RatingService
             }
 
             // Reset the field to zero
-            data[ field ] = [ 0 ];
+            data   [ field ] = [ 0 ];
+            cleared[ field ] = [ 0 ];
         }
 
-        data[ '__rate_pending' ] = [ 0 ];
+        data[ '__rate_pending' ]    = [ 0 ];
+        cleared[ '__rate_pending' ] = [ 0 ];
+
+        return cleared;
     }
 
 
@@ -534,11 +541,13 @@ export class RatingService
         // Make determinations
         const max_attempts  = ( retry_attempts >= this.RETRY_MAX_ATTEMPTS );
         const has_pending   = ( pending_count > 0 );
-        const retry_on_step = ( retry_attempts > 0 ) ? is_rate_step : true;
 
         data[ '__rate_pending' ] = [ pending_count ];
 
-        if ( has_pending && !max_attempts && retry_on_step )
+        quote.retryAttempted();
+        this._dao.saveQuoteRateRetries( quote );
+
+        if ( has_pending && !max_attempts && is_rate_step )
         {
             // Set rate event value to -1 so that it will be in the background
             actions.push( {
@@ -549,13 +558,25 @@ export class RatingService
                     value:  -1,
                 },
             } );
-
-            quote.retryAttempted();
-            this._dao.saveQuoteRateRetries( quote );
         }
-        else if ( max_attempts )
+        else
         {
-            this._clearRetries( data );
+            const clear_data = this._clearRetries( data );
+            const save_data  = <RateResult>{};
+
+            // Update quote ratedata
+            quote.setRatingData( data );
+
+            // do not overwrite data that we still want
+            Object.keys( clear_data ).forEach( key =>
+                {
+                    save_data[ 'ratedata.' + key ] = clear_data[ key ];
+                    save_data[ 'data.' + key ]     = clear_data[ key ];
+                }
+            );
+
+            this._dao.saveQuote( quote, () => {}, () => {}, save_data );
         }
+
     }
 }

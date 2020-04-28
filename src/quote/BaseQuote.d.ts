@@ -66,6 +66,14 @@ export declare class BaseQuote implements Quote
 
 
     /**
+     * Sets the id of the current step
+     *
+     * @param id of current step
+     */
+    setCurrentStepId( step_id: number ): this;
+
+
+    /**
      * Sets an explicit lock, providing a reason for doing so
      *
      * @param reason - lock reason
@@ -150,4 +158,12 @@ export declare class BaseQuote implements Quote
      * @return top saved step id
      */
     getTopSavedStepId(): PositiveInteger;
+
+
+    /**
+     * Sets the id of the highest step the quote has saved
+     *
+     * @param top saved step id
+     */
+    setTopSavedStepId( id: number ): this;
 }
