@@ -173,7 +173,7 @@ module.exports = Class( 'DslRater' )
 
         var c = single.__classes;
 
-        if ( !( c.submit ) )
+        if ( !c || !( c.submit ) )
         {
             return this;
         }
@@ -214,7 +214,14 @@ module.exports = Class( 'DslRater' )
             return this;
         }
 
-        var classes   = single.__classes;
+        var classes = single.__classes;
+
+        // An error was thrown during rating
+        if ( classes === undefined )
+        {
+            return this;
+        }
+
         var prohibits = [];
         var regex     =
         {

@@ -38,7 +38,7 @@ describe( 'DslRater', () =>
         {
             let called = false;
 
-            const raters    = [ getRaterStub(), getRaterStub() ];
+            const raters    = [ getRaterStub( ( _, __ ) => {}, [] ), getRaterStub( ( _, __ ) => {}, [] ) ];
             const resultSet = getResultSetStub();
             const override  = {
                 'override public rate': function( name, meta, rate, complete )
@@ -58,7 +58,7 @@ describe( 'DslRater', () =>
 
         it( `Throws exception on invalid context`, () =>
         {
-            const raters    = [ getRaterStub(), getRaterStub() ];
+            const raters    = [ getRaterStub( ( _, __ ) => {}, [] ), getRaterStub( ( _, __ ) => {}, [] ) ];
             const resultSet = getResultSetStub();
             const context   = {};
             const sut       = Sut( raters, resultSet );
@@ -123,6 +123,26 @@ describe( 'DslRater', () =>
 
             expect( called ).to.equal( true );
             expect( actual ).to.equal( expected );
+        } );
+
+
+        it( `Handle undefined classes gracefully`, () =>
+        {
+            let called = false;
+
+            const callback = ( _, __ ) =>
+            {
+                called = true;
+            }
+
+            const raters    = [ getRaterStub( callback, undefined ) ];
+            const resultSet = getResultSetStub();
+            const context   = DslRaterContext( null, false );
+            const sut       = Sut( raters, resultSet );
+
+            sut.rate( context );
+
+            expect( called ).to.equal( true );
         } );
 
 
@@ -362,7 +382,7 @@ describe( 'DslRater', () =>
     } );
 
 
-    function getRaterStub( callback = ( _, __ ) => {}, classes = [] )
+    function getRaterStub( callback, classes )
     {
         let raterStub = ( function()
         {
