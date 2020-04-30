@@ -38,9 +38,8 @@ describe( 'AmqpConnection', () =>
             const expected_err = new Error( "test failure" );
 
             const mock_channel = <amqplib.Channel>(<unknown>{
-                assertExchange() {
-                    return Promise.reject( expected_err );
-                },
+                on:             () => {},
+                assertExchange: () => Promise.reject( expected_err ),
             } );
 
             const mock_connection = <amqplib.Connection>(<unknown>{
@@ -74,9 +73,8 @@ describe( 'AmqpConnection', () =>
             let reconnect_called = false;
 
             const mock_channel = <amqplib.Channel>(<unknown>{
-                assertExchange() {
-                    return Promise.resolve();
-                },
+                on:             () => {},
+                assertExchange: () => Promise.resolve(),
             } );
 
             const mock_connection = <amqplib.Connection>Object.create(
@@ -106,6 +104,112 @@ describe( 'AmqpConnection', () =>
             return expect( result )
                 .to.eventually.deep.equal( true )
                 .then( _ => expect( reconnect_called ).to.be.true );
+        } );
+
+
+        it( "is called when there is an error with the channel", () =>
+        {
+            let reconnect_called = false;
+
+            const mock_channel = <amqplib.Channel>Object.create(
+                new EventEmitter()
+            )
+
+            mock_channel.assertExchange = (): any => {
+                return Promise.resolve();
+            };
+
+            const mock_connection = <amqplib.Connection>Object.create(
+                new EventEmitter()
+            );
+
+            mock_connection.createChannel = (): any => {
+                return Promise.resolve( mock_channel );
+            };
+
+            const mock_amqp = <typeof amqplib>(<unknown>{
+                connect() {
+                    return Promise.resolve( mock_connection );
+                }
+            } );
+
+            const emitter = new EventEmitter();
+
+            emitter.on( 'amqp-reconnect', () => { reconnect_called = true } );
+
+            const conf    = <AmqpConfig>{};
+            const sut     = new Sut( mock_amqp, conf, emitter );
+
+            const result = sut.connect()
+                                .then( () => mock_channel.emit( 'close' ) )
+
+            return expect( result )
+                .to.eventually.deep.equal( true )
+                .then( _ => expect( reconnect_called ).to.be.true );
+        } );
+
+
+        it( "throws an error if it is unable to reconnect", done =>
+        {
+            let connect_call_count = 0;
+            let retry_call_count   = 0;
+
+            const mock_channel = <amqplib.Channel>(<unknown>{
+                on:             () => {},
+                assertExchange: () => Promise.resolve(),
+            } );
+
+            const conn = <amqplib.Connection>Object.create(
+                new EventEmitter()
+            );
+
+            conn.createChannel = (): any => {
+                return Promise.resolve( mock_channel );
+            };
+
+            const mock_amqp = <typeof amqplib>(<unknown>{
+                connect() {
+                    if ( connect_call_count++ === 0 )
+                    {
+                        return Promise.resolve( conn );
+                    }
+
+                    return Promise.reject( new Error( 'Foo' ) );
+                }
+            } );
+
+            const conf = <AmqpConfig>{
+                retry_wait: 0,
+                retries:    3,
+            };
+
+            const sut = new Sut( mock_amqp, conf, new EventEmitter() );
+
+            const old_setTimeout = global.setTimeout;
+
+            global.setTimeout = ( cb: (...args: any[]) => void, _: number ) =>
+            {
+                retry_call_count++;
+
+                try { cb() }
+                catch( e )
+                {
+                    expect( e ).to.deep.equal(
+                        new Error( 'Coulds not re-establish AMQP connection.' )
+                    );
+
+                    expect( retry_call_count ).to.equal( 3 );
+                    expect( connect_call_count ).to.equal( 4 );
+
+                    global.setTimeout = old_setTimeout;
+
+                    done();
+                }
+
+                return <NodeJS.Timeout>{};
+            }
+
+            sut.connect().then( _ => conn.emit( 'error', 'moo' ) );
         } );
     } );
 } );
