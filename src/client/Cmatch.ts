@@ -305,13 +305,16 @@ export class Cmatch
 
             for ( let i = 0; i < fieldn; i++ )
             {
+                // current cmatch will contain only those
+                // indexes that we will handle
+                cmatch[ field ].indexes = cmatch[ field ].indexes.slice( 0, fieldn );
+
                 // do not record unchanged indexes as changed
                 // (avoiding the event overhead)
                 if ( !force && ( vis[ i ] === cur[ i ] ) )
                 {
                     continue;
                 }
-
                 ( ( vis[ i ] ) ? show : hide ).push( <PositiveInteger>i );
             }
 

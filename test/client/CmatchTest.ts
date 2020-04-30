@@ -190,6 +190,51 @@ describe( "Cmatch", () =>
     } );
 
 
+    [
+        {
+            label: "handleClassMatch handles only current indexes in bucket",
+            cur_data: [ 'bar' ],
+            cmatch: { foo: { all: true, any: true, indexes: [ 1, 1 ] } },
+            expected: { foo: { all: true, any: true, indexes: [ 1 ] } },
+        },
+        {
+            label: "handleClassMatch handles indexes requested when bucket and cmatch index counts are equal",
+            cur_data: [ 'bar', 'baz' ],
+            cmatch: { foo: { all: true, any: true, indexes: [ 1, 1 ] } },
+            expected: { foo: { all: true, any: true, indexes: [ 1, 1 ] } },
+        },
+        {
+            label: "handleClassMatch handles indexes requested when bucket values exist",
+            cur_data: [ 'bar', 'baz', 'foo' ],
+            cmatch: { foo: { all: true, any: true, indexes: [ 1, 1 ] } },
+            expected: { foo: { all: true, any: true, indexes: [ 1, 1 ] } },
+        },
+    ].forEach( ( { label, cur_data, cmatch, expected } ) => {
+        it( label, done =>
+        {
+            const step_ui = createStubStepUi( { 'foo': true } );
+            const { sut, client, quote } = createStubs( {}, step_ui );
+
+            let get_data_call_count = 0;
+            quote.getDataByName = ( _field: string ) =>
+            {
+                ++get_data_call_count;
+                return cur_data;
+            };
+
+            client.handleEvent = ( _event_id: string, _data: any ) =>
+            {
+                expect( get_data_call_count ).to.equal( 1 );
+                expect( sut.getMatches() ).to.deep.equal( expected );
+                done();
+                return client;
+            }
+
+            sut.handleClassMatch( cmatch );
+        } );
+    } );
+
+
     it( "getCmatchFields returns only fields with cmatch data", () =>
     {
         const expected_fields = [
