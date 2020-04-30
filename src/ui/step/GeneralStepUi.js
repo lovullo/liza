@@ -329,33 +329,30 @@ module.exports = Class( 'GeneralStepUi' )
             // remove the trailing square brackets from the name
             name = name.substring( 0, ( name.length - 2 ) );
 
-            // get its index
-            var $elements = step.$content.find( "[name='" + name + "[]']" ),
-                index     = $elements.index( $element );
+            var element = $element[ 0 ];
+            var index = element.getAttribute( 'data-index' );
 
-
-            // todo: this is temporary to allow noyes and legacy radios to work.
-            if ( $element.hasClass( 'legacyradio' ) )
+            // For single index groups, index should be 0
+            if ( index === undefined || index === null  )
             {
                 index = 0;
             }
-            else if ( $element.attr( 'type' ) === 'radio'
-                || $element.attr( 'type' ) === 'checkbox'
-            )
-            {
 
+            if ( element.getAttribute( 'type' ) === 'radio'
+                || element.getAttribute( 'type' ) === 'checkbox' )
+            {
                 // 2 in this instance is the yes/no group length.
-                var group_length = $element.attr( 'data-question-length' )
-                    ? +$element.attr( 'data-question-length' )
+                var group_length = element.getAttribute( 'data-question-length' )
+                    ? +element.getAttribute( 'data-question-length' )
                     : 2;
 
-                var is_checked = $element.attr( 'checked' );
+                var is_checked = element.checked;
 
                 // if it's not checked and in a group, then this isn't
                 // the radio we're interested in. Sorry!
                 if ( !is_checked && group_length !== 1 )
                 {
-                    $element.attr( 'checked', true );
+                    element.checked = true;
 
                     return;
                 }
@@ -365,8 +362,6 @@ module.exports = Class( 'GeneralStepUi' )
                 {
                     val = 0;
                 }
-
-                index = Math.floor( index / group_length );
             }
 
             var values              = {};
