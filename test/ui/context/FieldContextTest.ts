@@ -20,6 +20,7 @@
  */
 
 import { FieldContext as Sut, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
+import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
 
 import { expect } from 'chai';
 
@@ -41,6 +42,7 @@ describe( "FieldContext", () =>
         const content = group_content.querySelector( "#" + element_id );
         const sut = new Sut(
             document,
+            getStylerStub(),
             element_id,
             <ContextContent>content
         );
@@ -62,6 +64,7 @@ describe( "FieldContext", () =>
         const content = group_content.querySelector( "#" + element_id );
         const sut = new Sut(
             document,
+            getStylerStub(),
             element_id,
             <ContextContent>content
         );
@@ -121,6 +124,7 @@ describe( "FieldContext", () =>
             const sibling = group_content.querySelector( "#" + sibling_id );
             const sut = new Sut(
                 document,
+                getStylerStub(),
                 element_id,
                 <ContextContent>content,
                 <NullableContextContent>sibling
@@ -147,6 +151,7 @@ describe( "FieldContext", () =>
         let sibling = from_content.querySelector( "#qlabel_checkbox_foo" );
         const sut = new Sut(
             document,
+            getStylerStub(),
             'q_checkbox_foo_n_0',
             <ContextContent>content,
             <NullableContextContent>sibling
@@ -167,6 +172,7 @@ describe( "FieldContext", () =>
         from_content.appendChild( child );
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo',
             <ContextContent>child
         );
@@ -185,6 +191,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo',
             <ContextContent>child
         );
@@ -205,6 +212,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo',
             <ContextContent>child
         );
@@ -225,6 +233,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo',
             <ContextContent>child
         );
@@ -246,6 +255,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'foo',
             <ContextContent>child
         );
@@ -261,6 +271,7 @@ describe( "FieldContext", () =>
 
         const sut = new Sut(
             document,
+            getStylerStub(),
             'q_checkbox_foo_n_0',
             <ContextContent>content,
             <NullableContextContent>sibling
@@ -310,6 +321,7 @@ describe( "FieldContext", () =>
             const content = group_content.querySelector( "#qcontainer_select_element" );
             const sut = new Sut(
                 document,
+                getStylerStub(),
                 'q_select_element_0',
                 <ContextContent>content
             );
@@ -325,6 +337,13 @@ describe( "FieldContext", () =>
 
 } );
 
+
+function getStylerStub()
+{
+    return <FieldStyler>{
+        'setValue': ( _: any, __: any ) => {},
+    };
+}
 
 function getGroupContent()
 {

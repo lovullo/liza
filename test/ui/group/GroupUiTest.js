@@ -103,6 +103,8 @@ describe( 'ui.group.GroupUi', () =>
             styler_options_expected: false,
             context_options_expected: true,
             detach_store_content_expected : true,
+            context_set_value_expected : true,
+            styler_set_value_expected : false,
         },
         {
             label: 'when feature flag is off, use the old styler',
@@ -114,6 +116,8 @@ describe( 'ui.group.GroupUi', () =>
             styler_options_expected: true,
             context_options_expected: false,
             detach_store_content_expected : false,
+            context_set_value_expected : false,
+            styler_set_value_expected : true,
         },
     ].forEach( ( {
                 label,
@@ -124,7 +128,9 @@ describe( 'ui.group.GroupUi', () =>
                 apply_style_expected,
                 styler_options_expected,
                 context_options_expected,
-                detach_store_content_expected
+                detach_store_content_expected,
+                context_set_value_expected,
+                styler_set_value_expected
         } ) => {
         it( label, () =>
         {
@@ -150,6 +156,8 @@ describe( 'ui.group.GroupUi', () =>
             let styler_set_options_called = false;
             let context_set_options_called = false;
             let detach_store_content_called = false;
+            let context_set_value_called = false;
+            let styler_set_value_called = false;
 
             const feature_flag = {
                 getDomPerfFlag: () => { return flag; }
@@ -158,6 +166,10 @@ describe( 'ui.group.GroupUi', () =>
             const styler = {
                 setOptions: function(){
                     styler_set_options_called = true;
+                    return;
+                },
+                setValueByName: function(){
+                    styler_set_value_called = true;
                     return;
                 }
             };
@@ -169,6 +181,7 @@ describe( 'ui.group.GroupUi', () =>
             context.hide = () => { hide_is_called = true; };
             context.setOptions = () => { context_set_options_called = true; };
             context.detachStoreContent = () => { detach_store_content_called = true; };
+            context.setValueByName = () => { context_set_value_called = true; };
 
             rcontext.getFieldByName = () =>
             {
@@ -210,6 +223,11 @@ describe( 'ui.group.GroupUi', () =>
             sut.setOptions( field_name, field_index, {}, '' );
             expect( styler_set_options_called ).to.equal( styler_options_expected );
             expect( context_set_options_called ).to.equal( context_options_expected );
+
+            sut.setValueByName( field_name, field_index, 'foo' );
+            expect( styler_set_value_called ).to.equal( styler_set_value_expected );
+            expect( context_set_value_called ).to.equal( context_set_value_expected );
+
         } );
     } );
 } );

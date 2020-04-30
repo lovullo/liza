@@ -24,6 +24,7 @@ import { FieldContextStore } from "./FieldContextStore";
 import { PositiveInteger } from "../../numeric";
 import { SubFieldContext } from "./SubFieldContext";
 import { TableCellFieldContext } from "./TableCellFieldContext";
+import { FieldStylerFactory } from "./styler/FieldStylerFactory";
 
 
 export class FieldContextFactory
@@ -40,7 +41,8 @@ export class FieldContextFactory
      * @param _document - DOM
      */
     constructor(
-        private readonly _document: Document
+        private readonly _document: Document,
+        private readonly _styler_factory: FieldStylerFactory
     ) {}
 
 
@@ -73,6 +75,7 @@ export class FieldContextFactory
 
         return new obj(
             this._document,
+            this._styler_factory.create( name, index ),
             element_id,
             content,
             sibling

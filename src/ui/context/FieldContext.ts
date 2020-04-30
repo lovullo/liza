@@ -19,6 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { FieldStyler } from "./styler/FieldStyler";
+
 export type ContextContent = Element;
 export type NullableContextContent = ContextContent | null;
 
@@ -51,15 +53,17 @@ export class FieldContext
      * Initialize FieldContext
      *
      * @param document to create Document elements
+     * @param styler field styler
      * @param element_id field identifier
      * @param content field content
      * @param sibling sibling field content
      */
     constructor(
         protected readonly document: Document,
+        protected readonly styler: FieldStyler,
         protected readonly element_id: string,
         protected content: ContextContent,
-        protected sibling: NullableContextContent = null
+        protected sibling: NullableContextContent = null,
     )
     {
         this.setFieldAttached();
@@ -107,6 +111,17 @@ export class FieldContext
             this.is_attached = true;
             this.is_visible = true;
         }
+    }
+
+
+    /**
+     * Set value of the field
+     *
+     * @param value - value to set
+     */
+    setValue( value: string ): void
+    {
+        this.styler.setValue( this.content, value );
     }
 
 

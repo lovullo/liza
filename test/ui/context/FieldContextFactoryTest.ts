@@ -19,6 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { FieldStylerFactory } from "../../../src/ui/context/styler/FieldStylerFactory";
+import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
 import { FieldContextFactory as Sut } from "../../../src/ui/context/FieldContextFactory";
 import { FieldContext, ContextContent, NullableContextContent } from "../../../src/ui/context/FieldContext";
 import { FieldContextStore } from "../../../src/ui/context/FieldContextStore";
@@ -47,7 +49,18 @@ describe( "FieldContextFactory", () =>
     ].forEach( ( { label, is_subfield, field_name, expected } ) => {
         it ( label, () =>
         {
-            const sut = new Sut( document );
+            const styler_stub = getFieldStylerStub();
+            const styler_factory = getFieldStylerFactory();
+
+            let create_styler_is_called = false;
+
+            styler_factory.create = ( _:any, __:any  ) =>
+            {
+                create_styler_is_called = true;
+                return styler_stub;
+            };
+
+            const sut = new Sut( document, styler_factory );
             const content = document.createElement("div");
 
             const given = sut.create(
@@ -57,6 +70,7 @@ describe( "FieldContextFactory", () =>
                 is_subfield
             );
 
+            expect( create_styler_is_called ).to.be.true;
             expect( given ).to.be.instanceOf( expected );
         } );
     } );
@@ -64,7 +78,9 @@ describe( "FieldContextFactory", () =>
 
     it( "creates new TableCellFieldContext", () =>
     {
-        const sut = new Sut( document );
+        const styler_factory = getFieldStylerFactory();
+
+        const sut = new Sut( document, styler_factory );
         const table = document.createElement( "table" );
 
         table.innerHTML =
@@ -89,7 +105,9 @@ describe( "FieldContextFactory", () =>
 
     it( "creates new FieldContextStore", () =>
     {
-        const sut = new Sut( document );
+        const styler_factory = getFieldStylerFactory();
+
+        const sut = new Sut( document, styler_factory );
         const parent = document.createElement( "div" );
         parent.innerHTML =
             '<dl class="">' +
@@ -112,3 +130,20 @@ describe( "FieldContextFactory", () =>
     } );
 } );
 
+
+function getFieldStylerFactory()
+{
+    return <FieldStylerFactory>{
+        'create': ( _: any, __:any ) => {
+            return;
+        },
+    };
+}
+
+
+function getFieldStylerStub()
+{
+    return <FieldStyler>{
+        'setValue': ( _: any, __:any ) => {},
+    };
+}

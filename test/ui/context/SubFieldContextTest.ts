@@ -21,6 +21,7 @@
 
 import { SubFieldContext as Sut } from "../../../src/ui/context/SubFieldContext";
 import { ContextContent } from "../../../src/ui/context/FieldContext";
+import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
 
 import { expect } from 'chai';
 
@@ -68,6 +69,7 @@ describe( "SubFieldContext", () => {
             const content = group_content.querySelector( "#" + content_element_id );
             const sut = new Sut(
                 document,
+                getStylerStub(),
                 element_id,
                 <ContextContent>content
             );
@@ -118,6 +120,7 @@ describe( "SubFieldContext", () => {
             const content = group_content.querySelector( "#" + content_element_id );
             const sut = new Sut(
                 document,
+                getStylerStub(),
                 element_id,
                 <ContextContent>content
             );
@@ -132,6 +135,13 @@ describe( "SubFieldContext", () => {
     } );
 } );
 
+
+function getStylerStub()
+{
+    return <FieldStyler>{
+        'setValue': ( _: any, __: any ) => {},
+    };
+}
 
 function getGroupContent()
 {
