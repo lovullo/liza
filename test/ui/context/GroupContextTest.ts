@@ -512,6 +512,76 @@ describe( "GroupContext", () =>
     } );
 
 
+
+    it( "show field sets the options when they exist in the store", () =>
+    {
+        const fields = [ 'foo' ];
+        let stubs = <ContextCache>{
+            'foo': [ getFieldContextStub( 'foo', false, false ) ],
+        }
+
+        let stores = <ContextStores>{
+            'foo': getFieldContextStoreStub( 0 ),
+        }
+
+        const stub_options = [ { value: 'foo', label: 'foo', label_id: 'foo' } ];
+        const stub_value = 'foo bar';
+
+        let show_is_called = false;
+        let set_options_is_called = false;
+        let has_options_is_called = false;
+
+        const parser = getContextParserStub();
+
+        const factory = <FieldContextFactory>{
+            'create': ( field: string, __:any, ___:any, ____:any ) => {
+                return stubs[ field ][ 0 ];
+            },
+            'createStore': ( field: string, __:any, ___:any ) => {
+                return stores[ field ];
+            }
+        };
+
+        stubs[ 'foo' ][ 0 ].show = ( _:any, __:any ) =>
+        {
+            show_is_called = true;
+        };
+
+        // value is retrieved
+        stores[ 'foo' ].getValueByIndex = ( _: any ) => {
+            return stub_value;
+        };
+
+        // options are retrieved
+        stores[ 'foo' ].getOptionsByIndex = ( _: any ) => {
+            return stub_options;
+        };
+
+        stores[ 'foo' ].hasOptionsByIndex = ( _: any ) => {
+            has_options_is_called = true;
+            return true;
+        };
+
+        // options are set set
+        stubs[ 'foo' ][ 0 ].setOptions = ( options: any, value: any ) =>
+        {
+            expect( options ).to.equal( stub_options );
+            expect( value ).to.equal( stub_value );
+            set_options_is_called = true;
+        };
+
+        const dummy_content = document.createElement( "dl" );
+        const sut = new Sut( parser, factory );
+        sut.init( fields, fields, dummy_content );
+
+        sut.show( 'foo', <PositiveInteger>0, dummy_content );
+
+        expect( has_options_is_called ).to.be.true;
+        expect( set_options_is_called ).to.be.true;
+        expect( show_is_called ).to.be.true;
+    } );
+
+
     it( "show field does not set the value if value does not exist", () =>
     {
         const fields = [ 'foo' ];
@@ -721,40 +791,96 @@ describe( "GroupContext", () =>
 
     [
         {
-            label: 'setOptions sets options when field is cached',
+            label: 'setOptions sets options when field context exists',
             fields: [ 'foo', 'bar' ],
             field_to_set: 'bar',
-            call_expected: true
+            is_attached: true,
+            store_set_value_expected: false,
+            store_set_options_expected: false,
+            context_set_options_expected: true
         },
         {
-            label: 'setOptions sets options when field is cached',
+            label: 'setOptions sets options on store when field context does not exist',
+            fields: [ 'foo', 'bar' ],
+            field_to_set: 'bar',
+            is_attached: false,
+            store_set_value_expected: true,
+            store_set_options_expected: true,
+            context_set_options_expected: false
+        },
+        {
+            label: 'setOptions does not set options when field store does not exist',
             fields: [ 'foo', 'bar' ],
             field_to_set: 'baz',
-            call_expected: false
+            is_attached: false,
+            store_set_value_expected: false,
+            store_set_options_expected: false,
+            context_set_options_expected: false
         },
-    ].forEach( ( { label, fields, field_to_set, call_expected } ) => {
+    ].forEach( ( {
+        label,
+        fields,
+        field_to_set,
+        is_attached,
+        store_set_value_expected,
+        store_set_options_expected,
+        context_set_options_expected
+    } ) => {
     it( label, () =>
     {
         const stub_options = [ { value: 'foo', label: 'foo', label_id: 'foo' } ];
         const stub_value = 'bar';
 
-        const parser = getContextParserStub();
+        const store = getFieldContextStoreStub();
         const stub = getFieldContextStub();
-        const factory = getFieldContextFactory( stub );
 
-        let set_options_is_called = false;
+        const parser = getContextParserStub();
+        const factory = <FieldContextFactory>{
+            create: ( _:any, __:any, ___:any, ____:any ) => {
+                return stub;
+            },
+            'createStore': ( _: any, __:any, ___:any ) => {
+                return store;
+            }
+        };
+
+        let context_set_options_is_called = false;
+        let store_set_options_is_called = false;
+        let store_set_value_is_called = false;
+
+        stub.isAttached = () =>
+        {
+            return is_attached;
+        };
+
         stub.setOptions = ( options :any, value :any ) =>
         {
             expect( options ).to.equal( stub_options );
             expect( value ).to.equal( stub_value );
-            set_options_is_called = true;
+            context_set_options_is_called = true;
+        };
+
+        store.setOptionsByIndex = ( _:any, options :any ) =>
+        {
+            expect( options ).to.equal( stub_options );
+            store_set_options_is_called = true;
+        };
+
+        store.setValueByIndex = ( _:any, value :any ) =>
+        {
+            expect( value ).to.equal( stub_value );
+            store_set_value_is_called = true;
         };
 
         const dummy_content = document.createElement( "dl" );
         const sut = new Sut( parser, factory );
         sut.init( fields, fields, dummy_content );
+        sut.createFieldCache();
+
         sut.setOptions( field_to_set, <PositiveInteger>0, stub_options, stub_value );
-        expect( set_options_is_called ).to.equal( call_expected );
+        expect( context_set_options_is_called ).to.equal( context_set_options_expected );
+        expect( store_set_options_is_called ).to.equal( store_set_options_expected );
+        expect( store_set_value_is_called ).to.equal( store_set_value_expected );
         } );
     } );
 
@@ -872,6 +998,9 @@ function getFieldContextStoreStub( position = 0, parent_name = '' )
         'setValueByIndex': ( _: any, __: any ) => {},
         'getValueByIndex' : ( _: any ) => {},
         'hasValueByIndex' : ( _: any ) => { return true; },
+        'setOptionsByIndex': ( _: any, __: any ) => {},
+        'getOptionsByIndex' : ( _: any ) => {},
+        'hasOptionsByIndex' : ( _: any ) => { return false; },
     }
 }
 

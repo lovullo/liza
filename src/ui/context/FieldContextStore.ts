@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContextContent, NullableContextContent } from "./FieldContext";
+import { ContextContent, NullableContextContent, FieldOptions } from "./FieldContext";
 import { PositiveInteger } from "../../numeric";
 
 /**
@@ -53,6 +53,11 @@ export class FieldContextStore
      * Field values by index
      */
     private _field_values: string[] = [];
+
+    /**
+     * Field options by index
+     */
+    private _field_options: FieldOptions[] = [];
 
 
     /**
@@ -204,6 +209,55 @@ export class FieldContextStore
     hasValueByIndex( index: PositiveInteger ): boolean
     {
         return this._field_values[ index ] !== undefined;
+    }
+
+
+
+    /**
+     * Set options of the field by index
+     * This is used to store the options
+     * when a FieldContext does not exist
+     * for this index
+     *
+     * @param index - index of field
+     * @param options - list of options to set
+     */
+    setOptionsByIndex( index: PositiveInteger, options: FieldOptions ): void
+    {
+        this._field_options[ index ] = options;
+    }
+
+
+    /**
+     * Return options of the field by index
+     *
+     * Once returned, delete array key
+     * to avoid unnecessary calls to DOM
+     *
+     * @param index - index of field
+     */
+    getOptionsByIndex( index: PositiveInteger ): FieldOptions
+    {
+        const options = this._field_options[ index ];
+
+        if ( options !== undefined )
+        {
+            delete this._field_options[ index ];
+            return options;
+        }
+
+        return [];
+    }
+
+
+    /**
+     * Return true if field options were stored for index
+     *
+     * @param index - index of field
+     */
+    hasOptionsByIndex( index: PositiveInteger ): boolean
+    {
+        return this._field_options[ index ] !== undefined;
     }
 
 

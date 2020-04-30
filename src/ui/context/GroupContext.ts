@@ -276,6 +276,9 @@ export class GroupContext
     /**
      * Set Options on Select elements
      *
+     * If the field is not attached, store the options and value
+     * in the FieldContextStore to be retrieved when shown
+     *
      * @param field_name - to attach options to
      * @param index - field index
      * @param options - list of options to set
@@ -288,21 +291,28 @@ export class GroupContext
         val: string
     ): void
     {
-        // If field name was never added to a store, do nothing
-        if ( this._field_context_stores[ field_name ] === undefined )
+        if ( this.isFieldAttached( field_name, index ) )
         {
-            return;
+            const field_context = this._fromCache( field_name, index );
+            field_context.setOptions( options, val );
         }
+        else
+        {
+            const store = this._field_context_stores[ field_name ];
 
-        const field_context = this._fromCache( field_name, index );
-        field_context.setOptions( options, val );
+            if ( store !== undefined )
+            {
+                store.setOptionsByIndex( index, options );
+                store.setValueByIndex( index, val );
+            }
+        }
     }
 
 
     /**
      * Show field on the DOM
      *
-     * Set the value of the field if stored
+     * Set the value and options of the field if stored
      *
      * @param field_name - to attach to DOM
      * @param index - field index
@@ -324,17 +334,25 @@ export class GroupContext
 
         if ( field_context.isVisible() === false )
         {
+            field_context.show(
+                to,
+                this._getNextElement( field_name, index )
+            );
+
             const store = this._field_context_stores[ field_name ];
+
+            if ( store.hasOptionsByIndex( index ) )
+            {
+                field_context.setOptions(
+                    store.getOptionsByIndex( index ),
+                    store.getValueByIndex( index )
+                );
+            }
 
             if ( store.hasValueByIndex( index ) )
             {
                 field_context.setValue( store.getValueByIndex( index ) );
             }
-
-            field_context.show(
-                to,
-                this._getNextElement( field_name, index )
-            );
         }
     }
 
