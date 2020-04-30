@@ -243,6 +243,8 @@ describe( 'RatingService', () =>
 
         let saved_rates = false;
 
+        let saveQuote_call_count = 0;
+
         dao.saveQuote = (
             quote:      ServerSideQuote,
             success:    ServerDaoCallback,
@@ -251,8 +253,16 @@ describe( 'RatingService', () =>
             _push_data: Record<string, any>,
         ) =>
         {
-            expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
+            if( saveQuote_call_count === 0 )
+            {
+                expect( save_data.ratedata ).to.equal( undefined );
+            }
+            else
+            {
+                expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
+            }
 
+            saveQuote_call_count++;
             saved_rates = true;
             success( quote );
 
@@ -265,6 +275,7 @@ describe( 'RatingService', () =>
             .then( () =>
             {
                 expect( saved_rates ).to.be.true;
+                expect( saveQuote_call_count ).to.equal( 2 );
             } );
     } );
 
@@ -292,6 +303,8 @@ describe( 'RatingService', () =>
             return quote;
         };
 
+        let saveQuote_call_count = 0;
+
         dao.saveQuote = (
             quote:      ServerSideQuote,
             success:    ServerDaoCallback,
@@ -303,7 +316,16 @@ describe( 'RatingService', () =>
             stub_rate_delta[ "rdelta.ratedata" ].timestamp = timestamp;
             saved_quote                                    = true;
 
-            expect( push_data ).to.deep.equal( stub_rate_delta );
+            if( saveQuote_call_count === 0 )
+            {
+                expect( push_data ).to.equal( undefined );
+            }
+            else
+            {
+                expect( push_data ).to.deep.equal( stub_rate_delta );
+            }
+
+            saveQuote_call_count++;
             success( quote );
 
             return dao;
@@ -312,7 +334,11 @@ describe( 'RatingService', () =>
         const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
 
         return sut.request( session, quote, "" )
-            .then( () => { expect( saved_quote ).to.be.true; } );
+            .then( () =>
+            {
+                expect( saved_quote ).to.be.true;
+                expect( saveQuote_call_count ).to.equal( 2 );
+            } );
     } );
 
 
@@ -483,7 +509,7 @@ describe( 'RatingService', () =>
                 'supplier-d__retry': [ 1 ],
             },
             2,
-            [ 2 ],
+            [ 0 ],
             false,
             undefined,
             0,
@@ -768,7 +794,7 @@ function getStubs()
             return this;
         }
 
-        updateQuoteInfo(
+        syncRatingState(
             quote: ServerSideQuote
         ): Promise<ServerSideQuote>
         {
@@ -816,6 +842,7 @@ function getStubs()
         getRatedDate:          () => <UnixTimestamp>0,
         getLastPremiumDate:    () => <UnixTimestamp>0,
         getCurrentStepId:      () => 0,
+        setCurrentStepId:      () => quote,
         setExplicitLock:       () => quote,
         setRateBucket:         () => quote,
         setRatingData:         () => quote,
@@ -830,6 +857,7 @@ function getStubs()
         isBound:               () => true,
         getTopVisitedStepId:   () => <PositiveInteger>1,
         getTopSavedStepId:     () => <PositiveInteger>1,
+        setTopSavedStepId:     () => quote,
         setRetryAttempts:      () => quote,
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,

@@ -509,13 +509,20 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
 
     /**
-     * Updates the quote retry attempts and intial rated date
+     * Synchronize the quote data needed for rating
      *
-     * @param quote - the quote to update
+     * The provides the ability for quotes to refresh data that may have been
+     * changed since instantiation.
      *
-     * @returns a promise with an updated quote
+     * retryAttempts, initialRatedDate, and currentStepId are needed for rating
+     * calculations and topSavedStepId is included so that it is not overwritten
+     * when setCurrentStepId invokes saveQuoteState
+     *
+     * @param quote - the quote to sync
+     *
+     * @returns a promise with an synchronized quote
      */
-    updateQuoteInfo( quote: ServerSideQuote ): Promise<ServerSideQuote>
+    syncRatingState( quote: ServerSideQuote ): Promise<ServerSideQuote>
     {
         return new Promise<ServerSideQuote>( resolve =>
         {
@@ -526,6 +533,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
                     fields: {
                         retryAttempts:    1,
                         initialRatedDate: 1,
+                        currentStepId:    1,
+                        topSavedStepId:   1,
                     }
                 },
                 ( _err, cursor ) =>
@@ -542,6 +551,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
                         quote.setRetryAttempts( +data[ 0 ].retryAttempts );
                         quote.setInitialRatedDate( +data[ 0 ].initialRatedDate );
+                        quote.setTopSavedStepId( +data[ 0 ].topSavedStepId ),
+                        quote.setCurrentStepId( +data[ 0 ].currentStepId );
 
                         resolve( quote );
                     } );

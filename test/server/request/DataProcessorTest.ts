@@ -685,6 +685,11 @@ function createStubQuote()
             return 1;
         },
 
+        setCurrentStepId( _step: number )
+        {
+            return this;
+        },
+
         setExplicitLock( _reason: string, _step: number )
         {
             return this;
@@ -756,6 +761,11 @@ function createStubQuote()
         getTopVisitedStepId()
         {
             return <PositiveInteger>1;
+        },
+
+        setTopSavedStepId()
+        {
+            return this;
         },
 
         getTopSavedStepId()

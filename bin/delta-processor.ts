@@ -44,8 +44,7 @@ import { parse as avro_parse } from 'avro-js';
 import { hostname } from 'os';
 import * as PromClient from 'prom-client';
 
-
-require('dotenv-flow').config();
+require('dotenv-flow').config( { path: '..' } );
 
 const amqp_conf           = createAmqpConfig( process.env );
 const prom_conf           = createPrometheusConfig( process.env, hostname() );
