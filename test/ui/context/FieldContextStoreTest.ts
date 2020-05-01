@@ -250,6 +250,56 @@ describe( "FieldContextStore", () =>
 
         expect( given ).to.equal( "" );
     } );
+
+
+    it( "sets and returns the field options by index", () =>
+    {
+        const element_id = 'qlabel_foo_bar_long_name';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+
+        const options = [
+            { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
+            { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
+        ]
+        const index = <PositiveInteger>1;
+
+        const sut = new Sut(
+            element_id,
+            <ContextContent>content,
+            null,
+        );
+
+        sut.setOptionsByIndex( index, options );
+
+        const first_result = sut.getOptionsByIndex( index );
+
+        // call it again, and it should be an empty array
+        const second_result = sut.getOptionsByIndex( index );
+
+        expect( first_result ).to.equal( options );
+        expect( second_result ).to.deep.equal( [] );
+    } );
+
+
+    it( "returns empty array when field options not set", () =>
+    {
+        const element_id = 'qlabel_foo_bar_long_name';
+        const group_content = getGroupContent();
+        const content = group_content.querySelector( "#" + element_id );
+
+        const index = <PositiveInteger>1;
+
+        const sut = new Sut(
+            element_id,
+            <ContextContent>content,
+            null,
+        );
+
+        const given = sut.getOptionsByIndex( index );
+
+        expect( given ).to.deep.equal( [] );
+    } );
 } );
 
 
