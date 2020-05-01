@@ -661,9 +661,6 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
 
         if ( disable === false )
         {
-            // focus on the first element
-            content.find( 'input:first' ).focus();
-
             // show buttons
             this._getNavButtons( this.currentStep ).show();
             this.currentStep.hideAddRemove( false );
