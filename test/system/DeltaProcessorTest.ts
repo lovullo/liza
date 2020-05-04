@@ -431,6 +431,79 @@ describe( 'system.DeltaProcessor', () =>
                 .to.eventually.deep.equal( undefined )
                 .then( _ => expect( published ).to.deep.equal( expected ) );
         } ) );
+
+
+        ( <{
+            label:    string,
+            given:    any[],
+            expected: any
+        }[]>[
+        {
+            label: 'handles empty delta data',
+            given: [
+                {
+                    id:         111,
+                    lastUpdate: 123123123,
+                    data:       { foo: [ 'bar' ] },
+                    ratedata:   {},
+                    rdelta:     {
+                        data: [
+                            {
+                                data:            {},
+                                timestamp:       234,
+                                concluding_save: true,
+                            },
+                        ],
+                    },
+                },
+            ],
+            expected: [
+                {
+                    doc_id:   111,
+                    bucket:   { foo: [ 'bar' ] },
+                    ratedata: {},
+                    rdelta:   {
+                        concluding_save: true,
+                        data:            {},
+                        timestamp:       234,
+                        type:            "data",
+                    },
+                },
+            ],
+        },
+    ] ).forEach( ( { label, given, expected } ) => it( label, () =>
+    {
+        let   published: any = [];
+        const dao            = createMockDeltaDao();
+        const publisher      = createMockDeltaPublisher();
+        const emitter        = new EventEmitter();
+
+        dao.getUnprocessedDocuments = (): Promise<DeltaDocument[]> =>
+        {
+            return Promise.resolve( given );
+        }
+
+        publisher.publish = (
+            meta,
+            delta,
+            bucket,
+            ratedata,
+        ): Promise<void> =>
+        {
+            published.push( {
+                doc_id:   meta.id,
+                rdelta:   delta,
+                bucket:   bucket,
+                ratedata: ratedata,
+            } );
+
+            return Promise.resolve();
+        }
+
+        return expect( new Sut( dao, publisher, emitter ).process() )
+            .to.eventually.deep.equal( undefined )
+            .then( _ => expect( published ).to.deep.equal( expected ) );
+    } ) );
     } );
 
 

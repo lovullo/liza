@@ -1190,7 +1190,12 @@ module.exports = Class( 'Server' )
                         );
 
                     // Leave rdelta_data undefined if rdiff is an empty object
-                    if ( Object.keys( rdiff ).length > 0 )
+                    // but if there is a concluding save we still want to send
+                    // the delta
+                    if (
+                        concluding_save === 'true' ||
+                        Object.keys( rdiff ).length > 0
+                    )
                     {
                         rdelta_data = {
                             "rdelta.data": {
