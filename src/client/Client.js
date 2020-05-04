@@ -440,10 +440,7 @@ module.exports = Class( 'Client' )
             client._currentStepId = step_id;
 
             // scroll to the top of the page
-            $.scrollTo( 0 );
-
-            // ensure the scroll event was kicked off (FS#11036)
-            $( document ).scroll();
+            window.scrollTo(0, 0);
         } ).on( 'unload', function( event )
         {
             if ( !( client.ui.getCurrentStep() ) )
