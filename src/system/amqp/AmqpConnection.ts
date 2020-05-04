@@ -74,6 +74,8 @@ export class AmqpConnection
             {
                 this._channel = ch;
 
+                this._channel.on( 'close', () => this._reconnect() );
+
                 return this._channel.assertExchange(
                     this._conf.exchange,
                     'fanout',
@@ -93,12 +95,7 @@ export class AmqpConnection
     {
         if ( retry_count >= this._conf.retries )
         {
-            this._emitter.emit(
-                'error',
-                new Error( 'Could not re-establish AMQP connection.' )
-            );
-
-            return;
+            throw new Error( 'Could not re-establish AMQP connection.' );
         }
 
         this._emitter.emit( 'amqp-reconnect' );
