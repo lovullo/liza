@@ -38,4 +38,9 @@ export declare class ElementStyler
      * Retrieve default bucket value for an element
      */
     getDefault( name: string ): string;
+
+    /**
+     * Retrieve value for display/answer based on ref_id
+     */
+    styleAnswer( ref_id: string, name: string ): string;
 }
