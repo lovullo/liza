@@ -68,13 +68,15 @@ module.exports = Class( 'HttpRater' )
      * @param {UserSession} session      current session (performing rating)
      * @param {string}      host         hostname, if different from host addr
      * @param {string}      remote_path  endpoint path on server
+     * @param {string}      domain       hostname to pass in the request header.
      */
-    __construct: function( http_client, session, host, remote_path )
+    __construct: function( http_client, session, host, remote_path, domain )
     {
         this._client  = http_client;
         this._session = session;
         this._host    = ( host ) ? ''+host : this._client.host;
         this._path    = ''+remote_path;
+        this._domain  = ( domain ) ? (''+domain) : this._host;
     },
 
 
@@ -154,11 +156,14 @@ module.exports = Class( 'HttpRater' )
                 callback( Error( 'Rating timeout' ), null );
             }, ( _self._timeout * 1000 ) );
 
-        req = this._client.request( {
-                method: 'POST',
-                path:   path,
-                host:   this._host
-            } )
+        opts = {
+            method:  'POST',
+            path:    path,
+            host:    this._host,
+            headers: { 'host': this._domain },
+            setHost: false
+        };
+        req = this._client.request( opts )
             .on( 'response', function( response )
             {
                 var data = '';
