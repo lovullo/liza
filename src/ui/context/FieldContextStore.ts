@@ -63,14 +63,16 @@ export class FieldContextStore
     /**
      * Initialize FieldContextStore
      *
-     * @param _element_id field identifier
-     * @param _content    field content
-     * @param _sibling    sibling field content
+     * @param _element_id  field identifier
+     * @param _content     field content
+     * @param _sibling     sibling field content
+     * @param _is_internal if user is internal
      */
     constructor(
         private readonly _element_id: string,
         private readonly _content: ContextContent,
-        private readonly _sibling: NullableContextContent = null
+        private readonly _sibling: NullableContextContent = null,
+        private readonly _is_internal: boolean = false
     ) {
         this._setContentPosition();
     }
@@ -83,7 +85,7 @@ export class FieldContextStore
      */
     get content(): ContextContent
     {
-        return this._content;
+        return this._displayInternalFields( this._content );
     }
 
 
@@ -94,7 +96,12 @@ export class FieldContextStore
      */
     get siblingContent(): NullableContextContent
     {
-        return this._sibling;
+        if ( this._sibling !== null )
+        {
+            return this._displayInternalFields( this._sibling );
+        }
+
+        return null;
     }
 
 
@@ -109,7 +116,9 @@ export class FieldContextStore
     {
         const content_clone = <ContextContent>this._content.cloneNode( true );
 
-        return this._setElementIdIndexes( content_clone, index );
+        const content = this._setElementIdIndexes( content_clone, index );
+
+        return this._displayInternalFields( content );
     }
 
 
@@ -129,7 +138,9 @@ export class FieldContextStore
 
         const sibling_clone = <ContextContent>this._sibling.cloneNode( true );
 
-        return this._setElementIdIndexes( sibling_clone, index );
+        const content = this._setElementIdIndexes( sibling_clone, index );
+
+        return this._displayInternalFields( content );
     }
 
 
@@ -340,6 +351,37 @@ export class FieldContextStore
         }
 
         return this._is_subfield;
+    }
+
+
+    /**
+     * If the user is internal, display internal fields
+     *
+     * @param content - the content
+     *
+     * @returns modified content
+     */
+    private _displayInternalFields( content: ContextContent ): ContextContent
+    {
+        if ( this._is_internal === true )
+        {
+            if ( content.classList.contains( 'hidden' )
+                && content.classList.contains( 'i' ) )
+            {
+                content.classList.remove( 'hidden' );
+            }
+
+            // Iterate over child elements
+            const elements = content.querySelectorAll( '.hidden.i' );
+
+            for ( var i = 0; i < elements.length; i++ )
+            {
+                var element = elements[ i ];
+                element.classList.remove( 'hidden' );
+            }
+        }
+
+        return content;
     }
 
 
