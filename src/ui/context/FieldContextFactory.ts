@@ -89,11 +89,13 @@ export class FieldContextFactory
      * @param name - field name
      * @param content - field HTML content
      * @param sibling - field HTML sibling content
+     * @param is_internal - if user is internal
      */
     createStore(
         name: string,
         content: ContextContent,
-        sibling: NullableContextContent = null
+        sibling: NullableContextContent = null,
+        is_internal: boolean = false
     ): FieldContextStore
     {
         const element_id = this._field_id_prefix + name + '_0';
@@ -101,7 +103,8 @@ export class FieldContextFactory
         return new FieldContextStore(
             element_id,
             content,
-            sibling
+            sibling,
+            is_internal
         );
     }
 }

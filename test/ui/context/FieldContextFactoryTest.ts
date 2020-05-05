@@ -107,6 +107,8 @@ describe( "FieldContextFactory", () =>
     {
         const styler_factory = getFieldStylerFactory();
 
+        const is_internal = true;
+
         const sut = new Sut( document, styler_factory );
         const parent = document.createElement( "div" );
         parent.innerHTML =
@@ -123,7 +125,8 @@ describe( "FieldContextFactory", () =>
         const given = sut.createStore(
             'foo',
             <ContextContent>content,
-            <NullableContextContent>sibling
+            <NullableContextContent>sibling,
+            is_internal
         );
 
         expect( given ).to.be.instanceOf( FieldContextStore );

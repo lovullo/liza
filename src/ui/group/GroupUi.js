@@ -234,7 +234,7 @@ module.exports = Class( 'GroupUi' )
         const fields = this.group.getExclusiveFieldNames();
         const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
 
-        this.context.init( fields, cmatch_fields, this.content );
+        this.context.init( fields, cmatch_fields, this.content, this.group.isInternal() );
 
         if ( this.getDomPerfFlag() === true )
         {
