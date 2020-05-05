@@ -309,7 +309,8 @@ module.exports = Class( 'ClientDependencyFactory',
         step, styler, formatter, group_builder, data_get, callback
     )
     {
-        StepUiBuilder( styler, formatter, group_builder, data_get )
+        const feature_flag = new FeatureFlag();
+        StepUiBuilder( styler, formatter, group_builder, data_get, feature_flag )
             .setStep( step )
             .build( GeneralStepUi, callback );
     },

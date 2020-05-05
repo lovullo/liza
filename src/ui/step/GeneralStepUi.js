@@ -175,6 +175,11 @@ module.exports = Class( 'GeneralStepUi' )
 
     'private _forceAnswerUpdate': null,
 
+    /**
+     * Access feature flags for new UI features
+     * @type {FeatureFlag}
+     */
+    'private _feature_flag': null,
 
     /**
      * Initializes StepUi object
@@ -206,12 +211,14 @@ module.exports = Class( 'GeneralStepUi' )
         step,
         styler,
         formatter,
+        feature_flag,
         jquery
     )
     {
-        this.step        = step;
-        this.styler      = styler;
-        this._formatter  = formatter;
+        this.step          = step;
+        this.styler        = styler;
+        this._formatter    = formatter;
+        this._feature_flag = feature_flag;
 
         // TODO: transition code; remove default
         this._jquery = jquery || (
