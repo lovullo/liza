@@ -66,6 +66,18 @@ describe( "FieldStylerFactory", () =>
             qtypes: { 'baz': { type: 'checkbox', dim: <PositiveInteger>0 } },
             expected: CheckboxFieldStyler
         },
+        {
+            label: 'creates new CheckboxFieldStyler for radio with deprecated qtypes structure',
+            field_name: 'baz',
+            qtypes: { 'baz': 'radio' },
+            expected: CheckboxFieldStyler
+        },
+        {
+            label: 'creates new DefaultFieldStyler for currency with deprecated qtypes structure',
+            field_name: 'baz',
+            qtypes: { 'baz': 'currency' },
+            expected: DefaultFieldStyler
+        },
     ].forEach( ( {
              label,
              field_name,
