@@ -174,6 +174,7 @@ function createSut( content, field )
         getUserFieldNames: sinon.stub().returns( [ field ] ),
         getExclusiveFieldNames: sinon.stub().returns( [] ),
         getExclusiveCmatchFieldNames: sinon.stub().returns( [] ),
+        isInternal: sinon.stub().returns( false ),
     }
 
     // Mock jquery content object
