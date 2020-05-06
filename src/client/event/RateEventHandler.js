@@ -227,7 +227,7 @@ module.exports = Class( 'RateEventHandler' )
                 // that data is updated on the screen when it's re-rated (will
                 // be undefined if the step hasn't been loaded yet, in which
                 // case it doesn't need to be invalidated)
-                const step_id = quote.getCurrentStepId();
+                const step_id = dest_step_id || quote.getCurrentStepId();
                 var   stepui  = _self._client.getUi().getStep( step_id );
 
                 if ( stepui !== undefined )
