@@ -47,7 +47,7 @@ export class FieldStylerFactory
      */
     create( name: string, index: PositiveInteger ): FieldStyler
     {
-        const qtype = this._qtypes[ name ]?.type;
+        const qtype = this._qtypes[ name ]?.type || this._qtypes[ name ];
 
         switch ( qtype ) {
             case 'radio':
