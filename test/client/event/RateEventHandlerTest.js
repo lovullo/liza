@@ -298,6 +298,92 @@ describe( 'RateEventHandler', () =>
         } )
     } );
 
+
+    describe( "Determines step id", () =>
+    {
+        it( "if a step id is not passed in, get it from quote", done =>
+        {
+            const step_expected = 3;
+            let step_requested  = null;
+
+            const quote = {
+                getExplicitLockStep: () => 0,
+                setLastPremiumDate:  () => {},
+                setInitialRatedDate: () => {},
+                getCurrentStepId:    () => step_expected,
+                refreshData:         () => {},
+                isLocked:            () => {},
+                getId:               () => "111111"
+            };
+
+            const client = {
+                uiDialog: {
+                    showRatingInProgressDialog: () =>
+                    {
+                        return { close: () => {} }
+                    },
+                },
+                showRatingInProgressDialog: () => "Some Dialog",
+                getQuote: () => quote,
+                isSaving: () => false,
+                once:     ( _, __ ) => {},
+                getUi:    () =>
+                {
+                    return {
+                        getStep: ( id ) =>
+                        {
+                            step_requested = id;
+                            return { invalidate: () => {} }
+                        }
+                    }
+                },
+            };
+
+            const proxy = {
+                get: ( url, callback ) => callback(
+                    {
+                        content: {
+                            data:             "Some Data",
+                            initialRatedDate: 111,
+                            lastRatedDate:    222
+                        }
+                    },
+                    null
+                )
+            };
+
+            const sut = Sut( client, proxy );
+
+            const old_setTimeout = setTimeout;
+
+            setTimeout = ( callback, delay ) => {
+                callback.apply( this, arguments );
+            }
+
+            // this is necessary because if something breaks here, setTimeout
+            // will not be restored and will yield a false negative on other
+            // tests
+            try {
+                sut.handle(
+                    "",
+                    ( _, __ ) => {},
+                    {
+                        value: 0
+                    }
+                );
+            }
+            catch( e ) {}
+            finally
+            {
+                setTimeout = old_setTimeout;
+            }
+
+            expect( step_requested ).to.equal( 3 );
+            done();
+        } )
+    } );
+
+
     describe( "Handle Rating Event with locked quote", () =>
     {
         it( "calls #handle to do the rating with a locked quote", done =>
