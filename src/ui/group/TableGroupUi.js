@@ -288,7 +288,7 @@ module.exports = Class( 'TableGroupUi' )
     'private _applyStyle': function( row_id )
     {
         // style only the specified row
-        this.styler.apply( this._getTableRow( row_id ) );
+        this.styler.apply( this._getTableRow( row_id ), true );
 
         return this;
     },

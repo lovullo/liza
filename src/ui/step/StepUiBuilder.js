@@ -227,7 +227,7 @@ module.exports = Class( 'StepUiBuilder' )
 
         // we can style all the groups, since the elements that cannot be styled
         // (e.g. table groups) have been removed already
-        _self._elementStyler.apply( $groups );
+        _self._elementStyler.apply( $groups, false );
     },
 
 

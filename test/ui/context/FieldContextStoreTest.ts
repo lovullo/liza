@@ -81,46 +81,6 @@ describe( "FieldContextStore", () =>
     } );
 
 
-    it( "displays internal fields on cloned content if user is internal", () =>
-    {
-        const index = 45;
-        const element_id = 'qcontainer_internal_field';
-        const sibling_id = 'qlabel_internal_field';
-        const expected_content_clone = '<dd id="qcontainer_internal_field" class="i" data-index="45">' +
-                '<input type="text" class="i" id="foo_bar_45" data-index="45">' +
-            '</dd>';
-        const expected_sibling_clone = '<dt id="qlabel_internal_field" class="i" data-index="45">Test Ind</dt>';
-
-        const expected_content = '<dd id="qcontainer_internal_field" class="i">' +
-                '<input type="text" class="i" id="foo_bar_0">' +
-            '</dd>';
-        const expected_sibling = '<dt id="qlabel_internal_field" class="i">Test Ind</dt>';
-
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-        const sibling = group_content.querySelector( "#" + sibling_id );
-
-        const sut = new Sut(
-            'foo',
-            <ContextContent>content,
-            <ContextContent>sibling,
-            true,
-        );
-
-        const content_modified = <ContextContent>sut.getContentClone( <PositiveInteger>index );
-        const sibling_modified = <ContextContent>sut.getSiblingContentClone( <PositiveInteger>index );
-
-        expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content_clone );
-        expect( ( sibling_modified?.outerHTML as string ) ).to.equal( expected_sibling_clone );
-
-        const content_original = <ContextContent>sut.content;
-        const sibling_original = <ContextContent>sut.siblingContent;
-
-        expect( ( content_original?.outerHTML as string ) ).to.equal( expected_content );
-        expect( ( sibling_original?.outerHTML as string ) ).to.equal( expected_sibling );
-    } );
-
-
     it( "determines the position of the content", () =>
     {
         const element_id = 'qcontainer_checkbox_foo';
@@ -369,10 +329,6 @@ function getGroupContent()
         '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
         '<dd id="qcontainer_foo_bar_long_name">' +
             '<input type="text" id="foo_bar_0" >' +
-        '</dd>' +
-        '<dt id="qlabel_internal_field" class="hidden i">Test Ind</dt>' +
-        '<dd id="qcontainer_internal_field" class="hidden i">' +
-            '<input type="text" class="hidden i" id="foo_bar_0" >' +
         '</dd>' +
         '<dd id="qcontainer_subfield_single" class="foo widget">' +
             '<select id="q_subfield_single_type_0" class="foo widget">' +

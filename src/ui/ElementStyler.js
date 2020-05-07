@@ -286,30 +286,26 @@ module.exports = Class( 'ElementStyler',
 
 
     /**
-     * Applies the style to all DOM elements that are descendants of content
+     * Applies the style to all DOM elements that are descendants of $content
      *
-     * @param HTMLElement content parent element containing elements to style
+     * This method operates off of a very basic concept. It takes an array of
+     * data containing a jQuery selector and applies the associated attributes
+     * to the elements. These attributes are non-standard - that is, they are
+     * not valid HTML attributes. Dojo then parses out these attributes and
+     * generates the dijit HTML, replacing the existing element.
+     *
+     * @param jQuery $content parent element containing elements to style
      *
      * @return ElementStyler self to support method chaining
      */
-    apply: function( content )
+    apply: function( $content, parse )
     {
-        // Todo: Transitional step to remove jQuery
-        if ( content instanceof jQuery )
-        {
-            content = content[ 0 ];
-        }
+        parse = ( parse === undefined ) ? true : !!parse;
 
         // if we're internal, show internal questions
-        if ( this._showInternal && content !== null )
+        if ( this._showInternal )
         {
-            const elements = content.querySelectorAll( '.hidden.i' );
-
-            for ( var i = 0; i < elements.length; i++ )
-            {
-                var element = elements[ i ];
-                element.classList.remove( 'hidden' );
-            }
+            $content.find( '.hidden.i' ).removeClass( 'hidden' );
         }
 
         return this;

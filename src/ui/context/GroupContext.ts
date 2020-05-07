@@ -76,13 +76,11 @@ export class GroupContext
      * @param fields - exclusive field names of group
      * @param cmatch_fields - exclusive cmatch field names of group
      * @param content - group content
-     * @param is_internal if user is internal
      */
     init(
         fields: string[],
         cmatch_fields: string[],
-        content: ContextContent,
-        is_internal: boolean = false,
+        content: ContextContent
     ): void
     {
         const cmatch_fields_set = new Set( cmatch_fields );
@@ -103,7 +101,7 @@ export class GroupContext
 
                 // Create the FieldContextStore
                 let field_store = this._field_context_factory
-                    .createStore( field, field_content, sibling_content, is_internal );
+                    .createStore( field, field_content, sibling_content );
 
                 // Only non-subfields should store the position in GroupContext
                 if ( field_store.isSubField() === false )
