@@ -1104,17 +1104,19 @@ module.exports = Class( 'Client' )
             // run any visit hooks
             client._quote.visitData( function( bucket )
             {
-                client.program.visitStep(
-                    step_id,
-                    bucket,
-                    client._getVisitTriggerHandler()
-                );
-            } );
+                // Just let the server know we're visiting this step (we don't even
+                // care about a response). This will allow the server to save our
+                // current step even if it's cached client-side.
+                client.dataProxy.get( url, function()
+                {
+                    client.program.visitStep(
+                        step_id,
+                        bucket,
+                        client._getVisitTriggerHandler()
+                    );
+                } );
 
-            // Just let the server know we're visiting this step (we don't even
-            // care about a response). This will allow the server to save our
-            // current step even if it's cached client-side.
-            client.dataProxy.get( url );
+            } );
         } ).on( 'preRenderStep', function( step, $content )
         {
             client.elementStyler.setContext( $content );
