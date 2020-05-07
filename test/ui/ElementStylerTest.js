@@ -241,4 +241,31 @@ describe( 'ui.ElementStyler', () =>
         } );
     } );
 
+
+    it( "displays internal fields if user is internal", () =>
+    {
+        const content = document.createElement( "dl" );
+        content.innerHTML = '<dt id="qlabel_internal_field" class="hidden i">Test Ind</dt>' +
+                '<dd id="qcontainer_internal_field" class="hidden i">' +
+                '<input type="text" class="hidden i" id="foo_bar_0">' +
+            '</dd>';
+        const expected_content = '<dl><dt id="qlabel_internal_field" class="i">Test Ind</dt>' +
+                '<dd id="qcontainer_internal_field" class="i">' +
+                '<input type="text" class="i" id="foo_bar_0">' +
+            '</dd></dl>';
+
+        jQuery = sinon.stub();
+        jQuery.withArgs( 'body' ).returns( { context: {} } );
+
+        const sut = Sut( jQuery );
+
+        // set to internal
+        sut.showInternal();
+
+        sut.apply( content );
+
+        expect( content.outerHTML ).to.equal( expected_content );
+    } );
+
 } );
+

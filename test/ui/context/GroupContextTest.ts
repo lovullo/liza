@@ -35,6 +35,7 @@ describe( "GroupContext", () =>
     it( "init calls parser and creates a store for each field", () =>
     {
         const fields = [ 'foo', 'baz_subfield' ];
+        const is_internal = true;
 
         let stores = <ContextStores>{
             'foo': getFieldContextStoreStub( 0 ),
@@ -58,7 +59,8 @@ describe( "GroupContext", () =>
 
         const factory = <FieldContextFactory>{
             'create': ( _:any, __:any, ___:any, ____:any ) => {},
-            'createStore': ( field: any, __:any, ___:any ) => {
+            'createStore': ( field: any, __:any, ___:any, internal_flag: boolean ) => {
+                expect( internal_flag ).to.equal( is_internal );
                 return stores[ field ];
             }
         };
@@ -72,7 +74,7 @@ describe( "GroupContext", () =>
 
         const dummy_content = document.createElement( "dl" );
 
-        sut.init( fields, fields, dummy_content );
+        sut.init( fields, fields, dummy_content, is_internal );
 
         expect( parser_fields )
             .to.deep.equal( fields );
@@ -979,7 +981,7 @@ function getFieldContextFactory( stub: FieldContext )
         'create': ( _: any, __:any, ___:any, ____:any ) => {
             return stub;
         },
-        'createStore': ( _: any, __:any, ___:any ) => {
+        'createStore': ( _: any, __:any, ___:any, ____:any ) => {
             return getFieldContextStoreStub()
         }
     };
