@@ -156,6 +156,12 @@ module.exports = Class( 'GeneralStepUi' )
     'private _answerContext': {},
 
     /**
+     * Answer dataset for quick lookup
+     * @type {Object}
+     */
+    'private _answerDataSet': {},
+
+    /**
      * Hash of static answer indexes, if applicable
      * @type {Object}
      */
@@ -458,7 +464,7 @@ module.exports = Class( 'GeneralStepUi' )
                         continue;
                     }
 
-                    _self._updateAnswer( name, index, value );
+                    _self._setValueByName( name, index, value );
                 }
             } );
 
@@ -501,6 +507,45 @@ module.exports = Class( 'GeneralStepUi' )
     'virtual protected getAnswerContext': function( name )
     {
         return this._answerContext[ name ];
+    },
+
+
+    /**
+     * Retrieve data field name for answer
+     *
+     * @param {string} name field name
+     *
+     * @return {string|undefined} data-field-name from DataSet
+     */
+    'virtual protected getAnswerFieldName': function( name )
+    {
+        const dataset = this._answerDataSet[ name ];
+        return ( dataset !== undefined )
+            ? dataset.fieldName
+            : undefined;
+    },
+
+
+    /**
+     * Set the answer value
+     *
+     * @param {string} name
+     * @param {number} index
+     * @param {string} value
+     */
+    'private _setValueByName': function( name, index, value )
+    {
+        const field_name = this.getAnswerFieldName( name );
+        let group = this.getElementGroup( field_name );
+
+        if ( this._feature_flag.getDomPerfFlag() === true && !!group )
+        {
+            group.setValueByName( field_name, index, value, false );
+        }
+        else
+        {
+            this._updateAnswer( name, index, value );
+        }
     },
 
 
@@ -553,7 +598,7 @@ module.exports = Class( 'GeneralStepUi' )
                     continue;
                 }
 
-                this._updateAnswer( name, i, curdata[ index ] );
+                this._setValueByName( name, i, curdata[ index ] );
             }
         }
     },
@@ -585,7 +630,9 @@ module.exports = Class( 'GeneralStepUi' )
 
             // store the parent fieldset as our context to make DOM lookups a
             // bit more performant
-            _self._answerContext[ ref_id ] = $( this ).parents( 'fieldset' );
+            const fieldset = $( this ).parents( 'fieldset' );
+            _self._answerContext[ ref_id ] = fieldset;
+            _self._answerDataSet[ ref_id ] = fieldset.context.dataset;
             _self._answerStaticIndex[ ref_id ] = ( index )
                 ? +index
                 : NaN;
@@ -1022,7 +1069,7 @@ module.exports = Class( 'GeneralStepUi' )
      *
      * @return {GroupUi} group if known, otherwise null
      */
-    getElementGroup: function( name )
+    'virtual public getElementGroup': function( name )
     {
         return this._fieldGroup[ name ] || null;
     },
