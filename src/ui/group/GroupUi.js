@@ -891,7 +891,7 @@ module.exports = Class( 'GroupUi' )
      */
     'virtual protected postAddRow': function( $element, index )
     {
-        this.emit( this.__self.$('EVENT_POST_ADD_ROW'), $element, index );
+        this.emit( this.__self.$('EVENT_POST_ADD_ROW'), index );
 
         return this;
     },
