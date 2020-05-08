@@ -26,6 +26,29 @@
   */
 export class FeatureFlag
 {
+    private static instance: FeatureFlag;
+
+
+    /**
+     * Initialize FeatureFlag
+     */
+    private constructor() {}
+
+
+    /**
+     * Get instance of FeatureFlag
+     */
+    public static getInstance(): FeatureFlag
+    {
+      if ( !FeatureFlag.instance )
+      {
+        FeatureFlag.instance = new FeatureFlag();
+      }
+
+      return FeatureFlag.instance;
+    }
+
+
     /**
      * Toggle new DOM performance features which include
      * use of GroupContext to attach/detach elements from the DOM
