@@ -44,6 +44,7 @@ var Step          = require( '../step/Step' ),
     StackedGroupUi       = require( '../ui/group/StackedGroupUi' ),
     SideTableGroupUi     = require( '../ui/group/SideTableGroupUi' ),
     CollapseTableGroupUi = require( '../ui/group/CollapseTableGroupUi' ),
+    GridGroupUi          = require( '../ui/group/GridGroupUi' ),
 
     Ui           = require( '../ui/Ui' ),
     UiStyler     = require( '../ui/UiStyler' ),
@@ -353,6 +354,10 @@ module.exports = Class( 'ClientDependencyFactory',
         else if ( content.classList.contains( 'accordion' ) )
         {
             obj = AccordionGroupUi;
+        }
+        else if ( content.classList.contains( 'grid' ) )
+        {
+            obj = GridGroupUi;
         }
 
         const context = this.createGroupContext( qtypes, arefs, styler );
