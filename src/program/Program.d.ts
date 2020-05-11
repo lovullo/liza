@@ -28,6 +28,7 @@ export type DataApiDefinitions = any;
 export type ClassificationResult = { [ index: string ]: any };
 export type ClassificationRetain = Record<string, any>;
 export type QuestionTypes = Record<string, any>;
+export type AnswerRefs = Record<string, string>;
 
 export declare abstract class Program
 {
@@ -41,7 +42,7 @@ export declare abstract class Program
 
 
     meta: {
-        arefs:  Record<string, string>,
+        arefs:  AnswerRefs,
         fields: Record<string, any>,
         groups: Record<string, { min: PositiveInteger, max: PositiveInteger }>,
         qdata:  Record<string, Record<string, string>>,

@@ -309,7 +309,8 @@ module.exports = Class( 'ClientDependencyFactory',
         step, styler, formatter, group_builder, data_get, callback
     )
     {
-        StepUiBuilder( styler, formatter, group_builder, data_get )
+        const feature_flag = FeatureFlag.getInstance();
+        StepUiBuilder( styler, formatter, group_builder, data_get, feature_flag )
             .setStep( step )
             .build( GeneralStepUi, callback );
     },
@@ -319,7 +320,7 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createGroupUi: function (
-        group, content, styler, root_context, na_styler, qtypes
+        group, content, styler, root_context, na_styler, qtypes, arefs
     )
     {
         // default
@@ -354,8 +355,8 @@ module.exports = Class( 'ClientDependencyFactory',
             obj = AccordionGroupUi;
         }
 
-        const context = this.createGroupContext( qtypes );
-        const feature_flag = new FeatureFlag();
+        const context = this.createGroupContext( qtypes, arefs, styler );
+        const feature_flag = FeatureFlag.getInstance();
         return obj(
             group, content, styler, jQuery, context, root_context, na_styler, feature_flag
         );
@@ -367,11 +368,14 @@ module.exports = Class( 'ClientDependencyFactory',
         return NaFieldStyler();
     },
 
-    createGroupContext: function( qtypes )
+    createGroupContext: function( qtypes, arefs, styler )
     {
         return new GroupContext(
             new ContextParser(),
-            new FieldContextFactory( this._document, new FieldStylerFactory( qtypes ) )
+            new FieldContextFactory(
+                this._document,
+                new FieldStylerFactory( qtypes, arefs, styler )
+            )
         );
     },
 

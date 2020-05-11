@@ -36,7 +36,7 @@ describe( "FeatureFlag", () =>
     it( "getDomPerfFlag is true when global is set", () =>
     {
         (<any>window).dom_perf_flag = true;
-        const sut = new Sut();
+        const sut = Sut.getInstance();
         expect( sut.getDomPerfFlag() ).to.be.true;
         (<any>window).dom_perf_flag = undefined;
     } );
@@ -44,7 +44,7 @@ describe( "FeatureFlag", () =>
 
     it( "getDomPerfFlag is false when global is not defined", () =>
     {
-        const sut = new Sut();
+        const sut = Sut.getInstance();
         expect( sut.getDomPerfFlag() ).to.be.false;
     } );
 
@@ -52,7 +52,7 @@ describe( "FeatureFlag", () =>
     it( "getDomPerfFlag is false when global is false", () =>
     {
         (<any>window).dom_perf_flag = false;
-        const sut = new Sut();
+        const sut = Sut.getInstance();
         expect( sut.getDomPerfFlag() ).to.be.false;
         (<any>window).dom_perf_flag = undefined;
     } );

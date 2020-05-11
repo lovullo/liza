@@ -23,6 +23,8 @@ import { FieldStylerFactory as Sut } from "../../../../src/ui/context/styler/Fie
 import { PositiveInteger } from "../../../../src/numeric";
 import { DefaultFieldStyler}  from "../../../../src/ui/context/styler/DefaultFieldStyler";
 import { CheckboxFieldStyler } from "../../../../src/ui/context/styler/CheckboxFieldStyler";
+import { DisplayFieldStyler } from "../../../../src/ui/context/styler/DisplayFieldStyler";
+import { ElementStyler } from "../../../../src/ui/ElementStyler";
 
 import { expect } from 'chai';
 
@@ -86,12 +88,26 @@ describe( "FieldStylerFactory", () =>
         } ) => {
         it ( label, () =>
         {
-            const sut = new Sut( qtypes );
+            const styler = <ElementStyler>{};
+            const arefs = { 'foo' : 'bar', 'qux': 'boo' };
+
+            const sut = new Sut( qtypes, arefs, styler );
 
             const given = sut.create( field_name, <PositiveInteger>0 );
 
             expect( given ).to.be.instanceOf( expected );
         } );
+    } );
+
+
+    it ( 'creates new DisplayFieldStyler for display/answer type', () =>
+    {
+        const styler = <ElementStyler>{};
+        const qtype = {};
+        const aref = { 'baz' : 'bar' };
+        const sut = new Sut( qtype, aref, styler );
+        const given = sut.create( 'baz', <PositiveInteger>0 );
+        expect( given ).to.be.instanceOf( DisplayFieldStyler );
     } );
 
 } );

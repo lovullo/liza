@@ -440,7 +440,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         this._processUnavailable( isDisabled, isPending );
 
-        this.__super.call( this, arguments );
+        this.__super.call( this, name, index, value, change_event );
         return this;
     },
 

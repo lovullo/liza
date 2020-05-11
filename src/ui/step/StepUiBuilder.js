@@ -69,13 +69,15 @@ module.exports = Class( 'StepUiBuilder' )
         element_styler,
         formatter,
         groupBuilder,
-        dataGet
+        dataGet,
+        feature_flag
     )
     {
         this._elementStyler = element_styler;
         this._formatter     = formatter;
         this._groupBuilder  = groupBuilder;
         this._dataGet       = dataGet;
+        this._feature_flag  = feature_flag;
     },
 
 
@@ -106,7 +108,8 @@ module.exports = Class( 'StepUiBuilder' )
         var ui = StepUi(
             this._step,
             this._elementStyler,
-            this._formatter
+            this._formatter,
+            this._feature_flag
         );
 
         // retrieve and process the step data (this kick-starts the entire

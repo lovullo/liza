@@ -58,6 +58,56 @@ describe( 'ui.GeneralStepUi', function()
                 done();
             } ) ).answerDataUpdate( orig_data );
         } );
+
+        it( 'group will style answers when feature flag is on', function( done )
+        {
+            const data = { foo: [ 'bar' ] };
+            const formatter = createFormatter( data, data );
+            const feature_flag = createFeatureFlag( true );
+            const group = createGroupUi();
+
+            let group_set_value_calls = 0;
+            let answer_field_name_calls = 0;
+            let async_flag = false;
+            const field_name = 'foo_d1022e47903';
+
+            const styler = createElementStyler( function(){} );
+            styler.styleAnswer = ( name ) => {
+                done( new Error( 'ElementStyler should not be called with feature flag on' ) );
+            };
+
+            group.setValueByName = ( name, index, value, change_event ) =>
+            {
+                group_set_value_calls++;
+
+                if ( async_flag )
+                {
+                    // value is set w/answer ref
+                    expect( name ).to.equal( field_name );
+                    expect( value ).to.equal( 'bar' );
+                    expect( index ).to.equal( 0 );
+                    expect( group_set_value_calls ).to.equal( 1 );
+                    expect( answer_field_name_calls ).to.equal( 1 );
+                    done();
+                }
+            }
+
+            const sut = createSut( formatter, styler, {}, group, feature_flag );
+            sut.getAnswerFieldName = ( name ) =>
+            {
+                answer_field_name_calls++;
+                return field_name;
+            };
+
+            sut.getElementGroup = ( name ) =>
+            {
+                expect( name ).to.equal( field_name );
+                return group;
+            };
+
+            sut.answerDataUpdate( data );
+            async_flag = true;
+        } );
     } );
 
 
@@ -286,14 +336,17 @@ describe( 'ui.GeneralStepUi', function()
  * Create new SUT with formatter FORMATTER and generated element
  * styler
  *
- * @param {Object} formatter validator/formatter mock
- * @param {Object} styler    mock ElementStyler
- * @param {Object} step      mock step
+ * @param {Object} formatter    validator/formatter mock
+ * @param {Object} styler       mock ElementStyler
+ * @param {Object} step         mock step
+ * @param {Object} group        mocked Group Ui
+ * @param {Object} feature_flag mocked feature flag
  *
  * @return {Sut}
  */
-function createSut( formatter, styler, step )
+function createSut( formatter, styler, step, group, feature_flag )
 {
+
     return Sut.extend(
     {
         // visibility escalation
@@ -306,11 +359,43 @@ function createSut( formatter, styler, step )
         {
             return {};
         },
+
+        'override getAnswerFieldName': function( name ){},
+        'override getElementGroup': function( name ){},
     } )(
         step || {},
         styler,
-        formatter
+        formatter,
+        feature_flag || createFeatureFlag()
     );
+}
+
+
+/**
+ * Create mock FeatureFlag
+ *
+ * @param {boolean} flag_ind
+ *
+ * @return {Object} FeatureFlag
+ */
+function createFeatureFlag( flag_ind = false )
+{
+    return {
+        getDomPerfFlag: () => { return !!flag_ind; }
+    };
+}
+
+
+/**
+ * Create mock GroupUi
+ *
+ * @return {Object} GroupUi
+ */
+function createGroupUi()
+{
+    return {
+        setValueByName: ( name, index, value, change_event ) => {}
+    };
 }
 
 
@@ -364,8 +449,9 @@ function createElementStyler( style_callback )
 function createFormatter( expected, return_data )
 {
     return {
-        format: function()
+        format: function( expected )
         {
+            return return_data;
         },
     }
 }
