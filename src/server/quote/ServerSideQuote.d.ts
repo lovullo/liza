@@ -133,4 +133,11 @@ export declare class ServerSideQuote extends BaseQuote
      * @param time initial rated date as a Unix timestamp
      */
     setInitialRatedDate( time: number ): this;
+
+    /**
+     * Returns the quote's expiration date
+     *
+     * @return quote's expiration date
+     */
+    getExpirationDate(): number;
 }

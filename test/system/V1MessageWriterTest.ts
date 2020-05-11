@@ -378,6 +378,7 @@ describe( 'system.V1MessageWriter', () =>
         const entity_id       = 123;
         const startDate       = <UnixTimestamp>345;
         const lastUpdate      = <UnixTimestamp>456;
+        const expDate         = <UnixTimestamp>789;
         const schema          = createMockAvroSchema();
         const ts              = <UnixTimestamp>123;
         const encoder         = createMockEncoderCtor( schema );
@@ -388,6 +389,7 @@ describe( 'system.V1MessageWriter', () =>
             entity_id:   entity_id,
             startDate:   startDate,
             lastUpdate:  lastUpdate,
+            expDate:     expDate,
         };
 
         const delta = <Delta<any>>{
@@ -417,6 +419,9 @@ describe( 'system.V1MessageWriter', () =>
                 },
                 modified: {
                     'long': lastUpdate * 1000
+                },
+                expires: {
+                    'long': expDate
                 },
             },
             session: {
