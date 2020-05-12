@@ -864,7 +864,6 @@ function getStubs()
         setMetadata:           () => quote,
         getRetryCount:         () => 0,
         setInitialRatedDate:   () => quote,
-        getExpirationDate:     () => 123,
     };
 
     const ts_ctor = () => { return <UnixTimestamp>2592001 };

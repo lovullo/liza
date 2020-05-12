@@ -520,7 +520,6 @@ describe( 'system.DeltaProcessor', () =>
             const entity_id      = 4321;
             const lastUpdate     = <UnixTimestamp>123123123;
             const createdData    = <UnixTimestamp>234234234;
-            const exp_date       = <UnixTimestamp>123;
             const doc            = <DeltaDocument[]>[ {
                 id:            <DocumentId>123,
                 programId:     'mega',
@@ -528,7 +527,6 @@ describe( 'system.DeltaProcessor', () =>
                 agentEntityId: entity_id,
                 startDate:     createdData,
                 lastUpdate:    lastUpdate,
-                quoteExpDate:  exp_date,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -550,7 +548,6 @@ describe( 'system.DeltaProcessor', () =>
                 agentEntityId: entity_id,
                 startDate:     createdData,
                 lastUpdate:    <UnixTimestamp>123123123,
-                quoteExpDate:  exp_date,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -570,7 +567,6 @@ describe( 'system.DeltaProcessor', () =>
                     meta: {
                         entity_id:   4321,
                         entity_name: 'Some Agency',
-                        expDate:     123,
                         id:          123,
                         program:     'mega',
                         lastUpdate:  123123123,
@@ -584,7 +580,6 @@ describe( 'system.DeltaProcessor', () =>
                     meta: {
                         entity_id:   4321,
                         entity_name: 'Some Agency',
-                        expDate:     123,
                         id:          234,
                         program:     'mega',
                         lastUpdate:  123123123,
@@ -657,7 +652,6 @@ describe( 'system.DeltaProcessor', () =>
                 agentEntityId: 4321,
                 startDate:     <UnixTimestamp>234234234,
                 lastUpdate:    <UnixTimestamp>123123123,
-                quoteExpDate:  <UnixTimestamp>123123123,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -699,7 +693,6 @@ describe( 'system.DeltaProcessor', () =>
                 meta: {
                     entity_id:   4321,
                     entity_name: 'Some Agency',
-                    expDate:     123123123,
                     id:          123,
                     program:     'mega',
                     lastUpdate:  123123123,

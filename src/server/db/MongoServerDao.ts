@@ -324,7 +324,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.importedInd        = +quote.isImported();
         save_data.boundInd           = +quote.isBound();
         save_data.lastUpdate         = this._ts_ctor();
-        save_data.quoteExpDate       = quote.getExpirationDate();
 
         // meta will eventually take over for much of the above data
         meta.liza_timestamp_initial_rated = [ quote.getRatedDate() ];

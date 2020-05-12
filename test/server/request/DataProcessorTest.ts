@@ -802,11 +802,6 @@ function createStubQuote()
         {
             return this;
         },
-
-        getExpirationDate()
-        {
-            return 123;
-        },
     };
 }
 

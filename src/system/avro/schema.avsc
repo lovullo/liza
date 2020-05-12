@@ -85,12 +85,6 @@
                         "type":         ["null", "long"],
                         "logicalType":  "timestamp-millis",
                         "default":      null
-                    },
-                    {
-                        "name":         "expires",
-                        "type":         ["null", "long"],
-                        "logicalType":  "timestamp-millis",
-                        "default":      null
                     }
                 ]
             }

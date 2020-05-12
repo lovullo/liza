@@ -103,7 +103,6 @@ export class V1MessageWriter implements MessageWriter
         const event_id           = this.DELTA_MAP[ delta.type ];
         const start_date_ms      = { "long": meta.startDate * 1000 };
         const last_update_ms     = { "long": meta.lastUpdate * 1000 };
-        const exp_date_ms        = { "long": meta.expDate };
         const ts_ms              = ts * 1000;
 
 
@@ -131,7 +130,6 @@ export class V1MessageWriter implements MessageWriter
                 id:       meta.id,
                 created:  start_date_ms,
                 modified: last_update_ms,
-                expires:  exp_date_ms,
             },
             session: {
                 Session: {
