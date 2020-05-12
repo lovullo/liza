@@ -114,6 +114,7 @@ export class DeltaProcessor
             entity_id:   +doc.agentEntityId,
             startDate:   doc.startDate,
             lastUpdate:  doc.lastUpdate,
+            expDate:     doc.quoteExpDate,
         };
 
         const history = this._applyDeltas( deltas, bucket, ratedata );

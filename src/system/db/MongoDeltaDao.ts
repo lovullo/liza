@@ -45,6 +45,7 @@ export class MongoDeltaDao implements DeltaDao
         agentEntityId:     1,
         startDate:         1,
         lastUpdate:        1,
+        quoteExpDate:      1,
         data:              1,
         ratedata:          1,
         rdelta:            1,

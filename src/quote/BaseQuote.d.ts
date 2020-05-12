@@ -166,4 +166,11 @@ export declare class BaseQuote implements Quote
      * @param top saved step id
      */
     setTopSavedStepId( id: number ): this;
+
+    /**
+     * Returns the quote's expiration date
+     *
+     * @return quote's expiration date
+     */
+    getExpirationDate(): number;
 }
