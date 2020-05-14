@@ -324,7 +324,7 @@ module.exports = Class( 'CollapseTableGroupUi' )
             index = this.getCurrentIndex();
 
         // properly name the elements to prevent id conflicts
-        this.setElementIdIndexes( unit.getElementsByTagName( '*' ), index );
+        this.setElementIdIndexes( $unit.find( '*' ).toArray(), index );
 
         // Set field content parent for this index
         this.fieldContentParent[ index ] = unit;
