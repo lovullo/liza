@@ -58,6 +58,9 @@ const {
         encsvc: {
             QuoteDataBucketCipher,
         },
+        quote: {
+            ServerSideQuote: Quote,
+        },
     },
 
     util: {
@@ -1210,7 +1213,8 @@ module.exports = Class( 'Server' )
                         quote,
                         dapis,
                         meta_clear,
-                        request.getSession()
+                        request,
+                        program
                     );
                }
                 catch ( err )
@@ -1239,27 +1243,48 @@ module.exports = Class( 'Server' )
     },
 
 
-    'private _monitorMetadataPromise'( quote, dapis, meta_clear, session )
+    'private _monitorMetadataPromise'( quote, dapis, meta_clear, request, program )
     {
         quote.getMetabucket().setValues( meta_clear );
 
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
             {
-                this.dao.saveQuoteMeta(
-                    quote,
-                    data,
-                    null,
-                    e => { throw e; }
-                );
+                return new Promise( ( resolve, reject ) =>
+                {
+                    this.dao.saveQuoteMeta(
+                        quote,
+                        data,
+                        saved_quote =>
+                        {
+                            // Reinitialize the quote so that underlying data
+                            // changes are not affecting all returning DAPI
+                            // quotes
+                            const new_quote = Quote(
+                                quote.getId(),
+                                QuoteDataBucket()
+                            );
 
-                return quote.setMetadata( data );
+                            new_quote.setMetabucket( QuoteDataBucket() );
+                            new_quote.setRateBucket( QuoteDataBucket() );
+
+                            this.initQuote(
+                                new_quote,
+                                program,
+                                request,
+                                () =>
+                                {
+                                    new_quote.setMetadata( data );
+                                    resolve( new_quote )
+                                },
+                                e => reject( e )
+                            );
+                        },
+                        e => reject( e )
+                    );
+                } )
             } )
             .then( quote => this.dao.ensurePriorRate( quote ) )
-            // We will need to lookup the rate retries directly from the
-            // dao because the dapi promises have an old version of the
-            // quote without the updated count
-            .then( quote => this.dao.syncRatingState( quote ) )
             .then( quote =>
             {
                 rating_service = new RatingService(
@@ -1270,7 +1295,7 @@ module.exports = Class( 'Server' )
                     this._ts_ctor
                 );
 
-                rating_service.request( session, quote, '', true );
+                rating_service.request( request.getSession(), quote, '', true );
             } )
             .catch( e =>
             {
