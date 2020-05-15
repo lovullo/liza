@@ -180,6 +180,10 @@ describe( "ContextParser", () =>
             expected_sibling: '<dt id="qlabel_checkbox_foo">Foo</dt>'
         },
         {
+            element_id: 'static_bar',
+            expected_sibling: undefined
+        },
+        {
             element_id: 'qcontainer_foo_bar_long_name',
             expected_sibling: '<dt id="qlabel_foo_bar_long_name">Foo</dt>'
         },
@@ -237,6 +241,9 @@ function getContentToParse()
         '<dd id="answer_foo_bar_value">' +
             '<span id="answer_baz" data-field-name="answer_foo_bar">None</span>' +
         '</dd>' +
+        '<dt id="static_foo">Static element foo</dt>' +
+        '<dt id="static_bar">Static element bar</dt>' +
+        '<dt id="static_baz">Static element baz</dt>' +
         '<dt id="qlabel_subfield" >Foo</dt>' +
         '<dd id="qcontainer_subfield">' +
             '<select id="q_subfield_0">' +
