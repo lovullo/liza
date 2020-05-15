@@ -156,10 +156,10 @@ module.exports = Class( 'GeneralStepUi' )
     'private _answerContext': {},
 
     /**
-     * Answer dataset for quick lookup
+     * Answer field references for quick lookup
      * @type {Object}
      */
-    'private _answerDataSet': {},
+    'private _answerFieldRefs': {},
 
     /**
      * Hash of static answer indexes, if applicable
@@ -511,18 +511,15 @@ module.exports = Class( 'GeneralStepUi' )
 
 
     /**
-     * Retrieve data field name for answer
+     * Retrieve field references for answers
      *
      * @param {string} name field name
      *
-     * @return {string|undefined} data-field-name from DataSet
+     * @return {array} data-field-name references from DataSet
      */
-    'virtual protected getAnswerFieldName': function( name )
+    'virtual protected getAnswerFieldRefs': function( name )
     {
-        const dataset = this._answerDataSet[ name ];
-        return ( dataset !== undefined )
-            ? dataset.fieldName
-            : undefined;
+        return this._answerFieldRefs[ name ] || [];
     },
 
 
@@ -535,17 +532,26 @@ module.exports = Class( 'GeneralStepUi' )
      */
     'private _setValueByName': function( name, index, value )
     {
-        const field_name = this.getAnswerFieldName( name );
-        let group = this.getElementGroup( field_name );
+        const field_names = this.getAnswerFieldRefs( name );
+        const _self = this;
 
-        if ( this._feature_flag.getDomPerfFlag() === true && !!group )
-        {
-            group.setValueByName( field_name, index, value, false );
-        }
-        else
+        if ( this._feature_flag.getDomPerfFlag() === false )
         {
             this._updateAnswer( name, index, value );
+            return;
         }
+
+        // set the value for each answer/display referenced for this field
+        field_names.forEach(
+            function( field_name )
+            {
+                // fall back to element styler when group is unknown
+                let group = _self.getElementGroup( field_name );
+                ( !!group )
+                    ? group.setValueByName( field_name, index, value, false )
+                    : _self._updateAnswer( name, index, value );
+            }
+        );
     },
 
 
@@ -625,6 +631,10 @@ module.exports = Class( 'GeneralStepUi' )
             if ( _self.getAnswerContext( ref_id ) )
             {
                 _self._answerContext[ ref_id ] = _self.$content;
+                if ( !!$this.context.dataset.fieldName )
+                {
+                    _self._answerFieldRefs[ ref_id ].push( $this.context.dataset.fieldName );
+                }
                 return;
             }
 
@@ -632,7 +642,12 @@ module.exports = Class( 'GeneralStepUi' )
             // bit more performant
             const fieldset = $( this ).parents( 'fieldset' );
             _self._answerContext[ ref_id ] = fieldset;
-            _self._answerDataSet[ ref_id ] = fieldset.context.dataset;
+
+            if ( !!fieldset.context.dataset.fieldName )
+            {
+                _self._answerFieldRefs[ ref_id ] = [ fieldset.context.dataset.fieldName ];
+            }
+
             _self._answerStaticIndex[ ref_id ] = ( index )
                 ? +index
                 : NaN;
