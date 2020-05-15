@@ -558,7 +558,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var _self = this;
 
         return this._finalizeContent( index,
-            $( this._tabItem.cloneNode( true ) )
+            this.jquery( this._tabItem.cloneNode( true ) )
                 .click( function()
                 {
                     _self._selectTab( index );
@@ -586,7 +586,7 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
             this.context.addIndex( index, this.fieldContentParent[ index ] );
         }
 
-        return this._finalizeContent( index, $( item ) );
+        return this._finalizeContent( index, this.jquery( item ) );
     },
 
 
@@ -696,12 +696,16 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
     'private _getLastEligibleTab': function()
     {
-        var active_tabs = this._tabList.querySelectorAll( 'li:not(.disabled)' );
-        var i           = ( active_tabs.length - 1 );
+        var tab_count = this._getTabCount();
+        var tab_index   = -1;
 
-        return ( i === -1 )
-            ? 0
-            : i;
+        for ( let i = 0; i < tab_count; i++ ) {
+            if ( this._isEligibleTab( i )) {
+                tab_index = i;
+            }
+        }
+
+        return Math.max( 0, tab_index );
     },
 
 
