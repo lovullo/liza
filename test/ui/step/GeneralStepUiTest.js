@@ -59,54 +59,89 @@ describe( 'ui.GeneralStepUi', function()
             } ) ).answerDataUpdate( orig_data );
         } );
 
-        it( 'group will style answers when feature flag is on', function( done )
-        {
-            const data = { foo: [ 'bar' ] };
-            const formatter = createFormatter( data, data );
-            const feature_flag = createFeatureFlag( true );
-            const group = createGroupUi();
 
-            let group_set_value_calls = 0;
-            let answer_field_name_calls = 0;
-            let async_flag = false;
-            const field_name = 'foo_d1022e47903';
-
-            const styler = createElementStyler( function(){} );
-            styler.styleAnswer = ( name ) => {
-                done( new Error( 'ElementStyler should not be called with feature flag on' ) );
-            };
-
-            group.setValueByName = ( name, index, value, change_event ) =>
+        [
             {
-                group_set_value_calls++;
+                label: 'group will style answer when feature flag is on',
+                field_refs: [ 'foo_d1022e47903' ],
+                data: { foo: [ 'bar' ] },
+                expected_names: [ 'foo_d1022e47903' ],
+                expected_indexes: [ 0 ],
+                expected_values: [ 'bar' ],
+                expected_calls: 1
+            },
+            {
+                label: 'group will style multiple answers when feature flag is on',
+                field_refs: [ 'foo_d1022e47903', 'foo_d222222222' ],
+                data: { foo: [ 'bar' ] },
+                expected_names: [ 'foo_d1022e47903', 'foo_d222222222' ],
+                expected_indexes: [ 0, 0 ],
+                expected_values: [ 'bar', 'bar' ],
+                expected_calls: 2
+            },
+        ].forEach( ( {
+            label,
+            field_refs,
+            data,
+            expected_names,
+            expected_indexes,
+            expected_values,
+            expected_calls }
+        ) => {
+            it( label, function( done )
+            {
+                const formatter = createFormatter( data, data );
+                const feature_flag = createFeatureFlag( true );
+                const group = createGroupUi();
 
-                if ( async_flag )
+                let group_set_value_calls = 0;
+                let given_values = [];
+                let given_names = [];
+                let given_indexes = [];
+                let answer_field_ref_calls = 0;
+                let async_flag = false;
+
+                const styler = createElementStyler( function(){} );
+                styler.styleAnswer = ( name ) => {
+                    done( new Error( 'ElementStyler should not be called with feature flag on' ) );
+                };
+
+                group.setValueByName = ( name, index, value, change_event ) =>
                 {
-                    // value is set w/answer ref
-                    expect( name ).to.equal( field_name );
-                    expect( value ).to.equal( 'bar' );
-                    expect( index ).to.equal( 0 );
-                    expect( group_set_value_calls ).to.equal( 1 );
-                    expect( answer_field_name_calls ).to.equal( 1 );
-                    done();
+                    group_set_value_calls++;
+                    given_values.push( value );
+                    given_names.push( name );
+                    given_indexes.push( index );
+
+                    if ( async_flag && group_set_value_calls === expected_calls )
+                    {
+                        // value is set w/answer ref
+                        expect( given_names ).to.deep.equal( expected_names );
+                        expect( given_indexes ).to.deep.equal( expected_indexes );
+                        expect( given_values ).to.deep.equal( expected_values );
+                        expect( answer_field_ref_calls ).to.equal( 1 );
+                        done();
+                    }
                 }
-            }
 
-            const sut = createSut( formatter, styler, {}, group, feature_flag );
-            sut.getAnswerFieldName = ( name ) =>
-            {
-                answer_field_name_calls++;
-                return field_name;
-            };
+                const sut = createSut( formatter, styler, {}, group, feature_flag );
+                sut.getAnswerFieldRefs = ( name ) =>
+                {
+                    answer_field_ref_calls++;
+                    return field_refs;
+                };
 
-            sut.getElementGroup = ( name ) =>
-            {
-                expect( name ).to.equal( field_name );
-                return group;
-            };
+                let get_group_call_count = 0;
+                sut.getElementGroup = ( name ) =>
+                {
+                    expect( name ).to.equal( field_refs[ get_group_call_count ] );
+                    get_group_call_count++;
+                    return group;
+                };
 
-            sut.answerDataUpdate( data );
-            async_flag = true;
+                sut.answerDataUpdate( data );
+                async_flag = true;
+            } );
         } );
     } );
 
@@ -360,7 +395,7 @@ function createSut( formatter, styler, step, group, feature_flag )
             return {};
         },
 
-        'override getAnswerFieldName': function( name ){},
+        'override getAnswerFieldRefs': function( name ){ return [] },
         'override getElementGroup': function( name ){},
     } )(
         step || {},
