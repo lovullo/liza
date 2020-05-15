@@ -59,7 +59,9 @@ export class ContextParser
     findSiblingContent( content: ContextContent ): NullableContextContent
     {
         const sibling = content.previousElementSibling;
-        return ( sibling !== null && sibling.tagName === 'DT' ) ? sibling : null;
+        return ( sibling !== null && content.tagName === 'DD' && sibling.tagName === 'DT' )
+            ? sibling
+            : null;
     }
 
 
