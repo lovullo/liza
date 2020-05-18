@@ -361,8 +361,12 @@ module.exports = Class( 'ClientDependencyFactory',
         {
             obj = GridGroupUi;
 
-            content.querySelectorAll( ".gridcell" ).forEach( ( node ) =>
+            let cells = content.querySelectorAll( ".gridcell" );
+
+            for ( let i = 0; i < cells.length; i++ )
             {
+                let node = cells[ i ];
+
                 children.push(
                     this.createGroupUi(
                         this.createGroup(),
@@ -373,7 +377,7 @@ module.exports = Class( 'ClientDependencyFactory',
                         qtypes
                     )
                 );
-            });
+            }
         }
         else if ( content.classList.contains( 'gridcell' ) )
         {
