@@ -1,7 +1,7 @@
 /**
- * Grid Group UI
+ *  Grid Group UI
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -25,6 +25,13 @@ var Class   = require( 'easejs' ).Class,
 
 module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 {
+    /**
+     * Target parent element
+     *
+     * @prop {HTMLElement} _grid
+     */
+    'private _grid': null,
+
 
     /**
      * Called when the group is visited
@@ -35,10 +42,15 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
         this._children.forEach( child => child.visit() );
 
-        const COLUMN_WIDTH = ( 100 / this._getColumnCount() ) + "%";
+        const column_count = this._getColumnCount();
+
+        const COLUMN_WIDTH = ( 100 / column_count ) + "%";
+
+        this._setColumnClass( column_count );
 
         this._children.forEach( child => child.setColumnWidth( COLUMN_WIDTH ) );
     },
+
 
     /**
      * Performs any necessary processing on the content before it's displayed
@@ -52,13 +64,14 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
         this.context.createFieldCache();
 
-        let selector = this.$content[ 0 ].querySelector( '.groupGrid' );
+        this._grid = this._getGrid();
 
-        if ( selector !== null && selector.classList.contains( 'locked' ) )
+        if ( this._grid !== null && this._grid.classList.contains( 'locked' ) )
         {
             this.group.locked( true );
         }
     },
+
 
     /**
      * Get the count of columns in the grid
@@ -91,6 +104,31 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
 
     /**
+     * Set a column class on the group
+     * Remove existing column classes
+     *
+     * @param {number} The number of columns
+     */
+    'private _setColumnClass': function( number )
+    {
+        const class_class = /col-\d+/;
+        const classes = this._grid.classList;
+
+        for ( let index = 0; index < classes.length; index++ )
+        {
+            const value = classes[ index ];
+
+            if( class_class.test( value ) )
+            {
+                this._grid.classList.remove( value );
+            }
+        }
+
+        this._grid.classList.add( 'col-' + number );
+    },
+
+
+    /**
      * Permit adding only a single index
      *
      * @param {number} index index that has been added
@@ -106,7 +144,6 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
         return this.__super( index );
     },
-
 
     /**
      * Permit removing only the first index
@@ -125,5 +162,16 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         }
 
         return this.__super( index );
+    },
+
+
+    /**
+     * Get the target parent element from the DOM
+     *
+     * @return {HTMLElement}
+     */
+    'private _getGrid': function()
+    {
+        return this.content.querySelector( '.groupGrid' );
     }
 } );
