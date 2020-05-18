@@ -27,15 +27,49 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 {
 
     /**
+     * Called when the group is visited
+     */
+    'override public visit': function()
+    {
+        this.__super();
+
+        this._children.forEach( child => child.visit() );
+
+        const COLUMN_WIDTH = ( 100 / this._getColumnCount() ) + "%";
+
+        this._children.forEach( child => child.setColumnWidth( COLUMN_WIDTH ) );
+    },
+
+    /**
      * Performs any necessary processing on the content before it's displayed
      *
      * @param {object} quote Quote
      */
     'override protected processContent': function( quote )
     {
-        if ( this.$content.find( '.groupGrid' ).hasClass( 'locked' ) )
+        let selector = this.$content[ 0 ].querySelector( '.groupGrid' );
+
+        if ( selector !== null && selector.classList.contains( 'locked' ) )
         {
             this.group.locked( true );
         }
+    },
+
+    /**
+     * Get the count of columns in the grid
+     *
+     * @return {number} The number of columns
+     */
+    'private _getColumnCount': function()
+    {
+        const unique = ( type, i, children ) => children.indexOf( type ) === i;
+
+        let child_count = this._children
+            .filter( child => child.cellIsVisible() )
+            .map( child => child.getXType() )
+            .filter( unique )
+            .length;
+
+        return Math.max(child_count, 1);
     }
 } );

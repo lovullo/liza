@@ -195,24 +195,33 @@ module.exports = Class( 'GroupUi' )
     'private _feature_flag': null,
 
 
+     /**
+     * Child groups inside of this group
+     * @type {Array <GroupUi>}
+     */
+    'protected _children': [],
+
+
     /**
      * Initializes GroupUi
      *
      * @todo remove root (DOM) context, and na field styler!
      *
-     * @param {Group}         group         group to style
-     * @param {HTMLElement}   content       the group content
-     * @param {ElementStyler} styler        styler to use to style elements
-     * @param {jQuery}        jquery        jQuery-compatible object
-     * @param {GroupContext}  context       group context
-     * @param {DomContext}    rcontext      root context
+     * @param {Group}         group        group to style
+     * @param {HTMLElement}   content      the group content
+     * @param {ElementStyler} styler       styler to use to style elements
+     * @param {jQuery}        jquery       jQuery-compatible object
+     * @param {GroupContext}  context      group context
+     * @param {DomContext}    rcontext     root context
      * @param {FieldStyler}   na_styler    styler for fields that are N/A
      * @param {FeatureFlag}   feature_flag toggle access to new UI features
+     * @param {Array}         children     child groups
      *
      * @return  {undefined}
      */
     'public __construct': function(
-        group, content, styler, jquery, context, rcontext, na_styler, feature_flag
+        group, content, styler, jquery, context, rcontext, na_styler, feature_flag,
+        children
     )
     {
         this.group     = group;
@@ -226,11 +235,18 @@ module.exports = Class( 'GroupUi' )
 
         // Todo: Transition away from jQuery
         this.$content   = this.jquery( content );
+
+        if ( Array.isArray( children ) )
+        {
+            this._children = children;
+        }
     },
 
 
     'public init': function( quote )
     {
+        this._children.forEach( child => child.init( quote ) );
+
         const fields = this.group.getExclusiveFieldNames();
         const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
 

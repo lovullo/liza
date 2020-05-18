@@ -45,6 +45,7 @@ var Step          = require( '../step/Step' ),
     SideTableGroupUi     = require( '../ui/group/SideTableGroupUi' ),
     CollapseTableGroupUi = require( '../ui/group/CollapseTableGroupUi' ),
     GridGroupUi          = require( '../ui/group/GridGroupUi' ),
+    GridCellGroupUi      = require( '../ui/group/GridCellGroupUi' ),
 
     Ui           = require( '../ui/Ui' ),
     UiStyler     = require( '../ui/UiStyler' ),
@@ -326,6 +327,7 @@ module.exports = Class( 'ClientDependencyFactory',
     {
         // default
         var obj = FlatGroupUi;
+        var children = [];
 
         if ( content.classList.contains( 'table' ) )
         {
@@ -358,12 +360,30 @@ module.exports = Class( 'ClientDependencyFactory',
         else if ( content.classList.contains( 'grid' ) )
         {
             obj = GridGroupUi;
+
+            content.querySelectorAll( ".gridcell" ).forEach( ( node ) =>
+            {
+                children.push(
+                    this.createGroupUi(
+                        this.createGroup(),
+                        node,
+                        styler,
+                        root_context,
+                        na_styler,
+                        qtypes
+                    )
+                );
+            });
+        }
+        else if ( content.classList.contains( 'gridcell' ) )
+        {
+            obj = GridCellGroupUi;
         }
 
         const context = this.createGroupContext( qtypes, arefs, styler );
         const feature_flag = FeatureFlag.getInstance();
         return obj(
-            group, content, styler, jQuery, context, root_context, na_styler, feature_flag
+            group, content, styler, jQuery, context, root_context, na_styler, feature_flag, children
         );
     },
 
