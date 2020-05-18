@@ -19,11 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Sut     = require( '../../../' ).ui.step.GeneralStepUi,
-    expect  = require( 'chai' ).expect,
-    sinon   = require( 'sinon' ),
-    Class   = require( 'easejs' ).Class;
+import { GeneralStepUi as Sut } from "../../../src/ui/step/GeneralStepUi";
+import { GroupUi } from "../../../src/ui/group/GroupUi";
 
+var expect  = require( 'chai' ).expect,
+    sinon   = require( 'sinon' );
 
 describe( 'ui.GeneralStepUi', function()
 {
@@ -46,7 +46,7 @@ describe( 'ui.GeneralStepUi', function()
                 .withExactArgs( orig_data )
                 .returns( fmt_data );
 
-            createSut( formatter, createElementStyler( function( name, value )
+            createSut( formatter, createElementStyler( function( name: any, value: any )
             {
                 // by the time the answer data makes its way to the
                 // element styler, it should have already been
@@ -90,23 +90,23 @@ describe( 'ui.GeneralStepUi', function()
         ) => {
             it( label, function( done )
             {
-                const formatter = createFormatter( data, data );
+                const formatter = createFormatter( data );
                 const feature_flag = createFeatureFlag( true );
                 const group = createGroupUi();
 
-                let group_set_value_calls = 0;
-                let given_values = [];
-                let given_names = [];
-                let given_indexes = [];
-                let answer_field_ref_calls = 0;
-                let async_flag = false;
+                let group_set_value_calls   = 0;
+                let given_values: string[]  = [];
+                let given_names: string[]   = [];
+                let given_indexes: number[] = [];
+                let answer_field_ref_calls  = 0;
+                let async_flag              = false;
 
                 const styler = createElementStyler( function(){} );
-                styler.styleAnswer = ( name ) => {
+                styler.styleAnswer = ( _: any ) => {
                     done( new Error( 'ElementStyler should not be called with feature flag on' ) );
                 };
 
-                group.setValueByName = ( name, index, value, change_event ) =>
+                group.setValueByName = ( name, index, value, _ ) =>
                 {
                     group_set_value_calls++;
                     given_values.push( value );
@@ -122,10 +122,12 @@ describe( 'ui.GeneralStepUi', function()
                         expect( answer_field_ref_calls ).to.equal( 1 );
                         done();
                     }
+
+                    return group;
                 }
 
                 const sut = createSut( formatter, styler, {}, group, feature_flag );
-                sut.getAnswerFieldRefs = ( name ) =>
+                sut.getAnswerFieldRefs = ( _ ) =>
                 {
                     answer_field_ref_calls++;
                     return field_refs;
@@ -216,7 +218,7 @@ describe( 'ui.GeneralStepUi', function()
                     done();
                 } );
 
-                sut.scrollTo( args.field, args.index, false, args.cause );
+                sut.scrollTo( <string>args.field, <number>args.index, false, <string>args.cause );
             } );
         } );
 
@@ -269,13 +271,12 @@ describe( 'ui.GeneralStepUi', function()
 
                 getWidgetByName: function()
                 {
-                    // jQuery-ish
-                    var element = [ 0 ];
-
-                    element.is = function( selector )
-                    {
-                        expect( selector ).to.equal( ':visible' );
-                        return false;
+                    var element = {
+                        is: ( selector: string ) =>
+                        {
+                            expect( selector ).to.equal( ':visible' );
+                            return false;
+                        }
                     };
 
                     return element;
@@ -305,26 +306,23 @@ describe( 'ui.GeneralStepUi', function()
         {
             var field        = 'foo',
                 index        = 5,
-                content_html = '<html>something</html>',
-                element      = [ 0 ],
                 showm        = true,
-                message      = 'whatacluster';
-
-            var styler = {
-                getProperIndex: function()
-                {
-                },
-
-                getWidgetByName: function()
-                {
-                    element.is = function( selector )
+                message      = 'whatacluster',
+                element      = {
+                    0: {
+                        attributes: [],
+                    },
+                    is: ( selector: any ) =>
                     {
                         expect( selector ).to.equal( ':visible' );
                         return true;
-                    };
+                    }
+                };
 
-                    return element;
-                },
+            var styler = {
+                getProperIndex:  () => {},
+                getWidgetByName: () => element,
+                focus:           ( _: any, __: any, ___: any ) => {},
             };
 
             var content = {
@@ -336,7 +334,7 @@ describe( 'ui.GeneralStepUi', function()
                 },
             };
 
-            function scroll_mock( given_element, duration, options )
+            function scroll_mock( given_element: any, duration: any, options: any )
             {
                 expect( given_element ).to.equal( element );
                 expect( duration ).to.equal( 100 );
@@ -379,30 +377,28 @@ describe( 'ui.GeneralStepUi', function()
  *
  * @return {Sut}
  */
-function createSut( formatter, styler, step, group, feature_flag )
+function createSut(
+    formatter:     any,
+    styler:        any,
+    step?:         any,
+    _group?:       any,
+    feature_flag?: any,
+): Sut
 {
-
-    return Sut.extend(
-    {
-        // visibility escalation
-        'override answerDataUpdate': function( data )
-        {
-            return this.__super( data );
-        },
-
-        'override getAnswerContext': function( name )
-        {
-            return {};
-        },
-
-        'override getAnswerFieldRefs': function( name ){ return [] },
-        'override getElementGroup': function( name ){},
-    } )(
+    const sut = new Sut(
         step || {},
         styler,
         formatter,
-        feature_flag || createFeatureFlag()
+        feature_flag || createFeatureFlag(),
+        undefined
     );
+
+    // sut.answerDataUpdate   = ( data ) => { return sut.__super( data ) };
+    sut.getAnswerContext   = ( _ ) => { return {} };
+    sut.getAnswerFieldRefs = ( _ ) => { return [] };
+    sut.getElementGroup    = ( _ ) => <GroupUi>{};
+
+    return sut;
 }
 
 
@@ -426,10 +422,10 @@ function createFeatureFlag( flag_ind = false )
  *
  * @return {Object} GroupUi
  */
-function createGroupUi()
+function createGroupUi(): GroupUi
 {
-    return {
-        setValueByName: ( name, index, value, change_event ) => {}
+    return <GroupUi>{
+        setValueByName: ( _: any, __: any, ___: any, ____: any ) => {}
     };
 }
 
@@ -443,18 +439,19 @@ function createGroupUi()
  *
  * @return {Object} ElementStyler mock
  */
-function createElementStyler( style_callback )
+function createElementStyler( style_callback: any )
 {
     return {
         getAnswerElementByName: function()
         {
             // jQuery element
-            const $element = [ {
-                attributes: [],
-            } ];
-
-            $element.length = 1;
-            $element.text   = () => {};
+            const $element = {
+                0: {
+                    attributes: [],
+                },
+                length: 1,
+                text:   () => {},
+            };
 
             return $element;
         },
@@ -481,22 +478,13 @@ function createElementStyler( style_callback )
  *
  * @param {Object}
  */
-function createFormatter( expected, return_data )
+function createFormatter( return_data?: any ): any
 {
     return {
-        format: function( expected )
+        format: function( _: any )
         {
             return return_data;
         },
     }
 }
 
-
-function createStep()
-{
-    return {
-        getValidCause: function()
-        {
-        }
-    };
-}

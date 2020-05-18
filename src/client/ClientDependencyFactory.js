@@ -31,7 +31,6 @@
  */
 
 var Step          = require( '../step/Step' ),
-    GeneralStepUi = require( '../ui/step/GeneralStepUi' ),
     StepUiBuilder = require( '../ui/step/StepUiBuilder' ),
 
     Group                = require( '../group/Group' ),
@@ -109,6 +108,7 @@ const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 const { GroupContext }         = require( '../ui/context/GroupContext' );
 const { FeatureFlag }          = require( '../ui/FeatureFlag' );
+const { GeneralStepUi }        = require( '../ui/step/GeneralStepUi' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
 const { FieldStylerFactory }   = require( '../ui/context/styler/FieldStylerFactory' );
 

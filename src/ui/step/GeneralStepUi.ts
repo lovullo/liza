@@ -32,9 +32,12 @@
  * @end needsLove
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( '../../events' ).EventEmitter,
-    StepUi       = require( './StepUi' );
+import { StepUi } from "./StepUi";
+import { Step } from "../../step/Step";
+import { EventEmitter } from 'events';
+import { ElementStyler } from "../ElementStyler";
+import { FeatureFlag } from "../FeatureFlag";
+import { GroupUi } from "../group/GroupUi";
 
 
 /**
@@ -42,150 +45,115 @@ var Class        = require( 'easejs' ).Class,
  *
  * @return {StepUi}
  */
-module.exports = Class( 'GeneralStepUi' )
-    .implement( StepUi )
-    .extend( EventEmitter,
+export class GeneralStepUi extends EventEmitter implements StepUi
 {
     /**
      * Called after step data is processed
-     * @type {string}
      */
-    'const EVENT_POST_PROCESS': 'postProcess',
+    readonly EVENT_POST_PROCESS = 'postProcess';
 
     /**
      * Called after step is appended to the DOM
-     * @type {string}
      */
-    'const EVENT_POST_APPEND': 'postAppend',
+    readonly EVENT_POST_APPEND = 'postAppend';
 
     /**
      * Called when data is changed (question value changed)
-     * @type {string}
      */
-    'const EVENT_DATA_CHANGE': 'dataChange',
+    readonly EVENT_DATA_CHANGE = 'dataChange';
 
     /**
      * Raised when an index is added to a group (e.g. row addition)
-     * @type {string}
      */
-    'const EVENT_INDEX_ADD': 'indexAdd',
+    readonly EVENT_INDEX_ADD = 'indexAdd';
 
     /**
      * Raised when an index is reset in a group (rather than removed)
-     * @type {string}
      */
-    'const EVENT_INDEX_RESET': 'indexReset',
+    readonly EVENT_INDEX_RESET = 'indexReset';
 
     /**
      * Raised when an index is removed from a group (e.g. row deletion)
-     * @type {string}
      */
-    'const EVENT_INDEX_REMOVE': 'indexRemove',
+    readonly EVENT_INDEX_REMOVE = 'indexRemove';
 
     /**
      * Represents an action trigger
-     * @type {string}
      */
-    'const EVENT_ACTION': 'action',
+    readonly EVENT_ACTION = 'action';
 
     /**
      * Triggered when the step is active
-     * @type {boolean}
      */
-    'const EVENT_ACTIVE': 'active',
+    readonly EVENT_ACTIVE = 'active';
 
-
-    /**
-     * Instance of step to style
-     * @type {Step}
-     */
-    step: null,
 
     /**
      * jQuery instance
-     * @type {jQuery}
      */
-    'private _jquery': null,
+    private _jquery: any = null;
 
     /**
      * Step data (DOM representation)
-     * @type {jQuery}
      */
-    $content: null,
+    $content: any = null;
 
-    /**
-     * Element styler
-     * @type {ElementStyler}
-     */
-    styler: null,
 
     /**
      * Whether the step should be repopulated with bucket data upon display
-     * @type {boolean}
      */
-    invalid: false,
+    invalid: boolean = false;
 
     /**
      * Stores group objects representing each group
-     * @type {Object.<Group>}
      */
-    groups: {},
+    groups: Record<any, any> = {};
 
     /**
      * Flag to let system know its currently saving the step
-     * @type {boolean}
      */
-    saving: false,
+    saving: boolean = false;
 
     /**
      * Format bucket data for display
-     * @type {BucketDataValidator}
      */
-    'private _formatter': null,
+    private _formatter: any = null;
 
     /**
      * Stores references to which group fields belong to
-     * @type {Object}
      */
-    'private _fieldGroup': {},
+    private _fieldGroup: any = {};
 
     /**
      * Hash of answer contexts (jQuery) for quick lookup
-     * @type {Object}
      */
-    'private _answerContext': {},
+    private _answerContext: any = {};
 
     /**
      * Answer field references for quick lookup
-     * @type {Object}
      */
-    'private _answerFieldRefs': {},
+    private _answerFieldRefs: any = {};
 
     /**
      * Hash of static answer indexes, if applicable
-     * @type {Object}
      */
-    'private _answerStaticIndex': {},
+    private _answerStaticIndex: any = {};
 
     /**
      * Whether the step is the currently active (visible) step
-     * @type {boolean}
      */
-    'private _active': false,
+    private _active: boolean = false;
 
     /**
      * Whether the step is locked (all elements disabled)
-     * @type {boolean}
      */
-    'private _locked': false,
-
-    'private _forceAnswerUpdate': null,
+    private _locked: boolean = false;
 
     /**
-     * Access feature flags for new UI features
-     * @type {FeatureFlag}
+     * A function to call to update bucket data
      */
-    'private _feature_flag': null,
+    private _forceAnswerUpdate: any = null;
+
 
     /**
      * Initializes StepUi object
@@ -206,25 +174,22 @@ module.exports = Class( 'GeneralStepUi' )
      *
      * TODO: Remove jQuery
      *
-     * @param {Step}                step      step to render
-     * @param {ElementStyler}       styler    element styler
-     * @param {BucketDataValidator} formatter validator/formatter
-     * @param {jQuery}              jquery    jQuery instance
-     *
-     * @return {undefined}
+     * @param step          - step to render
+     * @param styler        - element styler
+     * @param formatter     - validator/formatter
+     * @param _feature_flag - Access feature flags for new UI features
+     * @param jquery        - jQuery instance
      */
-    'public __construct': function(
-        step,
-        styler,
-        formatter,
-        feature_flag,
-        jquery
+    constructor(
+        private step:                   Step,
+        private readonly _styler:       ElementStyler,
+        formatter:                      any,
+        private readonly _feature_flag: FeatureFlag,
+        jquery:                         any
     )
     {
-        this.step          = step;
-        this.styler        = styler;
+        super();
         this._formatter    = formatter;
-        this._feature_flag = feature_flag;
 
         // TODO: transition code; remove default
         this._jquery = jquery || (
@@ -232,15 +197,13 @@ module.exports = Class( 'GeneralStepUi' )
                 ? $
                 : undefined
         );
-    },
+    }
 
 
     /**
      * Initializes step
-     *
-     * @return {undefined}
      */
-    'public init': function()
+    init(): this
     {
         var _self = this;
 
@@ -252,10 +215,13 @@ module.exports = Class( 'GeneralStepUi' )
         } );
 
         return this;
-    },
+    }
 
 
-    'public initGroupFieldData': function()
+    /**
+     * Initialize group field data
+     */
+    initGroupFieldData(): void
     {
         for ( var group in this.groups )
         {
@@ -267,17 +233,15 @@ module.exports = Class( 'GeneralStepUi' )
                 this._fieldGroup[ fields[ i ] ] = groupui;
             }
         }
-    },
+    }
 
 
     /**
      * Sets content to be displayed
      *
-     * @param {HTMLElement} content content to display
-     *
-     * @return {StepUi} self
+     * @param content - content to display
      */
-    'public setContent': function( content )
+    setContent( content: HTMLElement ): this
     {
         // TODO: transition away from jQuery
         this.$content = this._jquery( content );
@@ -285,7 +249,7 @@ module.exports = Class( 'GeneralStepUi' )
         this._processAnswerFields();
 
         return this;
-    },
+    }
 
 
     /**
@@ -293,34 +257,32 @@ module.exports = Class( 'GeneralStepUi' )
      *
      * @return lovullo.program.Step
      */
-    getStep: function()
+    getStep(): Step
     {
         return this.step;
-    },
+    }
 
 
     /**
      * Returns the generated step content as a jQuery object
      *
-     * @return {HTMLElement} generated step content
+     * @return generated step content
      */
-    'virtual getContent': function()
+    getContent(): HTMLElement
     {
         return this.$content[ 0 ];
-    },
+    }
 
 
     /**
      * Will mark the step as dirty when the content is changed and update
      * the staging bucket
-     *
-     * @return undefined
      */
-    setDirtyTrigger: function()
+    setDirtyTrigger(): void
     {
         var step = this;
 
-        this.$content.bind( 'change.program', function( event )
+        this.$content.bind( 'change.program', function( event: any )
         {
             // do nothing if the step is locked
             if ( step._locked )
@@ -329,7 +291,7 @@ module.exports = Class( 'GeneralStepUi' )
             }
 
             // get the name of the altered element
-            var $element = step.styler.getNameElement( $( event.target ) ),
+            var $element = step._styler.getNameElement( $( event.target ) ),
                 name     = $element.attr( 'name' ),
                 val      = $element.val();
 
@@ -377,13 +339,13 @@ module.exports = Class( 'GeneralStepUi' )
                 }
             }
 
-            var values              = {};
+            var values: any         = {};
             values[ name ]          = [];
             values[ name ][ index ] = val;
 
 
             // update our bucket with this new data
-            step.emit( step.__self.$('EVENT_DATA_CHANGE'), values );
+            step.emit( step.EVENT_DATA_CHANGE, values );
         } );
 
         // @note This is a hack. In IE8, checkbox change events don't properly fire.
@@ -393,10 +355,10 @@ module.exports = Class( 'GeneralStepUi' )
             function ()
             {
                 // XXX: remove global
-                jQuery( this ).change();
+                step._jquery( step ).change();
             }
         );
-    },
+    }
 
 
     /**
@@ -404,10 +366,8 @@ module.exports = Class( 'GeneralStepUi' )
      *
      * This method will populate the answer fields with values already in the
      * bucket and hook the bucket so that future updates will also be reflected.
-     *
-     * @return {undefined}
      */
-    _processAnswerFields: function()
+    _processAnswerFields(): void
     {
         var _self  = this,
             bucket = this.step.getBucket();
@@ -417,14 +377,14 @@ module.exports = Class( 'GeneralStepUi' )
         // perform initial update for the step when we are first created, then
         // hook everything else (we do not need the hooks before then, as we
         // will be forcefully updating the step with values)
-        this.__inst.once( 'postAppend', function()
+        this.once( 'postAppend', function()
         {
             var forceupdate = false;
 
             // when the value we're watching is updated in the bucket, update
             // the displayed value
-            var doUpdate;
-            bucket.on( 'stagingUpdate', doUpdate = function( data )
+            var doUpdate: any;
+            bucket.on( 'stagingUpdate', doUpdate = function( data: any )
             {
                 // defer updates unless we're active
                 if ( !( _self._active ) )
@@ -433,9 +393,7 @@ module.exports = Class( 'GeneralStepUi' )
                     {
                         forceupdate = true;
 
-                        // use __inst until we get the ease.js issue sorted out
-                        // with extending non-class protoypes
-                        _self.__inst.once( _self.__self.$('EVENT_ACTIVE'), function()
+                        _self.once( _self.EVENT_ACTIVE, function()
                         {
                             doUpdate( bucket.getData() );
                             forceupdate = false;
@@ -451,7 +409,7 @@ module.exports = Class( 'GeneralStepUi' )
             doUpdate( bucket.getData() );
 
             // set the values when a row is added
-            _self.__inst.on( 'postAddRow', function( index )
+            _self.on( 'postAddRow', function( index )
             {
                 var data = bucket.getData();
 
@@ -468,19 +426,17 @@ module.exports = Class( 'GeneralStepUi' )
                 }
             } );
 
-            this._forceAnswerUpdate = doUpdate;
+            _self._forceAnswerUpdate = doUpdate;
         } );
-    },
+    }
 
 
     /**
      * Update and style answer field data
      *
-     * @param {Object} data key-value diff
-     *
-     * @return {undefined}
+     * @param data - key-value diff
      */
-    'virtual protected answerDataUpdate': function( data )
+    answerDataUpdate( data: any ): void
     {
         var _self = this;
 
@@ -494,43 +450,43 @@ module.exports = Class( 'GeneralStepUi' )
         {
             _self._updateAnswerFieldData( data_fmt );
         }, 25 );
-    },
+    }
 
 
     /**
      * Retrieve answer DOM context
      *
-     * @param {string} name field name
+     * @param name - field name
      *
-     * @return {jQuery} DOM context
+     * @return DOM context
      */
-    'virtual protected getAnswerContext': function( name )
+    getAnswerContext( name: string ): any
     {
         return this._answerContext[ name ];
-    },
+    }
 
 
     /**
      * Retrieve field references for answers
      *
-     * @param {string} name field name
+     * @param name - field name
      *
-     * @return {array} data-field-name references from DataSet
+     * @return data-field-name references from DataSet
      */
-    'virtual protected getAnswerFieldRefs': function( name )
+    getAnswerFieldRefs( name: string ): string[]
     {
         return this._answerFieldRefs[ name ] || [];
-    },
+    }
 
 
     /**
      * Set the answer value
      *
-     * @param {string} name
-     * @param {number} index
-     * @param {string} value
+     * @param name  - field name
+     * @param index - field index
+     * @param value - value to set
      */
-    'private _setValueByName': function( name, index, value )
+    private _setValueByName( name: string, index: number, value: string ): void
     {
         const field_names = this.getAnswerFieldRefs( name );
         const _self = this;
@@ -543,7 +499,7 @@ module.exports = Class( 'GeneralStepUi' )
 
         // set the value for each answer/display referenced for this field
         field_names.forEach(
-            function( field_name )
+            function( field_name: string )
             {
                 // fall back to element styler when group is unknown
                 let group = _self.getElementGroup( field_name );
@@ -552,7 +508,7 @@ module.exports = Class( 'GeneralStepUi' )
                     : _self._updateAnswer( name, index, value );
             }
         );
-    },
+    }
 
 
     /**
@@ -561,11 +517,9 @@ module.exports = Class( 'GeneralStepUi' )
      * Only watched answer fields are updated.  The update is performed on
      * the discovered context during step initialization.
      *
-     * @param {Object} data bucket diff
-     *
-     * @return {undefined}
+     * @param data - bucket diff
      */
-    'private _updateAnswerFieldData': function( data )
+    private _updateAnswerFieldData( data: any ): void
     {
         // we only care if the data we're watching has been
         // changed
@@ -584,7 +538,7 @@ module.exports = Class( 'GeneralStepUi' )
             if ( !( isNaN( si ) ) )
             {
                 // update every index on the DOM
-                i = this.styler.getAnswerElementByName(
+                i = this._styler.getAnswerElementByName(
                     name, undefined, undefined,
                     this.getAnswerContext( name )
                 ).length;
@@ -607,18 +561,21 @@ module.exports = Class( 'GeneralStepUi' )
                 this._setValueByName( name, i, curdata[ index ] );
             }
         }
-    },
+    }
 
 
-    'private _prepareAnswerContexts': function()
+    /**
+     * Prepare answer contexts
+     */
+    private _prepareAnswerContexts(): void
     {
         var _self = this;
 
         // get a list of all the answer elements
-        this.$content.find( 'span.answer' ).each( function()
+        this.$content.find( 'span.answer' ).each( function( _: any, elem: any )
         {
-            var $this  = $( this ),
-                ref_id = $this.attr( 'data-answer-ref' ),
+            var $this  = <any>$( elem ),
+                ref_id = <string>$this.attr( 'data-answer-ref' ),
                 index  = $this.attr( 'data-answer-static-index' );
 
             // clear the value (which by default contains the name of the answer
@@ -640,7 +597,7 @@ module.exports = Class( 'GeneralStepUi' )
 
             // store the parent fieldset as our context to make DOM lookups a
             // bit more performant
-            const fieldset = $( this ).parents( 'fieldset' );
+            const fieldset = $this.parents( 'fieldset' );
             _self._answerContext[ ref_id ] = fieldset;
 
             if ( !!fieldset.context.dataset.fieldName )
@@ -652,7 +609,7 @@ module.exports = Class( 'GeneralStepUi' )
                 ? +index
                 : NaN;
         } );
-    },
+    }
 
 
     /**
@@ -660,15 +617,13 @@ module.exports = Class( 'GeneralStepUi' )
      *
      * The value will be styled before display.
      *
-     * @param {string} name  field name
-     * @param {number} index index to update
-     * @param {string} value answer value (unstyled)
-     *
-     * @return {undefined}
+     * @param name  - field name
+     * @param index - index to update
+     * @param value - answer value (unstyled)
      */
-    'private _updateAnswer': function( name, index, value )
+    private _updateAnswer( name: string, index: number, value: string ): void
     {
-        var $element = this.styler.getAnswerElementByName(
+        var $element = this._styler.getAnswerElementByName(
             name, index, null, ( this.getAnswerContext( name ) || this.$content )
         );
 
@@ -677,7 +632,7 @@ module.exports = Class( 'GeneralStepUi' )
         {
             while( i-- )
             {
-                var styled = this.styler.styleAnswer( name, value ),
+                var styled = this._styler.styleAnswer( name, value ),
                     allow_html = $element[ i ]
                         .attributes[ 'data-field-allow-html' ] || {};
 
@@ -699,21 +654,19 @@ module.exports = Class( 'GeneralStepUi' )
                 this.emit( 'displayChanged', id.value, index, value );
             }
         }
-    },
+    }
 
 
     /**
      * Monitors the bucket for data changes and updates the elements accordingly
-     *
-     * @return undefined
      */
-    _hookBucket: function()
+    _hookBucket(): void
     {
         var _self = this;
 
         // when the bucket data is updated, update the element to reflect the
         // value
-        this.step.getBucket().on( 'stagingUpdate', function( data )
+        this.step.getBucket().on( 'stagingUpdate', function( data: any )
         {
             // if we're saving (filling the bucket), this is pointless
             if ( _self.saving )
@@ -751,13 +704,13 @@ module.exports = Class( 'GeneralStepUi' )
                     // set the value of the element using the appropriate group
                     // (for performance reasons, so we don't scan the whole DOM
                     // for the element)
-                    _self.getElementGroup( name ).setValueByName(
+                    _self.getElementGroup( name )?.setValueByName(
                         name, index, val, false
                     );
                 }
             }
         } );
-    },
+    }
 
 
     /**
@@ -766,13 +719,11 @@ module.exports = Class( 'GeneralStepUi' )
      * This method will simply loop through all the groups that are a part of
      * this step and call their postAppend() methods. If the group does not have
      * an element id, it will not function properly.
-     *
-     * @return StepUi self to allow for method chaining
      */
-    postAppend: function()
+    postAppend(): this
     {
         // let the styler do any final styling
-        this.styler.postAppend( this.$content.parent() );
+        this._styler.postAppend( this.$content.parent() );
 
         // If we have data in the bucket (probably loaded from the server), show
         // it. We use a delay to ensure that the UI is ready for the update. In
@@ -783,26 +734,24 @@ module.exports = Class( 'GeneralStepUi' )
         // monitor bucket changes and update the elements accordingly
         this._hookBucket();
 
-        this.emit( this.__self.$('EVENT_POST_APPEND') );
+        this.emit( this.EVENT_POST_APPEND );
 
         return this;
-    },
+    }
 
 
     /**
      * Empties the bucket into the step (filling the fields with its values)
      *
-     * @param Function callback function to call when bucket has been emptied
-     *
-     * @return StepUi self to allow for method chaining
+     * @param callback - function to call when bucket has been emptied
+     * @param delay    - whether to execute immediately or set a timer
      */
-    emptyBucket: function( callback, delay )
+    emptyBucket( callback?: any, delay?: boolean ): this
     {
         delay = ( delay === undefined ) ? false : true;
 
         var _self  = this,
-            bucket = this.getStep().getBucket(),
-            fields = {};
+            bucket = this.getStep().getBucket();
 
         // first, clear all the elements
         for ( var group in this.groups )
@@ -816,7 +765,7 @@ module.exports = Class( 'GeneralStepUi' )
         // available to empty into)
         var empty = function()
         {
-            var data = {};
+            var data: Record<string, any> = {};
 
             for ( var name in _self.step.getExclusiveFieldNames() )
             {
@@ -841,14 +790,14 @@ module.exports = Class( 'GeneralStepUi' )
                         // This should not happen (see FS#13653); emit an error
                         // and continue processing in the hopes that we can
                         // display most of the data
-                        this.emit( 'error', Error(
+                        _self.emit( 'error', Error(
                             "Unable to locate group for field `" + name + "'"
                         ) );
 
                         continue;
                     }
 
-                    var id = _self.getElementGroup( name ).setValueByName(
+                    _self.getElementGroup( name )?.setValueByName(
                         name, i, values[ i ], false
                     );
                 }
@@ -875,20 +824,16 @@ module.exports = Class( 'GeneralStepUi' )
         }
 
         return this;
-    },
+    }
 
 
     /**
      * Resets a step to its previous state or hooks the event
      *
-     * @param Function callback function to call when reset is complete
-     *
-     * @return StepUi self to allow for method chaining
+     * @param callback - function to call when reset is complete
      */
-    reset: function( callback )
+    reset( callback: any ): this
     {
-        var step = this;
-
         this.getStep().getBucket().revert();
 
         if ( typeof callback === 'function' )
@@ -900,18 +845,20 @@ module.exports = Class( 'GeneralStepUi' )
         this.invalid = false;
 
         return this;
-    },
+    }
 
 
     /**
      * Returns whether all the elements in the step contain valid data
      *
-     * @return Boolean true if all elements are valid, otherwise false
+     * @param cmatch - cmatch data
+     *
+     * @return true if all elements are valid, otherwise false
      */
-    isValid: function( cmatch )
+    isValid( cmatch: any ): boolean
     {
         return this.step.isValid( cmatch );
-    },
+    }
 
 
     /**
@@ -922,11 +869,11 @@ module.exports = Class( 'GeneralStepUi' )
      * there are no more invalid visible elements, except in the case of
      * required fields.
      *
-     * @param {Object} cmatch cmatch data
+     * @param cmatch - cmatch data
      *
-     * @return String id of element, or empty string
+     * @return id of element, or empty string
      */
-    'public getFirstInvalidField': function( cmatch )
+    getFirstInvalidField( cmatch: any ): Array<string | number | boolean>
     {
         var $element = this.$content.find(
             '.invalid_field[data-field-name]:visible:first'
@@ -965,20 +912,23 @@ module.exports = Class( 'GeneralStepUi' )
             // not a required field failure
             false
         ];
-    },
+    }
 
 
     /**
      * Scrolls to the element identified by the given id
      *
-     * @param {string}  field        name of field to scroll to
-     * @param {number}  i            index of field to scroll to
-     * @param {boolean} show_message whether to show the tooltip
-     * @param {string}  message      tooltip message to display
-     *
-     * @return {StepUi} self to allow for method chaining
+     * @param field        - name of field to scroll to
+     * @param i            - index of field to scroll to
+     * @param show_message - whether to show the tooltip
+     * @param message      - tooltip message to display
      */
-    'public scrollTo': function( field, i, show_message, message )
+    scrollTo(
+        field: string,
+        i: number,
+        show_message: boolean,
+        message:string
+    ): this
     {
         show_message = ( show_message === undefined ) ? true : !!show_message;
 
@@ -1000,8 +950,8 @@ module.exports = Class( 'GeneralStepUi' )
             return this;
         }
 
-        var index    = this.styler.getProperIndex( field, i ),
-            $element = this.styler.getWidgetByName( field, index );
+        var index    = this._styler.getProperIndex( field, i ),
+            $element = this._styler.getWidgetByName( field, index );
 
         // if the element couldn't be found, then this is useless
         if ( $element.length === 0 )
@@ -1043,12 +993,12 @@ module.exports = Class( 'GeneralStepUi' )
             onAfter: function()
             {
                 // focus on the element and display the tooltip
-                stepui.styler.focus( $element, show_message, message );
+                stepui._styler.focus( $element, show_message, message );
             }
         } );
 
         return this;
-    },
+    }
 
 
     /**
@@ -1056,48 +1006,44 @@ module.exports = Class( 'GeneralStepUi' )
      * displayed
      *
      * Resetting the step will clear the invalidation flag.
-     *
-     * @return StepUi self to allow for method chaining
      */
-    invalidate: function()
+    invalidate(): void
     {
         this.invalid = true;
-    },
+    }
 
 
     /**
      * Returns whether the step has been invalidated
      *
-     * @return Boolean true if step has been invalidated, otherwise false
+     * @return true if step has been invalidated, otherwise false
      */
-    isInvalid: function()
+    isInvalid(): boolean
     {
         return this.invalid;
-    },
+    }
 
 
     /**
      * Returns the GroupUi object associated with the given element name, if
      * known
      *
-     * @param {string} name element name
+     * @param name - element name
      *
-     * @return {GroupUi} group if known, otherwise null
+     * @return group if known, otherwise null
      */
-    'virtual public getElementGroup': function( name )
+    getElementGroup( name: string ): GroupUi | null
     {
         return this._fieldGroup[ name ] || null;
-    },
+    }
 
 
     /**
      * Forwards add/remove hiding requests to groups
      *
-     * @param {boolean} value whether to hide (default: true)
-     *
-     * @return {StepUi} self
+     * @param value - whether to hide (default: true)
      */
-    hideAddRemove: function( value )
+    hideAddRemove( value: boolean ): this
     {
         value = ( value !== undefined ) ? !!value : true;
 
@@ -1111,10 +1057,13 @@ module.exports = Class( 'GeneralStepUi' )
         }
 
         return this;
-    },
+    }
 
 
-    'public preRender': function()
+    /**
+     * Call prerender for all groups
+     */
+    preRender(): this
     {
         for ( var group in this.groups )
         {
@@ -1122,10 +1071,15 @@ module.exports = Class( 'GeneralStepUi' )
         }
 
         return this;
-    },
+    }
 
 
-    'public visit': function( callback )
+    /**
+     * Visit all groups
+     *
+     * @param callback - A function to call on completion
+     */
+    visit( callback: any ): this
     {
         // "invalid" means that the displayed data is not up-to-date
         if ( this.invalid )
@@ -1152,7 +1106,7 @@ module.exports = Class( 'GeneralStepUi' )
             }
         };
 
-        this.step.eachSortedGroupSet( function( ids )
+        this.step.eachSortedGroupSet( function( ids: string[] )
         {
             cn++;
             _self._sortGroups( ids, c );
@@ -1164,16 +1118,21 @@ module.exports = Class( 'GeneralStepUi' )
         }
 
         return this;
-    },
+    }
 
 
-    'private _sortGroups': function( ids, callback )
+    /**
+     * Sort groups
+     *
+     * @param ids      - ids to sort
+     * @param callback - a function to call on completion
+     */
+    private _sortGroups( ids: string[], callback: any ): void
     {
         // detach them all (TODO: a more efficient method could be to detach
         // only the ones that aren not already in order, or ignore ones that
         // would be hidden..etc)
-        var len    = ids.length,
-            groups = [];
+        var len = ids.length;
 
         // if one group (or none), nothing to sort
         if ( len <= 1 )
@@ -1181,13 +1140,13 @@ module.exports = Class( 'GeneralStepUi' )
             return;
         }
 
-        function getGroup( name )
+        function getGroup( name: string )
         {
             return document.getElementById( 'group_' + name );
         }
 
-        var nodes = [];
-        for ( var i in ids )
+        var nodes: Record<string, HTMLElement | null> = {};
+        for ( let i in ids )
         {
             nodes[ i ] = getGroup( ids[ i ] );
         }
@@ -1223,13 +1182,15 @@ module.exports = Class( 'GeneralStepUi' )
         // Node#insertBefore, but no Node#insertAfter
         setTimeout( function()
         {
+            var group;
+
             try
             {
                 do
                 {
-                    var group = nodes[ i ];
+                    group = nodes[ i ];
 
-                    if ( !group )
+                    if ( !group || !prev )
                     {
                         continue;
                     }
@@ -1266,7 +1227,7 @@ module.exports = Class( 'GeneralStepUi' )
 
             callback();
         }, 25 );
-    },
+    }
 
 
     /**
@@ -1275,11 +1236,9 @@ module.exports = Class( 'GeneralStepUi' )
      * A step should be marked as active when it is the step that is currently
      * accessible to the user.
      *
-     * @param {boolean} active whether step is active
-     *
-     * @return {StepUi} self
+     * @param active - whether step is active
      */
-    'public setActive': function( active )
+    setActive( active: boolean ): this
     {
         active = ( active === undefined ) ? true : !!active;
 
@@ -1293,11 +1252,11 @@ module.exports = Class( 'GeneralStepUi' )
 
         if ( active )
         {
-            this.emit( this.__self.$('EVENT_ACTIVE') );
+            this.emit( this.EVENT_ACTIVE );
         }
 
         return this;
-    },
+    }
 
 
     /**
@@ -1306,11 +1265,9 @@ module.exports = Class( 'GeneralStepUi' )
      * If the lock status has changed, the elements on the step will be
      * disabled/enabled respectively.
      *
-     * @param {boolean} lock whether step should be locked
-     *
-     * @return {StepUi} self
+     * @param lock - whether step should be locked
      */
-    'public lock': function( lock )
+    lock( lock: boolean ): this
     {
         lock = ( lock === undefined ) ? true : !!lock;
 
@@ -1319,11 +1276,11 @@ module.exports = Class( 'GeneralStepUi' )
         {
             for ( var name in this.step.getExclusiveFieldNames() )
             {
-                this.styler.disableField( name, undefined, lock );
+                this._styler.disableField( name, undefined, lock );
             }
         }
 
         this._locked = lock;
         return this;
     }
-} );
+};

@@ -21,6 +21,7 @@
 
 
 import { PositiveInteger } from "../numeric";
+import { EventEmitter } from "events";
 
 
 /**
@@ -31,7 +32,7 @@ import { PositiveInteger } from "../numeric";
  *
  * @todo Rename to DocumentDataBucket
  */
-export declare class QuoteDataBucket
+export declare class QuoteDataBucket extends EventEmitter
 {
     /**
      * Triggered when data in the bucket is updated, before it's committed

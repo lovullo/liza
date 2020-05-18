@@ -26,9 +26,10 @@ import { PositiveInteger } from "../../../src/numeric";
 import { UserRequest } from "../../../src/server/request/UserRequest";
 import { ServerSideQuote } from "../../../src/server/quote/ServerSideQuote";
 import { QuoteDataBucket } from "../../../src/bucket/QuoteDataBucket";
-import {DataApiResult} from "../../../src/dapi/DataApi";
-import {ClassificationResult} from "../../../src/program/Program";
+import { DataApiResult} from "../../../src/dapi/DataApi";
+import { ClassificationResult} from "../../../src/program/Program";
 import { RateResult } from "../../../src/server/rater/Rater";
+import { StagingBucket } from "../../../src/bucket/StagingBucket";
 
 chai_use( require( 'chai-as-promised' ) );
 
@@ -841,11 +842,11 @@ function createStubBucket( data: Record<string, any> )
 }
 
 
-function createStubStagingBucket( bucket: any )
+function createStubStagingBucket( bucket: any ): StagingBucket
 {
     let bucket_data = {};
 
-    return {
+    return <StagingBucket>(<unknown>{
         setCommittedValues( _data: Record<string, any> ) { return this; },
 
         forbidBypass() { return this; },
@@ -894,5 +895,5 @@ function createStubStagingBucket( bucket: any )
         hasIndex( _name: string, _i: PositiveInteger ) { return true; },
 
         isDirty() { return false; },
-    };
+    } );
 }
