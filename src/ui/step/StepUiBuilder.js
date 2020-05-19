@@ -105,7 +105,7 @@ module.exports = Class( 'StepUiBuilder' )
         }
 
         // create a new StepUi
-        var ui = StepUi(
+        var ui = new StepUi(
             this._step,
             this._elementStyler,
             this._formatter,
@@ -182,7 +182,7 @@ module.exports = Class( 'StepUiBuilder' )
 
         // let others do any final processing before we consider ourselves
         // ready
-        ui.emit( ui.__self.$( 'EVENT_POST_PROCESS' ) );
+        ui.emit( ui.EVENT_POST_PROCESS );
     },
 
 
@@ -251,19 +251,19 @@ module.exports = Class( 'StepUiBuilder' )
             } )
             .on( 'indexAdd', function( index )
             {
-                ui.emit( ui.__self.$( 'EVENT_INDEX_ADD' ), index, this );
+                ui.emit( ui.EVENT_INDEX_ADD, index, this );
             } )
             .on( 'indexRemove', function( index )
             {
-                ui.emit( ui.__self.$( 'EVENT_INDEX_REMOVE' ), index, this );
+                ui.emit( ui.EVENT_INDEX_REMOVE, index, this );
             } ).on( 'indexReset', function( index )
             {
-                ui.emit( ui.__self.$( 'EVENT_INDEX_RESET' ), index, this );
+                ui.emit( ui.EVENT_INDEX_RESET, index, this );
             } )
             .on( 'action', function( type, ref, index )
             {
                 // simply forward
-                ui.emit( ui.__self.$( 'EVENT_ACTION' ), type, ref, index );
+                ui.emit( ui.EVENT_ACTION, type, ref, index );
             } )
             .on( 'postAddRow', function( index )
             {

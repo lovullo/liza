@@ -415,10 +415,30 @@ function createStubStepUi( field_names: ExclusiveFields  )
         getExclusiveFieldNames: () => field_names
     };
 
-    return <StepUi>{
-        getElementGroup: () => <GroupUi>{},
-        getStep: () => <Step>step
+    const step_ui: StepUi = {
+        getElementGroup:      () => <GroupUi>{},
+        getStep:              () => <Step>step,
+        init:                 () => step_ui,
+        initGroupFieldData:   () => undefined,
+        setContent:           ( _ ) => step_ui,
+        getContent:           () => <HTMLElement>{},
+        setDirtyTrigger:      () => undefined,
+        postAppend:           () => step_ui,
+        emptyBucket:          ( _, __ ) => step_ui,
+        reset:                ( _ ) => step_ui,
+        isValid:              ( _ ) => true,
+        getFirstInvalidField: ( _ ) => [ '', 1, true ],
+        scrollTo:             ( _, __, ___, ____ ) => { return step_ui },
+        invalidate:           () => undefined,
+        isInvalid:            () => false,
+        hideAddRemove:        ( _ ) => step_ui,
+        preRender:            () => step_ui,
+        visit:                ( _ ) => step_ui,
+        setActive:            ( _ ) => step_ui,
+        lock:                 ( _ ) => step_ui,
     }
+
+    return step_ui;
 }
 
 

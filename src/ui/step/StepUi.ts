@@ -23,58 +23,56 @@
  * @end needsLove
  */
 
-var Interface = require( 'easejs' ).Interface;
+import { Step } from "../../step/Step";
+import { GroupUi } from "../group/GroupUi";
 
 
 /**
  * Interactive interface for steps
  */
-module.exports = Interface( 'StepUi',
+export interface StepUi
 {
     /**
      * Initializes step
-     *
-     * @return {undefined}
      */
-    'public init': [],
+    init(): this
 
 
-    'public initGroupFieldData': [],
+    /**
+     * Initialize group field data
+     */
+    initGroupFieldData(): void
 
 
     /**
      * Sets content to be displayed
      *
-     * @param {HTMLElement} content content to display
-     *
-     * @return {StepUi} self
+     * @param content - content to display
      */
-    'public setContent': [ 'content' ],
+    setContent( content: HTMLElement ): this
 
 
     /**
      * Returns the step that this object is styling
      *
-     * @return {Step}
+     * @return lovullo.program.Step
      */
-    'public getStep': [],
+    getStep(): Step
 
 
     /**
      * Returns the generated step content as a jQuery object
      *
-     * @return {HTMLElement} generated step content
+     * @return generated step content
      */
-    'public getContent': [],
+    getContent(): HTMLElement
 
 
     /**
      * Will mark the step as dirty when the content is changed and update
      * the staging bucket
-     *
-     * @return undefined
      */
-    'public setDirtyTrigger': [],
+    setDirtyTrigger(): void
 
 
     /**
@@ -83,38 +81,35 @@ module.exports = Interface( 'StepUi',
      * This method will simply loop through all the groups that are a part of
      * this step and call their postAppend() methods. If the group does not have
      * an element id, it will not function properly.
-     *
-     * @return {StepUi} self to allow for method chaining
      */
-    'public postAppend': [],
+    postAppend(): this
 
 
     /**
      * Empties the bucket into the step (filling the fields with its values)
      *
-     * @param {Function} callback function to call when bucket has been emptied
-     *
-     * @return {StepUi} self to allow for method chaining
+     * @param callback - function to call when bucket has been emptied
+     * @param delay    - whether to execute immediately or set a timer
      */
-    'public emptyBucket': [ 'callback', 'delay' ],
+    emptyBucket( callback: any, delay: boolean ): this
 
 
     /**
      * Resets a step to its previous state or hooks the event
      *
-     * @param {Function} callback function to call when reset is complete
-     *
-     * @return {StepUi} self to allow for method chaining
+     * @param callback - function to call when reset is complete
      */
-    'public reset': [ 'callback' ],
+    reset( callback: any ): this
 
 
     /**
      * Returns whether all the elements in the step contain valid data
      *
-     * @return Boolean true if all elements are valid, otherwise false
+     * @param cmatch - cmatch data
+     *
+     * @return true if all elements are valid, otherwise false
      */
-    'public isValid': [ 'cmatch' ],
+    isValid( cmatch: any ): boolean
 
 
     /**
@@ -125,24 +120,27 @@ module.exports = Interface( 'StepUi',
      * there are no more invalid visible elements, except in the case of
      * required fields.
      *
-     * @param {Object} cmatch cmatch data
+     * @param cmatch - cmatch data
      *
-     * @return String id of element, or empty string
+     * @return id of element, or empty string
      */
-    'public getFirstInvalidField': [ 'cmatch' ],
+    getFirstInvalidField( cmatch: any ): Array<string | number | boolean>
 
 
     /**
      * Scrolls to the element identified by the given id
      *
-     * @param {string}  field        name of field to scroll to
-     * @param {number}  i            index of field to scroll to
-     * @param {boolean} show_message whether to show the tooltip
-     * @param {string}  message      tooltip message to display
-     *
-     * @return {StepUi} self to allow for method chaining
+     * @param field        - name of field to scroll to
+     * @param i            - index of field to scroll to
+     * @param show_message - whether to show the tooltip
+     * @param message      - tooltip message to display
      */
-    'public scrollTo': [ 'field', 'i', 'show_message', 'message' ],
+    scrollTo(
+        field:        string,
+        i:            number,
+        show_message: boolean,
+        message:      string
+    ): this
 
 
     /**
@@ -150,45 +148,49 @@ module.exports = Interface( 'StepUi',
      * displayed
      *
      * Resetting the step will clear the invalidation flag.
-     *
-     * @return StepUi self to allow for method chaining
      */
-    'public invalidate': [],
+    invalidate(): void
 
 
     /**
      * Returns whether the step has been invalidated
      *
-     * @return Boolean true if step has been invalidated, otherwise false
+     * @return true if step has been invalidated, otherwise false
      */
-    'public isInvalid': [],
+    isInvalid(): boolean
 
 
     /**
      * Returns the GroupUi object associated with the given element name, if
      * known
      *
-     * @param {string} name element name
+     * @param name - element name
      *
-     * @return {GroupUi} group if known, otherwise null
+     * @return group if known, otherwise null
      */
-    getElementGroup: [ 'name' ],
+    getElementGroup( name: string ): GroupUi | null
 
 
     /**
      * Forwards add/remove hiding requests to groups
      *
-     * @param {boolean} value whether to hide (default: true)
-     *
-     * @return {StepUi} self
+     * @param value - whether to hide (default: true)
      */
-    'public hideAddRemove': [ 'value' ],
+    hideAddRemove( value: boolean ): this
 
 
-    'public preRender': [],
+    /**
+     * Call prerender for all groups
+     */
+    preRender(): this
 
 
-    'public visit': [ 'callback' ],
+    /**
+     * Visit all groups
+     *
+     * @param callback - A function to call on completion
+     */
+    visit( callback: any ): this
 
 
     /**
@@ -197,11 +199,9 @@ module.exports = Interface( 'StepUi',
      * A step should be marked as active when it is the step that is currently
      * accessible to the user.
      *
-     * @param {boolean} active whether step is active
-     *
-     * @return {StepUi} self
+     * @param active - whether step is active
      */
-    'public setActive': [ 'active' ],
+    setActive( active: boolean ): this
 
 
     /**
@@ -210,9 +210,7 @@ module.exports = Interface( 'StepUi',
      * If the lock status has changed, the elements on the step will be
      * disabled/enabled respectively.
      *
-     * @param {boolean} lock whether step should be locked
-     *
-     * @return {StepUi} self
+     * @param lock - whether step should be locked
      */
-    'public lock': [ 'lock' ]
-} );
+    lock( lock: boolean ): this
+}

@@ -20,6 +20,7 @@
  */
 
 import { PositiveInteger } from "../numeric";
+import { EventEmitter } from "events";
 
 
 export type StagingBucketConstructor = (
@@ -30,7 +31,7 @@ export type StagingBucketConstructor = (
 /**
  * Stages and merges values into underlying key/value store
  */
-export declare class StagingBucket
+export declare class StagingBucket extends EventEmitter
 {
     /**
      * Analgous to setValues(), but immediately commits the changes

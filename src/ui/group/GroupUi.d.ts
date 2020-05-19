@@ -41,4 +41,23 @@ export declare class GroupUi
      * built-in index tracking.
      */
     getCurrentIndexCount(): PositiveInteger;
+
+
+    /**
+     * Sets element value given a name and index
+     *
+     * This has the performance benefit of searching *only* within the group
+     * rather than scanning the entire DOM (or a much larger subset)
+     *
+     * @param name         - element name
+     * @param index        - index to set
+     * @param value        - value to set
+     * @param change_event - whether to trigger change event
+     */
+    setValueByName(
+        name:         string,
+        index:        number,
+        value:        string,
+        change_event: boolean
+    ):this
 }
