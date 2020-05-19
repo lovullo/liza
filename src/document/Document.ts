@@ -59,4 +59,7 @@ export type DocumentMeta =
 
     /** The time the document was updated */
     lastUpdate: UnixTimestamp,
+
+    /** The time the document will expire */
+    expDate: UnixTimestamp,
 }

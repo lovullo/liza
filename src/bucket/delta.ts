@@ -97,6 +97,9 @@ export interface DeltaDocument
     /** The time the document was updated */
     lastUpdate: UnixTimestamp,
 
+    /** The time the document expires */
+    quoteExpDate: UnixTimestamp,
+
     /** The data bucket */
     data: Record<string, any>,
 
