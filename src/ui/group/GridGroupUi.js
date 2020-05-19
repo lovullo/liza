@@ -47,6 +47,11 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'override protected processContent': function( quote )
     {
+        // Sets the parent element
+        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
+
+        this.context.createFieldCache();
+
         let selector = this.$content[ 0 ].querySelector( '.groupGrid' );
 
         if ( selector !== null && selector.classList.contains( 'locked' ) )
@@ -71,5 +76,54 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
             .length;
 
         return Math.max(child_count, 1);
+    },
+
+
+    /**
+     * This group does not support multiple indexes
+     *
+     * @return {boolean}
+     */
+    'protected override supportsMultipleIndex': function()
+    {
+        return false;
+    },
+
+
+    /**
+     * Permit adding only a single index
+     *
+     * @param {number} index index that has been added
+     *
+     * @return {GroupUi} self
+     */
+    'protected override addIndex': function( index )
+    {
+        if ( index > 0 )
+        {
+            return this;
+        }
+
+        return this.__super( index );
+    },
+
+
+    /**
+     * Permit removing only the first index
+     *
+     * This follows from #addIndex, since only one will ever exist.
+     *
+     * @param {number} index index that has been removed
+     *
+     * @return {GroupUi} self
+     */
+    'protected override removeIndex': function( index )
+    {
+        if ( index > 0 )
+        {
+            return this;
+        }
+
+        return this.__super( index );
     }
 } );
