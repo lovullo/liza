@@ -24,7 +24,7 @@ const Cell = require( "../../../src/ui/group/GridCellGroupUi" );
 const sinon = require( 'sinon' );
 
 import { expect } from 'chai';
-import { createSut, createQuote, createJqueryContent } from "./CommonResources";
+import { createSut, createQuote, createContent, getDomElement } from "./CommonResources";
 
 before(function () {
   this.jsdom = require( 'jsdom-global' )();
@@ -42,12 +42,16 @@ describe( "GridGroup", () =>
       {
         columns: 1,
         input: [ "column1" ],
-        output: [ "100%" ]
+        output: [ "100%" ],
+        expected_class_added : "col-1",
+        expected_class_removed: "col-99",
       },
       {
         columns: 2,
         input: [ "column1", "column2", "column1", "column2" ],
-        output: [ "50%", "50%", "50%", "50%" ]
+        output: [ "50%", "50%", "50%", "50%" ],
+        expected_class_added : "col-2",
+        expected_class_removed: "col-0",
       },
       {
         columns: 3,
@@ -56,16 +60,26 @@ describe( "GridGroup", () =>
           "33.333333333333336%",
           "33.333333333333336%",
           "33.333333333333336%"
-        ]
+        ],
+        expected_class_added : "col-3",
+        expected_class_removed: "col-99",
       },
       {
         columns: 4,
         input: [ "column1", "column2", "column3", "column4" ],
-        output: [ "25%", "25%", "25%", "25%" ]
-      }
+        output: [ "25%", "25%", "25%", "25%" ],
+        expected_class_added : "col-4",
+        expected_class_removed: "col-99",
+      },
     ].forEach( data =>
     {
-      let { columns, input, output } = data;
+      let {
+        columns,
+        input,
+        output,
+        expected_class_added,
+        expected_class_removed
+      } = data;
 
       it( `sets the width of its children for ${columns} columns`, () =>
       {
@@ -73,10 +87,9 @@ describe( "GridGroup", () =>
 
         const children = input.map( ( xType: string ) =>
           {
-            let $content = createJqueryContent();
-            $content[ 0 ].getAttribute = sinon.stub().returns( xType );
+            let cell = createSut( Cell );
 
-            let cell = createSut( Cell, { $content : $content } );
+            cell.getXType = (): string => xType;
 
             cell.setColumnWidth = ( width: string ) => {
               widths.push( width );
@@ -88,11 +101,33 @@ describe( "GridGroup", () =>
           }
         );
 
-        const sut = createSut( Sut, { children: children } );
+        const content = createContent();
+
+        const grid = getDomElement();
+        let add_column_class = '';
+        let actual_column_removed: string = '';
+
+        content.querySelector
+          .withArgs( '.groupGrid' )
+          .returns( grid );
+
+        grid.classList = getClassList( expected_class_removed );
+
+        grid.classList.add = ( classname: string ) => {
+          add_column_class = classname;
+        };
+
+        grid.classList.remove = ( class_name: string ) => {
+          actual_column_removed = class_name;
+        };
+
+        const sut = createSut( Sut, { children: children, content: content } );
 
         sut.init( createQuote() );
         sut.visit();
 
+        expect( add_column_class ).to.equal( expected_class_added );
+        expect( actual_column_removed ).to.equal( expected_class_removed );
         expect( widths ).to.deep.equal( output );
       } )
     } );
@@ -126,10 +161,9 @@ describe( "GridGroup", () =>
 
           const children = input.map( ( xType: string, index: number ) =>
             {
-              let $content = createJqueryContent();
-              $content[ 0 ].getAttribute = sinon.stub().returns( xType );
+              let cell = createSut( Cell );
 
-              let cell = createSut( Cell, { $content : $content } );
+              cell.getXType = (): string => xType;
 
               cell.setColumnWidth = ( width: string ) => {
                 widths.push( width );
@@ -141,7 +175,13 @@ describe( "GridGroup", () =>
             }
           );
 
-          const sut = createSut( Sut, { children: children } );
+          const content = createContent();
+
+          content.querySelector
+            .withArgs( '.groupGrid' )
+            .returns( getDomElement() );
+
+          const sut = createSut( Sut, { children: children, content: content } );
 
           sut.init( createQuote() );
           sut.visit();
@@ -153,3 +193,13 @@ describe( "GridGroup", () =>
 } );
 
 
+export const getClassList = ( class_name: string ) =>
+{
+  return {
+    contains: sinon.stub().returns( false ),
+    add: sinon.stub(),
+    remove: sinon.stub(),
+    length: 1,
+    0: class_name,
+  }
+};

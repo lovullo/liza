@@ -23,7 +23,7 @@ const Sut  = require( "../../../src/ui/group/GridCellGroupUi" );
 const sinon = require( 'sinon' );
 
 import { expect } from 'chai';
-import { createSut, createQuote, createJqueryContent } from "./CommonResources";
+import { createSut, createQuote, createContent } from "./CommonResources";
 
 before(function () {
   this.jsdom = require( 'jsdom-global' )();
@@ -55,10 +55,10 @@ describe( "GridCellGroup", () =>
     it( "detects when the cell is visible", () =>
     {
 
-      const $content = createJqueryContent();
-      $content[0].classList.contains = sinon.stub().returns( true );
+      const content = createContent();
+      content.classList.contains = sinon.stub().returns( true );
 
-      const sut = createSut( Sut, { $content: $content }  );
+      const sut = createSut( Sut, { content: content }  );
 
       expect( sut.cellIsVisible() ).to.be.false;
 

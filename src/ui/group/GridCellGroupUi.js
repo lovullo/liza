@@ -1,7 +1,7 @@
 /**
- * Grid Cell Group UI
+ *  Grid Cell Group UI
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -24,13 +24,6 @@ var Class   = require( 'easejs' ).Class,
 
 module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
 {
-    /**
-     * Target parent element
-     *
-     * @prop {HTMLElement} _box
-     */
-    'private _box': null,
-
     /**
      * Reference to the cell's marker on the x-axis
      *
@@ -76,7 +69,7 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
      */
     'public setColumnWidth': function ( width )
     {
-        this._box.style.width = width;
+        this.content.style.width = width;
     },
 
 
@@ -93,22 +86,11 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
 
 
     /**
-     * Performs any necessary processing on the content before it's displayed
-     *
-     * @param {object} quote Quote
-     */
-    'override protected processContent': function( quote )
-    {
-        this._box = this._getBox();
-    },
-
-
-    /**
      * Read all data attributes
      */
     'private _processDataAttributes': function()
     {
-        this._x_type = this._box.getAttribute( 'data-x-type' );
+        this._x_type = this.content.getAttribute( 'data-x-type' );
     },
 
 
@@ -117,20 +99,9 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
      */
     'private _processClasses': function()
     {
-        this._cell_visible = this._box.classList.contains( 'cell-visible' );
+        this._cell_visible = this.content.classList.contains( 'cell-visible' );
 
         const operation = this._cell_visible ? "remove" : "add";
-        this._box.classList[ operation ]( 'hidden' );
+        this.content.classList[ operation ]( 'hidden' );
     },
-
-
-    /**
-     * Get the target parent element from the DOM
-     *
-     * @return {HTMLElement}
-     */
-    'private _getBox': function()
-    {
-        return this.$content[ 0 ];
-    }
 } );

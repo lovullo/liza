@@ -44,7 +44,8 @@ export const createContent = () =>
   return {
     querySelector: sinon.stub(),
     querySelectorAll: sinon.stub(),
-    getAttribute: sinon.stub().returns( null )
+    getAttribute: sinon.stub().returns( 'foo' ),
+    classList: createClassList(),
   };
 }
 
