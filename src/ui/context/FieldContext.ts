@@ -153,9 +153,14 @@ export class FieldContext
             opt.value = opt_value;
             opt.text = options[ item ].label;
             field_element.appendChild( opt );
-        }
 
-        field_element.value = value_to_set;
+            // if we found our value, select it
+            if ( ''+opt_value === ''+value_to_set )
+            {
+                field_element.value = value_to_set;
+                this.setValue( value_to_set );
+            }
+        }
     }
 
 

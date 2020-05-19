@@ -297,10 +297,11 @@ describe( "FieldContext", () =>
                     '<option value="baz">Baz goes here</option>' +
                 '</select>' +
                 '</dd>',
+            expected_set_val_calls: 1,
             expected_val: 'baz'
         },
         {
-            label: 'setOptions sets previous value',
+            label: 'setOptions sets previous value when new value is not provided and old value still exists',
             options: [
                 { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
                 { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
@@ -312,16 +313,65 @@ describe( "FieldContext", () =>
                     '<option value="bar">Bar goes here</option>' +
                 '</select>' +
                 '</dd>',
+            expected_set_val_calls: 1,
             expected_val: 'bar'
         },
-    ].forEach( ( { label, options, value, expected, expected_val } ) => {
+        {
+            label: 'setOptions sets default value when requested value is not an option',
+            options: [
+                { value: '', label: 'I am the default', label_id: 'foo_label' },
+                { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
+            ],
+            value: 'baz',
+            expected: '<dd id="qcontainer_select_element">' +
+                '<select id="q_select_element_0">' +
+                '<option value="">I am the default</option>' +
+                '<option value="bar">Bar goes here</option>' +
+                '</select>' +
+                '</dd>',
+            expected_set_val_calls: 0,
+            expected_val: ''
+        },
+        {
+            label: 'setOptions sets default value when new value is not provided and old value no longer exists',
+            options: [
+                { value: '', label: 'I am the default', label_id: 'foo_label' },
+                { value: 'baz', label: 'Baz', label_id: 'baz_label' },
+            ],
+            value: undefined,
+            expected: '<dd id="qcontainer_select_element">' +
+                '<select id="q_select_element_0">' +
+                '<option value="">I am the default</option>' +
+                '<option value="baz">Baz</option>' +
+                '</select>' +
+                '</dd>',
+            expected_set_val_calls: 0,
+            expected_val: ''
+        },
+    ].forEach( ( {
+             label,
+             options,
+             value,
+             expected,
+             expected_set_val_calls,
+             expected_val } ) => {
         it( label, () => {
 
             const group_content = getGroupContent();
             const content = group_content.querySelector( "#qcontainer_select_element" );
+            const styler = getStylerStub();
+
+            let set_value_calls = 0;
+            let given_set_value = '';
+            styler.setValue = ( _content: any, value: string ) =>
+            {
+                set_value_calls++
+                given_set_value = value;
+            };
+
             const sut = new Sut(
                 document,
-                getStylerStub(),
+                styler,
                 'q_select_element_0',
                 <ContextContent>content
             );
@@ -330,8 +380,10 @@ describe( "FieldContext", () =>
 
             const final_content = sut.getFirstOfContentSet();
             const selected_option = <HTMLSelectElement>final_content.querySelector( '#q_select_element_0' );
-            expect( final_content.outerHTML ).to.equal( expected );
             expect( selected_option?.value ).to.equal( expected_val );
+            expect( final_content.outerHTML ).to.equal( expected );
+            expect( set_value_calls ).to.equal( expected_set_val_calls );
+            expect( given_set_value ).to.equal( expected_val );
         } )
     } );
 
