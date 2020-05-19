@@ -51,6 +51,7 @@ export const createContent = () =>
 export const createContext = () =>
 {
   return {
+    createFieldCache:   () => {},
     detachFields:       () => {},
     detachStoreContent: () => {},
     hide:               () => {},
