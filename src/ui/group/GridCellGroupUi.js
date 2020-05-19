@@ -82,6 +82,7 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
 
         this._processDataAttributes();
         this._processClasses();
+        this._addEventListeners();
     },
 
 
@@ -104,4 +105,45 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
         const operation = this._cell_visible ? "remove" : "add";
         this.content.classList[ operation ]( 'hidden' );
     },
+
+
+    /**
+     * Add event listeners to the cell
+     */
+    'private _addEventListeners': function()
+    {
+        const content = this.content.querySelector( ".content" );
+
+        if ( content )
+        {
+            content.addEventListener( "click", this._onContentClick );
+        }
+
+        const actions = this.content.querySelector( ".actions" );
+
+        if ( actions )
+        {
+            actions.addEventListener( "click", this._onActionsClick );
+        }
+    },
+
+
+    /**
+     * Handle event when content section is clicked
+     *
+     * @param {MouseEvent} e Click event
+     */
+    'private _onContentClick': function ( e )
+    {
+    },
+
+
+     /**
+     * Handle event when actions section is clicked
+     *
+     * @param {MouseEvent} e Click event
+     */
+    'private _onActionsClick': function ( e )
+    {
+    }
 } );
