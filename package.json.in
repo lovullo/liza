@@ -34,6 +34,9 @@
     "memcached":     "2.2.2",
     "php-serialize": "3.0.1"
   },
+  "optionalDependencies": {
+    "@splitsoftware/splitio": "10.12.1"
+  },
   "devDependencies": {
     "typescript":              "~3.7",
     "@types/node":             "12.12.11",

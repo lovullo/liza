@@ -213,7 +213,7 @@ function createSut( content, jquery, tabCount )
 
     const styler = { apply: sinon.stub() };
 
-    const feature_flag = { getDomPerfFlag: () => { return false; } };
+    const feature_flag = { isEnabled: ( _ ) => { return false; } };
 
     const sut = Sut( group, content, styler, jquery, context, {}, null, feature_flag );
     sut.getCurrentIndexCount = sinon.stub().returns( tabCount );

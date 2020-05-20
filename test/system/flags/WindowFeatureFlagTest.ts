@@ -1,5 +1,5 @@
 /**
- * Test case for FeatureFlag
+ * Test case for WindowFeatureFlag
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -20,7 +20,7 @@
  */
 
 import { expect } from 'chai';
-import { FeatureFlag as Sut } from "../../src/ui/FeatureFlag";
+import { WindowFeatureFlag as Sut } from "../../../src/system/flags/WindowFeatureFlag";
 
 before(function () {
     this.jsdom = require('jsdom-global')()
@@ -31,13 +31,13 @@ after(function () {
 })
 
 
-describe( "FeatureFlag", () =>
+describe( "WindowFeatureFlag", () =>
 {
     it( "getDomPerfFlag is true when global is set", () =>
     {
         (<any>window).dom_perf_flag = true;
         const sut = Sut.getInstance();
-        expect( sut.getDomPerfFlag() ).to.be.true;
+        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.true;
         (<any>window).dom_perf_flag = undefined;
     } );
 
@@ -45,7 +45,7 @@ describe( "FeatureFlag", () =>
     it( "getDomPerfFlag is false when global is not defined", () =>
     {
         const sut = Sut.getInstance();
-        expect( sut.getDomPerfFlag() ).to.be.false;
+        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.false;
     } );
 
 
@@ -53,7 +53,7 @@ describe( "FeatureFlag", () =>
     {
         (<any>window).dom_perf_flag = false;
         const sut = Sut.getInstance();
-        expect( sut.getDomPerfFlag() ).to.be.false;
+        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.false;
         (<any>window).dom_perf_flag = undefined;
     } );
 

@@ -224,13 +224,13 @@ module.exports = Class( 'GroupUi' )
         children
     )
     {
-        this.group     = group;
-        this.content   = content;
-        this.styler    = styler;
-        this.jquery    = jquery;
-        this.context   = context;
-        this.rcontext  = rcontext;
-        this._naStyler = na_styler;
+        this.group         = group;
+        this.content       = content;
+        this.styler        = styler;
+        this.jquery        = jquery;
+        this.context       = context;
+        this.rcontext      = rcontext;
+        this._naStyler     = na_styler;
         this._feature_flag = feature_flag;
 
         // Todo: Transition away from jQuery
@@ -404,7 +404,7 @@ module.exports = Class( 'GroupUi' )
      */
     'public getDomPerfFlag': function()
     {
-        return this._feature_flag.getDomPerfFlag();
+        return this._feature_flag.isEnabled( 'dom_perf_flag' );
     },
 
 
