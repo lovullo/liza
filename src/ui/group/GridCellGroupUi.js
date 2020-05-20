@@ -22,7 +22,7 @@
 var Class   = require( 'easejs' ).Class,
     GroupUi = require( './GroupUi' );
 
-module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
+module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
 {
     /**
      * Reference to the cell's marker on the x-axis
@@ -59,17 +59,6 @@ module.exports = Class( 'GridcellGroupUi' ).extend( GroupUi,
     'public getXType': function()
     {
         return this._x_type;
-    },
-
-
-    /**
-     * Set the width of this cell
-     *
-     * @param {string} width
-     */
-    'public setColumnWidth': function ( width )
-    {
-        this.content.style.width = width;
     },
 
 

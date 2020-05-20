@@ -42,32 +42,24 @@ describe( "GridGroup", () =>
       {
         columns: 1,
         input: [ "column1" ],
-        output: [ "100%" ],
         expected_class_added : "col-1",
         expected_class_removed: "col-99",
       },
       {
         columns: 2,
         input: [ "column1", "column2", "column1", "column2" ],
-        output: [ "50%", "50%", "50%", "50%" ],
         expected_class_added : "col-2",
         expected_class_removed: "col-0",
       },
       {
         columns: 3,
         input: [ "column1", "column2", "column3" ],
-        output: [
-          "33.333333333333336%",
-          "33.333333333333336%",
-          "33.333333333333336%"
-        ],
         expected_class_added : "col-3",
         expected_class_removed: "col-99",
       },
       {
         columns: 4,
         input: [ "column1", "column2", "column3", "column4" ],
-        output: [ "25%", "25%", "25%", "25%" ],
         expected_class_added : "col-4",
         expected_class_removed: "col-99",
       },
@@ -76,24 +68,17 @@ describe( "GridGroup", () =>
       let {
         columns,
         input,
-        output,
         expected_class_added,
         expected_class_removed
       } = data;
 
-      it( `sets the width of its children for ${columns} columns`, () =>
+      it( `sets the css class for ${columns} columns`, () =>
       {
-        let widths: string[] = [];
-
         const children = input.map( ( xType: string ) =>
           {
             let cell = createSut( Cell );
 
             cell.getXType = (): string => xType;
-
-            cell.setColumnWidth = ( width: string ) => {
-              widths.push( width );
-            };
 
             cell.cellIsVisible = (): boolean => true;
 
@@ -128,46 +113,33 @@ describe( "GridGroup", () =>
 
         expect( add_column_class ).to.equal( expected_class_added );
         expect( actual_column_removed ).to.equal( expected_class_removed );
-        expect( widths ).to.deep.equal( output );
       } )
     } );
 
 
-    it( `sets the width of its children when some columns aren't visible`, () => {
+    it( `sets the css class when some columns aren't visible`, () => {
       [
-        // One column that is not visible - width is not Infinity
+        // One column that is not visible
         {
           input: [ "column1" ],
-          output: [ "100%" ],
-          visibility: [ false ]
-        },
-        // One column that is visible
-        {
-          input: [ "column1" ],
-          output: [ "100%" ],
-          visibility: [ false ]
+          visibility: [ false ],
+          expected_class_added : "col-0",
         },
         // Four columns but only two are visible
         {
           input: [ "column1", "column2", "column3", "column4" ],
-          output: [ "50%", "50%", "50%", "50%" ],
-          visibility: [ true, false, false, true ]
+          visibility: [ true, false, false, true ],
+          expected_class_added : "col-2",
         }
       ].forEach( data =>
       {
-        let { input, output, visibility } = data;
-
-          let widths: string[] = [];
+        let { input, visibility, expected_class_added } = data;
 
           const children = input.map( ( xType: string, index: number ) =>
             {
               let cell = createSut( Cell );
 
               cell.getXType = (): string => xType;
-
-              cell.setColumnWidth = ( width: string ) => {
-                widths.push( width );
-              };
 
               cell.cellIsVisible = (): boolean => visibility[ index ];
 
@@ -177,16 +149,23 @@ describe( "GridGroup", () =>
 
           const content = createContent();
 
+          const grid = getDomElement();
+          let add_column_class = '';
+
           content.querySelector
             .withArgs( '.groupGrid' )
-            .returns( getDomElement() );
+            .returns( grid );
+
+          grid.classList.add = ( classname: string ) => {
+            add_column_class = classname;
+          };
 
           const sut = createSut( Sut, { children: children, content: content } );
 
           sut.init( createQuote() );
           sut.visit();
 
-          expect( widths ).to.deep.equal( output );
+          expect( add_column_class ).to.equal( expected_class_added );
       } );
     } );
   } );

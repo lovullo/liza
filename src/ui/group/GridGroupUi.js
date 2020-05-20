@@ -44,11 +44,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
         const column_count = this._getColumnCount();
 
-        const COLUMN_WIDTH = ( 100 / column_count ) + "%";
-
         this._setColumnClass( column_count );
-
-        this._children.forEach( child => child.setColumnWidth( COLUMN_WIDTH ) );
     },
 
 
@@ -88,7 +84,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
             .filter( unique )
             .length;
 
-        return Math.max(child_count, 1);
+        return child_count;
     },
 
 
