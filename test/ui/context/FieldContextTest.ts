@@ -301,6 +301,24 @@ describe( "FieldContext", () =>
             expected_val: 'baz'
         },
         {
+            label: 'setOptions sets new value when empty string',
+            options: [
+                { value: '', label: 'Foo goes here', label_id: 'foo_label' },
+                { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
+                { value: 'baz', label: 'Baz goes here', label_id: 'baz_label' },
+            ],
+            value: '',
+            expected: '<dd id="qcontainer_select_element">' +
+                '<select id="q_select_element_0">' +
+                '<option value="">Foo goes here</option>' +
+                '<option value="bar">Bar goes here</option>' +
+                '<option value="baz">Baz goes here</option>' +
+                '</select>' +
+                '</dd>',
+            expected_set_val_calls: 1,
+            expected_val: ''
+        },
+        {
             label: 'setOptions sets previous value when new value is not provided and old value still exists',
             options: [
                 { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
