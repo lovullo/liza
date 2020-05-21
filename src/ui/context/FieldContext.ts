@@ -141,7 +141,7 @@ export class FieldContext
         }
 
         // if new value is not provided reset the old value
-        const value_to_set = value || field_element?.value;
+        const value_to_set = value ?? field_element?.value;
         field_element.innerHTML = '';
 
         for ( let item in options )
