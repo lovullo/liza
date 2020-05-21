@@ -32,6 +32,13 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
     'private _x_type': null,
 
     /**
+     * Target inner div
+     *
+     * @prop {HTMLElement} _box
+     */
+    'private _box': null,
+
+    /**
      * If the cell is visible
      *
      * @prop {boolean} _cell_visible
@@ -67,7 +74,6 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
      */
     'override public visit': function()
     {
-        this.__super();
 
         this._processDataAttributes();
         this._processClasses();
@@ -76,11 +82,33 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
 
 
     /**
+     * Process content of the group
+     *
+     * @param {ClientQuote} quote Quote
+     */
+    'override protected processContent': function( quote )
+    {
+        this._box = this._getBox();
+    },
+
+
+    /**
+     * Get the targeted inner div
+     *
+     * @return {HTMLElement} Inner div
+     */
+    'private _getBox': function()
+    {
+        return this.content.querySelector( "div" );
+    },
+
+
+    /**
      * Read all data attributes
      */
     'private _processDataAttributes': function()
     {
-        this._x_type = this.content.getAttribute( 'data-x-type' );
+        this._x_type = this._box.getAttribute( 'data-x-type' );
     },
 
 

@@ -23,7 +23,7 @@ const Sut    = require( '../../../' ).ui.group.GroupUi,
       expect = require( 'chai' ).expect,
       sinon  = require( 'sinon' );
 
-import { createSut, createGroup, createQuote, createContext } from "./CommonResources";
+import { createSut, createGroup, createQuote, createContext, createContent } from "./CommonResources";
 
 
 describe( 'ui.group.GroupUi', () =>
@@ -199,6 +199,46 @@ describe( 'ui.group.GroupUi', () =>
       sut.setValueByName( field_name, field_index, 'foo' );
       expect( styler_set_value_called ).to.equal( styler_set_value_expected );
       expect( context_set_value_called ).to.equal( context_set_value_expected );
+    } );
+  } );
+
+
+  describe( "#setChildren", () =>
+  {
+    it( "doesn't set children when it contains none", () =>
+    {
+      const content = createContent();
+
+      content.querySelectorAll = () => [];
+
+      const sut = createSut( Sut, { content: content } );
+
+      let groups = [ { getGroupId: () => 'group_child1' } ];
+      expect( sut.setChildren( groups ) ).to.be.false;
+    } );
+
+    it( "sets children", () =>
+    {
+      const content = createContent();
+
+      content.querySelectorAll = () =>
+      {
+        return [
+          { getAttribute: () => 'group_child1' },
+          { getAttribute: () => 'group_child2' }
+        ]
+      };
+
+      const sut = createSut( Sut, { content: content } );
+
+      let group = { getGroupId: () => 'group_child1' };
+      expect( sut.setChildren( [ group ] ) ).to.be.true;
+
+      group = { getGroupId: () => 'group_child2' };
+      expect( sut.setChildren( [ group ] ) ).to.be.true;
+
+      group = { getGroupId: () => 'invalid_group' };
+      expect( sut.setChildren( [ group ] ) ).to.be.false;
     } );
   } );
 } );

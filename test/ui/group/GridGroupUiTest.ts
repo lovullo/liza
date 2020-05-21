@@ -24,7 +24,7 @@ const Cell = require( "../../../src/ui/group/GridCellGroupUi" );
 const sinon = require( 'sinon' );
 
 import { expect } from 'chai';
-import { createSut, createQuote, createContent, getDomElement } from "./CommonResources";
+import { createSut, createQuote, createContent, getDomElement, createBoxContent } from "./CommonResources";
 
 before(function () {
   this.jsdom = require( 'jsdom-global' )();
@@ -74,13 +74,17 @@ describe( "GridGroup", () =>
 
       it( `sets the css class for ${columns} columns`, () =>
       {
-        const children = input.map( ( xType: string ) =>
+        const children = input.map( ( xType: string, index: number ) =>
           {
-            let cell = createSut( Cell );
+            let boxContent = createBoxContent();
+            boxContent.classList.contains = sinon.stub().returns( true );
 
-            cell.getXType = (): string => xType;
+            let cell = createSut( Cell, { content: boxContent } );
+            cell.init( createQuote() );
 
+            cell.getGroupId = () => index;
             cell.cellIsVisible = (): boolean => true;
+            cell.getXType = (): string => xType;
 
             return cell;
           }
@@ -88,11 +92,17 @@ describe( "GridGroup", () =>
 
         const content = createContent();
 
+        content.querySelectorAll = () => children.map( ( _child, index: number) => {
+          return {
+            getAttribute: () => index
+          };
+        });
+
         const grid = getDomElement();
         let add_column_class = '';
         let actual_column_removed: string = '';
 
-        content.querySelector
+        content.querySelector = sinon.stub()
           .withArgs( '.groupGrid' )
           .returns( grid );
 
@@ -106,7 +116,9 @@ describe( "GridGroup", () =>
           actual_column_removed = class_name;
         };
 
-        const sut = createSut( Sut, { children: children, content: content } );
+        const sut = createSut( Sut, { content: content } );
+
+        sut.setChildren( children )
 
         sut.init( createQuote() );
         sut.visit();
@@ -137,17 +149,28 @@ describe( "GridGroup", () =>
 
           const children = input.map( ( xType: string, index: number ) =>
             {
-              let cell = createSut( Cell );
+              let boxContent = createBoxContent();
+              boxContent.classList.contains = sinon.stub().returns( true );
 
-              cell.getXType = (): string => xType;
+              let cell = createSut( Cell, { content: boxContent } );
 
+              cell.init( createQuote() );
+
+              cell.getGroupId = () => index;
               cell.cellIsVisible = (): boolean => visibility[ index ];
+              cell.getXType = (): string => xType;
 
               return cell;
             }
           );
 
           const content = createContent();
+
+          content.querySelectorAll = () => children.map( ( _child, index: number) => {
+            return {
+              getAttribute: () => index
+            };
+          });
 
           const grid = getDomElement();
           let add_column_class = '';
@@ -160,7 +183,9 @@ describe( "GridGroup", () =>
             add_column_class = classname;
           };
 
-          const sut = createSut( Sut, { children: children, content: content } );
+          const sut = createSut( Sut, { content: content } );
+
+          sut.setChildren( children )
 
           sut.init( createQuote() );
           sut.visit();

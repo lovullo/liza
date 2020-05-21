@@ -60,4 +60,8 @@ export declare class GroupUi
         value:        string,
         change_event: boolean
     ):this
+
+    hasChildren(): boolean;
+
+    setChildren(): void;
 }

@@ -327,7 +327,6 @@ module.exports = Class( 'ClientDependencyFactory',
     {
         // default
         var obj = FlatGroupUi;
-        var children = [];
 
         if ( content.classList.contains( 'table' ) )
         {
@@ -360,24 +359,6 @@ module.exports = Class( 'ClientDependencyFactory',
         else if ( content.classList.contains( 'grid' ) )
         {
             obj = GridGroupUi;
-
-            let cells = content.querySelectorAll( ".gridcell" );
-
-            for ( let i = 0; i < cells.length; i++ )
-            {
-                let node = cells[ i ];
-
-                children.push(
-                    this.createGroupUi(
-                        this.createGroup(),
-                        node,
-                        styler,
-                        root_context,
-                        na_styler,
-                        qtypes
-                    )
-                );
-            }
         }
         else if ( content.classList.contains( 'gridcell' ) )
         {
@@ -387,7 +368,7 @@ module.exports = Class( 'ClientDependencyFactory',
         const context = this.createGroupContext( qtypes, arefs, styler );
         const feature_flag = WindowFeatureFlag.getInstance();
         return obj(
-            group, content, styler, jQuery, context, root_context, na_styler, feature_flag, children
+            group, content, styler, jQuery, context, root_context, na_styler, feature_flag
         );
     },
 

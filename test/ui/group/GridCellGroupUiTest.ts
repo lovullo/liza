@@ -23,7 +23,7 @@ const Sut  = require( "../../../src/ui/group/GridCellGroupUi" );
 const sinon = require( 'sinon' );
 
 import { expect } from 'chai';
-import { createSut, createQuote, createContent } from "./CommonResources";
+import { createSut, createQuote, createBoxContent } from "./CommonResources";
 
 before(function () {
   this.jsdom = require( 'jsdom-global' )();
@@ -39,7 +39,7 @@ describe( "GridCellGroup", () =>
   {
     it( "detects x-type for a cell", () =>
     {
-      const sut = createSut( Sut );
+      const sut = createSut( Sut, { content: createBoxContent() } );
 
       expect( sut.getXType() ).to.be.null;
 
@@ -54,11 +54,11 @@ describe( "GridCellGroup", () =>
   {
     it( "detects when the cell is visible", () =>
     {
+      const content = createBoxContent();
 
-      const content = createContent();
       content.classList.contains = sinon.stub().returns( true );
 
-      const sut = createSut( Sut, { content: content }  );
+      const sut = createSut( Sut, { content: content } );
 
       expect( sut.cellIsVisible() ).to.be.false;
 
@@ -70,7 +70,7 @@ describe( "GridCellGroup", () =>
 
     it( "detects when the cell is not visible", () =>
     {
-      const sut = createSut( Sut );
+      const sut = createSut( Sut, { content: createBoxContent() } );
 
       expect( sut.cellIsVisible() ).to.be.false;
 
@@ -81,5 +81,4 @@ describe( "GridCellGroup", () =>
     } );
   } );
 } );
-
 

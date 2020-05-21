@@ -46,7 +46,17 @@ export const createContent = () =>
     querySelectorAll: sinon.stub(),
     getAttribute: sinon.stub().returns( 'foo' ),
     classList: createClassList(),
+    addEventListener: sinon.stub()
   };
+}
+
+export const createBoxContent = () =>
+{
+  const content = createContent();
+
+  content.querySelector = () => createContent();
+
+  return content;
 }
 
 export const createContext = () =>
@@ -86,7 +96,8 @@ export const createJqueryContent = () =>
   return {
     hide: sinon.stub(),
     find: sinon.stub().returns( { live: sinon.stub() } ),
-    0: getDomElement()
+    0: getDomElement(),
+    attr: sinon.stub()
   }
 }
 
@@ -156,7 +167,6 @@ export const createSut = ( Sut: any, input: any = {} ) =>
   const context       = input.context ?? createContext();
   const rcontext      = input.rcontext ?? createRContext();
   const feature_flag  = input.feature_flag ?? createFeatureFlag();
-  const children      = input.children ?? [];
   const styler        = input.styler ?? null;
 
   return Sut(
@@ -167,7 +177,6 @@ export const createSut = ( Sut: any, input: any = {} ) =>
     context,
     rcontext,
     null,
-    feature_flag,
-    children
+    feature_flag
   );
 }

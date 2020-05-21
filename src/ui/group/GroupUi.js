@@ -220,8 +220,7 @@ module.exports = Class( 'GroupUi' )
      * @return  {undefined}
      */
     'public __construct': function(
-        group, content, styler, jquery, context, rcontext, na_styler, feature_flag,
-        children
+        group, content, styler, jquery, context, rcontext, na_styler, feature_flag
     )
     {
         this.group         = group;
@@ -235,18 +234,11 @@ module.exports = Class( 'GroupUi' )
 
         // Todo: Transition away from jQuery
         this.$content   = this.jquery( content );
-
-        if ( Array.isArray( children ) )
-        {
-            this._children = children;
-        }
     },
 
 
     'public init': function( quote )
     {
-        this._children.forEach( child => child.init( quote ) );
-
         const fields = this.group.getExclusiveFieldNames();
         const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
 
@@ -271,6 +263,59 @@ module.exports = Class( 'GroupUi' )
         this._bindClasses( quote );
 
         return this;
+    },
+
+
+    /**
+     * Set child groups. When this is run, it will clear out any children
+     * previously observed.
+     *
+     * @param  {object} groups Child groups
+     *
+     * @return {boolean}       If children were added
+     */
+    'public setChildren': function( groups )
+    {
+        const children = this._getChildFieldsets();
+        let child_ids  = [];
+
+        if ( children.length === 0 )
+        {
+            return false;
+        }
+
+        this._children = [];
+
+        for ( let i = 0; i < children.length; i++ )
+        {
+            child_ids.push( children[ i ].getAttribute( "id" ) );
+        }
+
+        child_ids = child_ids.filter( id => id !== null && id !== "" );
+
+        for ( let group in groups )
+        {
+            const groupui = groups[ group ];
+            const is_child_id = child_ids.indexOf( groupui.getGroupId() ) !== -1;
+
+            if ( is_child_id && groupui !== this )
+            {
+                this._children.push( groupui );
+            }
+        }
+
+        return this._children.length > 0;
+    },
+
+
+    /**
+     * Get child fieldsets
+     *
+     * @return {NodeList} Child elements
+     */
+    'private _getChildFieldsets': function ()
+    {
+        return this.content.querySelectorAll( "fieldset" );
     },
 
 
