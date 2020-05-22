@@ -24,19 +24,27 @@ var Class   = require( 'easejs' ).Class,
 
 module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
 {
+
+    /**
+     * Reference to the bucket
+     *
+     * @prop {Bucket} _bucket
+     */
+    'private _bucket': null,
+
+    /**
+     * Inner container
+     *
+     * @prop {HTMLElement} _box
+     */
+    'private _box': null,
+
     /**
      * Reference to the cell's marker on the x-axis
      *
      * @prop {string} _x_type
      */
     'private _x_type': null,
-
-    /**
-     * Target inner div
-     *
-     * @prop {HTMLElement} _box
-     */
-    'private _box': null,
 
     /**
      * If the cell is visible
@@ -74,28 +82,43 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
      */
     'override public visit': function()
     {
-
         this._processDataAttributes();
         this._processClasses();
         this._addEventListeners();
+
+        const isPending  = this._state_manager.isPending( this._bucket );
+
+        this._setPending( isPending );
     },
 
 
     /**
      * Process content of the group
      *
-     * @param {ClientQuote} quote Quote
+     * @param {ClientQuote} quote quote
      */
     'override protected processContent': function( quote )
     {
         this._box = this._getBox();
+
+        quote.visitData( bucket =>
+        {
+            this._bucket = bucket;
+
+            this._bucket.on( 'stagingUpdate', () =>
+            {
+                this._setPending(
+                    this._state_manager.isPending( this._bucket )
+                );
+            })
+        } );
     },
 
 
     /**
      * Get the targeted inner div
      *
-     * @return {HTMLElement} Inner div
+     * @return {HTMLElement} inner div
      */
     'private _getBox': function()
     {
@@ -109,6 +132,8 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
     'private _processDataAttributes': function()
     {
         this._x_type = this._box.getAttribute( 'data-x-type' );
+
+        this._state_manager.processDataAttributes( this._box );
     },
 
 
@@ -120,7 +145,28 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
         this._cell_visible = this.content.classList.contains( 'cell-visible' );
 
         const operation = this._cell_visible ? "remove" : "add";
+
         this.content.classList[ operation ]( 'hidden' );
+    },
+
+
+    /**
+     * Apply the pending state to this group
+     *
+     * @param {boolean} isPending if the group is pending
+     */
+    'private _setPending': function( isPending )
+    {
+        const content = this._box.querySelector(".content");
+
+        if ( !content )
+        {
+            return;
+        }
+
+        const operation = isPending ? "add" : "remove";
+
+        content.classList[ operation ]( "pending" );
     },
 
 
@@ -148,7 +194,7 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
     /**
      * Handle event when content section is clicked
      *
-     * @param {MouseEvent} e Click event
+     * @param {MouseEvent} e click event
      */
     'private _onContentClick': function ( e )
     {
@@ -158,7 +204,7 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
      /**
      * Handle event when actions section is clicked
      *
-     * @param {MouseEvent} e Click event
+     * @param {MouseEvent} e click event
      */
     'private _onActionsClick': function ( e )
     {

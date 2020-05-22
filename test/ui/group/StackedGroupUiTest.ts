@@ -24,137 +24,137 @@ const Sut    = require( '../../../' ).ui.group.StackedGroupUi,
       sinon  = require( 'sinon' );
 
 import {
-  createSut,
-  createQuote,
-  createContent,
-  createContainer
+    createSut,
+    createQuote,
+    createContent,
+    createContainer
 } from "./CommonResources";
 
 
 describe( 'ui.group.StackedGroupUi', () =>
 {
-  describe( '#showField', function()
-  {
-    [
-      {
-        field: 'foo_bar',
-        index: 0,
-      },
-      {
-        field: 'bar_foo',
-        index: 1,
-      },
-    ].forEach( ( { field, index } ) =>
+    describe( '#showField', function()
     {
-      it( `it shows the header for ${field} when group fields are visible`, () =>
-      {
-        const container = createContainer();
-        const content   = createContent();
+        [
+            {
+                field: 'foo_bar',
+                index: 0,
+            },
+            {
+                field: 'bar_foo',
+                index: 1,
+            },
+        ].forEach( ( { field, index } ) =>
+        {
+            it( `it shows the header for ${field} when group fields are visible`, () =>
+            {
+                const container = createContainer();
+                const content   = createContent();
 
-        content.querySelector
-          .withArgs( 'div.stacked-container' )
-          .returns( container );
+                content.querySelector
+                    .withArgs( 'div.stacked-container' )
+                    .returns( container );
 
-        const sut = createSut(
-          Sut,
-          {
-            field: field,
-            content: content
-          }
-        );
+                const sut = createSut(
+                    Sut,
+                    {
+                        field: field,
+                        content: content
+                    }
+                );
 
-        const removeClass = sinon.stub();
+                const removeClass = sinon.stub();
 
-        const header = {
-          classList: {
-            remove: removeClass
-          },
-        };
+                const header = {
+                    classList: {
+                        remove: removeClass
+                    },
+                };
 
-        sut.getCurrentIndex = sinon.stub().returns( 10 );
-        sut.hasVisibleField = sinon.stub()
-          .withArgs( index )
-          .returns( true );
+                sut.getCurrentIndex = sinon.stub().returns( 10 );
+                sut.hasVisibleField = sinon.stub()
+                    .withArgs( index )
+                    .returns( true );
 
-        container.querySelectorAll
-          .withArgs( 'dl' )
-          .returns( [ header, header ] );
+                container.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
 
-        const quote = createQuote();
+                const quote = createQuote();
 
-        content.querySelectorAll
-          .withArgs( 'dl' )
-          .returns( [ header, header ] );
+                content.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
 
-        sut.init( quote );
-        sut.showField( field, index );
+                sut.init( quote );
+                sut.showField( field, index );
 
-        expect( removeClass.calledOnce ).to.be.true;
-      } );
+                expect( removeClass.calledOnce ).to.be.true;
+            } );
+        } );
     } );
-  } );
 
 
-  describe( '#hideField', function()
-  {
-    [
-      {
-        field: 'foo_baz',
-        index: 0,
-      },
-      {
-        field: 'baz_foo',
-        index: 1,
-      },
-    ].forEach( ( { field, index } ) =>
+    describe( '#hideField', function()
     {
-      it( `it hides the header for ${field} when no group fields are visible`, () =>
-      {
-        const container = createContainer();
-        const content   = createContent();
+        [
+            {
+                field: 'foo_baz',
+                index: 0,
+            },
+            {
+                field: 'baz_foo',
+                index: 1,
+            },
+        ].forEach( ( { field, index } ) =>
+        {
+            it( `it hides the header for ${field} when no group fields are visible`, () =>
+            {
+                const container = createContainer();
+                const content   = createContent();
 
-        content.querySelector
-          .withArgs( 'div.stacked-container' )
-          .returns( container );
+                content.querySelector
+                    .withArgs( 'div.stacked-container' )
+                    .returns( container );
 
-        const sut = createSut(
-          Sut,
-          {
-            field: field,
-            content: content
-          }
-        );
+                const sut = createSut(
+                    Sut,
+                    {
+                        field: field,
+                        content: content
+                    }
+                );
 
-        const addClass = sinon.stub();
+                const addClass = sinon.stub();
 
-        const header = {
-          classList: {
-            add: addClass
-          },
-        };
+                const header = {
+                    classList: {
+                        add: addClass
+                    },
+                };
 
-        sut.getCurrentIndex = sinon.stub().returns( 10 );
-        sut.hasVisibleField = sinon.stub()
-          .withArgs( index )
-          .returns( false );
+                sut.getCurrentIndex = sinon.stub().returns( 10 );
+                sut.hasVisibleField = sinon.stub()
+                    .withArgs( index )
+                    .returns( false );
 
-        container.querySelectorAll
-          .withArgs( 'dl' )
-          .returns( [ header, header ] );
+                container.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
 
-        const quote = createQuote();
+                const quote = createQuote();
 
-        content.querySelectorAll
-          .withArgs( 'dl' )
-          .returns( [ header, header ] );
+                content.querySelectorAll
+                    .withArgs( 'dl' )
+                    .returns( [ header, header ] );
 
-        sut.init( quote );
-        sut.hideField( field, index );
+                sut.init( quote );
+                sut.hideField( field, index );
 
-        expect( addClass.calledOnce ).to.be.true;
-      } );
+                expect( addClass.calledOnce ).to.be.true;
+            } );
+        } );
     } );
-  } );
 } );
 
 

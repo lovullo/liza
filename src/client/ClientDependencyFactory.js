@@ -46,6 +46,8 @@ var Step          = require( '../step/Step' ),
     GridGroupUi          = require( '../ui/group/GridGroupUi' ),
     GridCellGroupUi      = require( '../ui/group/GridCellGroupUi' ),
 
+    GroupStateManager  = require("../ui/group/GroupStateManager").GroupStateManager,
+
     Ui           = require( '../ui/Ui' ),
     UiStyler     = require( '../ui/UiStyler' ),
     UiNotifyBar  = require( '../ui/UiNotifyBar' ),
@@ -367,8 +369,18 @@ module.exports = Class( 'ClientDependencyFactory',
 
         const context = this.createGroupContext( qtypes, arefs, styler );
         const feature_flag = WindowFeatureFlag.getInstance();
+        const state_manager = new GroupStateManager();
+
         return obj(
-            group, content, styler, jQuery, context, root_context, na_styler, feature_flag
+            group,
+            content,
+            styler,
+            jQuery,
+            context,
+            root_context,
+            na_styler,
+            feature_flag,
+            state_manager
         );
     },
 

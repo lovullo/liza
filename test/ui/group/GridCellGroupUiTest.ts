@@ -26,59 +26,59 @@ import { expect } from 'chai';
 import { createSut, createQuote, createBoxContent } from "./CommonResources";
 
 before(function () {
-  this.jsdom = require( 'jsdom-global' )();
+    this.jsdom = require( 'jsdom-global' )();
 });
 
 after(function () {
-  this.jsdom();
+    this.jsdom();
 });
 
 describe( "GridCellGroup", () =>
 {
-  describe ( "gettXType", () =>
-  {
-    it( "detects x-type for a cell", () =>
+    describe ( "gettXType", () =>
     {
-      const sut = createSut( Sut, { content: createBoxContent() } );
+        it( "detects x-type for a cell", () =>
+        {
+            const sut = createSut( Sut, { content: createBoxContent() } );
 
-      expect( sut.getXType() ).to.be.null;
+            expect( sut.getXType() ).to.be.null;
 
-      sut.init( createQuote() );
-      sut.visit();
+            sut.init( createQuote() );
+            sut.visit();
 
-      expect( sut.getXType() ).to.equal( "foo" );
-    } );
-  } );
-
-  describe ( "cellIsVisible", () =>
-  {
-    it( "detects when the cell is visible", () =>
-    {
-      const content = createBoxContent();
-
-      content.classList.contains = sinon.stub().returns( true );
-
-      const sut = createSut( Sut, { content: content } );
-
-      expect( sut.cellIsVisible() ).to.be.false;
-
-      sut.init( createQuote() );
-      sut.visit();
-
-      expect( sut.cellIsVisible() ).to.be.true;
+            expect( sut.getXType() ).to.equal( "foo" );
+        } );
     } );
 
-    it( "detects when the cell is not visible", () =>
+    describe ( "cellIsVisible", () =>
     {
-      const sut = createSut( Sut, { content: createBoxContent() } );
+        it( "detects when the cell is visible", () =>
+        {
+            const content = createBoxContent();
 
-      expect( sut.cellIsVisible() ).to.be.false;
+            content.classList.contains = sinon.stub().returns( true );
 
-      sut.init( createQuote() );
-      sut.visit();
+            const sut = createSut( Sut, { content: content } );
 
-      expect( sut.cellIsVisible() ).to.be.false;
+            expect( sut.cellIsVisible() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            expect( sut.cellIsVisible() ).to.be.true;
+        } );
+
+        it( "detects when the cell is not visible", () =>
+        {
+            const sut = createSut( Sut, { content: createBoxContent() } );
+
+            expect( sut.cellIsVisible() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            expect( sut.cellIsVisible() ).to.be.false;
+        } );
     } );
-  } );
 } );
 

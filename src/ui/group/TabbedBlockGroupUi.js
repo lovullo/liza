@@ -71,12 +71,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
      */
     'private _defaultSelectionField': null,
 
-     /**
-     * Block flags
-     * @type {array}
-     */
-    'private _blockFlags': [],
-
     /**
      * Disable flags
      * @type {array}
@@ -133,15 +127,15 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
         var _self = this;
 
         var disable_attr     = this._box.getAttribute( 'data-disable-flags' );
-        var block_attr       = this._box.getAttribute( 'data-block-flags' );
         var disable_msg_attr = this._box.getAttribute( 'data-disable-message' );
 
         this._disableFlags = ( disable_attr ) ? disable_attr.split( ';' ) : [];
-        this._blockFlags   = ( block_attr ) ? block_attr.split( ' ' ) : [];
 
         this._disableMessage = ( disable_msg_attr )
             ? disable_msg_attr
-            : 'Unable to provide a rate at this time' ;
+            : 'Unable to provide a rate at this time';
+
+        this._state_manager.processDataAttributes( this._box );
 
         quote.visitData( function( bucket )
         {
@@ -292,36 +286,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
 
     /**
-     * Inspect blocking flags an evaluated a pending state
-     *
-     * @return {boolean} If there is some pending state
-     */
-    'private _processBlockFlags': function()
-    {
-        if ( this._blockFlags.length === 0 )
-        {
-            return this._setPending( false );
-        }
-
-        for ( var index in this._blockFlags )
-        {
-            var flag = this._blockFlags[ index ];
-            var data = this._bucket.getDataByName( flag ) || [];
-
-            for ( var data_index in data )
-            {
-                if ( +data[ data_index ] > 0 )
-                {
-                    return this._setPending( true );
-                }
-            }
-        }
-
-        return this._setPending( false );
-    },
-
-
-    /**
      * Handle forced-visibility for a disabled tab group when a blocking state
      * is resolved
      *
@@ -331,11 +295,6 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
      */
     'private _processUnavailable': function( isDisabled, isPending )
     {
-        if ( this._blockFlags.length === 0 )
-        {
-            return;
-        }
-
         var unavailableMsg = this._box.querySelector( '.group-unavailable' );
 
         this._toggleClass( this._box, 'unavailable', isDisabled );
@@ -436,9 +395,14 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     )
     {
         var isDisabled = this._processHideFlags();
-        var isPending  = this._processBlockFlags();
+        var isPending  = this._state_manager.isPending( this._bucket );
 
-        this._processUnavailable( isDisabled, isPending );
+        this._setPending( isPending );
+
+        if ( this._state_manager.observesPending() )
+        {
+            this._processUnavailable( isDisabled, isPending );
+        }
 
         this.__super.call( this, name, index, value, change_event );
         return this;
@@ -723,9 +687,14 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         // we will have already rated once by the time this is called
         var isDisabled = this._processHideFlags();
-        var isPending  = this._processBlockFlags();
+        var isPending  = this._state_manager.isPending( this._bucket );
 
-        this._processUnavailable( isDisabled, isPending );
+        this._setPending( isPending );
+
+        if ( this._state_manager.observesPending() )
+        {
+            this._processUnavailable( isDisabled, isPending );
+        }
 
         if ( this._defaultSelectionField === '' )
         {

@@ -195,11 +195,19 @@ module.exports = Class( 'GroupUi' )
     'private _feature_flag': null,
 
 
-     /**
+    /**
      * Child groups inside of this group
      * @type {Array <GroupUi>}
      */
     'protected _children': [],
+
+
+    /**
+     * State manager of the group
+     * @type {GroupStateManager}
+     */
+    'protected _state_manager': null,
+
 
 
     /**
@@ -216,11 +224,20 @@ module.exports = Class( 'GroupUi' )
      * @param {FieldStyler}   na_styler    styler for fields that are N/A
      * @param {FeatureFlag}   feature_flag toggle access to new UI features
      * @param {Array}         children     child groups
+     * @param {GroupStateManager} state_manager state manager for the group
      *
      * @return  {undefined}
      */
     'public __construct': function(
-        group, content, styler, jquery, context, rcontext, na_styler, feature_flag
+        group,
+        content,
+        styler,
+        jquery,
+        context,
+        rcontext,
+        na_styler,
+        feature_flag,
+        state_manager
     )
     {
         this.group         = group;
@@ -231,6 +248,7 @@ module.exports = Class( 'GroupUi' )
         this.rcontext      = rcontext;
         this._naStyler     = na_styler;
         this._feature_flag = feature_flag;
+        this._state_manager = state_manager;
 
         // Todo: Transition away from jQuery
         this.$content   = this.jquery( content );
@@ -270,9 +288,9 @@ module.exports = Class( 'GroupUi' )
      * Set child groups. When this is run, it will clear out any children
      * previously observed.
      *
-     * @param  {object} groups Child groups
+     * @param  {object}  groups Child groups
      *
-     * @return {boolean}       If children were added
+     * @return {boolean}        If children were added
      */
     'public setChildren': function( groups )
     {
