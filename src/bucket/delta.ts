@@ -111,6 +111,9 @@ export interface DeltaDocument
 
     /** A count of how many of each delta type have been processed */
     totalPublishDelta?: PublishDeltaCount,
+
+    /** The quote set id */
+    quoteSetId: DocumentId,
 };
 
 
