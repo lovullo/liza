@@ -529,6 +529,7 @@ describe( 'system.DeltaProcessor', () =>
                 startDate:     createdData,
                 lastUpdate:    lastUpdate,
                 quoteExpDate:  exp_date,
+                quoteSetId:    <DocumentId>123,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -551,6 +552,7 @@ describe( 'system.DeltaProcessor', () =>
                 startDate:     createdData,
                 lastUpdate:    <UnixTimestamp>123123123,
                 quoteExpDate:  exp_date,
+                quoteSetId:    <DocumentId>234,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -572,6 +574,7 @@ describe( 'system.DeltaProcessor', () =>
                         entity_name: 'Some Agency',
                         expDate:     123,
                         id:          123,
+                        quoteSetId:  123,
                         program:     'mega',
                         lastUpdate:  123123123,
                         startDate:   234234234,
@@ -586,6 +589,7 @@ describe( 'system.DeltaProcessor', () =>
                         entity_name: 'Some Agency',
                         expDate:     123,
                         id:          234,
+                        quoteSetId:  234,
                         program:     'mega',
                         lastUpdate:  123123123,
                         startDate:   234234234,
@@ -658,6 +662,7 @@ describe( 'system.DeltaProcessor', () =>
                 startDate:     <UnixTimestamp>234234234,
                 lastUpdate:    <UnixTimestamp>123123123,
                 quoteExpDate:  <UnixTimestamp>123123123,
+                quoteSetId:    <DocumentId>123,
                 data:          { foo: [ 'start_bar' ] },
                 ratedata:      {},
                 rdelta:        {
@@ -701,6 +706,7 @@ describe( 'system.DeltaProcessor', () =>
                     entity_name: 'Some Agency',
                     expDate:     123123123,
                     id:          123,
+                    quoteSetId:  123,
                     program:     'mega',
                     lastUpdate:  123123123,
                     startDate:   234234234,

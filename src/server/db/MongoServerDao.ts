@@ -324,6 +324,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.importedInd        = +quote.isImported();
         save_data.boundInd           = +quote.isBound();
         save_data.lastUpdate         = this._ts_ctor();
+        save_data.quoteSetId         = id;
 
         const exp_date         = quote.getExpirationDate();
         save_data.quoteExpDate = ( exp_date === Infinity ) ? 0 : exp_date;

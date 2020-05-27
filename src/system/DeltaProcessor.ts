@@ -115,6 +115,7 @@ export class DeltaProcessor
             startDate:   doc.startDate,
             lastUpdate:  doc.lastUpdate,
             expDate:     doc.quoteExpDate,
+            quoteSetId:  doc.quoteSetId,
         };
 
         const history = this._applyDeltas( deltas, bucket, ratedata );
@@ -130,6 +131,7 @@ export class DeltaProcessor
                     {
                         doc_id:   meta.id,
                         quote_id: meta.id,
+                        quote_set_id: meta.quoteSetId,
                     },
                 );
             } )
