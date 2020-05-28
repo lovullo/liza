@@ -178,18 +178,18 @@ module.exports = Class( 'DocumentServer',
             {}
         ) ).then( flag_conf =>
         {
-            let flag = new DefaultFeatureFlag( flag_conf.flags );
+            var flag = new DefaultFeatureFlag( flag_conf.flags );
 
             switch( flag_conf.type )
             {
                 case 'splitio':
-                    const { SplitFactory }
+                    var { SplitFactory }
                             = require( '@splitsoftware/splitio' );
 
-                    const api_key = flag_conf.splitio.key;
-                    const host    = flag_conf.splitio.redis.host;
-                    const port    = flag_conf.splitio.redis.port;
-                    const factory = new SplitFactory( {
+                    var api_key = flag_conf.splitio.key;
+                    var host    = flag_conf.splitio.redis.host;
+                    var port    = flag_conf.splitio.redis.port;
+                    var factory = new SplitFactory( {
                         mode: 'consumer',
                         core: { authorizationKey: api_key },
                         storage: {
