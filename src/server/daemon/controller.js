@@ -185,7 +185,10 @@ exports.init = function( logger, enc_service, conf, env )
 
 exports.close = function()
 {
-    server.close();
+    if ( server && server.close instanceof Function )
+    {
+        server.close();
+    }
 }
 
 
