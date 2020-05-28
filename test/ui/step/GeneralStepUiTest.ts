@@ -362,6 +362,26 @@ describe( 'ui.GeneralStepUi', function()
             expect( result ).to.equal( sut );
         } );
     } );
+
+    describe( "#initChildGroups", () =>
+    {
+        it( "inits all child groups", () =>
+        {
+            const group = createGroupUi();
+
+            let children_set = 0;
+
+            group.setChildren = () => children_set += 1;
+
+            const sut = createSut( {}, {}, {} );
+
+            sut.groups = [ group, group ];
+
+            sut.initChildGroups();
+
+            expect( children_set ).to.equal( 2 );
+        } );
+    } );
 } );
 
 
@@ -425,7 +445,9 @@ function createFeatureFlag( flag_ind = false )
 function createGroupUi(): GroupUi
 {
     return <GroupUi>{
-        setValueByName: ( _: any, __: any, ___: any, ____: any ) => {}
+        setValueByName: ( _: any, __: any, ___: any, ____: any ) => {},
+        hasChildren: () => true,
+        setChildren: () => sinon.stub()
     };
 }
 

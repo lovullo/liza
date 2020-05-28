@@ -215,7 +215,24 @@ function createSut( content, jquery, tabCount )
 
     const feature_flag = { isEnabled: ( _ ) => { return false; } };
 
-    const sut = Sut( group, content, styler, jquery, context, {}, null, feature_flag );
+    const manager = {
+        isPending: sinon.stub(),
+        observesPending: sinon.stub(),
+        processDataAttributes: sinon.stub()
+    };
+
+    const sut = Sut(
+        group,
+        content,
+        styler,
+        jquery,
+        context,
+        {},
+        null,
+        feature_flag,
+        manager
+    );
+
     sut.getCurrentIndexCount = sinon.stub().returns( tabCount );
 
     return sut;

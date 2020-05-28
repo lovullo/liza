@@ -227,6 +227,7 @@ module.exports = Class( 'StepUiBuilder' )
         // XXX: remove public property assignment
         ui.groups = groups;
         ui.initGroupFieldData();
+        ui.initChildGroups();
 
         // we can style all the groups, since the elements that cannot be styled
         // (e.g. table groups) have been removed already

@@ -237,6 +237,18 @@ export class GeneralStepUi extends EventEmitter implements StepUi
 
 
     /**
+     * Initialize child groups for each group
+     */
+    initChildGroups(): void
+    {
+        for ( let group in this.groups )
+        {
+            this.groups[ group ].setChildren( this.groups );
+        }
+    }
+
+
+    /**
      * Sets content to be displayed
      *
      * @param content - content to display

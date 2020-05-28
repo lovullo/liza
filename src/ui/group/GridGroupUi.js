@@ -38,8 +38,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'override public visit': function()
     {
-        this.__super();
-
+        // Force-visit the children before the parent due to race condition
         this._children.forEach( child => child.visit() );
 
         const column_count = this._getColumnCount();
@@ -114,7 +113,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         {
             const value = classes[ index ];
 
-            if( class_class.test( value ) )
+            if ( class_class.test( value ) )
             {
                 this._grid.classList.remove( value );
             }
