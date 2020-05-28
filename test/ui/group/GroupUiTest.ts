@@ -46,7 +46,7 @@ describe( 'ui.group.GroupUi', () =>
         };
 
         const feature_flag = {
-            getDomPerfFlag: () => { return false; }
+            isEnabled: ( _: any ) => { return false; }
         };
 
         const sut = createSut(
@@ -141,7 +141,7 @@ describe( 'ui.group.GroupUi', () =>
       };
 
       const feature_flag = {
-          getDomPerfFlag: () => { return flag; }
+          isEnabled: ( _: any ) => { return flag; }
       };
 
       const context = createContext();

@@ -317,6 +317,17 @@ module.exports = AbstractClass( 'Daemon',
         );
 
         this._debugLog.log( this._debugLog.PRIOIRTY_IMPORTANT,
+            "Closing routers..."
+        );
+        this._routers.forEach( function( router )
+        {
+            if ( router.close instanceof Function )
+            {
+                router.close();
+            }
+        });
+
+        this._debugLog.log( this._debugLog.PRIOIRTY_IMPORTANT,
             "Closing HTTP server..."
         );
         this._httpServer.close();
