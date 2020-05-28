@@ -140,8 +140,8 @@ export const createQuote = () =>
 export const createStateManager = () =>
 {
     return {
-        isPending: sinon.stub(),
-        observesPending: sinon.stub(),
+        is: sinon.stub(),
+        observes: sinon.stub(),
         processDataAttributes: sinon.stub()
     }
 };

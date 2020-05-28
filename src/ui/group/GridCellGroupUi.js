@@ -85,10 +85,7 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
         this._processDataAttributes();
         this._processClasses();
         this._addEventListeners();
-
-        const isPending  = this._state_manager.isPending( this._bucket );
-
-        this._setPending( isPending );
+        this._setState();
     },
 
 
@@ -105,12 +102,7 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
         {
             this._bucket = bucket;
 
-            this._bucket.on( 'stagingUpdate', () =>
-            {
-                this._setPending(
-                    this._state_manager.isPending( this._bucket )
-                );
-            })
+            this._bucket.on( 'stagingUpdate', () => this._setState() );
         } );
     },
 
@@ -123,6 +115,16 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
     'private _getBox': function()
     {
         return this.content.querySelector( "div" );
+    },
+
+
+
+    /**
+     * Set the current state of the group
+     */
+    'private _setState': function() {
+        this._setPending( this._state_manager.is( "pending", this._bucket ) );
+        this._setDisabled( this._state_manager.is( "disabled", this._bucket ) );
     },
 
 
@@ -167,6 +169,26 @@ module.exports = Class( 'GridCellGroupUi' ).extend( GroupUi,
         const operation = isPending ? "add" : "remove";
 
         content.classList[ operation ]( "pending" );
+    },
+
+
+    /**
+     * Apply the disabled state to this group
+     *
+     * @param {boolean} isDisabled if the group is disabled
+     */
+    'private _setDisabled': function( isDisabled )
+    {
+        const content = this._box.querySelector( ".content" );
+
+        if ( !content )
+        {
+            return;
+        }
+
+        const operation = isDisabled ? "add" : "remove";
+
+        content.classList[ operation ]( "disabled" );
     },
 
 

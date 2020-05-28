@@ -395,11 +395,11 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
     )
     {
         var isDisabled = this._processHideFlags();
-        var isPending  = this._state_manager.isPending( this._bucket );
+        var isPending  = this._state_manager.is( "pending", this._bucket );
 
         this._setPending( isPending );
 
-        if ( this._state_manager.observesPending() )
+        if ( this._state_manager.observes( "pending" ) )
         {
             this._processUnavailable( isDisabled, isPending );
         }
@@ -687,11 +687,11 @@ module.exports = Class( 'TabbedGroupUi' ).extend( GroupUi,
 
         // we will have already rated once by the time this is called
         var isDisabled = this._processHideFlags();
-        var isPending  = this._state_manager.isPending( this._bucket );
+        var isPending  = this._state_manager.is( "pending", this._bucket );
 
         this._setPending( isPending );
 
-        if ( this._state_manager.observesPending() )
+        if ( this._state_manager.observes( "pending" ) )
         {
             this._processUnavailable( isDisabled, isPending );
         }
