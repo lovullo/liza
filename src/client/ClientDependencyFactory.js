@@ -107,7 +107,7 @@ const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
 const { GroupContext }         = require( '../ui/context/GroupContext' );
-const { WindowFeatureFlag }    = require( '../system/flags/WindowFeatureFlag' );
+const { FeatureFlag }          = require( '../ui/FeatureFlag' );
 const { GeneralStepUi }        = require( '../ui/step/GeneralStepUi' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
 const { FieldStylerFactory }   = require( '../ui/context/styler/FieldStylerFactory' );
@@ -311,7 +311,7 @@ module.exports = Class( 'ClientDependencyFactory',
         step, styler, formatter, group_builder, data_get, callback
     )
     {
-        const feature_flag = WindowFeatureFlag.getInstance();
+        const feature_flag = FeatureFlag.getInstance();
         StepUiBuilder( styler, formatter, group_builder, data_get, feature_flag )
             .setStep( step )
             .build( GeneralStepUi, callback );
@@ -385,7 +385,7 @@ module.exports = Class( 'ClientDependencyFactory',
         }
 
         const context = this.createGroupContext( qtypes, arefs, styler );
-        const feature_flag = WindowFeatureFlag.getInstance();
+        const feature_flag = FeatureFlag.getInstance();
         return obj(
             group, content, styler, jQuery, context, root_context, na_styler, feature_flag, children
         );

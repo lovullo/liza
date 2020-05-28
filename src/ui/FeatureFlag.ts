@@ -1,5 +1,5 @@
 /**
- * Feature Flag Interface
+ * UI Feature Flags
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -19,29 +19,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export type FeatureFlagConditions = Record<string, any>
-
 /**
- * Feature flag interface
- */
-export interface FeatureFlag
+  * Global feature flag for new UI
+  *
+  * TODO: replace with a proper feature flag solution
+  */
+export class FeatureFlag
 {
-    /**
-     * Look up a feature flag by key
-     *
-     * @param key        - the key to lookup
-     * @param conditions - optional conditions to specify
-     *
-     * @return whether or not this feature flag is enabled
-     */
-    isEnabled(
-        key:         string,
-        conditions?: FeatureFlagConditions
-    ): Promise<boolean>
+    private static instance: FeatureFlag;
 
 
     /**
-     * Cleanup any active connections or set variables
+     * Initialize FeatureFlag
      */
-    close(): void
+    private constructor() {}
+
+
+    /**
+     * Get instance of FeatureFlag
+     */
+    public static getInstance(): FeatureFlag
+    {
+      if ( !FeatureFlag.instance )
+      {
+        FeatureFlag.instance = new FeatureFlag();
+      }
+
+      return FeatureFlag.instance;
+    }
+
+
+    /**
+     * Toggle new DOM performance features which include
+     * use of GroupContext to attach/detach elements from the DOM
+     */
+    getDomPerfFlag(): boolean
+    {
+        return ( !!(<any>window).dom_perf_flag )
+    }
 }

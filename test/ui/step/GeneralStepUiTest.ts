@@ -21,7 +21,6 @@
 
 import { GeneralStepUi as Sut } from "../../../src/ui/step/GeneralStepUi";
 import { GroupUi } from "../../../src/ui/group/GroupUi";
-import { WindowFeatureFlag } from "../../../src/system/flags/WindowFeatureFlag";
 
 var expect  = require( 'chai' ).expect,
     sinon   = require( 'sinon' );
@@ -394,6 +393,7 @@ function createSut(
         undefined
     );
 
+    // sut.answerDataUpdate   = ( data ) => { return sut.__super( data ) };
     sut.getAnswerContext   = ( _ ) => { return {} };
     sut.getAnswerFieldRefs = ( _ ) => { return [] };
     sut.getElementGroup    = ( _ ) => <GroupUi>{};
@@ -411,8 +411,8 @@ function createSut(
  */
 function createFeatureFlag( flag_ind = false )
 {
-    return <WindowFeatureFlag>{
-        isEnabled: ( _: any ) => { return !!flag_ind; }
+    return {
+        getDomPerfFlag: () => { return !!flag_ind; }
     };
 }
 

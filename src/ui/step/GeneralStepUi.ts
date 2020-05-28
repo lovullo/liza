@@ -36,7 +36,7 @@ import { StepUi } from "./StepUi";
 import { Step } from "../../step/Step";
 import { EventEmitter } from 'events';
 import { ElementStyler } from "../ElementStyler";
-import { WindowFeatureFlag } from "../../system/flags/WindowFeatureFlag";
+import { FeatureFlag } from "../FeatureFlag";
 import { GroupUi } from "../group/GroupUi";
 
 
@@ -184,7 +184,7 @@ export class GeneralStepUi extends EventEmitter implements StepUi
         private step:                   Step,
         private readonly _styler:       ElementStyler,
         formatter:                      any,
-        private readonly _feature_flag: WindowFeatureFlag,
+        private readonly _feature_flag: FeatureFlag,
         jquery:                         any
     )
     {
@@ -491,7 +491,7 @@ export class GeneralStepUi extends EventEmitter implements StepUi
         const field_names = this.getAnswerFieldRefs( name );
         const _self = this;
 
-        if ( !this._feature_flag.isEnabled( 'dom_perf_flag' ) )
+        if ( this._feature_flag.getDomPerfFlag() === false )
         {
             this._updateAnswer( name, index, value );
             return;

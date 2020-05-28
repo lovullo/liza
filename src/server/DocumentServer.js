@@ -53,13 +53,6 @@ const {
             MongoTokenDao: { MongoTokenDao },
         },
     },
-
-    system: {
-        flags: {
-            DefaultFeatureFlag: { DefaultFeatureFlag },
-            SplitFeatureFlag:   { SplitFeatureFlag },
-        }
-    }
 } = require( '../..' );
 
 
@@ -99,8 +92,7 @@ module.exports = Class( 'DocumentServer',
     {
         return Promise.all( [
             conf.get( 'dapi' ),
-            this._createFeatureFlag( conf )
-        ] ).then( ([ dapi_conf, feature_flag ]) => Server(
+        ] ).then( ([ dapi_conf ]) => Server(
             new JsonServerResponse.create(),
             dao,
             logger,
@@ -120,8 +112,7 @@ module.exports = Class( 'DocumentServer',
                 StagingBucket
             ),
             ProgramInit(),
-            ts_ctor,
-            feature_flag
+            ts_ctor
         ) );
     },
 
@@ -153,57 +144,5 @@ module.exports = Class( 'DocumentServer',
             ),
             apis
         );
-    },
-
-
-    /**
-     * Create a feature flag checker
-     *
-     * We will use split if it is configured and included as a dependency,
-     * otherwise we will default to the flags defined in the config file
-     *
-     * @param {conf} feature_flag Feature Flag config
-     *
-     * @return {FeatureFlag} A feature flag checker
-     */
-    'private _createFeatureFlag': function( conf )
-    {
-        return conf.get( 'services.featureFlag' )
-        .then( flag_conf => flag_conf.reduce(
-            ( accum, value, key ) =>
-            {
-                accum[ key ] = value;
-                return accum;
-            },
-            {}
-        ) ).then( flag_conf =>
-        {
-            let flag = new DefaultFeatureFlag( flag_conf.flags );
-
-            switch( flag_conf.type )
-            {
-                case 'splitio':
-                    const { SplitFactory }
-                            = require( '@splitsoftware/splitio' );
-
-                    const api_key = flag_conf.splitio.key;
-                    const host    = flag_conf.splitio.redis.host;
-                    const port    = flag_conf.splitio.redis.port;
-                    const factory = new SplitFactory( {
-                        mode: 'consumer',
-                        core: { authorizationKey: api_key },
-                        storage: {
-                            type: 'REDIS',
-                            options: {
-                                url: 'redis://' + host + ':' + port + '/0'
-                            },
-                        }
-                    } );
-                    return new SplitFeatureFlag( flag, {}, factory.client() );
-
-                default:
-                    return flag;
-            }
-        } );
     },
 } );

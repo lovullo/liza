@@ -62,17 +62,11 @@
         "vhost":      "/",
         "queueName":  "postrate"
       }
+
     },
     "c1export": {
       "host":   "localhost",
       "domain": ""
-    },
-    "featureFlag": {
-      "type": "default",
-      "flags": {
-        "dom_perf_flag": false,
-        "liza_autosave": false
-      }
     }
   }
 }

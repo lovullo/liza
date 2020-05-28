@@ -183,12 +183,6 @@ exports.init = function( logger, enc_service, conf, env )
 }
 
 
-exports.close = function()
-{
-    server.close();
-}
-
-
 // TODO: Remove this and use the new MongoFactory.ts
 function _createDB( logger )
 {
@@ -226,8 +220,7 @@ function _createDocumentServer(
     enc_service,
     conf,
     collection,
-    ts_ctor,
-    feature_flag
+    ts_ctor
 )
 {
     const origin_url = process.env.HTTP_ORIGIN_URL || '';
@@ -244,14 +237,7 @@ function _createDocumentServer(
     }
 
     return DocumentServer().create(
-        dao,
-        logger,
-        enc_service,
-        origin_url,
-        conf,
-        collection,
-        ts_ctor,
-        feature_flag
+        dao, logger, enc_service, origin_url, conf, collection, ts_ctor
     );
 }
 

@@ -104,7 +104,7 @@ export const getDomElement = () =>
 export const createFeatureFlag = () =>
 {
   return {
-    isEnabled: ( _: any ) => { return false; }
+    getDomPerfFlag: () => { return false; }
   };
 }
 

@@ -124,17 +124,6 @@ module.exports = Class.extend( require( '../../events' ).EventEmitter,
 
 
     /**
-     * Gets the user name, if available
-     *
-     * @return String|undefined user name or undefined if unavailable
-     */
-    userName: function()
-    {
-        return this._data.user_name || undefined;
-    },
-
-
-    /**
      * Whether the user is logged in as an internal user rather than a broker
      *
      * @return {boolean} true if internal user, otherwise false

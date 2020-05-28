@@ -137,12 +137,6 @@ module.exports = Class( 'Server' )
      */
     'private _ts_ctor': null,
 
-    /**
-     * A feature flag object to evaluate whether flags are on or off
-     * @type {FeatureFlag}
-     */
-    'private _feature_flag': null,
-
 
     /**
      * Rater
@@ -160,7 +154,6 @@ module.exports = Class( 'Server' )
      * @param {DataProcessor}     data_processor data processor
      * @param {ProgramInit}       init           program initializer
      * @param {function}          ts_ctor        timestamp constructor
-     * @param {FeatureFlag}       feature_flag   a feature flag object
      */
     'public __construct': function(
         response,
@@ -169,8 +162,7 @@ module.exports = Class( 'Server' )
         encsvc,
         data_processor,
         init,
-        ts_ctor,
-        feature_flag
+        ts_ctor
     )
     {
         if ( !Class.isA( DataProcessor, data_processor ) )
@@ -185,7 +177,6 @@ module.exports = Class( 'Server' )
         this._dataProcessor = data_processor;
         this._progInit      = init;
         this._ts_ctor       = ts_ctor;
-        this._feature_flag  = feature_flag;
     },
 
 
@@ -224,15 +215,6 @@ module.exports = Class( 'Server' )
                 );
             }
         );
-    },
-
-
-    /**
-     * Shut down any active connections and close gracefully
-     */
-    'public close': function()
-    {
-        this._feature_flag.close();
     },
 
 
@@ -796,45 +778,38 @@ module.exports = Class( 'Server' )
             lock = 'Quote is locked due to concurrent access.';
         }
 
-        this._feature_flag.isEnabled(
-            'liza_autosave',
-            { user: session.userName() }
-        ).then( autosave_flag =>
+        // decrypt bucket contents, if necessary, and return
+        this._getBucketCipher( program ).decrypt( bucket, function()
         {
-            // decrypt bucket contents, if necessary, and return
-            this._getBucketCipher( program ).decrypt( bucket, function()
-            {
-                _self.sendResponse( request, quote, {
-                    valid: valid,
-                    data:  bucket.getData() || {},
+            _self.sendResponse( request, quote, {
+                valid: valid,
+                data:  bucket.getData() || {},
 
-                    meta: ( internal ) ? quote.getMetabucket().getData() : {},
+                meta: ( internal ) ? quote.getMetabucket().getData() : {},
 
-                    programId: program_id,
+                programId: program_id,
 
-                    currentStepId:      quote.getCurrentStepId(),
-                    topVisitedStepId:   quote.getTopVisitedStepId(),
-                    imported:           quote.isImported(),
-                    bound:              quote.isBound(),
-                    needsImport:        quote.needsImport(),
-                    explicitLock:       lock,
-                    explicitLockStepId: lock_step,
-                    agentId:            quote.getAgentId(),
-                    agentName:          quote.getAgentName(),
-                    agentEntityId:      ( internal ) ? quote.getAgentEntityId() : 0,
-                    startDate:          quote.getStartDate(),
-                    initialRatedDate:   quote.getInitialRatedDate(),
-                    lastPremDate:       quote.getLastPremiumDate(),
-                    autosave:           ( program.autosave && autosave_flag ),
+                currentStepId:      quote.getCurrentStepId(),
+                topVisitedStepId:   quote.getTopVisitedStepId(),
+                imported:           quote.isImported(),
+                bound:              quote.isBound(),
+                needsImport:        quote.needsImport(),
+                explicitLock:       lock,
+                explicitLockStepId: lock_step,
+                agentId:            quote.getAgentId(),
+                agentName:          quote.getAgentName(),
+                agentEntityId:      ( internal ) ? quote.getAgentEntityId() : 0,
+                startDate:          quote.getStartDate(),
+                initialRatedDate:   quote.getInitialRatedDate(),
+                lastPremDate:       quote.getLastPremiumDate(),
 
-                    // set to undefined if not internal so it's not included in the
-                    // JSON response
-                    internal: ( ( request.getSession().isInternal() === true )
-                        ? true
-                        : undefined
-                    ),
-                }, actions );
-            } );
+                // set to undefined if not internal so it's not included in the
+                // JSON response
+                internal: ( ( request.getSession().isInternal() === true )
+                    ? true
+                    : undefined
+                ),
+            }, actions );
         } );
 
         return this;
