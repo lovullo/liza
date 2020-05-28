@@ -325,29 +325,22 @@ export class Cmatch
         // those might trigger events that check the current cmatches
         this._cmatch = cmatch;
 
-        // allow DOM operations to complete before we trigger
-        // manipulations on it (TODO: this is a workaround for group
-        // show/hide issues; we need a better solution to guarantee
-        // order
-        setTimeout( () =>
+        Object.keys( visq ).forEach( field =>
         {
-            Object.keys( visq ).forEach( field =>
+            const field_vis = visq[ field ];
+
+            Object.keys( field_vis ).forEach( event_id =>
             {
-                const field_vis = visq[ field ];
+                const indexes = field_vis[ event_id ];
 
-                Object.keys( field_vis ).forEach( event_id =>
-                {
-                    const indexes = field_vis[ event_id ];
-
-                    this._client.handleEvent( event_id, {
-                        elementName: field,
-                        indexes:     indexes,
-                    } );
+                this._client.handleEvent( event_id, {
+                    elementName: field,
+                    indexes:     indexes,
                 } );
-
-                this._dapiTrigger( field );
             } );
-        }, 25 );
+
+            this._dapiTrigger( field );
+        } );
     }
 
 
