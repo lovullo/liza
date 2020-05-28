@@ -135,8 +135,7 @@ describe( "Cmatch", () =>
     } );
 
 
-    it( "handleClassMatch triggers dapi for every visible queued element",
-        done =>
+    it( "handleClassMatch triggers dapi for every visible queued element", () =>
     {
         const field_names = {
             foo: true,
@@ -159,7 +158,6 @@ describe( "Cmatch", () =>
         } = createStubs( cmatch, step_ui );
 
         let given: string[] = [];
-        let async_flag= false;
         let dapi_call_count = 0;
 
         program.dapi = (
@@ -173,20 +171,14 @@ describe( "Cmatch", () =>
         {
             given.push( field );
             ++dapi_call_count;
-
-            if ( dapi_call_count === 2 && async_flag )
-            {
-                expect( given ).to.deep
-                    .equal( [ 'foo', 'baz' ] );
-                done();
-            }
-
             return <DataApiResult>{};
         }
 
         sut.hookClassifier( data_validator );
         quote.emit("classify");
-        async_flag = true;
+
+        expect( dapi_call_count ).to.equal( 2 );
+        expect( given ).to.deep.equal( [ 'foo', 'baz' ] );
     } );
 
 
