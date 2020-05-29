@@ -42,6 +42,8 @@ export declare class GroupUi
      */
     getCurrentIndexCount(): PositiveInteger;
 
+    getGroupId(): string;
+
 
     /**
      * Sets element value given a name and index

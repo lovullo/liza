@@ -1380,6 +1380,20 @@ module.exports = Class( 'Client' )
 
 
     /**
+     * Create a collection
+     *
+     * @param {HTMLElement} content - main UI element
+     * @param {GroupUi}     groups  - groups in the UI
+     *
+     * @return {Collection} a collection of groups
+     */
+    _buildCollection: function( content, groups )
+    {
+        return this._factory.createCollection( content, groups );
+    },
+
+
+    /**
      * Builds a new step
      *
      * @param {number} id id of the step
@@ -1407,6 +1421,12 @@ module.exports = Class( 'Client' )
                     styler,
                     client._factory.createNaFieldStyler()
                 );
+            },
+
+            // collection builder
+            function( content, groups )
+            {
+                return client._buildCollection( content, groups );
             },
 
             // step builder
