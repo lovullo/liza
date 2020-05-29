@@ -19,6 +19,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * Listing of possible states
+ *
+ * Pending - A pending state represents when a group's content is not ready to
+ * be displayed. In the meantime, the presence of a pending state allows the
+ * group to display temporary content or make other informed decisions.
+ *
+ * Disabled - A disabled state represents that the group is not active.
+ */
+enum GroupState
+{
+    Pending = "pending",
+    Disabled = "disabled"
+};
+
+/**
+ * The data standard on which stateful applications depend
+ *
+ * A legend depicts criteria for when a state should be enabled. It is an object
+ * keyed by the state names and resolve to lists of bucket keys which enable the
+ * state.
+ */
+type StateLegend = {
+    [ K in GroupState ]: string[]
+};
 
 /**
  * Manage various states a group might have
@@ -30,23 +55,24 @@ export class GroupStateManager
 {
 
     /**
-     * References to bucket keys that constitute a pending state
-     *
-     * A pending state represents when a group's content is not ready to be
-     * displayed. In the meantime, the presence of a pending state allows to group
-     * to display temporary content or make other informed decisions.
+     * A legend that maps possible states to their bucket triggers
      */
-    private _pendingWhen: string[] = [];
+    private _legend: StateLegend = {
+        pending: [],
+        disabled: []
+    }
 
 
     /**
-     * Determine if the state manager observes the bucket for a pending state
+     * Determine if the state manager observes the bucket for a certain state
+     *
+     * @param state - state name
      *
      * @return if pending is observed by the manager
      */
-    public observesPending(): boolean
+    public observes( state: GroupState ): boolean
     {
-        return this._pendingWhen.length > 0;
+        return ( this._legend[ state ]?.length ?? 0 ) > 0;
     }
 
 
@@ -57,29 +83,32 @@ export class GroupStateManager
      */
     public processDataAttributes( target: HTMLElement )
     {
-        const pending_when = target.getAttribute( 'data-pending-when' ) || '';
+        const pending = target.getAttribute( 'data-pending-when' ) || '';
+        const disabled = target.getAttribute( 'data-disabled-when' ) || '';
 
-        this._pendingWhen = pending_when ? pending_when.split( ' ' ) : [];
+        this._legend[ "pending" ] = pending ? pending.split( ' ' ) : [];
+        this._legend[ "disabled" ] = disabled ? disabled.split( ' ' ) : [];
     }
 
 
     /**
-     * Determine if the group's state is pending
+     * Determine if a particular state is enabled for the group
      *
+     * @param state  - state to check
      * @param bucket - bucket
      *
-     * @return if the group is pending
+     * @return if a group's state is enabled
      */
-    public isPending( bucket: any ): boolean
+    public is( state: GroupState, bucket: any ): boolean
     {
-        if ( !this.observesPending() )
+        if ( !this.observes( state ) )
         {
             return false;
         }
 
-        for ( let index in this._pendingWhen )
+        for ( let index in this._legend[ state ] )
         {
-            let key = this._pendingWhen[ index ];
+            let key = this._legend[ state ][ index ];
             let data = bucket.getDataByName( key ) || [];
 
             for ( let data_index in data )

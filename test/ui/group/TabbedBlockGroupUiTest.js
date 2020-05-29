@@ -216,8 +216,8 @@ function createSut( content, jquery, tabCount )
     const feature_flag = { isEnabled: ( _ ) => { return false; } };
 
     const manager = {
-        isPending: sinon.stub(),
-        observesPending: sinon.stub(),
+        is: sinon.stub(),
+        observes: sinon.stub(),
         processDataAttributes: sinon.stub()
     };
 

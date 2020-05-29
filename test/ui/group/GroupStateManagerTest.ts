@@ -54,19 +54,19 @@ describe( 'ui.group.GroupStateManager', () =>
         } );
     } );
 
-    describe( 'observesPending', () =>
+    describe( 'observes', () =>
     {
-        it( 'detects when the state manager observes a pending state', () =>
+        it( 'detects when the state manager observes a valid state', () =>
         {
             const sut = new Sut();
             const elem = createHtmlElement();
 
             sut.processDataAttributes( elem );
 
-            expect( sut.observesPending() ).to.be.true;
+            expect( sut.observes( 'pending' ) ).to.be.true;
         } );
 
-        it( 'detects when the state manager does not observe a pending state', () =>
+        it( 'detects when the state manager does not observe an invalid state', () =>
         {
             const sut = new Sut();
             const elem = createHtmlElement();
@@ -75,7 +75,7 @@ describe( 'ui.group.GroupStateManager', () =>
 
             sut.processDataAttributes( elem );
 
-            expect( sut.observesPending() ).to.be.false;
+            expect( sut.observes( 'foo' ) ).to.be.false;
         } );
     } );
 
@@ -92,7 +92,7 @@ describe( 'ui.group.GroupStateManager', () =>
 
             bucket.getDataByName = () => [ 0 ];
 
-            expect( sut.isPending( bucket ) ).to.be.false;
+            expect( sut.is( "pending", bucket ) ).to.be.false;
         } );
 
         it( 'detects a pending state', () =>
@@ -106,7 +106,7 @@ describe( 'ui.group.GroupStateManager', () =>
 
             bucket.getDataByName = () => [ 1 ];
 
-            expect( sut.isPending( bucket ) ).to.be.true;
+            expect( sut.is( "pending", bucket ) ).to.be.true;
         } );
 
         it( 'detects a multi-variate pending state', () =>
@@ -129,7 +129,38 @@ describe( 'ui.group.GroupStateManager', () =>
                 return bucket_values[ key ];
             };
 
-            expect( sut.isPending( bucket ) ).to.be.true;
+            expect( sut.is( "pending", bucket ) ).to.be.true;
+        } );
+    } );
+
+    describe( 'isDisabled', () =>
+    {
+        it( 'detects a non-disabled state', () =>
+        {
+            const sut = new Sut();
+            const elem = createHtmlElement();
+
+            sut.processDataAttributes( elem );
+
+            const bucket = createBucket();
+
+            bucket.getDataByName = () => [ 0 ];
+
+            expect( sut.is( "disabled", bucket ) ).to.be.false;
+        } );
+
+        it( 'detects a disabled state', () =>
+        {
+            const sut = new Sut();
+            const elem = createHtmlElement();
+
+            sut.processDataAttributes( elem );
+
+            const bucket = createBucket();
+
+            bucket.getDataByName = () => [ 1 ];
+
+            expect( sut.is( "disabled", bucket ) ).to.be.true;
         } );
     } );
 } );
