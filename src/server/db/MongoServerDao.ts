@@ -299,9 +299,13 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
         if ( save_data === undefined )
         {
-            save_data = {
-                data: quote.getBucket().getData(),
-            };
+            save_data = {};
+
+            const quote_data = quote.getBucket().getData();
+
+            Object.keys( quote_data ).forEach(
+                key => save_data[ 'data.' + key ] = quote_data[ key ]
+            );
 
             // full save will include all metadata
             meta = quote.getMetabucket().getData();
@@ -657,9 +661,16 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         failure: Callback = () => {},
     ): this
     {
+        const update: MongoUpdate = {};
+
+        for ( var key in classes )
+        {
+            update[ 'classData.' + key ] = classes[ key ];
+        }
+
         return this.mergeData(
             quote,
-            { classData: classes },
+            update,
             success,
             failure
         );

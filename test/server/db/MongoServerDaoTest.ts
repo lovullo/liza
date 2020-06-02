@@ -214,7 +214,7 @@ function createStubQuote( metadata: Record<string, any> )
 
     const quote = <ServerSideQuote>{
         getBucket: () => <QuoteDataBucket>( {
-            getData: () => {},
+            getData: () => { return {}; },
         } ),
 
         getMetabucket: () => <QuoteDataBucket>( {
