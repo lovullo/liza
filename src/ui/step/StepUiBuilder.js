@@ -265,10 +265,17 @@ module.exports = Class( 'StepUiBuilder' )
         for ( var i = 0; i < collection_elems.length; i++ )
         {
             var collection_elem = collection_elems[ i ];
+            var collection = this._collectionBuilder( collection_elem, groups );
 
-            collections.push(
-                this._collectionBuilder( collection_elem, groups )
-            );
+            /**
+             * It's possible for the builder to return undefined if collection
+             * does not have valid data. As such we only want to add collections
+             * that get created.
+             */
+            if ( collection )
+            {
+                collections.push( collection );
+            }
         }
 
         ui.collections = collections;

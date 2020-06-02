@@ -18,17 +18,22 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { GridGroupUi } from "../ui/group/GridGroupUi";
+import { GroupUi } from "../ui/group/GroupUi";
 
 /**
  * A mediator of groups
+ *
+ * A collection serves as a mediator between groups. The intent is that some
+ * specific behavior should exist within a collection of groups. As such, this
+ * class is abstract to force specific use-cases to define their own behavior in
+ * a subclass.
  */
-export class Collection
+export abstract class Collection
 {
     /**
      * Groups inside of this collection
      */
-    private _groups: GridGroupUi[] = [];
+    protected _groups: GroupUi[] = [];
 
 
     /**
@@ -36,22 +41,7 @@ export class Collection
      *
      * @param _content - target collection element
      */
-    constructor( private _content: HTMLElement ) {}
-
-
-    /**
-     * Trigger visitation of the collection
-     *
-     * It's assumed that the groups will have been visited before the
-     * collection's visit method is called. If not, the children may not have
-     * properly updated data.
-     */
-    public visit()
-    {
-        const column_count = this._getColumnCount();
-
-        this._setColumnClass( column_count );
-    }
+    constructor( protected _content: HTMLElement ) {}
 
 
     /**
@@ -59,15 +49,18 @@ export class Collection
      *
      * When this is run, it will clear out any groups previously observed.
      *
-     * @param groups - child groups
+     * @param groups    - child groups
+     * @param prototype - only accept groups of this type
+     *                    An undefined value has no group restrictions.
      *
      * @return if groups were added
      */
-    public setGroups( groups: GridGroupUi[] )
+    public setGroups( groups: GroupUi[], prototype?: any )
     {
-        const group_elems = this._getGroupFieldsets();
-        let group_ids  = [];
         this._groups = [];
+
+        const group_elems = this._getGroupFieldsets();
+        let group_ids     = [];
 
         if ( group_elems.length === 0 )
         {
@@ -97,52 +90,23 @@ export class Collection
             }
         }
 
+        // Filter groups if groupType is set
+        if ( prototype !== undefined ) {
+            this._groups = this._groups.filter( g => g.isA( prototype ) );
+        }
+
         return this._groups.length > 0;
     }
 
-    /**
-     * Get the count of columns in the grid
-     *
-     * @return the number of columns
-     */
-    private _getColumnCount()
-    {
-        const unique = ( type: string, i: number, children: string[] ) =>
-        {
-            return children.indexOf( type ) === i;
-        };
-
-        return this._groups
-            .filter( group => group.isVisible() )
-            .map( child => child.getXType() )
-            .filter( unique )
-            .length;
-    }
-
 
     /**
-     * Set a column class on the group
+     * Force subclass to implement this behavior
      *
-     * Remove existing column classes.
-     *
-     * @param number - the number of columns
+     * @throws {Error} if the subclass doesn't implement this method
      */
-    private _setColumnClass( number: number )
+    public visit()
     {
-        const class_class = /col-\d+/;
-        const classes = this._content.classList;
-
-        for ( let index = 0; index < classes.length; index++ )
-        {
-            const value = classes[ index ];
-
-            if ( class_class.test( value ) )
-            {
-                this._content.classList.remove( value );
-            }
-        }
-
-        this._content.classList.add( 'col-' + number );
+        throw new Error( "Collection subclass must implement visit method." );
     }
 
 

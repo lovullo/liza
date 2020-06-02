@@ -1,5 +1,5 @@
 /**
- * Test case for Collection
+ * Test case for GridCollection
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -22,7 +22,7 @@
 const Group = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
-import { Collection as Sut } from "../../../src/step/Collection";
+import { GridCollection as Sut } from "../../../src/step/GridCollection";
 import { expect } from 'chai';
 
 import {

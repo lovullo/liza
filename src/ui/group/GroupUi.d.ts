@@ -44,6 +44,8 @@ export declare class GroupUi
 
     getGroupId(): string;
 
+    isA( ref: any ): boolean;
+
 
     /**
      * Sets element value given a name and index

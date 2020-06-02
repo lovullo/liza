@@ -274,9 +274,6 @@ module.exports = Class( 'GroupUi' )
     },
 
 
-
-
-
     'private _monitorIndexChange': function( quote )
     {
         var _self = this,

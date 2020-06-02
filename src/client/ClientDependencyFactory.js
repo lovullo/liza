@@ -103,7 +103,7 @@ var Step          = require( '../step/Step' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
-const { Collection}            = require( '../step/Collection' );
+const { GridCollection }       = require( '../step/GridCollection' );
 const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
@@ -391,9 +391,19 @@ module.exports = Class( 'ClientDependencyFactory',
      */
     createCollection: function ( content, groups )
     {
-        const collection = new Collection( content );
+        const collection_type = content.getAttribute( 'data-collection-type' );
+        var collection;
 
-        collection.setGroups( groups );
+        switch ( collection_type )
+        {
+            case "grid":
+                collection = new GridCollection( content );
+        }
+
+        if ( collection )
+        {
+            collection.setGroups( groups );
+        }
 
         return collection;
     },

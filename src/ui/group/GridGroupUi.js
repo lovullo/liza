@@ -24,7 +24,6 @@ var Class   = require( 'easejs' ).Class,
 
 module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 {
-
     /**
      * Reference to the bucket
      *
