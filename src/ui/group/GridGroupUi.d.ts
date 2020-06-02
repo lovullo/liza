@@ -25,4 +25,8 @@ export declare class GridGroupUi extends GroupUi
     public isVisible(): boolean;
 
     public getXType(): string;
+
+    public select(): void;
+
+    public deselect(): void;
 }

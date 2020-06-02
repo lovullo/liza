@@ -32,13 +32,13 @@
  * @end needsLove
  */
 
-import { StepUi } from "./StepUi";
-import { Step } from "../../step/Step";
-import { EventEmitter } from 'events';
+import { Collection } from "./Collection";
 import { ElementStyler } from "../ElementStyler";
-import { WindowFeatureFlag } from "../../system/flags/WindowFeatureFlag";
+import { EventEmitter } from 'events';
 import { GroupUi } from "../group/GroupUi";
-import { Collection } from "../../step/Collection";
+import { Step } from "../../step/Step";
+import { StepUi } from "./StepUi";
+import { WindowFeatureFlag } from "../../system/flags/WindowFeatureFlag";
 
 
 /**

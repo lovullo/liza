@@ -84,8 +84,30 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     {
         this._processDataAttributes();
         this._processClasses();
-        this._addEventListeners();
         this._setState();
+    },
+
+
+    /**
+     * Select the group
+     */
+    'public select': function()
+    {
+        this.content.classList.remove( "deselected" );
+        this.content.classList.add( "selected" );
+    },
+
+
+    /**
+     * Deselect the group
+     */
+    'public deselect': function()
+    {
+        if ( this.content.classList.contains( "selected" ) )
+        {
+            this.content.classList.remove( "selected" );
+            this.content.classList.add( "deselected" );
+        }
     },
 
 
@@ -118,13 +140,18 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     },
 
 
-
     /**
      * Set the current state of the group
      */
     'private _setState': function() {
         this._setPending( this._state_manager.is( "pending", this._bucket ) );
-        this._setDisabled( this._state_manager.is( "disabled", this._bucket ) );
+
+        if ( this._state_manager.observes( "disabled" ) )
+        {
+            this._setDisabled(
+                this._state_manager.is( "disabled", this._bucket )
+            );
+        }
     },
 
 
@@ -159,16 +186,9 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'private _setPending': function( isPending )
     {
-        const content = this._box.querySelector(".content");
-
-        if ( !content )
-        {
-            return;
-        }
-
         const operation = isPending ? "add" : "remove";
 
-        content.classList[ operation ]( "pending" );
+        this.content.classList[ operation ]( "pending" );
     },
 
 
@@ -179,56 +199,8 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'private _setDisabled': function( isDisabled )
     {
-        const content = this._box.querySelector( ".content" );
-
-        if ( !content )
-        {
-            return;
-        }
-
         const operation = isDisabled ? "add" : "remove";
 
-        content.classList[ operation ]( "disabled" );
+        this.content.classList[ operation ]( "disabled" );
     },
-
-
-    /**
-     * Add event listeners to the group
-     */
-    'private _addEventListeners': function()
-    {
-        const content = this.content.querySelector( ".content" );
-
-        if ( content )
-        {
-            content.addEventListener( "click", this._onContentClick );
-        }
-
-        const actions = this.content.querySelector( ".actions" );
-
-        if ( actions )
-        {
-            actions.addEventListener( "click", this._onActionsClick );
-        }
-    },
-
-
-    /**
-     * Handle event when content section is clicked
-     *
-     * @param {MouseEvent} e click event
-     */
-    'private _onContentClick': function ( e )
-    {
-    },
-
-
-     /**
-     * Handle event when actions section is clicked
-     *
-     * @param {MouseEvent} e click event
-     */
-    'private _onActionsClick': function ( e )
-    {
-    }
 } );

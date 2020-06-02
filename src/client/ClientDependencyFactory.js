@@ -103,7 +103,7 @@ var Step          = require( '../step/Step' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
-const { GridCollection }       = require( '../step/GridCollection' );
+const { GridCollection }       = require( '../ui/step/GridCollection' );
 const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
@@ -397,12 +397,7 @@ module.exports = Class( 'ClientDependencyFactory',
         switch ( collection_type )
         {
             case "grid":
-                collection = new GridCollection( content );
-        }
-
-        if ( collection )
-        {
-            collection.setGroups( groups );
+                collection = new GridCollection( content, groups );
         }
 
         return collection;

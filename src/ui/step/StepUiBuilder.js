@@ -269,7 +269,7 @@ module.exports = Class( 'StepUiBuilder' )
 
             /**
              * It's possible for the builder to return undefined if collection
-             * does not have valid data. As such we only want to add collections
+             * does not have valid data. As such, we only want to add collections
              * that get created.
              */
             if ( collection )

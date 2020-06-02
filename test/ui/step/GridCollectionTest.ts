@@ -22,13 +22,13 @@
 const Group = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
-import { GridCollection as Sut } from "../../../src/step/GridCollection";
+import { GridCollection as Sut, GroupList } from "../../../src/ui/step/GridCollection";
+import { GroupUi } from "../../../src/ui/group/GroupUi";
 import { expect } from 'chai';
 
 import {
     createSut as createGroup,
     createQuote,
-    createContent,
     createBoxContent
 } from "../group/CommonResources";
 
@@ -42,49 +42,6 @@ after(function () {
 
 describe( "ui.step.Collection", () =>
 {
-    describe( "#setGroups", () =>
-    {
-        it( "doesn't set children when it contains none", () =>
-        {
-            const content = createContent();
-
-            content.querySelectorAll = () => [];
-
-            const sut = new Sut( createHtmlElement() );
-            let groups = [ createGroup( Group ) ];
-
-            groups[0].getGroupId = () => 'group_child1';
-
-            expect( sut.setGroups( groups ) ).to.be.false;
-        } );
-
-        it( "sets group", () =>
-        {
-            const content = createHtmlElement();
-
-            sinon.stub( content, "querySelectorAll").callsFake( () =>
-            {
-                return   [
-                    { getAttribute: () => 'group_child1' },
-                    { getAttribute: () => 'group_child2' }
-                ];
-            } );
-
-            const sut = new Sut( content )
-            let group = createGroup( Group );
-
-            group.getGroupId = () => 'group_child1';
-
-            expect( sut.setGroups( [ group ] ) ).to.be.true;
-
-            group.getGroupId = () => 'group_child2';
-            expect( sut.setGroups( [ group ] ) ).to.be.true;
-
-            group.getGroupId = () => 'invalid_group';
-            expect( sut.setGroups( [ group ] ) ).to.be.false;
-        } );
-    } );
-
     describe ( "visit", () =>
     {
         [
@@ -163,9 +120,8 @@ describe( "ui.step.Collection", () =>
                     actual_column_removed = class_name;
                 };
 
-                const sut = new Sut( content );
+                const sut = new Sut( content, convertToGroupList( groups ) );
 
-                sut.setGroups( groups )
                 sut.visit();
 
                 expect( add_column_class ).to.equal( expected_class_added );
@@ -214,7 +170,7 @@ describe( "ui.step.Collection", () =>
                     return groups.map( ( _child, index: number ) =>
                     {
                         const elem = createHtmlElement();
-                        elem.getAttribute =  () => index.toString();
+                        elem.getAttribute = () => index.toString();
                         return elem;
                     } );
                 } );
@@ -223,17 +179,147 @@ describe( "ui.step.Collection", () =>
                     add_column_class = classname;
                 };
 
-                const sut = new Sut( content );
+                const sut = new Sut( content, convertToGroupList( groups ) );
 
-                sut.setGroups( groups )
                 sut.visit();
 
                 expect( add_column_class ).to.equal( expected_class_added );
             } );
         } );
     } );
+
+    describe( "handleClick", () =>
+    {
+        let actual: string[] = [];
+
+        const overrideGroupSelection = ( groups: any ) => {
+            [ "select", "deselect" ].forEach( event =>
+            {
+                groups.forEach( ( group: any, index: number ) =>
+                {
+                    sinon.stub( group, event ).callsFake( () =>
+                    {
+                        actual.push( `${event} grid group ${index}` );
+                    } );
+                } );
+            } );
+        };
+
+        beforeEach(() =>
+        {
+            actual = [];
+        } ) ;
+
+        it( "causes selection when group's content is clicked", () =>
+        {
+            let expected = [
+                "deselect grid group 0",
+                "deselect grid group 1",
+                "select grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ) );
+
+            sut.visit();
+
+            const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( content )
+            {
+                content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "doesn't cause selection when a disabled group is clicked", () =>
+        {
+            let expected: string[] = [];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ) );
+
+            sut.visit();
+
+            const group = <HTMLElement> markup.querySelector( "#group_grid1" );
+            const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( group && content )
+            {
+                group.classList.add( "disabled" );
+                content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+    } );
 } );
 
 const createHtmlElement = () => {
     return document.createElement( "div" );
+}
+
+const createCollectionMarkup = () => {
+    let collection = document.createElement( "div" );
+
+    collection.setAttribute( "class", "collection" );
+    collection.setAttribute( "data-collection-type", "grid" );
+
+    collection.innerHTML =
+        `<fieldset class="grid" id="group_grid0">
+            <div id="grid0">
+                <section class="content"></section>
+                <section class="actions"></section>
+            </div>
+        </fieldset>
+        <fieldset class="grid" id="group_grid1">
+            <div id="grid1">
+                <section class="content"></section>
+                <section class="actions"></section>
+            </div>
+        </fieldset>`;
+
+    return collection;
+}
+
+const createGroupsFromMarkup = ( markup: HTMLElement ): any =>
+{
+    let groups: any = [];
+
+    markup.querySelectorAll( "fieldset" ).forEach( fieldset =>
+    {
+        groups.push( createGroup( Group, { content: fieldset } ) )
+    } );
+
+    groups.forEach( ( group: any, index: number ) =>
+    {
+        sinon.stub( group, "getGroupId" ).returns( "group_grid" + index );
+    } );
+
+    return groups;
+};
+
+const convertToGroupList = ( groups: GroupUi[] ): GroupList =>
+{
+    let group_list: GroupList = {};
+
+    groups.forEach( ( group: GroupUi ) =>
+    {
+        group_list[ group.getGroupId() ] = group;
+    } );
+
+    return group_list;
 }
