@@ -843,14 +843,20 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
         var ui           = this,
             nav          = this.nav,
             step_id      = step.getStep().getId(),
-            prev_step_id = ui.nav.getPrevStepId();
+            prev_step_id = ui.nav.getPrevStepId(),
+            cur_step     = this._program.steps[ step_id ];
+
+        var btn_text = ( nav.isQuoteReviewStep( step_id ) )
+                            ? 'Go Back'
+                            : 'Save & Go Back'
+
+        if( cur_step.backLabel )
+        {
+            btn_text = cur_step.backLabel;
+        }
 
         var $btn_back = $( '<button />' )
-            .text(
-                ( nav.isQuoteReviewStep( step_id ) )
-                    ? 'Go Back'
-                    : 'Save & Go Back'
-            )
+            .text( btn_text )
             .attr( 'id', 'btn_save_back' )
             .click( function( event )
             {
@@ -876,7 +882,7 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
                 );
             } );
 
-        $buttons.append( $btn_back )
+        $buttons.append( $btn_back );
     },
 
 
@@ -896,7 +902,8 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
         var ui           = this,
             nav          = this.nav,
             step_id      = step.getStep().getId(),
-            last_step    = nav.isLastStep( step_id );
+            last_step    = nav.isLastStep( step_id ),
+            cur_step     = this._program.steps[ step_id ];
 
         var $btn_continue = $( '<button />' )
             .addClass( 'default' )
@@ -936,35 +943,28 @@ module.exports = Class( 'Ui' ).extend( EventEmitter,
                 );
             });
 
-        function set_text()
+        var btn_text = ( nav.isLastStep( step_id ) )
+            ? 'View Binding Documents'
+            : ( nav.isQuoteReviewStep( step_id ) )
+                ? 'Continue to Complete Application'
+                : 'Save & Continue'
+
+        if( cur_step.continueLabel )
         {
-            // TODO: need better way to label the save & continue btn
-            //       determine if the rater is an endorsement, or set
-            //       the label in the program xml
-            // XXX: someone polluted this code; remove this!
-            $btn_continue
-                .text(
-                    ( nav.isLastStep( step_id ) )
-                        ? ( program_client.programId == 'amig-snow-endorsement'
-                            || program_client.programId == 'amig-cycle-endorsement' )
-                            ? 'Submit Endorsement Request'
-                            : 'View Binding Documents'
-                        : ( nav.isQuoteReviewStep( step_id ) )
-                            ? 'Continue to Complete Application'
-                            : 'Save & Continue'
-                )
-                .attr(
-                    'id',
-                    ( nav.isLastStep( step_id ) )
-                        ? ( ( ui.quote.isImported() )
-                            ? 'btn_view_bind_docs'
-                            : 'btn_save_bind_docs'
-                        )
-                        : 'btn_save_continue'
-                );
+            btn_text = cur_step.continueLabel;
         }
 
-        set_text();
+        $btn_continue
+            .text( btn_text )
+            .attr(
+                'id',
+                ( nav.isLastStep( step_id ) )
+                    ? ( ( ui.quote.isImported() )
+                        ? 'btn_view_bind_docs'
+                        : 'btn_save_bind_docs'
+                    )
+                    : 'btn_save_continue'
+            );
 
         $buttons.append( $btn_continue );
     },
