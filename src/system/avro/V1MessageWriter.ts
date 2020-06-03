@@ -128,10 +128,11 @@ export class V1MessageWriter implements MessageWriter
                 step:  step,
             },
             document: {
-                id:       meta.id,
-                created:  start_date_ms,
-                modified: last_update_ms,
-                expires:  exp_date_ms,
+                id:           meta.id,
+                quote_set_id: meta.quoteSetId,
+                created:      start_date_ms,
+                modified:     last_update_ms,
+                expires:      exp_date_ms,
             },
             session: {
                 Session: {

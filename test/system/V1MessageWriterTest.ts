@@ -49,6 +49,7 @@ describe( 'system.V1MessageWriter', () =>
         const ts              = <UnixTimestamp>123;
         const meta            = <DocumentMeta>{
             id:          <DocumentId>123,
+            quoteSetId:  <DocumentId>123,
             entity_name: 'Some Agency',
             entity_id:   234,
             startDate:   <UnixTimestamp>345,
@@ -373,6 +374,7 @@ describe( 'system.V1MessageWriter', () =>
         const bucket          = { foo: [ 'bar', 'baz' ] };
         const ratedata        = {};
         const doc_id          = <DocumentId>123;
+        const quote_set_id    = <DocumentId>123;
         const program         = 'mega';
         const entity_name     = 'Some Agency';
         const entity_id       = 123;
@@ -384,6 +386,7 @@ describe( 'system.V1MessageWriter', () =>
         const encoder         = createMockEncoderCtor( schema );
         const meta            = <DocumentMeta>{
             id:          doc_id,
+            quoteSetId:  quote_set_id,
             program:     program,
             entity_name: entity_name,
             entity_id:   entity_id,
@@ -413,7 +416,8 @@ describe( 'system.V1MessageWriter', () =>
                 },
             },
             document: {
-                id:       doc_id,
+                id:           doc_id,
+                quote_set_id: quote_set_id,
                 created:  {
                     'long': startDate * 1000
                 },
@@ -505,9 +509,10 @@ function createMockData( delta_data: any ): any
             step:  null,
         },
         document: {
-            id:       123123,
-            created:  { 'long': 157385691600 },
-            modified: { 'long': 257381491600 },
+            id:           123123,
+            quote_set_id: 123123,
+            created:      { 'long': 157385691600 },
+            modified:     { 'long': 257381491600 },
             top_visited_step: '2',
         },
         session: {
