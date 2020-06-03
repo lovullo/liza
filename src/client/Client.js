@@ -511,6 +511,11 @@ module.exports = Class( 'Client' )
                     : false;
             client.ui.setInternal( client._isInternal );
 
+            if( !data.content.autosave )
+            {
+                client.program.autosave = false;
+            }
+
             // attach the bucket to the sidebar (note: order of these method
             // calls is important)
             client.ui.getSidebar()
