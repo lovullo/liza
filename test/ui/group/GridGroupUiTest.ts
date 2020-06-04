@@ -80,5 +80,38 @@ describe( "GridGroup", () =>
             expect( sut.isVisible() ).to.be.false;
         } );
     } );
+
+    describe ( "isSelected", () =>
+    {
+        it( "detects when the group is selected", () =>
+        {
+            const content = createBoxContent();
+
+            content.classList.contains = sinon.stub().returns( false );
+
+            const sut = createSut( Sut, { content: content } );
+
+            expect( sut.isSelected() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            content.classList.contains = sinon.stub().returns( true );
+
+            expect( sut.isSelected() ).to.be.true;
+        } );
+
+        it( "detects when the group is deselected", () =>
+        {
+            const sut = createSut( Sut, { content: createBoxContent() } );
+
+            expect( sut.isSelected() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            expect( sut.isSelected() ).to.be.false;
+        } );
+    } );
 } );
 

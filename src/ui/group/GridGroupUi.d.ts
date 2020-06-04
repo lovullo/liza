@@ -22,6 +22,8 @@ import { GroupUi } from "./GroupUi";
 
 export declare class GridGroupUi extends GroupUi
 {
+    public isSelected(): boolean;
+
     public isVisible(): boolean;
 
     public getXType(): string;
