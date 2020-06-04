@@ -89,6 +89,17 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
 
     /**
+     * Determine if the group is selected
+     *
+     * @return {boolean} if the group is selected
+     */
+    'public isSelected': function()
+    {
+        return this.content.classList.contains( "selected" );
+    },
+
+
+    /**
      * Select the group
      */
     'public select': function()
@@ -103,7 +114,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'public deselect': function()
     {
-        if ( this.content.classList.contains( "selected" ) )
+        if ( this.isSelected() )
         {
             this.content.classList.remove( "selected" );
             this.content.classList.add( "deselected" );

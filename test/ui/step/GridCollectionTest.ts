@@ -203,6 +203,11 @@ describe( "ui.step.Collection", () =>
                     } );
                 } );
             } );
+
+            groups.forEach( ( group: any ) =>
+            {
+                sinon.stub( group, "isSelected" ).returns( false );
+            } );
         };
 
         beforeEach(() =>
@@ -214,7 +219,6 @@ describe( "ui.step.Collection", () =>
         {
             let expected = [
                 "deselect grid group 0",
-                "deselect grid group 1",
                 "select grid group 1"
             ];
 
@@ -259,6 +263,84 @@ describe( "ui.step.Collection", () =>
             {
                 group.classList.add( "disabled" );
                 content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "causes deselection when group's content is already selected", () =>
+        {
+            let expected = [
+                "deselect grid group 0",
+                "select grid group 1",
+                "deselect grid group 0",
+                "deselect grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ) );
+
+            sut.visit();
+
+            const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( content )
+            {
+                content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            groups[1].isSelected = sinon.stub().returns( true );
+
+            if ( content )
+            {
+                content.click();
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "causes selection/deselection when alternating groups are clicked", () =>
+        {
+            let expected = [
+                "deselect grid group 0",
+                "select grid group 1",
+                "select grid group 0",
+                "deselect grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ) );
+
+            sut.visit();
+
+            const content1 = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( content1 )
+            {
+                content1.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            groups[1].isSelected = sinon.stub().returns( true );
+
+            const content0 = <HTMLElement> markup.querySelector( "#grid0 > .content" );
+
+            if ( content0 )
+            {
+                content0.click();
             } else {
                 throw new Error( "Unable to find grid content" );
             }

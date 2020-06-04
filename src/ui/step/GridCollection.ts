@@ -177,9 +177,17 @@ export class GridCollection implements Collection
             return;
         }
 
-        this._groups.forEach( group => group.deselect() );
-
-        group.select();
+        this._groups.forEach( g =>
+        {
+            if ( g === group )
+            {
+                g.isSelected() ? g.deselect() : g.select();
+            }
+            else
+            {
+                g.deselect();
+            }
+        } );
     }
 
 
