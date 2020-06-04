@@ -207,6 +207,7 @@ describe( "ui.step.Collection", () =>
             groups.forEach( ( group: any ) =>
             {
                 sinon.stub( group, "isSelected" ).returns( false );
+                sinon.stub( group, "getCategories" ).returns( [] );
             } );
         };
 
@@ -218,7 +219,6 @@ describe( "ui.step.Collection", () =>
         it( "causes selection when group's content is clicked", () =>
         {
             let expected = [
-                "deselect grid group 0",
                 "select grid group 1"
             ];
 
@@ -273,9 +273,7 @@ describe( "ui.step.Collection", () =>
         it( "causes deselection when group's content is already selected", () =>
         {
             let expected = [
-                "deselect grid group 0",
                 "select grid group 1",
-                "deselect grid group 0",
                 "deselect grid group 1"
             ];
 
@@ -307,7 +305,7 @@ describe( "ui.step.Collection", () =>
             expect( actual ).to.deep.equal( expected );
         } );
 
-        it( "causes selection/deselection when alternating groups are clicked", () =>
+        it( "deselects a group that shares categories with the group that was clicked", () =>
         {
             let expected = [
                 "deselect grid group 0",
@@ -320,6 +318,9 @@ describe( "ui.step.Collection", () =>
             const groups = createGroupsFromMarkup( markup );
 
             overrideGroupSelection( groups );
+
+            groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
+            groups[1].getCategories = sinon.stub().returns( [ "foo" ] );
 
             let sut = new Sut( markup, convertToGroupList( groups ) );
 
@@ -341,6 +342,36 @@ describe( "ui.step.Collection", () =>
             if ( content0 )
             {
                 content0.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "does not deselect a group when it does not share categories with a clicked group", () =>
+        {
+            let expected = [
+                "select grid group 1",
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
+            groups[1].getCategories = sinon.stub().returns( [ "bar" ] );
+
+            let sut = new Sut( markup, convertToGroupList( groups ) );
+
+            sut.visit();
+
+            const content1 = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( content1 )
+            {
+                content1.click();
             } else {
                 throw new Error( "Unable to find grid content" );
             }
