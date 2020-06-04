@@ -443,7 +443,10 @@ module.exports = Class( 'ClientQuote' )
                 _self._staging.setValues( old_store.old, true, false  );
             }
 
-            callback.apply( null, arguments );
+            if ( typeof callback === 'function' )
+            {
+                callback.apply( null, arguments );
+            }
         } );
 
         // XXX: we need to commit after a _successful_ save, otherwise the
@@ -487,7 +490,7 @@ module.exports = Class( 'ClientQuote' )
         transport.send( this, function( err, data )
         {
             // if bucket data is returned, then apply it
-            if ( data && data.content && !data.hasError )
+            if ( data && data.content && data.content.length && !data.hasError )
             {
                 // the server has likely already applied these changes, so do
                 // not allow them to be discarded

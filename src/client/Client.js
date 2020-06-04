@@ -1622,7 +1622,7 @@ module.exports = Class( 'Client' )
         // transport used to transfer the bucket data to the server, prohibiting
         // callback aborts (to ensure that we can handle failures ourselves)
         var transport = this._createBucketTransport(
-            step_id,
+            ( this._quote.getId() + '/step/' + step_id + '/post' ),
             true,
             event.concluding_save
         );
@@ -1756,9 +1756,11 @@ module.exports = Class( 'Client' )
      *
      * TODO: Remove once we have a proper heartbeat route.
      *
+     * @param {XhttpQuoteTransport} transport An optional transport to use
+     *
      * @return {Client} self
      */
-    'public saveStaging': function()
+    'public saveStaging': function( transport )
     {
         // abort if no quote is currently loaded
         if ( !this._quote )
@@ -1766,7 +1768,10 @@ module.exports = Class( 'Client' )
             return this;
         }
 
-        var transport = this._createStagingBucketTransport();
+        if( transport === undefined )
+        {
+            transport = this._createStagingBucketTransport();
+        }
 
         // we don't care whether or not it succeeds; just give it a shot
         this._quote.saveStaging( transport );
@@ -1775,13 +1780,12 @@ module.exports = Class( 'Client' )
 
 
     'private _createBucketTransport': function(
-        step_id,
-        prohibit_abort,
-        concluding_save
+        url,
+        prohibit_abort  = true,
+        concluding_save = false
     ){
         return this._factory.createDataBucketTransport(
-            this._quote.getId(),
-            step_id,
+            url,
             this._createDataProxy( jQuery, prohibit_abort ),
             concluding_save
         );
@@ -2442,6 +2446,23 @@ module.exports = Class( 'Client' )
             } )
                 .catch( e => _self.handleError( e ) );
         } );
+
+        if( this.program.autosave === true )
+        {
+            quote.on( 'dataUpdate', function( diff )
+            {
+                if( !diff || ( Object.keys( diff ).length === 0 ) )
+                {
+                    return;
+                }
+
+                var transport = _self._createBucketTransport(
+                    _self._quote.getId() + '/autosave'
+                )
+
+                quote.save( transport );
+            } );
+        }
 
         // proxy errors
         this._fieldMonitor.on( 'error', function( e )
