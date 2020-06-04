@@ -17,7 +17,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 var Class   = require( 'easejs' ).Class,
@@ -26,11 +25,56 @@ var Class   = require( 'easejs' ).Class,
 module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 {
     /**
-     * Target parent element
+     * Reference to the bucket
      *
-     * @prop {HTMLElement} _grid
+     * @prop {Bucket}
      */
-    'private _grid': null,
+    'private _bucket': null,
+
+    /**
+     * Inner container
+     *
+     * @prop {HTMLElement}
+     */
+    'private _box': null,
+
+    /**
+     * Reference to the group's marker on the x-axis
+     *
+     * @prop {string}
+     */
+    'private _x_type': null,
+
+    /**
+     * If the group is visible
+     *
+     * @prop {boolean}
+     */
+    'private _is_visible': false,
+
+
+    /**
+     * Get the group's visibility
+     *
+     * @return {boolean} if the group is visibile
+     */
+    'public isVisible': function()
+    {
+        return this._is_visible;
+    },
+
+
+    /**
+     * Read the x-type of this group
+     *
+     * The x-type is an identifier for the column that this group belongs to.
+     *
+     * @return {string} the x-type of the group
+     */
+    'public getXType': function()
+    {
+        return this._x_type;
+    },
 
 
     /**
@@ -38,135 +82,125 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'override public visit': function()
     {
-        // Force-visit the children before the parent due to race condition
-        this._children.forEach( child => child.visit() );
-
-        const column_count = this._getColumnCount();
-
-        this._setColumnClass( column_count );
+        this._processDataAttributes();
+        this._processClasses();
+        this._setState();
     },
 
 
     /**
-     * Performs any necessary processing on the content before it's displayed
+     * Select the group
+     */
+    'public select': function()
+    {
+        this.content.classList.remove( "deselected" );
+        this.content.classList.add( "selected" );
+    },
+
+
+    /**
+     * Deselect the group
+     */
+    'public deselect': function()
+    {
+        if ( this.content.classList.contains( "selected" ) )
+        {
+            this.content.classList.remove( "selected" );
+            this.content.classList.add( "deselected" );
+        }
+    },
+
+
+    /**
+     * Process content of the group
      *
-     * @param {object} quote Quote
+     * @param {ClientQuote} quote target quote
      */
     'override protected processContent': function( quote )
     {
-        // Sets the parent element
-        this.fieldContentParent[ 0 ] = this.content.querySelector( 'dl' );
+        this._box = this._getBox();
 
-        this.context.createFieldCache();
-
-        this._grid = this._getGrid();
-
-        if ( this._grid !== null && this._grid.classList.contains( 'locked' ) )
+        quote.visitData( bucket =>
         {
-            this.group.locked( true );
+            this._bucket = bucket;
+
+            this._bucket.on( 'stagingUpdate', () => this._setState() );
+        } );
+    },
+
+
+    /**
+     * Get the targeted inner div
+     *
+     * @return {HTMLElement} inner div
+     */
+    'private _getBox': function()
+    {
+        return this.content.querySelector( "div" );
+    },
+
+
+    /**
+     * Set the current state of the group
+     */
+    'private _setState': function() {
+        this._setPending( this._state_manager.is( "pending", this._bucket ) );
+
+        if ( this._state_manager.observes( "disabled" ) )
+        {
+            this._setDisabled(
+                this._state_manager.is( "disabled", this._bucket )
+            );
         }
     },
 
 
     /**
-     * Get the count of columns in the grid
-     *
-     * @return {number} The number of columns
+     * Read all data attributes
      */
-    'private _getColumnCount': function()
+    'private _processDataAttributes': function()
     {
-        const unique = ( type, i, children ) => children.indexOf( type ) === i;
+        this._x_type = this._box.getAttribute( 'data-x-type' );
 
-        let child_count = this._children
-            .filter( child => child.cellIsVisible() )
-            .map( child => child.getXType() )
-            .filter( unique )
-            .length;
-
-        return child_count;
+        this._state_manager.processDataAttributes( this._box );
     },
 
 
     /**
-     * This group does not support multiple indexes
-     *
-     * @return {boolean}
+     * Process class-related data
      */
-    'protected override supportsMultipleIndex': function()
+    'private _processClasses': function()
     {
-        return false;
+        this._is_visible = this.content.classList.contains( 'is-visible' );
+
+        const operation = this._is_visible ? "remove" : "add";
+
+        this.content.classList[ operation ]( 'hidden' );
     },
 
 
     /**
-     * Set a column class on the group
-     * Remove existing column classes
+     * Apply the pending state to this group
      *
-     * @param {number} The number of columns
+     * @param {boolean} isPending if the group is pending
      */
-    'private _setColumnClass': function( number )
+    'private _setPending': function( isPending )
     {
-        const class_class = /col-\d+/;
-        const classes = this._grid.classList;
+        const operation = isPending ? "add" : "remove";
 
-        for ( let index = 0; index < classes.length; index++ )
-        {
-            const value = classes[ index ];
-
-            if ( class_class.test( value ) )
-            {
-                this._grid.classList.remove( value );
-            }
-        }
-
-        this._grid.classList.add( 'col-' + number );
+        this.content.classList[ operation ]( "pending" );
     },
 
 
     /**
-     * Permit adding only a single index
+     * Apply the disabled state to this group
      *
-     * @param {number} index index that has been added
-     *
-     * @return {GroupUi} self
+     * @param {boolean} isDisabled if the group is disabled
      */
-    'protected override addIndex': function( index )
+    'private _setDisabled': function( isDisabled )
     {
-        if ( index > 0 )
-        {
-            return this;
-        }
+        const operation = isDisabled ? "add" : "remove";
 
-        return this.__super( index );
+        this.content.classList[ operation ]( "disabled" );
     },
-
-    /**
-     * Permit removing only the first index
-     *
-     * This follows from #addIndex, since only one will ever exist.
-     *
-     * @param {number} index index that has been removed
-     *
-     * @return {GroupUi} self
-     */
-    'protected override removeIndex': function( index )
-    {
-        if ( index > 0 )
-        {
-            return this;
-        }
-
-        return this.__super( index );
-    },
-
-
-    /**
-     * Get the target parent element from the DOM
-     *
-     * @return {HTMLElement}
-     */
-    'private _getGrid': function()
-    {
-        return this.content.querySelector( '.groupGrid' );
-    }
 } );

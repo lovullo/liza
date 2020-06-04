@@ -44,9 +44,8 @@ var Step          = require( '../step/Step' ),
     SideTableGroupUi     = require( '../ui/group/SideTableGroupUi' ),
     CollapseTableGroupUi = require( '../ui/group/CollapseTableGroupUi' ),
     GridGroupUi          = require( '../ui/group/GridGroupUi' ),
-    GridCellGroupUi      = require( '../ui/group/GridCellGroupUi' ),
 
-    GroupStateManager  = require("../ui/group/GroupStateManager").GroupStateManager,
+    GroupStateManager    = require( '../ui/group/GroupStateManager' ).GroupStateManager,
 
     Ui           = require( '../ui/Ui' ),
     UiStyler     = require( '../ui/UiStyler' ),
@@ -104,7 +103,7 @@ var Step          = require( '../step/Step' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
-
+const { GridCollection }       = require( '../ui/step/GridCollection' );
 const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }    = require( './event/DelayEventHandler' );
@@ -113,6 +112,7 @@ const { WindowFeatureFlag }    = require( '../system/flags/WindowFeatureFlag' );
 const { GeneralStepUi }        = require( '../ui/step/GeneralStepUi' );
 const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
 const { FieldStylerFactory }   = require( '../ui/context/styler/FieldStylerFactory' );
+
 
 const Class = require( 'easejs' ).Class;
 
@@ -310,11 +310,11 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createStepUi: function(
-        step, styler, formatter, group_builder, data_get, callback
+        step, styler, formatter, group_builder, collection_builder, data_get, callback
     )
     {
         const feature_flag = WindowFeatureFlag.getInstance();
-        StepUiBuilder( styler, formatter, group_builder, data_get, feature_flag )
+        StepUiBuilder( styler, formatter, group_builder, collection_builder, data_get, feature_flag )
             .setStep( step )
             .build( GeneralStepUi, callback );
     },
@@ -362,10 +362,6 @@ module.exports = Class( 'ClientDependencyFactory',
         {
             obj = GridGroupUi;
         }
-        else if ( content.classList.contains( 'gridcell' ) )
-        {
-            obj = GridCellGroupUi;
-        }
 
         const context = this.createGroupContext( qtypes, arefs, styler );
         const feature_flag = WindowFeatureFlag.getInstance();
@@ -382,6 +378,29 @@ module.exports = Class( 'ClientDependencyFactory',
             feature_flag,
             state_manager
         );
+    },
+
+
+    /**
+     * Create a collection
+     *
+     * @param {HTMLElement} content - main UI element
+     * @param {GroupUi}     groups  - groups in the UI
+     *
+     * @return {Collection} a collection of groups
+     */
+    createCollection: function ( content, groups )
+    {
+        const collection_type = content.getAttribute( 'data-collection-type' );
+        var collection;
+
+        switch ( collection_type )
+        {
+            case "grid":
+                collection = new GridCollection( content, groups );
+        }
+
+        return collection;
     },
 
 

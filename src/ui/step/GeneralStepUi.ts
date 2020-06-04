@@ -32,12 +32,13 @@
  * @end needsLove
  */
 
-import { StepUi } from "./StepUi";
-import { Step } from "../../step/Step";
-import { EventEmitter } from 'events';
+import { Collection } from "./Collection";
 import { ElementStyler } from "../ElementStyler";
-import { WindowFeatureFlag } from "../../system/flags/WindowFeatureFlag";
+import { EventEmitter } from 'events';
 import { GroupUi } from "../group/GroupUi";
+import { Step } from "../../step/Step";
+import { StepUi } from "./StepUi";
+import { WindowFeatureFlag } from "../../system/flags/WindowFeatureFlag";
 
 
 /**
@@ -143,6 +144,11 @@ export class GeneralStepUi extends EventEmitter implements StepUi
      * Whether the step is the currently active (visible) step
      */
     private _active: boolean = false;
+
+    /**
+     * Collections of groups
+     */
+    private _collections: Collection[] = [];
 
     /**
      * Whether the step is locked (all elements disabled)
@@ -283,6 +289,17 @@ export class GeneralStepUi extends EventEmitter implements StepUi
     getContent(): HTMLElement
     {
         return this.$content[ 0 ];
+    }
+
+
+    /**
+     * Set collections on this step
+     *
+     * @param collections - collections to set
+     */
+    set collections( collections: Collection[] )
+    {
+        this._collections = collections;
     }
 
 
@@ -1128,6 +1145,8 @@ export class GeneralStepUi extends EventEmitter implements StepUi
         {
             callback && callback();
         }
+
+        this._collections.forEach( collection => collection.visit() );
 
         return this;
     }

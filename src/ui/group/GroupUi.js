@@ -194,20 +194,11 @@ module.exports = Class( 'GroupUi' )
      */
     'private _feature_flag': null,
 
-
-    /**
-     * Child groups inside of this group
-     * @type {Array <GroupUi>}
-     */
-    'protected _children': [],
-
-
     /**
      * State manager of the group
      * @type {GroupStateManager}
      */
     'protected _state_manager': null,
-
 
 
     /**
@@ -223,7 +214,6 @@ module.exports = Class( 'GroupUi' )
      * @param {DomContext}    rcontext     root context
      * @param {FieldStyler}   na_styler    styler for fields that are N/A
      * @param {FeatureFlag}   feature_flag toggle access to new UI features
-     * @param {Array}         children     child groups
      * @param {GroupStateManager} state_manager state manager for the group
      *
      * @return  {undefined}
@@ -281,59 +271,6 @@ module.exports = Class( 'GroupUi' )
         this._bindClasses( quote );
 
         return this;
-    },
-
-
-    /**
-     * Set child groups. When this is run, it will clear out any children
-     * previously observed.
-     *
-     * @param  {object}  groups Child groups
-     *
-     * @return {boolean}        If children were added
-     */
-    'public setChildren': function( groups )
-    {
-        const children = this._getChildFieldsets();
-        let child_ids  = [];
-
-        if ( children.length === 0 )
-        {
-            return false;
-        }
-
-        this._children = [];
-
-        for ( let i = 0; i < children.length; i++ )
-        {
-            child_ids.push( children[ i ].getAttribute( "id" ) );
-        }
-
-        child_ids = child_ids.filter( id => id !== null && id !== "" );
-
-        for ( let group in groups )
-        {
-            const groupui = groups[ group ];
-            const is_child_id = child_ids.indexOf( groupui.getGroupId() ) !== -1;
-
-            if ( is_child_id && groupui !== this )
-            {
-                this._children.push( groupui );
-            }
-        }
-
-        return this._children.length > 0;
-    },
-
-
-    /**
-     * Get child fieldsets
-     *
-     * @return {NodeList} Child elements
-     */
-    'private _getChildFieldsets': function ()
-    {
-        return this.content.querySelectorAll( "fieldset" );
     },
 
 

@@ -47,6 +47,12 @@ module.exports = Class( 'StepUiBuilder' )
     'private _groupBuilder': null,
 
     /**
+     * Used for building collections of groups
+     * @type {function()}
+     */
+    'private _collectionBuilder': null,
+
+    /**
      * Retrieves step data
      * @type {function( step_id: number )}
      */
@@ -69,15 +75,17 @@ module.exports = Class( 'StepUiBuilder' )
         element_styler,
         formatter,
         groupBuilder,
+        collectionBuilder,
         dataGet,
         feature_flag
     )
     {
-        this._elementStyler = element_styler;
-        this._formatter     = formatter;
-        this._groupBuilder  = groupBuilder;
-        this._dataGet       = dataGet;
-        this._feature_flag  = feature_flag;
+        this._elementStyler     = element_styler;
+        this._formatter         = formatter;
+        this._groupBuilder      = groupBuilder;
+        this._collectionBuilder = collectionBuilder;
+        this._dataGet           = dataGet;
+        this._feature_flag      = feature_flag;
     },
 
 
@@ -177,6 +185,8 @@ module.exports = Class( 'StepUiBuilder' )
         // create the group objects
         this._createGroups( ui );
 
+        this._createCollections( ui );
+
         // track changes so we know when to validate and post
         ui.setDirtyTrigger();
 
@@ -227,11 +237,48 @@ module.exports = Class( 'StepUiBuilder' )
         // XXX: remove public property assignment
         ui.groups = groups;
         ui.initGroupFieldData();
-        ui.initChildGroups();
 
         // we can style all the groups, since the elements that cannot be styled
         // (e.g. table groups) have been removed already
         _self._elementStyler.apply( $groups );
+    },
+
+
+    /**
+     * Create a collection for each collection element
+     *
+     * @param {StepUi} ui the step UI
+     *
+     * @return {undefined}
+     */
+    'private _createCollections': function( ui )
+    {
+        var collections      = [],
+            collection_elems = ui.getContent().querySelectorAll( '.collection' ),
+            groups           = ui.groups;
+
+        if ( Object.keys( ui.groups ).length === 0 )
+        {
+            return;
+        }
+
+        for ( var i = 0; i < collection_elems.length; i++ )
+        {
+            var collection_elem = collection_elems[ i ];
+            var collection = this._collectionBuilder( collection_elem, groups );
+
+            /**
+             * It's possible for the builder to return undefined if collection
+             * does not have valid data. As such, we only want to add collections
+             * that get created.
+             */
+            if ( collection )
+            {
+                collections.push( collection );
+            }
+        }
+
+        ui.collections = collections;
     },
 
 

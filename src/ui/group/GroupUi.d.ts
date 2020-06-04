@@ -42,6 +42,10 @@ export declare class GroupUi
      */
     getCurrentIndexCount(): PositiveInteger;
 
+    getGroupId(): string;
+
+    isA( ref: any ): boolean;
+
 
     /**
      * Sets element value given a name and index
