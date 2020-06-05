@@ -32,6 +32,13 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     'private _bucket': null,
 
     /**
+     * Categories pertaining to the group
+     *
+     * @prop {string[]}
+     */
+    'private _categories': [],
+
+    /**
      * Inner container
      *
      * @prop {HTMLElement}
@@ -74,6 +81,19 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     'public getXType': function()
     {
         return this._x_type;
+    },
+
+
+    /**
+     * Read the categories of this group
+     *
+     * Categories are tags on a group that imply behavior.
+     *
+     * @return {string[]} the categories of the group
+     */
+    'public getCategories': function()
+    {
+        return this._categories;
     },
 
 
@@ -172,6 +192,15 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     'private _processDataAttributes': function()
     {
         this._x_type = this._box.getAttribute( 'data-x-type' );
+
+        this._state_manager.processDataAttributes( this._box );
+
+        const categories = this._box.getAttribute( 'data-categories' );
+
+        if ( categories )
+        {
+            this._categories = categories.split( /\s+/ );
+        }
 
         this._state_manager.processDataAttributes( this._box );
     },

@@ -183,7 +183,7 @@ export class GridCollection implements Collection
             {
                 g.isSelected() ? g.deselect() : g.select();
             }
-            else
+            else if ( this._groupsConflict( g, group ) )
             {
                 g.deselect();
             }
@@ -318,6 +318,25 @@ export class GridCollection implements Collection
         return Array.prototype.slice.call(
             this._content.querySelectorAll( "fieldset" )
         );
+    }
+
+
+    /**
+     * Determine if the groups conflict
+     *
+     * Groups conflict when they share a category.
+     *
+     * @param g1 - first group
+     * @param g2 - second group
+     *
+     * @return if the groups conflict
+     */
+    private _groupsConflict( g1: GridGroupUi, g2: GridGroupUi ): boolean
+    {
+        return g1.getCategories().filter( ( category: string ) =>
+        {
+            return ( g2.getCategories().indexOf( category ) > -1 );
+        } ).length > 0;
     }
 }
 

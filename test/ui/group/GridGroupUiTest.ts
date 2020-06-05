@@ -50,6 +50,22 @@ describe( "GridGroup", () =>
         } );
     } );
 
+    describe ( "getCategory", () =>
+    {
+        it( "detects categories for a group", () =>
+        {
+            const expected = [ "foo" ];
+            const sut = createSut( Sut, { content: createBoxContent() } );
+
+            expect( sut.getCategories() ).to.deep.equal( [] );
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            expect( sut.getCategories() ).to.deep.equal( expected );
+        } );
+    } );
+
     describe ( "isVisible", () =>
     {
         it( "detects when the group is visible", () =>
