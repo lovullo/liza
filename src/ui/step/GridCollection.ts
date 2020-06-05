@@ -19,8 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { Collection } from "./Collection";
+import { ConditionalStyler } from "../styler/ConditionalStyler";
 import { GridGroupUi } from "../group/GridGroupUi";
 import { GroupUi } from "../group/GroupUi";
+
 
 /**
  * The only type of group this collection may contain
@@ -60,12 +62,18 @@ export class GridCollection implements Collection
     protected _groups: GridGroupUi[] = [];
 
 
-     /**
+    /**
      * Create a new GridCollection instance
      *
      * @param _content - target collection element
+     * @param groups - list of groups
+     * @param _styler - conditional styler
      */
-    constructor( private _content: HTMLElement, groups: GroupList ) {
+    constructor(
+        private _content: HTMLElement,
+        groups: GroupList,
+        private _styler: ConditionalStyler
+    ) {
         this._setGroups( groups );
 
         this._content.addEventListener( "click", ( e: MouseEvent ) =>
@@ -169,25 +177,46 @@ export class GridCollection implements Collection
     {
         const is_disabled = group_element.classList.contains( "disabled" );
         const is_content  = section.classList.contains( "content" );
+        const is_actions  = section.classList.contains( "actions" );
         const group       = this._getGroupFromElement( group_element );
 
         // If the group is disabled we don't take any action on selection
-        if ( is_disabled || !is_content || !group )
+        if ( is_disabled || !group )
         {
             return;
         }
 
-        this._groups.forEach( g =>
+        if ( is_content )
         {
-            if ( g === group )
+            this._groups.forEach( g =>
             {
-                g.isSelected() ? g.deselect() : g.select();
-            }
-            else if ( this._groupsConflict( g, group ) )
+                if ( g === group )
+                {
+                    g.isSelected() ? g.deselect() : g.select();
+                }
+                else if ( this._groupsConflict( g, group ) )
+                {
+                    g.deselect();
+                }
+            } );
+        }
+
+        if ( is_actions )
+        {
+            this._groups.forEach( g =>
             {
-                g.deselect();
-            }
-        } );
+                if ( g === group )
+                {
+                    g.areDetailsOpen()
+                        ? g.closeDetails()
+                        : g.openDetails( this._styler );
+                }
+                else
+                {
+                    g.closeDetails();
+                }
+            } );
+        }
     }
 
 

@@ -19,18 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { GroupUi } from "./GroupUi";
+import { ConditionalStyler } from "../styler/ConditionalStyler";
 
 export declare class GridGroupUi extends GroupUi
 {
-    public isSelected(): boolean;
+    public areDetailsOpen(): boolean;
 
-    public isVisible(): boolean;
+    public closeDetails(): void;
+
+    public deselect(): void;
 
     public getCategories(): string[];
 
     public getXType(): string;
 
-    public select(): void;
+    public isSelected(): boolean;
 
-    public deselect(): void;
+    public isVisible(): boolean;
+
+    public openDetails( styler: ConditionalStyler ): void;
+
+    public select(): void;
 }

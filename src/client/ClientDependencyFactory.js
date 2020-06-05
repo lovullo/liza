@@ -103,6 +103,7 @@ var Step          = require( '../step/Step' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
+const { AncestorAwareStyler }  = require( '../ui/styler/AncestorAwareStyler' );
 const { GridCollection }       = require( '../ui/step/GridCollection' );
 const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
@@ -397,7 +398,11 @@ module.exports = Class( 'ClientDependencyFactory',
         switch ( collection_type )
         {
             case "grid":
-                collection = new GridCollection( content, groups );
+                collection = new GridCollection(
+                    content,
+                    groups,
+                    new AncestorAwareStyler()
+                );
         }
 
         return collection;

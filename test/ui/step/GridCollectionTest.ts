@@ -22,6 +22,7 @@
 const Group = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
+import { ConditionalStyler } from "../../../src/ui/styler/ConditionalStyler";
 import { GridCollection as Sut, GroupList } from "../../../src/ui/step/GridCollection";
 import { GroupUi } from "../../../src/ui/group/GroupUi";
 import { expect } from 'chai';
@@ -31,6 +32,8 @@ import {
     createQuote,
     createBoxContent
 } from "../group/CommonResources";
+
+
 
 before(function () {
     this.jsdom = require( 'jsdom-global' )();
@@ -120,7 +123,7 @@ describe( "ui.step.Collection", () =>
                     actual_column_removed = class_name;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ) );
+                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub() );
 
                 sut.visit();
 
@@ -179,7 +182,7 @@ describe( "ui.step.Collection", () =>
                     add_column_class = classname;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ) );
+                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub() );
 
                 sut.visit();
 
@@ -193,7 +196,7 @@ describe( "ui.step.Collection", () =>
         let actual: string[] = [];
 
         const overrideGroupSelection = ( groups: any ) => {
-            [ "select", "deselect" ].forEach( event =>
+            [ "select", "deselect", "openDetails", "closeDetails" ].forEach( event =>
             {
                 groups.forEach( ( group: any, index: number ) =>
                 {
@@ -208,6 +211,7 @@ describe( "ui.step.Collection", () =>
             {
                 sinon.stub( group, "isSelected" ).returns( false );
                 sinon.stub( group, "getCategories" ).returns( [] );
+                sinon.stub( group, "areDetailsOpen" ).returns( false );
             } );
         };
 
@@ -227,7 +231,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
 
             sut.visit();
 
@@ -252,7 +256,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
 
             sut.visit();
 
@@ -282,7 +286,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
 
             sut.visit();
 
@@ -322,7 +326,7 @@ describe( "ui.step.Collection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "foo" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
 
             sut.visit();
 
@@ -363,7 +367,7 @@ describe( "ui.step.Collection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "bar" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
 
             sut.visit();
 
@@ -378,6 +382,66 @@ describe( "ui.step.Collection", () =>
 
             expect( actual ).to.deep.equal( expected );
         } );
+
+        it( "opens group details when group's actions is clicked, closes other group", () =>
+        {
+            let expected = [
+                "closeDetails grid group 0",
+                "openDetails grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid1 > .actions" );
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "opens group details and passes ConditionalStyler", () =>
+        {
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+            let open_calls = 0;
+
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid0 > .actions" );
+
+            groups[ 0 ].areDetailsOpen = () => { return false };
+            groups[ 0 ].openDetails = ( styler: ConditionalStyler ) =>
+            {
+                open_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( open_calls ).to.equal( 1 );
+        } );
+
     } );
 } );
 
@@ -435,4 +499,11 @@ const convertToGroupList = ( groups: GroupUi[] ): GroupList =>
     } );
 
     return group_list;
+}
+
+const getStylerStub = (): ConditionalStyler =>
+{
+    return <ConditionalStyler>{
+        'style': ( _: any ) => {},
+    };
 }

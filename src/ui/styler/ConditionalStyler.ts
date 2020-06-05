@@ -1,5 +1,5 @@
 /**
- *  Collection
+ *  Conditional Styler
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -20,11 +20,12 @@
  */
 
 /**
- * A collection of groups
+ * Interface for conditional styling
  */
-export interface Collection {
+export interface ConditionalStyler
+{
     /**
-     * Trigger visitation of the collection
+     * Conditionally apply a style to an HTML element
      */
-    visit(): void;
+    style( element: HTMLElement ): void;
 }

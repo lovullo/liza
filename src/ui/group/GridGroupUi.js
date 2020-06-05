@@ -46,6 +46,13 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     'private _box': null,
 
     /**
+     * Details pane
+     *
+     * @prop {HTMLElement}
+     */
+    'private _details': null,
+
+    /**
      * Reference to the group's marker on the x-axis
      *
      * @prop {string}
@@ -143,13 +150,58 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
 
     /**
+     * Determine if the details pane is open
+     *
+     * @return {boolean} if the details pane is open
+     */
+    'public areDetailsOpen': function()
+    {
+        if ( this._details === null )
+        {
+            return false;
+        }
+
+        return this.content.classList.contains( "details-open" );
+    },
+
+
+    /**
+     * Open the details pane
+     *
+     * @param {ConditionalStyler} styler
+     */
+    'public openDetails': function( styler )
+    {
+        if ( this._details !== null )
+        {
+            styler.style( this._details );
+
+            this.content.classList.add( "details-open" );
+        }
+    },
+
+
+    /**
+     * Close the details pane
+     */
+    'public closeDetails': function()
+    {
+        if ( this.areDetailsOpen() )
+        {
+            this.content.classList.remove( "details-open" );
+        }
+    },
+
+
+    /**
      * Process content of the group
      *
      * @param {ClientQuote} quote target quote
      */
     'override protected processContent': function( quote )
     {
-        this._box = this._getBox();
+        this._box     = this._getBox();
+        this._details = this._getDetails();
 
         quote.visitData( bucket =>
         {
@@ -168,6 +220,17 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     'private _getBox': function()
     {
         return this.content.querySelector( "div" );
+    },
+
+
+    /**
+     * Get the targeted div of the details pane
+     *
+     * @return {HTMLElement} details pane div
+     */
+    'private _getDetails': function()
+    {
+        return this.content.querySelector( ".details-pane" );
     },
 
 
