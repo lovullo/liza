@@ -40,6 +40,16 @@ const SECTION_TAG = "SECTION";
 const FIELDSET_TAG = "FIELDSET";
 
 /**
+ * Escape key
+ */
+const ESCAPE_KEY = 'Escape';
+
+/**
+ * Escape keycode
+ */
+const ESCAPE_KEYCODE = 27;
+
+/**
  * HTMLElement type that allows null values
  */
 type NullableHTMLElement = HTMLElement | null;
@@ -67,21 +77,28 @@ export class GridCollection implements Collection
      *
      * @param _content - target collection element
      * @param groups - list of groups
+     * @param _document - DOM
      * @param _styler - conditional styler
      */
     constructor(
         private _content: HTMLElement,
         groups: GroupList,
-        private _styler: ConditionalStyler
+        private readonly _document: Document,
+        private readonly _styler: ConditionalStyler
     ) {
         this._setGroups( groups );
 
-        this._content.addEventListener( "click", ( e: MouseEvent ) =>
+        this._content.addEventListener( 'click', ( e: MouseEvent ) =>
         {
-            if  ( e.target )
+            if ( e.target )
             {
                 this._handleClick( e.target );
             }
+        } );
+
+        this._document.addEventListener( 'keydown', ( e: KeyboardEvent ) =>
+        {
+            this._handleKeyEvent( e );
         } );
     }
 
@@ -215,6 +232,26 @@ export class GridCollection implements Collection
                 {
                     g.closeDetails();
                 }
+            } );
+        }
+    }
+
+
+    /**
+     * Handle keyboard events
+     *
+     * TODO: Remove keyCode reference once support for IE11 is dropped
+     *
+     * @param event - Keyboard event
+     */
+    private _handleKeyEvent( event: KeyboardEvent )
+    {
+        if ( event.key === ESCAPE_KEY || event.keyCode === ESCAPE_KEYCODE )
+        {
+            // Escape key closes any open group detail panes
+            this._groups.forEach( g =>
+            {
+                g.closeDetails();
             } );
         }
     }

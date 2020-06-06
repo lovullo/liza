@@ -401,6 +401,7 @@ module.exports = Class( 'ClientDependencyFactory',
                 collection = new GridCollection(
                     content,
                     groups,
+                    this._document,
                     new AncestorAwareStyler()
                 );
         }
