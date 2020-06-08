@@ -281,8 +281,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         push_data?: any,
     ): this
     {
-        var dao                       = this;
-        var meta: Record<string, any> = {};
+        var dao = this;
 
         // if we're not ready, then we can't save the quote!
         if ( this._ready === false )
@@ -306,9 +305,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             Object.keys( quote_data ).forEach(
                 key => save_data[ 'data.' + key ] = quote_data[ key ]
             );
-
-            // full save will include all metadata
-            meta = quote.getMetabucket().getData();
         }
 
         var id = quote.getId();
@@ -334,15 +330,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.quoteExpDate = ( exp_date === Infinity ) ? 0 : exp_date;
 
         // meta will eventually take over for much of the above data
-        meta.liza_timestamp_initial_rated = [ quote.getRatedDate() ];
+        save_data[ 'meta.liza_timestamp_initial_rated' ] = [ quote.getRatedDate() ];
 
         // save the stack so we can track this call via the oplog
         save_data._stack = ( new Error() ).stack;
-
-        // avoid wiping out other metadata (since this may not be a full set)
-        Object.keys( meta ).forEach(
-            key => save_data[ 'meta.' + key ] = meta[ key ]
-        );
 
         // do not push empty objects
         const document = ( !push_data || !Object.keys( push_data ).length )
@@ -690,13 +681,18 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param failure  - callback on error
      */
     saveQuoteMeta(
-        quote:    ServerSideQuote,
-        new_meta: Record<string, any>,
-        success: Callback = () => {},
-        failure: Callback = () => {},
+        quote:     ServerSideQuote,
+        new_meta?: Record<string, any>,
+        success:   Callback = () => {},
+        failure:   Callback = () => {},
     ): void
     {
         const update: MongoUpdate = {};
+
+        if( new_meta === undefined )
+        {
+            new_meta = quote.getMetabucket().getData();
+        }
 
         for ( var key in new_meta )
         {
