@@ -45,6 +45,9 @@ export type DocumentMeta =
     /** The document id */
     id: DocumentId,
 
+    /** The quote set id */
+    quoteSetId: DocumentId,
+
     /** The source program */
     program: string,
 

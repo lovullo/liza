@@ -75,22 +75,26 @@
                         "type": "int"
                     },
                     {
+                        "name":        "quote_set_id",
+                        "type":        "int"
+                    },
+                    {
                         "name":        "created",
-                        "type":         ["null", "long"],
-                        "logicalType":  "timestamp-millis",
-                        "default":      null
+                        "type":        ["null", "long"],
+                        "logicalType": "timestamp-millis",
+                        "default":     null
                     },
                     {
-                        "name":         "modified",
-                        "type":         ["null", "long"],
-                        "logicalType":  "timestamp-millis",
-                        "default":      null
+                        "name":        "modified",
+                        "type":        ["null", "long"],
+                        "logicalType": "timestamp-millis",
+                        "default":     null
                     },
                     {
-                        "name":         "expires",
-                        "type":         ["null", "long"],
-                        "logicalType":  "timestamp-millis",
-                        "default":      null
+                        "name":        "expires",
+                        "type":        ["null", "long"],
+                        "logicalType": "timestamp-millis",
+                        "default":     null
                     }
                 ]
             }
