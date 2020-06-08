@@ -1,5 +1,5 @@
 /**
- *  Ancestor Aware Styler
+ *  Ancestor-Aware Styler
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -19,47 +19,43 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ConditionalStyler } from "./ConditionalStyler";
+import { PositiveInteger } from "../../../src/numeric";
+
+/**
+ * HTMLElement type that allows null values
+ */
+export type NullableHTMLElement = HTMLElement | null;
 
 
 /**
- * Styles an HTML element based on its ancestors
+ * Helper to get nth ancestor
+ *
+ * @param element - target element
+ * @param n       - number of generations back
+ *
+ * @return the element's ancestor
  */
-export class AncestorAwareStyler implements ConditionalStyler
+export const getNthAncestor = (
+    element: HTMLElement,
+    n:       PositiveInteger
+): NullableHTMLElement =>
+{
+    while ( element.parentNode && n-- > 0 )
+    {
+        element = <HTMLElement> element.parentNode;
+    }
+
+    return ( n > 0 ) ? null : element;
+};
+
+
+/**
+ * Interface for conditional styling
+ */
+export interface AncestorAwareStyler
 {
     /**
-     * Applies styles to an element
-     *
-     * Applies the following styles:
-     * 1. The element takes the width of its greatgrandparnt
-     * 2. The element is left aligned with its greatgrandparent
-     * 3. The greatgrandparent element adds bottom margin
-     *    to account for the height and position of the element
-     *
-     * @param element - HTML element
+     * Conditionally apply a style to an HTML element based on an ancestor
      */
-    style( element: HTMLElement ): void
-    {
-        const parent = element.parentElement;
-        const grandparent = parent?.parentElement ?? null;
-        const greatgrandparent = grandparent?.parentElement ?? null;
-
-        if ( parent === null || greatgrandparent === null )
-        {
-            return;
-        }
-
-        const ggp_rect = greatgrandparent.getBoundingClientRect();
-        const p_rect   = parent.getBoundingClientRect();
-
-        element.style.width = greatgrandparent.offsetWidth + 'px';
-        element.style.left = ( ggp_rect.left - p_rect.left ) + 'px';
-
-        const elem_rect = element.getBoundingClientRect();
-
-        // Apply bottom margin to great grandparent to account for
-        // excess height added by element
-        const ggp_margin = Math.max( 0, elem_rect.bottom - ggp_rect.bottom ) + 'px';
-        greatgrandparent.style.marginBottom = ggp_margin;
-    };
+    style( elem: HTMLElement, generation: PositiveInteger ): void;
 }

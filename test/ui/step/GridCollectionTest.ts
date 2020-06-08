@@ -22,7 +22,7 @@
 const Group = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
-import { ConditionalStyler } from "../../../src/ui/styler/ConditionalStyler";
+import { AncestorAwareStyler } from "../../../src/ui/styler/AncestorAwareStyler";
 import { GridCollection as Sut, GroupList } from "../../../src/ui/step/GridCollection";
 import { GroupUi } from "../../../src/ui/group/GroupUi";
 import { expect } from 'chai';
@@ -43,7 +43,7 @@ after(function () {
     this.jsdom();
 });
 
-describe( "ui.step.Collection", () =>
+describe( "ui.step.GridCollection", () =>
 {
     describe ( "visit", () =>
     {
@@ -476,7 +476,7 @@ describe( "ui.step.Collection", () =>
             expect( actual ).to.deep.equal( expected );
         } );
 
-        it( "group details open and close methods pass ConditionalStyler", () =>
+        it( "group details open and close methods pass AncestorAwareStyler", () =>
         {
             const markup = createCollectionMarkup();
             const groups = createGroupsFromMarkup( markup );
@@ -491,14 +491,14 @@ describe( "ui.step.Collection", () =>
             const actions = <HTMLElement> markup.querySelector( "#grid0 > .actions" );
 
             groups[ 0 ].areDetailsOpen = () => { return false };
-            groups[ 0 ].openDetails = ( styler: ConditionalStyler ) =>
+            groups[ 0 ].openDetails = ( styler: AncestorAwareStyler ) =>
             {
                 open_calls++;
                 expect( styler ).to.equal( styler_stub );
             };
 
             groups[ 1 ].areDetailsOpen = () => { return false };
-            groups[ 1 ].closeDetails = ( styler: ConditionalStyler ) =>
+            groups[ 1 ].closeDetails = ( styler: AncestorAwareStyler ) =>
             {
                 close_calls++;
                 expect( styler ).to.equal( styler_stub );
@@ -584,9 +584,11 @@ const convertToGroupList = ( groups: GroupUi[] ): GroupList =>
     return group_list;
 }
 
-const getStylerStub = (): ConditionalStyler =>
+const getStylerStub = (): AncestorAwareStyler[] =>
 {
-    return <ConditionalStyler>{
-        'style': ( _: any ) => {},
-    };
+    return [
+        <AncestorAwareStyler>{
+            'style': ( _: any ) => {},
+        }
+    ];
 }

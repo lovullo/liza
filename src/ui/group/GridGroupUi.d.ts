@@ -19,13 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { GroupUi } from "./GroupUi";
-import { ConditionalStyler } from "../styler/ConditionalStyler";
+import { AncestorAwareStyler } from "../styler/AncestorAwareStyler";
 
 export declare class GridGroupUi extends GroupUi
 {
     public areDetailsOpen(): boolean;
 
-    public closeDetails( styler: ConditionalStyler ): void;
+    public closeDetails( stylers: AncestorAwareStyler[] ): void;
 
     public deselect(): void;
 
@@ -37,7 +37,7 @@ export declare class GridGroupUi extends GroupUi
 
     public isVisible(): boolean;
 
-    public openDetails( styler: ConditionalStyler ): void;
+    public openDetails( stylers: AncestorAwareStyler[] ): void;
 
     public select(): void;
 }

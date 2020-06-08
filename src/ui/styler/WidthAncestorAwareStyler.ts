@@ -1,5 +1,5 @@
 /**
- *  Conditional Styler
+ *  WidthAncestorAwareStyler
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -19,13 +19,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { AncestorAwareStyler, getNthAncestor } from "./AncestorAwareStyler";
+import { PositiveInteger } from "../../../src/numeric";
+
+
 /**
- * Interface for conditional styling
+ * Styles an HTML element's width based on an ancestor
  */
-export interface ConditionalStyler
+export class WidthAncestorAwareStyler implements AncestorAwareStyler
 {
     /**
-     * Conditionally apply a style to an HTML element
+     * Apply an ancestor's width to the element
+     *
+     * @param element - target element
+     * @param n       - number of generations back
      */
-    style( element: HTMLElement ): void;
+    public style( element: HTMLElement, generation: PositiveInteger ): void
+    {
+        const ancestor = getNthAncestor( element, generation );
+
+        if ( ancestor !== null )
+        {
+            element.style.width = ancestor.offsetWidth + 'px';
+        }
+    };
 }

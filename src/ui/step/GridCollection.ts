@@ -19,9 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { Collection } from "./Collection";
-import { ConditionalStyler } from "../styler/ConditionalStyler";
 import { GridGroupUi } from "../group/GridGroupUi";
 import { GroupUi } from "../group/GroupUi";
+import { AncestorAwareStyler, NullableHTMLElement } from "../styler/AncestorAwareStyler";
 
 
 /**
@@ -49,10 +49,6 @@ const ESCAPE_KEY = 'Escape';
  */
 const ESCAPE_KEYCODE = 27;
 
-/**
- * HTMLElement type that allows null values
- */
-type NullableHTMLElement = HTMLElement | null;
 
 /**
  * A list of groups keyed by their ID
@@ -75,16 +71,16 @@ export class GridCollection implements Collection
     /**
      * Create a new GridCollection instance
      *
-     * @param _content - target collection element
-     * @param groups - list of groups
+     * @param _content  - target collection element
+     * @param groups    - list of groups
      * @param _document - DOM
-     * @param _styler - conditional styler
+     * @param _stylers  - ancestor-aware styler
      */
     constructor(
-        private _content: HTMLElement,
-        groups: GroupList,
+        private _content:           HTMLElement,
+        groups:                     GroupList,
         private readonly _document: Document,
-        private readonly _styler: ConditionalStyler
+        private readonly _stylers:  AncestorAwareStyler[]
     ) {
         this._setGroups( groups );
 
@@ -226,19 +222,14 @@ export class GridCollection implements Collection
 
         if ( is_actions )
         {
-            this._groups.forEach( g =>
-            {
-                if ( g === group )
-                {
-                    g.areDetailsOpen()
-                        ? g.closeDetails( this._styler )
-                        : g.openDetails( this._styler );
-                }
-                else
-                {
-                    g.closeDetails( this._styler );
-                }
-            } );
+            // Cycle through all other groups first to avoid conflicting CSS
+            this._groups
+                .filter( g => g !== group )
+                .forEach( g => g.closeDetails( this._stylers ) );
+
+            group.areDetailsOpen()
+                ? group.closeDetails( this._stylers )
+                : group.openDetails( this._stylers );
         }
     }
 
@@ -265,7 +256,7 @@ export class GridCollection implements Collection
      */
     private _closeDetails()
     {
-        this._groups.forEach( g => g.closeDetails( this._styler ) );
+        this._groups.forEach( g => g.closeDetails( this._stylers ) );
     }
 
 

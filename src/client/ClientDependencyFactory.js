@@ -103,7 +103,9 @@ var Step          = require( '../step/Step' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
 
-const { AncestorAwareStyler }  = require( '../ui/styler/AncestorAwareStyler' );
+const { ExpandAncestorAwareStyler }    = require( '../ui/styler/ExpandAncestorAwareStyler' );
+const { LeftAlignAncestorAwareStyler } = require( '../ui/styler/LeftAlignAncestorAwareStyler' );
+const { WidthAncestorAwareStyler }     = require( '../ui/styler/WidthAncestorAwareStyler' );
 const { GridCollection }       = require( '../ui/step/GridCollection' );
 const { ContextParser }        = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
@@ -402,7 +404,11 @@ module.exports = Class( 'ClientDependencyFactory',
                     content,
                     groups,
                     this._document,
-                    new AncestorAwareStyler()
+                    [
+                        new WidthAncestorAwareStyler(),
+                        new LeftAlignAncestorAwareStyler(),
+                        new ExpandAncestorAwareStyler()
+                    ]
                 );
         }
 

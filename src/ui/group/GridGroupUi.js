@@ -168,15 +168,17 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     /**
      * Open the details pane
      *
-     * @param {ConditionalStyler} styler
+     * @param {AncestorAwareStyler[]} stylers
      */
-    'public openDetails': function( styler )
+    'public openDetails': function( stylers )
     {
         if ( this._details !== null )
         {
             this.content.classList.add( "details-open" );
 
-            styler.style( this._details );
+            const ancestor = 3;
+
+            stylers.forEach( styler => styler.style( this._details, ancestor ) );
         }
     },
 
@@ -184,15 +186,17 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     /**
      * Close the details pane
      *
-     * @param {ConditionalStyler} styler
+     * @param {AncestorAwareStyler[]} stylers
      */
-    'public closeDetails': function( styler )
+    'public closeDetails': function( stylers )
     {
         if ( this.areDetailsOpen() )
         {
             this.content.classList.remove( "details-open" );
 
-            styler.style( this._details );
+            const ancestor = 3;
+
+            stylers.forEach( styler => styler.style( this._details, ancestor ) );
         }
     },
 

@@ -1,5 +1,5 @@
 /**
- *  Test case for AncestorAwareStyler
+ *  Test case for LeftAlignAncestorAwareStyler
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -19,29 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AncestorAwareStyler as Sut } from "../../../src/ui/styler/AncestorAwareStyler";
+import { LeftAlignAncestorAwareStyler as Sut } from "../../../src/ui/styler/LeftAlignAncestorAwareStyler";
+import { PositiveInteger } from "../../../src/numeric";
 import { expect } from 'chai';
 const sinon = require( 'sinon' );
 
 
 before(function () {
     this.jsdom = require( 'jsdom-global' )();
-
-    Object.defineProperty( HTMLElement.prototype, "offsetWidth", {
-        get: function(){ return 500; },
-    });
-
 });
 
 after(function () {
     this.jsdom();
 });
 
-describe( "ui.styler.AncestorAwareStyler", () =>
+describe( "ui.styler.LeftAlignAncestorAwareStyler", () =>
 {
     describe ( "style", () =>
     {
-        it( "sets the width and left of the element based on its ancestors", () =>
+        it( "sets left of the element based on its ancestors", () =>
         {
             const container = document.createElement( "div" );
 
@@ -57,12 +53,11 @@ describe( "ui.styler.AncestorAwareStyler", () =>
                 </div>`;
 
             const element  = <HTMLElement>container.querySelector( ".foo" );
-            const parent   = <HTMLElement>container.querySelector( "#parent" );
             const ggparent = <HTMLElement>container.querySelector( "#ggparent" );
 
-            element.getBoundingClientRect = sinon.stub().returns( { bottom: 100 } );
-            ggparent.getBoundingClientRect = sinon.stub().returns( { left: 500, bottom: 25 } );
-            parent.getBoundingClientRect = sinon.stub().returns( { left: 800 });
+            element.getBoundingClientRect = sinon.stub().returns( { left: 800 } );
+            ggparent.getBoundingClientRect = sinon.stub().returns( { left: 500 } );
+
 
             if ( element === null )
             {
@@ -70,15 +65,13 @@ describe( "ui.styler.AncestorAwareStyler", () =>
             }
 
             const sut = new Sut();
-            sut.style( element );
+            sut.style( element, <PositiveInteger> 3 );
 
-            expect( element.style.width ).to.equal( "500px" );
             expect( element.style.left ).to.equal( "-300px" );
-            expect( ggparent.style.marginBottom ).to.equal( "75px" );
         } );
 
 
-        it( "does not set width and left if element has no parent", () =>
+        it( "does not set left if element has no parent", () =>
         {
             const container = document.createElement( "div" );
 
@@ -95,9 +88,8 @@ describe( "ui.styler.AncestorAwareStyler", () =>
             }
 
             const sut = new Sut();
-            sut.style( element );
+            sut.style( element, <PositiveInteger> 2 );
 
-            expect( element.style.width ).to.equal( "" );
             expect( element.style.left ).to.equal( "" );
         } )
     } );
