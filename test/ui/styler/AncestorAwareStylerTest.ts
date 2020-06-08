@@ -60,7 +60,8 @@ describe( "ui.styler.AncestorAwareStyler", () =>
             const parent   = <HTMLElement>container.querySelector( "#parent" );
             const ggparent = <HTMLElement>container.querySelector( "#ggparent" );
 
-            ggparent.getBoundingClientRect = sinon.stub().returns( { left: 500 } );
+            element.getBoundingClientRect = sinon.stub().returns( { bottom: 100 } );
+            ggparent.getBoundingClientRect = sinon.stub().returns( { left: 500, bottom: 25 } );
             parent.getBoundingClientRect = sinon.stub().returns( { left: 800 });
 
             if ( element === null )
@@ -73,6 +74,7 @@ describe( "ui.styler.AncestorAwareStyler", () =>
 
             expect( element.style.width ).to.equal( "500px" );
             expect( element.style.left ).to.equal( "-300px" );
+            expect( ggparent.style.marginBottom ).to.equal( "75px" );
         } );
 
 

@@ -28,8 +28,13 @@ import { ConditionalStyler } from "./ConditionalStyler";
 export class AncestorAwareStyler implements ConditionalStyler
 {
     /**
-     * Conditionally apply styles to an HTML element
-     * based on its parent and grandparent element
+     * Applies styles to an element
+     *
+     * Applies the following styles:
+     * 1. The element takes the width of its greatgrandparnt
+     * 2. The element is left aligned with its greatgrandparent
+     * 3. The greatgrandparent element adds bottom margin
+     *    to account for the height and position of the element
      *
      * @param element - HTML element
      */
@@ -44,10 +49,17 @@ export class AncestorAwareStyler implements ConditionalStyler
             return;
         }
 
-        const ggp_position = greatgrandparent.getBoundingClientRect();
-        const p_position   = parent.getBoundingClientRect();
+        const ggp_rect = greatgrandparent.getBoundingClientRect();
+        const p_rect   = parent.getBoundingClientRect();
 
         element.style.width = greatgrandparent.offsetWidth + 'px';
-        element.style.left = ( ggp_position.left - p_position.left ) + 'px';
+        element.style.left = ( ggp_rect.left - p_rect.left ) + 'px';
+
+        const elem_rect = element.getBoundingClientRect();
+
+        // Apply bottom margin to great grandparent to account for
+        // excess height added by element
+        const ggp_margin = Math.max( 0, elem_rect.bottom - ggp_rect.bottom ) + 'px';
+        greatgrandparent.style.marginBottom = ggp_margin;
     };
 }

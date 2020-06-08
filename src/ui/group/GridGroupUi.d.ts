@@ -25,7 +25,7 @@ export declare class GridGroupUi extends GroupUi
 {
     public areDetailsOpen(): boolean;
 
-    public closeDetails(): void;
+    public closeDetails( styler: ConditionalStyler ): void;
 
     public deselect(): void;
 

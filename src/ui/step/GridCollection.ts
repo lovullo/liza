@@ -225,12 +225,12 @@ export class GridCollection implements Collection
                 if ( g === group )
                 {
                     g.areDetailsOpen()
-                        ? g.closeDetails()
+                        ? g.closeDetails( this._styler )
                         : g.openDetails( this._styler );
                 }
                 else
                 {
-                    g.closeDetails();
+                    g.closeDetails( this._styler );
                 }
             } );
         }
@@ -249,10 +249,7 @@ export class GridCollection implements Collection
         if ( event.key === ESCAPE_KEY || event.keyCode === ESCAPE_KEYCODE )
         {
             // Escape key closes any open group detail panes
-            this._groups.forEach( g =>
-            {
-                g.closeDetails();
-            } );
+            this._groups.forEach( g => g.closeDetails( this._styler ) );
         }
     }
 

@@ -174,21 +174,25 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     {
         if ( this._details !== null )
         {
-            styler.style( this._details );
-
             this.content.classList.add( "details-open" );
+
+            styler.style( this._details );
         }
     },
 
 
     /**
      * Close the details pane
+     *
+     * @param {ConditionalStyler} styler
      */
-    'public closeDetails': function()
+    'public closeDetails': function( styler )
     {
         if ( this.areDetailsOpen() )
         {
             this.content.classList.remove( "details-open" );
+
+            styler.style( this._details );
         }
     },
 

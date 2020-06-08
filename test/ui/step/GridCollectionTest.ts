@@ -446,12 +446,13 @@ describe( "ui.step.Collection", () =>
             expect( actual ).to.deep.equal( expected );
         } );
 
-        it( "opens group details and passes ConditionalStyler", () =>
+        it( "group details open and close methods pass ConditionalStyler", () =>
         {
             const markup = createCollectionMarkup();
             const groups = createGroupsFromMarkup( markup );
             const styler_stub = getStylerStub();
             let open_calls = 0;
+            let close_calls = 0;
 
             let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
 
@@ -466,6 +467,13 @@ describe( "ui.step.Collection", () =>
                 expect( styler ).to.equal( styler_stub );
             };
 
+            groups[ 1 ].areDetailsOpen = () => { return false };
+            groups[ 1 ].closeDetails = ( styler: ConditionalStyler ) =>
+            {
+                close_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
             if ( actions )
             {
                 actions.click();
@@ -474,6 +482,7 @@ describe( "ui.step.Collection", () =>
             }
 
             expect( open_calls ).to.equal( 1 );
+            expect( close_calls ).to.equal( 1 );
         } );
 
     } );
