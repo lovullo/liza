@@ -446,6 +446,36 @@ describe( "ui.step.Collection", () =>
             expect( actual ).to.deep.equal( expected );
         } );
 
+
+        it( "clicking element with close class closes all groups", () =>
+        {
+            let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid1 .close" );
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
         it( "group details open and close methods pass ConditionalStyler", () =>
         {
             const markup = createCollectionMarkup();
@@ -503,12 +533,22 @@ const createCollectionMarkup = () => {
             <div id="grid0">
                 <section class="content"></section>
                 <section class="actions"></section>
+                <div class="details-pane">
+                    <div class="buttons">
+                        <input type="button" value="Close" class="close">
+                    </div>
+                </div>
             </div>
         </fieldset>
         <fieldset class="grid" id="group_grid1">
             <div id="grid1">
                 <section class="content"></section>
                 <section class="actions"></section>
+                <div class="details-pane">
+                    <div class="buttons">
+                        <input type="button" value="Close" class="close">
+                    </div>
+                </div>
             </div>
         </fieldset>`;
 

@@ -172,6 +172,12 @@ export class GridCollection implements Collection
     private _handleClick( target: EventTarget )
     {
         const element = <HTMLElement> target;
+
+        if ( element.classList.contains( 'close' ) )
+        {
+            return this._closeDetails();
+        }
+
         const section = this._getGridSection( element );
         const group   = this._getGridGroup( element );
 
@@ -249,8 +255,17 @@ export class GridCollection implements Collection
         if ( event.key === ESCAPE_KEY || event.keyCode === ESCAPE_KEYCODE )
         {
             // Escape key closes any open group detail panes
-            this._groups.forEach( g => g.closeDetails( this._styler ) );
+            this._closeDetails();
         }
+    }
+
+
+    /**
+     * Close details of all groups
+     */
+    private _closeDetails()
+    {
+        this._groups.forEach( g => g.closeDetails( this._styler ) );
     }
 
 
