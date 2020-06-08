@@ -236,137 +236,175 @@ describe( 'BaseQuote', () =>
             {
                 description: 'default values',
                 currentDate: 0,
-                expired: false
+                expired:     false
             },
             {
                 description: 'quote immediately after start',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:      86400,
                 expirationDate: 7862400,
-                currentDate: 86400,
-                expired: false
+                currentDate:    86400,
+                expired:        false
             },
             {
                 description: 'quote immediately after rate',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400000,
+                startDate:        86400000,
                 initialRatedDate: 172800,
-                expirationDate: 2764800,
-                currentDate: 172800,
-                expired: false
+                expirationDate:   2764800,
+                currentDate:      172800,
+                expired:          false
             },
             {
                 description: 'quote 31 days after rate',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:        86400,
                 initialRatedDate: 172800,
-                expirationDate: 2764800,
-                currentDate: 2851200,
-                expired: true
+                expirationDate:   2764800,
+                currentDate:      2851200,
+                expired:          true
             },
             {
                 description: 'quote 31 days after rate (with grace period)',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
-                    preRateGracePeriod: 15,
-                    postRateExpiration: 30,
+                    preRateExpiration:   90,
+                    preRateGracePeriod:  15,
+                    postRateExpiration:  30,
                     postRateGracePeriod: 5
                 },
-                startDate: 86400,
+                startDate:        86400,
                 initialRatedDate: 172800,
-                expirationDate: 2764800,
-                currentDate: 2851200,
-                expired: false
+                expirationDate:   2764800,
+                currentDate:      2851200,
+                expired:          false
             },
             {
                 description: 'quote 62 days after start',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:      86400,
                 expirationDate: 7862400,
-                currentDate: 5356800,
-                expired: false
+                currentDate:    5356800,
+                expired:        false
             },
             {
                 description: 'quote 61 days after rate',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:        86400,
                 initialRatedDate: 172800,
-                expirationDate: 2764800,
-                currentDate: 5356800,
-                expired: true
+                expirationDate:   2764800,
+                currentDate:      5356800,
+                expired:          true
             },
             {
                 description: 'quote 91 days after start',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:      86400,
                 expirationDate: 7862400,
-                currentDate: 7948800,
-                expired: true
+                currentDate:    7948800,
+                expired:        true
             },
             {
                 description: 'quote 91 days after start (with grace period)',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
-                    preRateGracePeriod: 15,
-                    postRateExpiration: 30,
+                    preRateExpiration:   90,
+                    preRateGracePeriod:  15,
+                    postRateExpiration:  30,
                     postRateGracePeriod: 5
                 },
-                startDate: 86400,
+                startDate:      86400,
                 expirationDate: 7862400,
-                currentDate: 7948800,
-                expired: false
+                currentDate:    7948800,
+                expired:        false
             },
             {
                 description: 'quote 121 days after start',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:      86400,
                 expirationDate: 7862400,
-                currentDate: 10540800,
-                expired: true
+                currentDate:    10540800,
+                expired:        true
             },
             {
                 description: 'quote 120 days after rate',
                 lockTimeout:
                 {
-                    preRateExpiration: 90,
+                    preRateExpiration:  90,
                     postRateExpiration: 30
                 },
-                startDate: 86400,
+                startDate:        86400,
                 initialRatedDate: 172800,
-                expirationDate: 2764800,
-                currentDate: 10540800,
-                expired: true
-            }
+                expirationDate:   2764800,
+                currentDate:      10540800,
+                expired:          true
+            },
+            {
+                description: 'preRateExpiration set to zero',
+                lockTimeout:
+                {
+                    preRateExpiration:  0,
+                    postRateExpiration: 30
+                },
+                startDate:        86400,
+                initialRatedDate: 172800,
+                expirationDate:   2764800,
+                currentDate:      10540800,
+                expired:          true
+            },
+            {
+                description: 'postRateExpiration set to zero',
+                lockTimeout:
+                {
+                    preRateExpiration:  90,
+                    postRateExpiration: 0
+                },
+                startDate:        86400,
+                expirationDate:   7862400,
+                currentDate:      10540800,
+                expired:          true
+            },
+            {
+                description: 'preRateExpiration and postRateExpiration set to zero',
+                lockTimeout:
+                {
+                    preRateExpiration:  0,
+                    postRateExpiration: 0
+                },
+                startDate:        86400,
+                initialRatedDate: 172800,
+                expirationDate:   Infinity,
+                currentDate:      10540800,
+                expired:          false
+            },
 
         ].forEach( testCase =>
         {
