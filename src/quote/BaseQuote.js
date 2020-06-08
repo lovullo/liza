@@ -308,7 +308,10 @@ module.exports = Class( 'BaseQuote' )
         if ( !this._program
             || !this._program.lockTimeout
             || ( !post_rate && !this._program.lockTimeout.preRateExpiration )
-            || ( post_rate && !this._program.lockTimeout.postRateExpiration ))
+            || ( post_rate && !this._program.lockTimeout.postRateExpiration )
+            || ( +this._program.lockTimeout.preRateExpiration === 0
+                 && +this._program.lockTimeout.postRateExpiration === 0 )
+            )
         {
             return Infinity;
         }
