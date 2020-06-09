@@ -22,6 +22,7 @@
 const Group = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
+import { AncestorAwareStyler } from "../../../src/ui/styler/AncestorAwareStyler";
 import { GridCollection as Sut, GroupList } from "../../../src/ui/step/GridCollection";
 import { GroupUi } from "../../../src/ui/group/GroupUi";
 import { expect } from 'chai';
@@ -32,6 +33,8 @@ import {
     createBoxContent
 } from "../group/CommonResources";
 
+
+
 before(function () {
     this.jsdom = require( 'jsdom-global' )();
 });
@@ -40,7 +43,7 @@ after(function () {
     this.jsdom();
 });
 
-describe( "ui.step.Collection", () =>
+describe( "ui.step.GridCollection", () =>
 {
     describe ( "visit", () =>
     {
@@ -120,7 +123,7 @@ describe( "ui.step.Collection", () =>
                     actual_column_removed = class_name;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ) );
+                const sut = new Sut( content, convertToGroupList( groups ), document, getStylerStub() );
 
                 sut.visit();
 
@@ -179,7 +182,7 @@ describe( "ui.step.Collection", () =>
                     add_column_class = classname;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ) );
+                const sut = new Sut( content, convertToGroupList( groups ), document, getStylerStub() );
 
                 sut.visit();
 
@@ -188,12 +191,46 @@ describe( "ui.step.Collection", () =>
         } );
     } );
 
+    describe( "handleKeyboardEvent", () =>
+    {
+        it( "closes the detail panes of all groups", () =>
+        {
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+            let open_calls = 0;
+
+            let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
+
+            sut.visit();
+
+            groups[ 0 ].closeDetails = () =>
+            {
+                open_calls++;
+            };
+
+            groups[ 1 ].closeDetails = () =>
+            {
+                open_calls++;
+            };
+
+            // Simulate firing key event
+            document.dispatchEvent(
+                new KeyboardEvent( "keydown", {
+                    key: "Escape"
+                })
+            );
+
+            expect( open_calls ).to.equal( 2 );
+        } );
+    } );
+
     describe( "handleClick", () =>
     {
         let actual: string[] = [];
 
         const overrideGroupSelection = ( groups: any ) => {
-            [ "select", "deselect" ].forEach( event =>
+            [ "select", "deselect", "openDetails", "closeDetails" ].forEach( event =>
             {
                 groups.forEach( ( group: any, index: number ) =>
                 {
@@ -208,6 +245,7 @@ describe( "ui.step.Collection", () =>
             {
                 sinon.stub( group, "isSelected" ).returns( false );
                 sinon.stub( group, "getCategories" ).returns( [] );
+                sinon.stub( group, "areDetailsOpen" ).returns( false );
             } );
         };
 
@@ -227,7 +265,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), document, getStylerStub() );
 
             sut.visit();
 
@@ -252,7 +290,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), document, getStylerStub() );
 
             sut.visit();
 
@@ -282,7 +320,7 @@ describe( "ui.step.Collection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), document, getStylerStub() );
 
             sut.visit();
 
@@ -322,7 +360,7 @@ describe( "ui.step.Collection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "foo" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), document, getStylerStub() );
 
             sut.visit();
 
@@ -363,7 +401,7 @@ describe( "ui.step.Collection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "bar" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ) );
+            let sut = new Sut( markup, convertToGroupList( groups ), document, getStylerStub() );
 
             sut.visit();
 
@@ -378,6 +416,105 @@ describe( "ui.step.Collection", () =>
 
             expect( actual ).to.deep.equal( expected );
         } );
+
+        it( "opens group details when group's actions is clicked, closes other group", () =>
+        {
+            let expected = [
+                "closeDetails grid group 0",
+                "openDetails grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid1 > .actions" );
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+
+        it( "clicking element with close class closes all groups", () =>
+        {
+            let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1"
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid1 .close" );
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
+        it( "group details open and close methods pass AncestorAwareStyler", () =>
+        {
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+            let open_calls = 0;
+            let close_calls = 0;
+
+            let sut = new Sut( markup, convertToGroupList( groups ), document, styler_stub );
+
+            sut.visit();
+
+            const actions = <HTMLElement> markup.querySelector( "#grid0 > .actions" );
+
+            groups[ 0 ].areDetailsOpen = () => { return false };
+            groups[ 0 ].openDetails = ( styler: AncestorAwareStyler ) =>
+            {
+                open_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
+            groups[ 1 ].areDetailsOpen = () => { return false };
+            groups[ 1 ].closeDetails = ( styler: AncestorAwareStyler ) =>
+            {
+                close_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
+            if ( actions )
+            {
+                actions.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( open_calls ).to.equal( 1 );
+            expect( close_calls ).to.equal( 1 );
+        } );
+
     } );
 } );
 
@@ -396,12 +533,22 @@ const createCollectionMarkup = () => {
             <div id="grid0">
                 <section class="content"></section>
                 <section class="actions"></section>
+                <div class="details-pane">
+                    <div class="buttons">
+                        <input type="button" value="Close" class="close">
+                    </div>
+                </div>
             </div>
         </fieldset>
         <fieldset class="grid" id="group_grid1">
             <div id="grid1">
                 <section class="content"></section>
                 <section class="actions"></section>
+                <div class="details-pane">
+                    <div class="buttons">
+                        <input type="button" value="Close" class="close">
+                    </div>
+                </div>
             </div>
         </fieldset>`;
 
@@ -435,4 +582,13 @@ const convertToGroupList = ( groups: GroupUi[] ): GroupList =>
     } );
 
     return group_list;
+}
+
+const getStylerStub = (): AncestorAwareStyler[] =>
+{
+    return [
+        <AncestorAwareStyler>{
+            'style': ( _: any ) => {},
+        }
+    ];
 }

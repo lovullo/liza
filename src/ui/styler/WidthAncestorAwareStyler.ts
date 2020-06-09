@@ -1,5 +1,5 @@
 /**
- * Grid Group UI logic
+ *  WidthAncestorAwareStyler
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -18,26 +18,29 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { GroupUi } from "./GroupUi";
-import { AncestorAwareStyler } from "../styler/AncestorAwareStyler";
 
-export declare class GridGroupUi extends GroupUi
+import { AncestorAwareStyler, getNthAncestor } from "./AncestorAwareStyler";
+import { PositiveInteger } from "../../../src/numeric";
+
+
+/**
+ * Styles an HTML element's width based on an ancestor
+ */
+export class WidthAncestorAwareStyler implements AncestorAwareStyler
 {
-    public areDetailsOpen(): boolean;
+    /**
+     * Apply an ancestor's width to the element
+     *
+     * @param element - target element
+     * @param n       - number of generations back
+     */
+    public style( element: HTMLElement, generation: PositiveInteger ): void
+    {
+        const ancestor = getNthAncestor( element, generation );
 
-    public closeDetails( stylers: AncestorAwareStyler[] ): void;
-
-    public deselect(): void;
-
-    public getCategories(): string[];
-
-    public getXType(): string;
-
-    public isSelected(): boolean;
-
-    public isVisible(): boolean;
-
-    public openDetails( stylers: AncestorAwareStyler[] ): void;
-
-    public select(): void;
+        if ( ancestor !== null )
+        {
+            element.style.width = ancestor.offsetWidth + 'px';
+        }
+    };
 }

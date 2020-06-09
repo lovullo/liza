@@ -21,6 +21,8 @@
 import { Collection } from "./Collection";
 import { GridGroupUi } from "../group/GridGroupUi";
 import { GroupUi } from "../group/GroupUi";
+import { AncestorAwareStyler, NullableHTMLElement } from "../styler/AncestorAwareStyler";
+
 
 /**
  * The only type of group this collection may contain
@@ -38,9 +40,15 @@ const SECTION_TAG = "SECTION";
 const FIELDSET_TAG = "FIELDSET";
 
 /**
- * HTMLElement type that allows null values
+ * Escape key
  */
-type NullableHTMLElement = HTMLElement | null;
+const ESCAPE_KEY = 'Escape';
+
+/**
+ * Escape keycode
+ */
+const ESCAPE_KEYCODE = 27;
+
 
 /**
  * A list of groups keyed by their ID
@@ -60,20 +68,33 @@ export class GridCollection implements Collection
     protected _groups: GridGroupUi[] = [];
 
 
-     /**
+    /**
      * Create a new GridCollection instance
      *
-     * @param _content - target collection element
+     * @param _content  - target collection element
+     * @param groups    - list of groups
+     * @param _document - DOM
+     * @param _stylers  - ancestor-aware styler
      */
-    constructor( private _content: HTMLElement, groups: GroupList ) {
+    constructor(
+        private _content:           HTMLElement,
+        groups:                     GroupList,
+        private readonly _document: Document,
+        private readonly _stylers:  AncestorAwareStyler[]
+    ) {
         this._setGroups( groups );
 
-        this._content.addEventListener( "click", ( e: MouseEvent ) =>
+        this._content.addEventListener( 'click', ( e: MouseEvent ) =>
         {
-            if  ( e.target )
+            if ( e.target )
             {
                 this._handleClick( e.target );
             }
+        } );
+
+        this._document.addEventListener( 'keydown', ( e: KeyboardEvent ) =>
+        {
+            this._handleKeyEvent( e );
         } );
     }
 
@@ -147,6 +168,12 @@ export class GridCollection implements Collection
     private _handleClick( target: EventTarget )
     {
         const element = <HTMLElement> target;
+
+        if ( element.classList.contains( 'close' ) )
+        {
+            return this._closeDetails();
+        }
+
         const section = this._getGridSection( element );
         const group   = this._getGridGroup( element );
 
@@ -169,25 +196,67 @@ export class GridCollection implements Collection
     {
         const is_disabled = group_element.classList.contains( "disabled" );
         const is_content  = section.classList.contains( "content" );
+        const is_actions  = section.classList.contains( "actions" );
         const group       = this._getGroupFromElement( group_element );
 
         // If the group is disabled we don't take any action on selection
-        if ( is_disabled || !is_content || !group )
+        if ( is_disabled || !group )
         {
             return;
         }
 
-        this._groups.forEach( g =>
+        if ( is_content )
         {
-            if ( g === group )
+            this._groups.forEach( g =>
             {
-                g.isSelected() ? g.deselect() : g.select();
-            }
-            else if ( this._groupsConflict( g, group ) )
-            {
-                g.deselect();
-            }
-        } );
+                if ( g === group )
+                {
+                    g.isSelected() ? g.deselect() : g.select();
+                }
+                else if ( this._groupsConflict( g, group ) )
+                {
+                    g.deselect();
+                }
+            } );
+        }
+
+        if ( is_actions )
+        {
+            // Cycle through all other groups first to avoid conflicting CSS
+            this._groups
+                .filter( g => g !== group )
+                .forEach( g => g.closeDetails( this._stylers ) );
+
+            group.areDetailsOpen()
+                ? group.closeDetails( this._stylers )
+                : group.openDetails( this._stylers );
+        }
+    }
+
+
+    /**
+     * Handle keyboard events
+     *
+     * TODO: Remove keyCode reference once support for IE11 is dropped
+     *
+     * @param event - Keyboard event
+     */
+    private _handleKeyEvent( event: KeyboardEvent )
+    {
+        if ( event.key === ESCAPE_KEY || event.keyCode === ESCAPE_KEYCODE )
+        {
+            // Escape key closes any open group detail panes
+            this._closeDetails();
+        }
+    }
+
+
+    /**
+     * Close details of all groups
+     */
+    private _closeDetails()
+    {
+        this._groups.forEach( g => g.closeDetails( this._stylers ) );
     }
 
 

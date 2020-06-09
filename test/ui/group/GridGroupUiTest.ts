@@ -129,5 +129,38 @@ describe( "GridGroup", () =>
             expect( sut.isSelected() ).to.be.false;
         } );
     } );
+
+    describe ( "areDetailsOpen", () =>
+    {
+        it( "detects when the details pane is open", () =>
+        {
+            const content = createBoxContent();
+
+            content.classList.contains = sinon.stub().returns( false );
+
+            const sut = createSut( Sut, { content: content } );
+
+            expect( sut.areDetailsOpen() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            content.classList.contains = sinon.stub().returns( true );
+
+            expect( sut.areDetailsOpen() ).to.be.true;
+        } );
+
+        it( "detects when the group is closed", () =>
+        {
+            const sut = createSut( Sut, { content: createBoxContent() } );
+
+            expect( sut.areDetailsOpen() ).to.be.false;
+
+            sut.init( createQuote() );
+            sut.visit();
+
+            expect( sut.areDetailsOpen() ).to.be.false;
+        } );
+    } );
 } );
 
