@@ -459,8 +459,6 @@ module.exports = Class( 'Server' )
                         explicitLock:       quote.getExplicitLockReason(),
                         explicitLockStepId: quote.getExplicitLockStep(),
                     } );
-
-                    server.dao.saveQuoteMeta( quote );
                 }
 
                 callback.call( server );
@@ -662,23 +660,17 @@ module.exports = Class( 'Server' )
             // save the quote updates (but only if it was modified)
             if ( mod )
             {
-                var error_cb = function()
-                {
-                    _self.sendError( request,
-                        "Quote sanitization failed to commit"
-                    );
-                };
-
                 _self.dao.saveQuote( quote,
                     function()
                     {
-                        _self.dao.saveQuoteMeta( quote, undefined, function()
-                        {
-                            _self._processInit.apply( _self, args );
-                        },
-                        error_cb );
+                        _self._processInit.apply( _self, args );
                     },
-                    error_cb
+                    function()
+                    {
+                        _self.sendError( request,
+                            "Quote sanitization failed to commit"
+                        );
+                    }
                 );
             }
             else
@@ -1278,7 +1270,7 @@ module.exports = Class( 'Server' )
 
     'private _monitorMetadataPromise'( quote, dapis, meta_clear, request, program )
     {
-        this.dao.saveQuoteMeta( quote, meta_clear );
+        quote.getMetabucket().setValues( meta_clear );
 
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
@@ -1371,13 +1363,11 @@ module.exports = Class( 'Server' )
         // unless this is a rating step
         if ( ( program.rateSteps || [] )[ step_id ] !== true )
         {
-            const meta = { liza_timestamp_rate_request: [ 0 ] }
-
             quote.setLastPremiumDate( 0 );
             quote.setRetryAttempts( 0 );
-            quote.setMetadata( meta );
-
-            server.dao.saveQuoteMeta( quote, meta );
+            quote.setMetadata( {
+                liza_timestamp_rate_request: [ 0 ],
+            } );
         }
 
         server.quoteFill( quote, step_id, request.getSession(),

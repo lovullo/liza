@@ -41,20 +41,26 @@ describe( 'MongoServerDao', () =>
     {
         describe( "with no save data or push data", () =>
         {
-            it( "saves initial rated individually", done =>
+            it( "saves entire metabucket record individually", done =>
             {
-                const expected = 123321;
-                const quote    = createStubQuote( {} );
+                const metadata = {
+                    foo: [ 'bar', 'baz' ],
+                    bar: [ { quux: 'quuux' } ],
+                };
 
-                quote.getRatedDate = () => { return <UnixTimestamp>expected };
+                const quote = createStubQuote( metadata );
 
                 const sut = new Sut(
                     createMockDb(
                         // update
                         ( _selector: MongoSelector, data: MongoUpdate ) =>
                         {
-                            expect( data.$set[ 'meta.liza_timestamp_initial_rated' ] )
-                                .to.deep.equal( [ expected ] );
+                            expect( data.$set[ 'meta.foo' ] )
+                                .to.deep.equal( metadata.foo );
+
+                            expect( data.$set[ 'meta.bar' ] )
+                                .to.deep.equal( metadata.bar );
+
 
                             expect( data.$push ).to.equal( undefined );
 
