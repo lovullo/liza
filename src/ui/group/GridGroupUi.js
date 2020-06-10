@@ -25,6 +25,13 @@ var Class   = require( 'easejs' ).Class,
 module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 {
     /**
+     * Reference to quote object
+     *
+     * @prop {ClientQuote}
+     */
+    'private _quote': null,
+
+    /**
      * Reference to the bucket
      *
      * @prop {Bucket}
@@ -58,6 +65,34 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      * @prop {string}
      */
     'private _x_type': null,
+
+    /**
+     * If group is selected
+     *
+     * @prop {boolean}
+     */
+    'private _is_selected': false,
+
+    /**
+     * Bucket key for currently selected group
+     *
+     * @prop {string}
+     */
+    'private _selected_current_key': null,
+
+    /**
+     * Bucket key for list of selected group
+     *
+     * @prop {string}
+     */
+    'private _selected_list_key': null,
+
+    /**
+     * Selectd bucket value of group
+     *
+     * @prop {string}
+     */
+    'private _selected_value': null,
 
     /**
      * If the group is visible
@@ -122,7 +157,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'public isSelected': function()
     {
-        return this.content.classList.contains( "selected" );
+        return this._is_selected;
     },
 
 
@@ -131,8 +166,12 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'public select': function()
     {
+        this._is_selected = true;
+
         this.content.classList.remove( "deselected" );
         this.content.classList.add( "selected" );
+
+        this._setSelectedData();
     },
 
 
@@ -143,8 +182,105 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     {
         if ( this.isSelected() )
         {
+            this._is_selected = false;
+
             this.content.classList.remove( "selected" );
             this.content.classList.add( "deselected" );
+
+            this._setSelectedData();
+        }
+    },
+
+
+    /**
+     * Set selected if selected value
+     * is already set in the bucket
+     */
+    'private _setSelectedStatus': function()
+    {
+        if ( this._selected_list_key === null
+            || this._selected_value === null )
+        {
+            return;
+        }
+
+        const list_values = this._quote.getDataByName( this._selected_list_key );
+
+        if ( Array.isArray( list_values )
+            && list_values.indexOf( this._selected_value ) > -1 )
+        {
+            this.select();
+        }
+    },
+
+
+    /**
+     * Update the selected value in the bucket
+     */
+    'private _setSelectedData': function()
+    {
+        // Do not continue if any data attributes are missing
+        if ( this._selected_current_key === null
+            || this._selected_list_key === null
+            || this._selected_value === null )
+        {
+            return;
+        }
+
+        var list_values = this._quote.getDataByName( this._selected_list_key );
+        var update_data = false;
+
+        if ( Array.isArray( list_values ) )
+        {
+            const value_index = list_values.indexOf( this._selected_value );
+            var set_current = [];
+
+            // If selected and value not found in array
+            if ( this.isSelected() === true && value_index === -1 )
+            {
+                update_data = true;
+
+                // Add the group value
+                list_values.push( this._selected_value );
+
+                // Remove empty values
+                list_values = list_values.filter( item => item !== "" );
+
+                set_current = [ this._selected_value ];
+            }
+            // If deselected and value is found in array
+            else if ( this.isSelected() === false && value_index > -1 )
+            {
+                update_data = true;
+
+                // Remove the group value
+                list_values = list_values.filter( item => item !== this._selected_value );
+
+                // Force data to be overwritten
+                list_values.push( null );
+
+                const current_select = this._quote.getDataByName( this._selected_current_key );
+
+                if ( Array.isArray( current_select )
+                    && current_select.indexOf( this._selected_value ) > -1 )
+                {
+                    // clear current selected value
+                    set_current = [];
+                }
+                else
+                {
+                    // If selected value not set, keep current value
+                    set_current = current_select;
+                }
+            }
+
+            if ( update_data )
+            {
+                this._quote.setData( {
+                    [ this._selected_list_key ]:    list_values,
+                    [ this._selected_current_key ]: set_current
+                } );
+            }
         }
     },
 
@@ -210,6 +346,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     {
         this._box     = this._getBox();
         this._details = this._getDetails();
+        this._quote   = quote;
 
         quote.visitData( bucket =>
         {
@@ -264,6 +401,12 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
     {
         this._x_type = this._box.getAttribute( 'data-x-type' );
 
+        this._selected_current_key = this._box.getAttribute( 'data-selected-current-key' ) || null;
+        this._selected_list_key    = this._box.getAttribute( 'data-selected-list-key' ) || null;
+        this._selected_value       = this._box.getAttribute( 'data-selected-value' ) || null;
+
+        this._setSelectedStatus();
+
         this._state_manager.processDataAttributes( this._box );
 
         const categories = this._box.getAttribute( 'data-categories' );
@@ -313,5 +456,11 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         const operation = isDisabled ? "add" : "remove";
 
         this.content.classList[ operation ]( "disabled" );
+
+        if ( isDisabled )
+        {
+            // Ensure the group is deselected
+            this.deselect();
+        }
     },
 } );

@@ -314,8 +314,8 @@ describe( "ui.step.GridCollection", () =>
             let expected = [
                 "deselect grid group 0",
                 "select grid group 1",
-                "select grid group 0",
-                "deselect grid group 1"
+                "deselect grid group 1",
+                "select grid group 0"
             ];
 
             const markup = createCollectionMarkup();

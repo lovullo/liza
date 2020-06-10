@@ -190,17 +190,15 @@ export class GridCollection implements Collection
 
         if ( is_content )
         {
-            this._groups.forEach( g =>
-            {
-                if ( g === group )
-                {
-                    g.isSelected() ? g.deselect() : g.select();
-                }
-                else if ( this._groupsConflict( g, group ) )
-                {
-                    g.deselect();
-                }
-            } );
+            // Cycle through all other groups first
+            this._groups
+                .filter( g => g !== group )
+                .filter( g => this._groupsConflict( g, group ) )
+                .forEach( g => g.deselect() );
+
+            group.isSelected()
+                ? group.deselect()
+                : group.select();
         }
 
         if ( is_actions )
