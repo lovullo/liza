@@ -245,19 +245,6 @@ module.exports = Class( 'ServerSideQuote' )
 
 
     /**
-     * Increments the number of retries attempted
-     *
-     * @return {ServerSideQuote} self
-     */
-    'public retryAttempted': function()
-    {
-        this._retry_attempts++;
-
-        return this;
-    },
-
-
-    /**
      * Retrieve the number of raters that are pending
      *
      * @param {Object.<string,Array>} data (optional) Rate data

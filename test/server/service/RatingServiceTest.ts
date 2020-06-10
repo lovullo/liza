@@ -253,14 +253,7 @@ describe( 'RatingService', () =>
             _push_data: Record<string, any>,
         ) =>
         {
-            if( saveQuote_call_count === 0 )
-            {
-                expect( save_data.ratedata ).to.equal( undefined );
-            }
-            else
-            {
-                expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
-            }
+            expect( save_data.ratedata ).to.deep.equal( stub_rate_data );
 
             saveQuote_call_count++;
             saved_rates = true;
@@ -275,7 +268,7 @@ describe( 'RatingService', () =>
             .then( () =>
             {
                 expect( saved_rates ).to.be.true;
-                expect( saveQuote_call_count ).to.equal( 2 );
+                expect( saveQuote_call_count ).to.equal( 1 );
             } );
     } );
 
@@ -316,14 +309,7 @@ describe( 'RatingService', () =>
             stub_rate_delta[ "rdelta.ratedata" ].timestamp = timestamp;
             saved_quote                                    = true;
 
-            if( saveQuote_call_count === 0 )
-            {
-                expect( push_data ).to.equal( undefined );
-            }
-            else
-            {
-                expect( push_data ).to.deep.equal( stub_rate_delta );
-            }
+            expect( push_data ).to.deep.equal( stub_rate_delta );
 
             saveQuote_call_count++;
             success( quote );
@@ -337,7 +323,7 @@ describe( 'RatingService', () =>
             .then( () =>
             {
                 expect( saved_quote ).to.be.true;
-                expect( saveQuote_call_count ).to.equal( 2 );
+                expect( saveQuote_call_count ).to.equal( 1 );
             } );
     } );
 
@@ -509,12 +495,12 @@ describe( 'RatingService', () =>
                 'supplier-d__retry': [ 1 ],
             },
             2,
-            [ 0 ],
+            [ 2 ],
             false,
             undefined,
             0,
-            0,
-            true,
+            2,
+            false,
         ],
         [
             "Set __rate_pending to zero after max attempts are reached",
@@ -769,8 +755,9 @@ function getStubs()
             return this;
         }
 
-        mergeBucket(): this
+        mergeBucket( _: any, __:any, cb: any ): this
         {
+            cb();
             return this;
         }
 

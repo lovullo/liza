@@ -90,22 +90,6 @@ export interface ServerDao
 
 
     /**
-     * Save quote classification data
-     *
-     * @param quote   - quote to save
-     * @param classes - classification data
-     * @param success - successful callback
-     * @param failure - failure callback
-     */
-    saveQuoteClasses(
-        quote:    ServerSideQuote,
-        classes:  ClassificationData,
-        success?: Callback,
-        failure?: Callback,
-    ): this;
-
-
-    /**
      * Saves the quote state to the database
      *
      * The quote state includes the current step, the top visited step and the
@@ -120,37 +104,6 @@ export interface ServerDao
         success?: Callback,
         failure?: Callback,
     ): this;
-
-
-    /**
-     * Saves the quote retry attempts
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteRateRetries(
-        quote:    ServerSideQuote,
-        success?: Callback,
-        failure?: Callback,
-    ): this
-
-
-    /**
-     * Synchronize the quote data needed for rating
-     *
-     * The provides the ability for quotes to refresh data that may have been
-     * changed since instantiation.
-     *
-     * retryAttempts, initialRatedDate, and currentStepId are needed for rating
-     * calculations and topSavedStepId is included so that it is not overwritten
-     * when setCurrentStepId invokes saveQuoteState
-     *
-     * @param quote - the quote to sync
-     *
-     * @returns a promise with an synchronized quote
-     */
-    syncRatingState( quote: ServerSideQuote ): Promise<ServerSideQuote>
 
 
     /**

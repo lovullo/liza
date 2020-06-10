@@ -71,11 +71,13 @@ module.exports = Class( 'DapiMetaSource',
                 data,
                 ( err, api_data ) =>
                 {
-                    if ( api_data.length > 1 )
+                    if ( api_data.length !== 1 )
                     {
                         reject( Error(
-                            "Data API request produced more than one result"
+                            "Data API request produced " +
+                                api_data.length + " results"
                         ) );
+                        return;
                     }
 
                     dapi_manager.setFieldData(

@@ -177,6 +177,44 @@ exports.init = function( logger, enc_service, conf, env )
                     // we're done
                     c();
                 } );
+            } ).onDapiReturn( function( quote_id, request, program )
+            {
+                return new Promise( ( resolve, reject ) =>
+                {
+                    // We will be calling this function from within a post call
+                    // which has its own write lock. This call should be made
+                    // asynchronously so we avoid deadlocks.
+                    //
+                    // It is also necessary that we free this lock manually
+                    // because the underlying request may have been resolved
+                    // already
+                    acquireWriteLock( quote_id, request, function( free )
+                    {
+                        createQuote( quote_id, program, request,
+                            function( quote )
+                            {
+                                rating_service.request(
+                                    request.getSession(),
+                                    quote,
+                                    '',
+                                    true
+                                )
+                                .then( () =>
+                                {
+                                    free();
+                                    resolve();
+                                } );
+                            },
+                            function( error )
+                            {
+                                free();
+
+                                reject( error );
+                            }
+                        );
+                    },
+                    true );
+                } );
             } );
         } );
     } );
