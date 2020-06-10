@@ -296,42 +296,49 @@ function createStubClientQuote()
 {
     const callbacks: any = {};
 
-    return new class implements ClientQuote
+    const quote =
     {
         setClassifier( _known_fields: any, _classifier: any ): ClientQuote
         {
-            return this;
-        }
+            return <ClientQuote><unknown>this;
+        },
 
         getDataByName( _name: string ): Record<string, any>
         {
             return {};
-        }
+        },
 
         visitData(
             visitor: ( bucket: StagingBucket ) => void
         ): void
         {
             visitor( <StagingBucket>{} );
-        }
+        },
 
         setData( _data: Data ): ClientQuote
         {
-            return this;
-        }
+            return <ClientQuote><unknown>this;
+        },
 
         on( name: string, callback: any ): void
         {
             callbacks[ name ] = callback;
-        }
+        },
 
         emit( name: string )
         {
             const data = Array.prototype.slice.call( arguments, 1 );
 
             callbacks[ name ].apply( null, data );
-        }
+        },
+
+        autosave( _: any )
+        {
+            return this;
+        },
     };
+
+    return quote;
 }
 
 
@@ -375,6 +382,7 @@ function createStubProgram()
         cretain:             {},
         apis:                {},
         internal:            {},
+        autosave:            false,
         meta:                {
             arefs:  {},
             fields: {},
@@ -437,6 +445,7 @@ function createStubStepUi( field_names: ExclusiveFields  )
 function createStubClient( quote: ClientQuote, ui: Ui )
 {
     return <Client>{
+        program: <Program>{},
         nav: <Nav>{
             getCurrentStepId: () => <PositiveInteger>0
         },
@@ -445,6 +454,7 @@ function createStubClient( quote: ClientQuote, ui: Ui )
         getQuote: () => <ClientQuote>quote,
         handleError: ( _e: Error) => {},
         handleEvent: () => <Client>{},
+        validateChange: ( _: any ) => {},
     };
 }
 
@@ -459,7 +469,7 @@ function createStubs(
     const program        = createStubProgram();
     const class_matcher  = createStubClassMatcher( cmatch );
     const ui             = createStubUi( step );
-    const client         = createStubClient( quote, ui );
+    const client         = createStubClient( <ClientQuote><unknown>quote, ui );
 
     const sut =  new class extends Sut
     {

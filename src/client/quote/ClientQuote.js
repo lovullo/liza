@@ -98,6 +98,11 @@ module.exports = Class( 'ClientQuote' )
 
     'private _classKnown': {},
 
+    /**
+     * The timestamp of the last autosave
+     */
+    'private _autosave_id': 0,
+
 
     /**
      * Initializes component with the given quote
@@ -427,6 +432,9 @@ module.exports = Class( 'ClientQuote' )
     /**
      * Commits changes to quote and attempts to save
      *
+     * @param {QuoteTransport} transport A transport for the data
+     * @param {Function}       callback  A function to call with results
+     *
      * @return {ClientQuote} self
      */
     'public save': function( transport, callback )
@@ -443,10 +451,7 @@ module.exports = Class( 'ClientQuote' )
                 _self._staging.setValues( old_store.old, true, false  );
             }
 
-            if ( typeof callback === 'function' )
-            {
-                callback.apply( null, arguments );
-            }
+            callback.apply( null, arguments );
         } );
 
         // XXX: we need to commit after a _successful_ save, otherwise the
@@ -458,6 +463,36 @@ module.exports = Class( 'ClientQuote' )
         // commit staged quote data to the data bucket (important: do this
         // *after* save); will make the staged values available as old_store.old
         this._staging.commit( old_store );
+
+        return this;
+    },
+
+
+    /**
+     * Commits changes to quote and attempts to save
+     *
+     * @param {QuoteTransport} transport A transport for the data
+     * @param {Function}       callback  A function to call with results
+     *
+     * @return {ClientQuote} self
+     */
+    'public autosave': function( transport, callback )
+    {
+        var _self = this,
+            id    = ++this._autosave_id;
+
+        this._doSave( transport, function( data )
+        {
+            if ( !data.hasError && ( _self._autosave_id === id ) )
+            {
+                _self._staging.commit();
+            }
+
+            if ( typeof callback === 'function' )
+            {
+                callback.apply( null, arguments );
+            }
+        } );
 
         return this;
     },
