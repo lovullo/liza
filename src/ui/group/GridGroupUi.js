@@ -151,6 +151,17 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
 
     /**
+     * Get selected value
+     *
+     * @return {string}
+     */
+    'public getSelectedValue': function()
+    {
+        return this._selected_value;
+    },
+
+
+    /**
      * Determine if the group is selected
      *
      * @return {boolean} if the group is selected
@@ -163,22 +174,29 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
     /**
      * Select the group
+     *
+     * @param {Array} selected_values selected values (optional)
      */
-    'public select': function()
+    'public select': function( selected_values )
     {
         this._is_selected = true;
 
         this.content.classList.remove( "deselected" );
         this.content.classList.add( "selected" );
 
-        this._setSelectedData();
+        if ( selected_values !== undefined )
+        {
+            this._setSelectedData( selected_values );
+        }
     },
 
 
     /**
      * Deselect the group
+     *
+     * @param {Array} selected_values selected values (optional)
      */
-    'public deselect': function()
+    'public deselect': function( selected_values )
     {
         if ( this.isSelected() )
         {
@@ -187,14 +205,16 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
             this.content.classList.remove( "selected" );
             this.content.classList.add( "deselected" );
 
-            this._setSelectedData();
+            if ( selected_values !== undefined )
+            {
+                this._setSelectedData( selected_values );
+            }
         }
     },
 
 
     /**
-     * Set selected if selected value
-     * is already set in the bucket
+     * Set selected if selected value is already set in the bucket
      */
     'private _setSelectedStatus': function()
     {
@@ -204,10 +224,10 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
             return;
         }
 
-        const list_values = this._quote.getDataByName( this._selected_list_key );
+        const current_values = this._quote.getDataByName( this._selected_list_key );
 
-        if ( Array.isArray( list_values )
-            && list_values.indexOf( this._selected_value ) > -1 )
+        if ( Array.isArray( current_values )
+            && current_values.indexOf( this._selected_value ) > -1 )
         {
             this.select();
         }
@@ -215,73 +235,80 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
 
     /**
-     * Update the selected value in the bucket
+     * Set deselected if required due to a change in state
      */
-    'private _setSelectedData': function()
+    'private _setDeSelectedStatus': function()
     {
-        // Do not continue if any data attributes are missing
-        if ( this._selected_current_key === null
+        if ( this.isSelected() === false
             || this._selected_list_key === null
             || this._selected_value === null )
         {
             return;
         }
 
-        var list_values = this._quote.getDataByName( this._selected_list_key );
-        var update_data = false;
+        const current_values = this._quote.getDataByName( this._selected_list_key );
 
-        if ( Array.isArray( list_values ) )
+        if ( Array.isArray( current_values )
+            && current_values.indexOf( this._selected_value ) > -1 )
         {
-            const value_index = list_values.indexOf( this._selected_value );
-            var set_current = [];
+            // Remove group from current values
+            const selected_values = current_values.filter(
+                item => item !== this._selected_value
+            );
 
-            // If selected and value not found in array
-            if ( this.isSelected() === true && value_index === -1 )
+            this.deselect( selected_values );
+        }
+    },
+
+
+    /**
+     * Update the selected value in the bucket
+     *
+     * @param {Array} selected_values selected values
+     */
+    'private _setSelectedData': function( selected_values )
+    {
+        // Do not continue if any data is not valid
+        if ( Array.isArray( selected_values ) === false
+            || this._selected_current_key === null
+            || this._selected_list_key === null
+            || this._selected_value === null )
+        {
+            return;
+        }
+
+        var set_current = [];
+
+        if ( this.isSelected() )
+        {
+            // Add the group value
+            selected_values.push( this._selected_value );
+
+            set_current = [ this._selected_value ];
+        }
+        else
+        {
+            // Get current selected value
+            const current_select = this._quote.getDataByName( this._selected_current_key );
+
+            if ( !Array.isArray( current_select )
+                || current_select.indexOf( this._selected_value ) === -1 )
             {
-                update_data = true;
-
-                // Add the group value
-                list_values.push( this._selected_value );
-
-                // Remove empty values
-                list_values = list_values.filter( item => item !== "" );
-
-                set_current = [ this._selected_value ];
-            }
-            // If deselected and value is found in array
-            else if ( this.isSelected() === false && value_index > -1 )
-            {
-                update_data = true;
-
-                // Remove the group value
-                list_values = list_values.filter( item => item !== this._selected_value );
-
-                // Force data to be overwritten
-                list_values.push( null );
-
-                const current_select = this._quote.getDataByName( this._selected_current_key );
-
-                if ( Array.isArray( current_select )
-                    && current_select.indexOf( this._selected_value ) > -1 )
-                {
-                    // clear current selected value
-                    set_current = [];
-                }
-                else
-                {
-                    // If selected value not set, keep current value
-                    set_current = current_select;
-                }
-            }
-
-            if ( update_data )
-            {
-                this._quote.setData( {
-                    [ this._selected_list_key ]:    list_values,
-                    [ this._selected_current_key ]: set_current
-                } );
+                 // If selected value not set, keep current value
+                 set_current = current_select;
             }
         }
+
+        // Remove empty values
+        selected_values = selected_values.filter( item => item !== "" );
+
+        // Force entire array to be overwritten
+        selected_values.push( null );
+
+        this._quote.setData( {
+            [ this._selected_list_key ]:    selected_values,
+            [ this._selected_current_key ]: set_current
+        } );
     },
 
 
@@ -460,7 +487,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         if ( isDisabled )
         {
             // Ensure the group is deselected
-            this.deselect();
+            this._setDeSelectedStatus();
         }
     },
 } );

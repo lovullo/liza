@@ -192,13 +192,16 @@ export class GridCollection implements Collection
         {
             // Cycle through all other groups first
             this._groups
-                .filter( g => g !== group )
-                .filter( g => this._groupsConflict( g, group ) )
+                .filter( g => g !== group && this._groupsConflict( g, group ) )
                 .forEach( g => g.deselect() );
 
+            const selected_siblings = this._groups
+                .filter( g => g !== group && g.isSelected() )
+                .map( g => g.getSelectedValue() )
+
             group.isSelected()
-                ? group.deselect()
-                : group.select();
+                ? group.deselect( selected_siblings )
+                : group.select( selected_siblings );
         }
 
         if ( is_actions )

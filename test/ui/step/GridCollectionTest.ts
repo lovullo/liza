@@ -247,6 +247,49 @@ describe( "ui.step.GridCollection", () =>
             expect( actual ).to.deep.equal( expected );
         } );
 
+        it( "selected group passes selected values from previously selected groups", () =>
+        {
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+
+            const selected_value = "foo";
+            let get_selected_calls = 0;
+            let select_calls = 0;
+
+            const expected_selected_siblings = [ selected_value ];
+
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+
+            sut.visit();
+
+            const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            groups[ 0 ].isSelected = () => { return true };
+            groups[ 0 ].getSelectedValue = () =>
+            {
+                get_selected_calls++;
+                return selected_value;
+            };
+
+            groups[ 1 ].isSelected = () => { return false };
+            groups[ 1 ].select = ( selected_siblings: string[] ) =>
+            {
+                select_calls++;
+                expect( selected_siblings ).to.deep.equal( expected_selected_siblings );
+            };
+
+            if ( content )
+            {
+                content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( get_selected_calls ).to.equal( 1 );
+            expect( select_calls ).to.equal( 1 );
+        } );
+
         it( "doesn't cause selection when a disabled group is clicked", () =>
         {
             let expected: string[] = [];
