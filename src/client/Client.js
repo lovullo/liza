@@ -509,8 +509,6 @@ module.exports = Class( 'Client' )
 
             client._monitorFields();
 
-            client._hookQuote();
-
             // store internal status
             client._isInternal = client.program.isInternal =
                 ( data.content.internal )
@@ -560,6 +558,8 @@ module.exports = Class( 'Client' )
             // kick off the classifier (it may not be kicked off on step change
             // if there are no questions on the step that are used by it)
             client._quote.forceClassify();
+
+            client._hookQuote();
         } );
     },
 
