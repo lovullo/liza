@@ -98,6 +98,11 @@ module.exports = Class( 'ClientQuote' )
 
     'private _classKnown': {},
 
+    /**
+     * The timestamp of the last autosave
+     */
+    'private _autosave_id': 0,
+
 
     /**
      * Initializes component with the given quote
@@ -427,6 +432,9 @@ module.exports = Class( 'ClientQuote' )
     /**
      * Commits changes to quote and attempts to save
      *
+     * @param {QuoteTransport} transport A transport for the data
+     * @param {Function}       callback  A function to call with results
+     *
      * @return {ClientQuote} self
      */
     'public save': function( transport, callback )
@@ -461,6 +469,36 @@ module.exports = Class( 'ClientQuote' )
 
 
     /**
+     * Commits changes to quote and attempts to save
+     *
+     * @param {QuoteTransport} transport A transport for the data
+     * @param {Function}       callback  A function to call with results
+     *
+     * @return {ClientQuote} self
+     */
+    'public autosave': function( transport, callback )
+    {
+        var _self = this,
+            id    = ++this._autosave_id;
+
+        this._doSave( transport, function( data )
+        {
+            if ( !data.hasError && ( _self._autosave_id === id ) )
+            {
+                _self._staging.commit();
+            }
+
+            if ( typeof callback === 'function' )
+            {
+                callback.apply( null, arguments );
+            }
+        } );
+
+        return this;
+    },
+
+
+    /**
      * Save staging bucket
      *
      * TODO: This is now used as a heartbeat and should be removed in the
@@ -487,7 +525,7 @@ module.exports = Class( 'ClientQuote' )
         transport.send( this, function( err, data )
         {
             // if bucket data is returned, then apply it
-            if ( data && data.content && !data.hasError )
+            if ( data && data.content && data.content.length && !data.hasError )
             {
                 // the server has likely already applied these changes, so do
                 // not allow them to be discarded
