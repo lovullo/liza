@@ -306,6 +306,8 @@ describe( "ui.step.GridCollection", () =>
             const group = <HTMLElement> markup.querySelector( "#group_grid1" );
             const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
 
+            groups[ 1 ].group.isInternal = () => { return false; };
+
             if ( group && content )
             {
                 group.classList.add( "disabled" );

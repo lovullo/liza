@@ -1,5 +1,5 @@
 /**
- * Grid Group UI logic
+ * Group
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -18,31 +18,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { AncestorAwareStyler } from "../styler/AncestorAwareStyler";
-import { Group } from "../../group/Group";
-import { GroupUi } from "./GroupUi";
 
-export declare class GridGroupUi extends GroupUi
+export declare class Group
 {
-    public group: Group;
-
-    public areDetailsOpen(): boolean;
-
-    public closeDetails( stylers: AncestorAwareStyler[] ): void;
-
-    public deselect( selected_siblings?: string[]  ): void;
-
-    public getCategories(): string[];
-
-    public getSelectedValue(): string;
-
-    public getXType(): string;
-
-    public isSelected(): boolean;
-
-    public isVisible(): boolean;
-
-    public openDetails( stylers: AncestorAwareStyler[] ): void;
-
-    public select( selected_siblings?: string[] ): void;
+    public isInternal(): boolean;
 }
