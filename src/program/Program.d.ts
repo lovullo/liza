@@ -40,8 +40,6 @@ export declare abstract class Program
 
     internal: Record<string, boolean>;
 
-    autosave: boolean;
-
 
     meta: {
         arefs:  AnswerRefs,

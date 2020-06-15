@@ -520,7 +520,6 @@ function createStubProgram( internals: { internal: boolean } )
     return {
         ineligibleLockCount: 0,
         internal:            internals,
-        autosave:            false,
         meta:                {
             arefs:  {},
             fields: {},
@@ -809,11 +808,6 @@ function createStubQuote()
         {
             return 123;
         },
-
-        autosave( _: any, __: any )
-        {
-            return this;
-        }
     };
 }
 

@@ -246,16 +246,15 @@ function createSut( content, jquery, tabCount )
  */
 function createQuote()
 {
-    const bucket = {
-        setValues:     sinon.stub(),
-        on:            sinon.stub(),
-        getData:       sinon.stub().returns( [] ),
-        getDataByName: sinon.stub().returns( [] ),
-        filter:        sinon.stub()
-    };
+   let bucket = {
+       setValues: sinon.stub(),
+       on: sinon.stub(),
+       getData: sinon.stub().returns( [] ),
+       getDataByName: sinon.stub().returns( [] ),
+       filter: sinon.stub()
+   };
 
-    const staging_callback = sinon.stub().returns( bucket );
-    const quote            = new BaseQuote( 1, bucket );
-
-    return new ClientQuote( quote, {}, staging_callback );
+   let staging_callback = sinon.stub().returns( bucket );
+   let quote = new BaseQuote( 1, bucket );
+   return new ClientQuote( quote, {}, staging_callback );
 }

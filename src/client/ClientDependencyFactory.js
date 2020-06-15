@@ -106,19 +106,15 @@ var Step          = require( '../step/Step' ),
 const { ExpandAncestorAwareStyler }    = require( '../ui/styler/ExpandAncestorAwareStyler' );
 const { LeftAlignAncestorAwareStyler } = require( '../ui/styler/LeftAlignAncestorAwareStyler' );
 const { WidthAncestorAwareStyler }     = require( '../ui/styler/WidthAncestorAwareStyler' );
-const { GridCollection }               = require( '../ui/step/GridCollection' );
-const { ContextParser }                = require( '../ui/context/ContextParser' );
-const { DelegateEventHandler }         = require( './event/DelegateEventHandler' );
-const { DelayEventHandler }            = require( './event/DelayEventHandler' );
-const { GroupContext }                 = require( '../ui/context/GroupContext' );
-const { WindowFeatureFlag }            = require( '../system/flags/WindowFeatureFlag' );
-const { GeneralStepUi }                = require( '../ui/step/GeneralStepUi' );
-const { FieldContextFactory }          = require( '../ui/context/FieldContextFactory' );
-const { FieldStylerFactory }           = require( '../ui/context/styler/FieldStylerFactory' );
-const {
-    createQuotePreStagingHook,
-    createQuoteStagingHook,
-} = require( './quote/ClientQuoteHooks' );
+const { GridCollection }       = require( '../ui/step/GridCollection' );
+const { ContextParser }        = require( '../ui/context/ContextParser' );
+const { DelegateEventHandler } = require( './event/DelegateEventHandler' );
+const { DelayEventHandler }    = require( './event/DelayEventHandler' );
+const { GroupContext }         = require( '../ui/context/GroupContext' );
+const { WindowFeatureFlag }    = require( '../system/flags/WindowFeatureFlag' );
+const { GeneralStepUi }        = require( '../ui/step/GeneralStepUi' );
+const { FieldContextFactory }  = require( '../ui/context/FieldContextFactory' );
+const { FieldStylerFactory }   = require( '../ui/context/styler/FieldStylerFactory' );
 
 
 const Class = require( 'easejs' ).Class;
@@ -196,13 +192,14 @@ module.exports = Class( 'ClientDependencyFactory',
 
 
     createDataBucketTransport: function (
-        url,
+        quote_id,
+        step_id,
         proxy,
         concluding_save
     )
     {
         return XhttpQuoteTransport(
-            url,
+            ( quote_id + '/step/' + step_id + '/post' ),
             proxy,
             concluding_save
         );
@@ -229,20 +226,6 @@ module.exports = Class( 'ClientDependencyFactory',
             {
                 return _self.createStagingBucket( bucket );
             }
-        );
-    },
-
-
-    createQuotePreStagingHook: createQuotePreStagingHook,
-
-
-    createQuoteStagingHook: function( program, quote_id, proxy )
-    {
-        return createQuoteStagingHook(
-            program,
-            this.createDataBucketTransport(
-                quote_id + '/autosave', proxy, false
-            )
         );
     },
 

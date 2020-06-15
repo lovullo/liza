@@ -18,16 +18,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { StagingBucket } from '../../bucket/StagingBucket';
-import { BaseQuote } from '../../quote/BaseQuote';
-import { QuoteTransport } from '../transport/QuoteTransport';
+import { StagingBucket } from "../../bucket/StagingBucket";
 
 export type Data = Record<string, any>;
 
 /**
  * Controller for the program client
  */
-export declare class ClientQuote extends BaseQuote
+export declare class ClientQuote
 {
 
     /**
@@ -63,13 +61,4 @@ export declare class ClientQuote extends BaseQuote
      * Data is not written directly to the quote. It must be committed.
      */
     setData( data: Data ): ClientQuote;
-
-
-    /**
-     * Commits changes to quote and attempts to save
-     *
-     * @param transport - Transport for the data
-     * @param callback  - Function to call with results
-     */
-    autosave( transport: QuoteTransport, callback?: any ): this
 }

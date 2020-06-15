@@ -487,11 +487,6 @@ module.exports = Class( 'Client' )
                 return;
             }
 
-            if( !data.content.autosave )
-            {
-                client.program.autosave = false;
-            }
-
             // stop any currently running XHRs to ensure they don't conflict
             // with the new quote
             client.dataProxy.abortAll();
@@ -507,9 +502,7 @@ module.exports = Class( 'Client' )
 
             client.nav.setMinStepId( client._quote.getExplicitLockStep() );
 
-            client._monitorFields();
-
-            client._hookQuote();
+            client._monitorQuote( client._quote );
 
             // store internal status
             client._isInternal = client.program.isInternal =
@@ -517,6 +510,11 @@ module.exports = Class( 'Client' )
                     ? true
                     : false;
             client.ui.setInternal( client._isInternal );
+
+            if( !data.content.autosave )
+            {
+                client.program.autosave = false;
+            }
 
             // attach the bucket to the sidebar (note: order of these method
             // calls is important)
@@ -567,48 +565,20 @@ module.exports = Class( 'Client' )
     /**
      * Hooks quote for performing validations on data change
      *
-     * @param {Object} diff Diff to validate
-     *
      * @return {undefined}
      */
-    validateChange: function( diff )
-    {
-        var _self = this;
-
-        this._quote.visitData( function( bucket )
-        {
-            // it is important that we pass `undefined` here for class data,
-            // _not_ an empty object
-            _self._dataValidator.validate(
-                diff,
-                undefined,
-                ( vdiff, failures ) =>
-                {
-                    _self._validateProgramChange( bucket, vdiff, failures )
-                }
-            )
-            .catch( e => _self.handleError( e ) );
-        } );
-    },
-
-
-    /**
-     * Validate changes with program
-     *
-     * @param {QuoteDataBucket} bucket   quote data bucket
-     * @param {Object}          diff     diff to process
-     * @param {Object}          failures validation failures
-     *
-     * @return {undefined}
-     */
-    'private _validateProgramChange': function( bucket, diff, failures )
+    'private _validateChange': function( msgobj, bucket, diff, failures )
     {
         var trigger_callback = this._getValidationTriggerHandler();
 
+        var diff_count = 0;
+
         for ( var name in diff )
         {
-            // if we already have a problem with the field, then
-            // save ourselves some effort and ignore it for now
+            diff_count++;
+
+            // if we already have a problem with the field, then save
+            // ourselves some effort and ignore it for now
             if ( failures[ name ] )
             {
                 continue;
@@ -652,6 +622,8 @@ module.exports = Class( 'Client' )
                 );
             }
         }
+
+        return;
     },
 
 
@@ -1808,7 +1780,8 @@ module.exports = Class( 'Client' )
         concluding_save
     ){
         return this._factory.createDataBucketTransport(
-            ( this._quote.getId() + '/step/' + step_id + '/post' ),
+            this._quote.getId(),
+            step_id,
             this._createDataProxy( jQuery, prohibit_abort ),
             concluding_save
         );
@@ -2407,7 +2380,7 @@ module.exports = Class( 'Client' )
     },
 
 
-    'private _monitorFields': function()
+    'private _monitorQuote': function( quote )
     {
         var _self  = this,
             ui     = this.ui,
@@ -2417,6 +2390,15 @@ module.exports = Class( 'Client' )
 
             err   = styler.register( 'fieldError' ),
             fixed = styler.register( 'fieldFixed' );
+
+        // TODO: breaks encapsulation and this klugery is simply to avoid
+        // another level of indentation; refactor
+        var bucket = {};
+        quote.visitData( function( the_bucket  )
+        {
+            bucket = the_bucket;
+        } );
+
 
         this._fieldMonitor
             .on( 'failure', function( failures )
@@ -2443,41 +2425,29 @@ module.exports = Class( 'Client' )
                     // in use; this data is no longer needed
                     delete msgs[ name ];
                 }
-            } )
-            .on( 'error', function( e )
-            {
-                _self.handleError( e );
             } );
-    },
 
 
-    /**
-     * Attach any quote hooks for the current quote
-     */
-    'private _hookQuote': function()
-    {
-        this._createQuoteHooks().forEach( hook => hook( this._quote ) );
-    },
+        // catch problems *before* the data is staged, altering the data
+        // directly if need be
+        quote.on( 'preDataUpdate', function( diff )
+        {
+            var failures = {};
 
+            // it is important that we pass `undefined` here for class data,
+            // _not_ an empty object
+            _self._dataValidator.validate( diff, undefined, ( vdiff, failures ) =>
+            {
+                _self._validateChange( msgs, bucket, vdiff, failures );
+            } )
+                .catch( e => _self.handleError( e ) );
+        } );
 
-    /**
-     * Create hooks to attach to the quote
-     *
-     * @return {array} an array of functions to hook the quote
-     */
-    'private _createQuoteHooks': function()
-    {
-        var hooks = [];
-
-        hooks.push( this._factory.createQuotePreStagingHook( this ) );
-
-        hooks.push( this._factory.createQuoteStagingHook(
-            this.program,
-            this._quote.getId(),
-            this.dataProxy
-        ) )
-
-        return hooks;
+        // proxy errors
+        this._fieldMonitor.on( 'error', function( e )
+        {
+            _self.handleError( e );
+        } );
     },
 
 

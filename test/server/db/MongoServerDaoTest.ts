@@ -197,7 +197,6 @@ function createStubQuote( metadata: Record<string, any> )
         cretain:             {},
         apis:                {},
         internal:            {},
-        autosave:            false,
         meta:                {
             arefs:  {},
             fields: {},

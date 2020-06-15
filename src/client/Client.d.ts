@@ -23,27 +23,23 @@ import { Ui } from "../ui/Ui"
 import { ClientQuote } from "./quote/ClientQuote";
 import { Nav } from "./nav/Nav";
 import { ElementStyler } from "../ui/ElementStyler";
-import { Program } from "../program/Program";
 
 /**
  * Controller for the program client
  */
 export declare class Client
 {
+
     /**
      * Handles navigation
      */
     nav: Nav;
 
+
     /**
      * Styles DOM elements
      */
     elementStyler: ElementStyler;
-
-    /**
-     * Holds the Program object generated from the XML
-     */
-    program: Program;
 
 
     /**
@@ -77,12 +73,4 @@ export declare class Client
         callback?: ( data: any ) => void,
         error_callback?: (err: Error) => void
     ): Client;
-
-
-    /**
-     * Hooks quote for performing validations on data change
-     *
-     * @param diff - Diff to validate
-     */
-    validateChange( diff: any ): void;
 }

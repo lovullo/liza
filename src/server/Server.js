@@ -1241,7 +1241,7 @@ module.exports = Class( 'Server' )
                         request,
                         program
                     );
-                }
+               }
                 catch ( err )
                 {
                     server.logger.log( server.logger.PRIORITY_ERROR,

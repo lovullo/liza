@@ -87,13 +87,6 @@ module.exports = Class( 'XhttpQuoteTransport' )
             // get the data from the bucket
             var data = _self.getBucketDataJson( bucket );
 
-            // Do not send empty data unless there was a concluding save
-            if( ( !data || data === '{}' ) && _self._concluding_save === false )
-            {
-                callback.call( this, null, {} );
-                return;
-            }
-
             // post the data
             _self._proxy.post(
                 _self._url,
