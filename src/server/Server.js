@@ -1162,11 +1162,19 @@ module.exports = Class( 'Server' )
      * @param Quote       quote    instance of quote to operate on
      * @param Program     program  program associated with the quote
      *
-     * @param {UserSession} session user session
+     * @param {UserSession} session  user session
+     * @param {Boolean}     autosave identifies the POST as autosave
      *
      * @return undefined
      */
-    handlePost: function( step_id, request, quote, program, session )
+    handlePost: function(
+        step_id,
+        request,
+        quote,
+        program,
+        session,
+        autosave = false
+    )
     {
         var server = this;
 
@@ -1274,7 +1282,7 @@ module.exports = Class( 'Server' )
             }
 
             // save the quote
-            server._doQuoteSave( step_id, request, quote, program, rdelta_data);
+            server._doQuoteSave( step_id, request, quote, program, rdelta_data, autosave );
         });
 
         return this;
@@ -1365,14 +1373,15 @@ module.exports = Class( 'Server' )
         quote,
         program,
         rdelta_data,
+        autosave,
         c
     )
     {
         var server = this;
 
         // whenever they save, we want to make sure we invalidate the premium,
-        // unless this is a rating step
-        if ( ( program.rateSteps || [] )[ step_id ] !== true )
+        // unless this is a rating step or autosave
+        if ( !autosave && ( program.rateSteps || [] )[ step_id ] !== true )
         {
             const meta = { liza_timestamp_rate_request: [ 0 ] }
 
@@ -1393,6 +1402,10 @@ module.exports = Class( 'Server' )
                 {
                     // as a precaution to prevent navigation burps, update the
                     // step if it's greater than the previous
+                    //
+                    // TODO: it is currently possible to save data from a future step
+                    // (either from autosave or step save), determine the best way to
+                    // prevent this from happening
                     if ( step_id > quote.getTopVisitedStepId() )
                     {
                         quote.setCurrentStepId( step_id );
@@ -1456,7 +1469,8 @@ module.exports = Class( 'Server' )
                 );
 
                 c && c( false );
-            }
+            },
+            autosave
         );
     },
 
@@ -1596,7 +1610,7 @@ module.exports = Class( 'Server' )
     },
 
 
-    quoteFill: function( data, step_id, session, success, failure )
+    quoteFill: function( data, step_id, session, success, failure, autosave )
     {
         if ( data instanceof Function )
         {
@@ -1618,7 +1632,7 @@ module.exports = Class( 'Server' )
         var len = this.quoteFillHooks.length;
         for ( var i = 0; i < len; i++ )
         {
-            this.quoteFillHooks[i].call( event, data, step_id, session );
+            this.quoteFillHooks[i].call( event, data, step_id, session, autosave );
 
             // if we aborted, there's no need to continue
             if ( abort )
@@ -1700,7 +1714,7 @@ module.exports = Class( 'Server' )
                 const program        = program_module();
 
                 // hook ourselves
-                server.quoteFill( function( quote, step_id, session )
+                server.quoteFill( function( quote, step_id, session, autosave )
                 {
                     var _self = this;
 
@@ -1738,6 +1752,12 @@ module.exports = Class( 'Server' )
                     }
 
                     bucket_tmp.setValues( data_tmp );
+
+                    // autosave does not need to perform assertions
+                    if ( autosave )
+                    {
+                        return;
+                    }
 
                     // Run all initialization stuff (e.g. calculated
                     // values) on the bucket to prepare for

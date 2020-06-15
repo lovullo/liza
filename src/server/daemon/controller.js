@@ -664,7 +664,9 @@ function doRoute( program, request, data, resolve, reject )
         {
             handleRequest( function( quote )
             {
-                server.sendEmptyReply( request, quote );
+                server.handlePost(
+                    step_id, request, quote, program, session, true
+                );
             } );
         } );
     }
