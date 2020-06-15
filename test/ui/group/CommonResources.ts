@@ -133,7 +133,9 @@ export const createQuote = () =>
     return {
         on: sinon.stub(),
         onClassifyAndNow: sinon.stub(),
-        visitData: sinon.stub()
+        visitData: sinon.stub(),
+        setData: sinon.stub(),
+        getDataByName: sinon.stub()
     };
 }
 

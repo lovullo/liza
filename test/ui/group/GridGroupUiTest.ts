@@ -23,7 +23,7 @@ const Sut   = require( "../../../src/ui/group/GridGroupUi" );
 const sinon = require( 'sinon' );
 
 import { expect } from 'chai';
-import { createSut, createQuote, createBoxContent } from "./CommonResources";
+import { createSut, createQuote, createContent, createBoxContent, createStateManager } from "./CommonResources";
 
 before(function () {
     this.jsdom = require( 'jsdom-global' )();
@@ -103,8 +103,6 @@ describe( "GridGroup", () =>
         {
             const content = createBoxContent();
 
-            content.classList.contains = sinon.stub().returns( false );
-
             const sut = createSut( Sut, { content: content } );
 
             expect( sut.isSelected() ).to.be.false;
@@ -112,7 +110,7 @@ describe( "GridGroup", () =>
             sut.init( createQuote() );
             sut.visit();
 
-            content.classList.contains = sinon.stub().returns( true );
+            sut.select();
 
             expect( sut.isSelected() ).to.be.true;
         } );
@@ -129,6 +127,312 @@ describe( "GridGroup", () =>
             expect( sut.isSelected() ).to.be.false;
         } );
     } );
+
+    describe ( "visit", () =>
+    {
+        it( "sets a group to selected based on bucket value", () =>
+        {
+            const selected_list_key = 'foo';
+            const selected_value = 'bar';
+            const mock_data = [ selected_value ];
+
+            let get_data_calls = 0;
+
+            const content = createContent();
+            const box_content = createContent();
+            box_content.querySelector = () => content;
+
+            const quote = createQuote();
+
+            quote.getDataByName = ( name: string ) =>
+            {
+                get_data_calls++;
+                expect( name ).to.equal( selected_list_key );
+                return mock_data;
+            };
+
+            content.getAttribute
+                .withArgs( 'data-selected-list-key' )
+                .returns( selected_list_key );
+
+            content.getAttribute
+                .withArgs( 'data-selected-value' )
+                .returns( selected_value );
+
+            const sut = createSut( Sut, { content: box_content } );
+
+            sut.init( quote );
+            sut.visit();
+
+            expect( get_data_calls ).to.equal( 1 );
+            expect( sut.isSelected() ).to.be.true;
+        } );
+
+        it( "sets a group to deselected if already selected and disabled state is true", () =>
+        {
+            const selected_current_key = 'cur';
+            const selected_list_key = 'foo';
+            const selected_value = 'bar';
+            const mock_data = [ selected_value ];
+
+            const expected_data = {
+                'foo': [ null ],
+                'cur': []
+            };
+
+            let set_data_calls = 0;
+
+            const state_manager = createStateManager();
+
+            const content = createContent();
+            const box_content = createContent();
+            box_content.querySelector = () => content;
+
+            const quote = createQuote();
+
+            quote.getDataByName
+                .withArgs( selected_list_key )
+                .returns( mock_data );
+
+            quote.getDataByName
+                .withArgs( selected_current_key )
+                .returns( mock_data );
+
+            quote.setData = ( data: any ) =>
+            {
+                set_data_calls++;
+                expect( data ).to.deep.equal( expected_data );
+            };
+
+            content.getAttribute
+                .withArgs( 'data-selected-current-key' )
+                .returns( selected_current_key );
+
+            content.getAttribute
+                .withArgs( 'data-selected-list-key' )
+                .returns( selected_list_key );
+
+            content.getAttribute
+                .withArgs( 'data-selected-value' )
+                .returns( selected_value );
+
+            // Mock state manager sets disabled state
+            state_manager.observes = sinon.stub().returns( true );
+            state_manager.is = sinon.stub().returns( true );
+
+            const sut = createSut( Sut,
+            {
+                content: box_content,
+                state_manager: state_manager
+            } );
+
+            sut.init( quote );
+
+            // Simulate calling select first
+            sut.select();
+            sut.visit();
+
+            expect( set_data_calls ).to.equal( 1 );
+            expect( sut.isSelected() ).to.be.false;
+        } );
+    } );
+
+    describe ( "select", () =>
+    {
+        [
+            {
+                label: "updates bucket data with selected value, multiple selected",
+                selected_current_key: 'view',
+                selected_list_key: 'name',
+                selected_value: 'foo-bar',
+                existing_list_value: [ 'baz' ],
+                expected_set_data_calls: 1,
+                expected_data: {
+                    'name': [ 'baz', 'foo-bar', null ],
+                    'view': [ 'foo-bar' ]
+                },
+            },
+            {
+                label: "updates bucket data with selected value, single selected",
+                selected_current_key: 'view',
+                selected_list_key: 'name',
+                selected_value: 'bar',
+                existing_list_value: [ '' ],
+                expected_set_data_calls: 1,
+                expected_data: {
+                    'name': [ 'bar', null ],
+                    'view': [ 'bar' ]
+                },
+            },
+            {
+                label: "does not update bucket data with missing data attributes",
+                selected_current_key: '',
+                selected_list_key: '',
+                selected_value: '',
+                existing_list_value: [ '' ],
+                expected_set_data_calls: 0,
+                expected_data:  {},
+            },
+        ].forEach( ( {
+            label,
+            selected_current_key,
+            selected_list_key,
+            selected_value,
+            existing_list_value,
+            expected_data,
+            expected_set_data_calls
+        } ) =>
+        {
+            it( label, () =>
+            {
+                let set_data_calls = 0;
+
+                const content = createContent();
+                const box_content = createContent();
+                box_content.querySelector = () => content;
+
+                const quote = createQuote();
+
+                content.getAttribute
+                    .withArgs( 'data-selected-current-key' )
+                    .returns( selected_current_key );
+
+                content.getAttribute
+                    .withArgs( 'data-selected-list-key' )
+                    .returns( selected_list_key );
+
+                content.getAttribute
+                    .withArgs( 'data-selected-value' )
+                    .returns( selected_value );
+
+                box_content.classList.contains = sinon.stub().returns( true );
+
+                const sut = createSut( Sut, { content: box_content } );
+
+                sut.init( quote );
+                sut.visit();
+
+                quote.setData = ( data: any ) =>
+                {
+                    set_data_calls++;
+                    expect( data ).to.deep.equal( expected_data );
+                };
+
+                sut.select( existing_list_value );
+
+                expect( set_data_calls ).to.equal( expected_set_data_calls );
+            } );
+        } );
+    } );
+
+
+    describe ( "deselect", () =>
+    {
+        [
+            {
+                label: "updates bucket data to remove selected value, multiple selected",
+                selected_current_key: 'view',
+                selected_list_key: 'name',
+                selected_value: 'foo-bar',
+                existing_current_value: [ 'baz' ],
+                existing_list_value: [ 'baz' ],
+                expected_set_data_calls: 1,
+                expected_data:  {
+                    'name': [ 'baz', null ],
+                    'view': [ 'baz' ]
+                },
+            },
+            {
+                label: "updates bucket data to remove selected value, single selected",
+                selected_current_key: 'view',
+                selected_list_key: 'name',
+                selected_value: 'foo-bar',
+                existing_current_value: [ '' ],
+                existing_list_value: [ '' ],
+                expected_set_data_calls: 1,
+                expected_data: {
+                    'name': [ null ],
+                    'view': [ '' ]
+                },
+            },
+            {
+                label: "does not update bucket data with undefined selected values",
+                selected_current_key: 'view',
+                selected_list_key: 'name',
+                selected_value: 'foo-bar',
+                existing_current_value: [ '' ],
+                existing_list_value: undefined,
+                expected_set_data_calls: 0,
+                expected_data:  {},
+            },
+            {
+                label: "does not update bucket data with missing data attributes",
+                selected_current_key: '',
+                selected_list_key: '',
+                selected_value: '',
+                existing_current_value: [ '' ],
+                existing_list_value: [ '' ],
+                expected_set_data_calls: 0,
+                expected_data:  {},
+            },
+        ].forEach( ( {
+            label,
+            selected_current_key,
+            selected_list_key,
+            selected_value,
+            existing_current_value,
+            existing_list_value,
+            expected_data,
+            expected_set_data_calls
+        } ) =>
+        {
+            it( label, () =>
+            {
+                let set_data_calls = 0;
+
+                const content = createContent();
+                const box_content = createContent();
+                box_content.querySelector = () => content;
+
+                const quote = createQuote();
+
+                content.getAttribute
+                    .withArgs( 'data-selected-current-key' )
+                    .returns( selected_current_key );
+
+                content.getAttribute
+                    .withArgs( 'data-selected-list-key' )
+                    .returns( selected_list_key );
+
+                content.getAttribute
+                    .withArgs( 'data-selected-value' )
+                    .returns( selected_value );
+
+                const sut = createSut( Sut, { content: box_content } );
+
+                sut.init( quote );
+                sut.visit();
+
+                // Simulate calling select first
+                sut.select();
+
+                quote.getDataByName
+                    .withArgs( selected_current_key )
+                    .returns( existing_current_value );
+
+                quote.setData = ( data: any ) =>
+                {
+                    set_data_calls++;
+                    expect( data ).to.deep.equal( expected_data );
+                };
+
+                sut.deselect( existing_list_value );
+
+                expect( set_data_calls ).to.equal( expected_set_data_calls );
+            } );
+        } );
+    } );
+
 
     describe ( "areDetailsOpen", () =>
     {

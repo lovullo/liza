@@ -27,9 +27,11 @@ export declare class GridGroupUi extends GroupUi
 
     public closeDetails( stylers: AncestorAwareStyler[] ): void;
 
-    public deselect(): void;
+    public deselect( selected_siblings?: string[]  ): void;
 
     public getCategories(): string[];
+
+    public getSelectedValue(): string;
 
     public getXType(): string;
 
@@ -39,5 +41,5 @@ export declare class GridGroupUi extends GroupUi
 
     public openDetails( stylers: AncestorAwareStyler[] ): void;
 
-    public select(): void;
+    public select( selected_siblings?: string[] ): void;
 }
