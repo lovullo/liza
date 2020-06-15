@@ -21,6 +21,13 @@
 
 var Interface = require( 'easejs' ).Interface;
 
+import { ClientQuote } from '../quote/ClientQuote';
+
+
+export interface QuoteTransport
+{
+    send( quote: ClientQuote, callback: any ): void
+}
 
 /**
  * Interface used for types that wish to transfer quote data
