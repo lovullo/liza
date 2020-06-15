@@ -86,6 +86,17 @@ module.exports = Class( 'SideTableGroupUi' )
     },
 
 
+    /**
+     * This group does not support multiple indexes
+     *
+     * @return {boolean}
+     */
+    'protected override supportsMultipleIndex': function()
+    {
+        return false;
+    },
+
+
     _processTable: function()
     {
         this.$table = this._getTable();
