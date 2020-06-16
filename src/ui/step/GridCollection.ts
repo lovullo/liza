@@ -94,6 +94,9 @@ export class GridCollection implements Collection
         const column_count = this._getColumnCount();
 
         this._setColumnClass( column_count );
+
+        // Ensure all detail panes are closed
+        this._groups.forEach( g => g.closeDetails( this._stylers ) );
     }
 
 

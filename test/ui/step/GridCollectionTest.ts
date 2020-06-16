@@ -47,6 +47,32 @@ describe( "ui.step.GridCollection", () =>
 {
     describe ( "visit", () =>
     {
+        it( "closes all groups details pane and passes AncestorAwareStyler", () =>
+        {
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+            const styler_stub = getStylerStub();
+            let close_calls = 0;
+
+            groups[ 0 ].closeDetails = ( styler: AncestorAwareStyler ) =>
+            {
+                close_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
+            groups[ 1 ].closeDetails = ( styler: AncestorAwareStyler ) =>
+            {
+                close_calls++;
+                expect( styler ).to.equal( styler_stub );
+            };
+
+            const sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+
+            sut.visit();
+
+            expect( close_calls ).to.equal( 2 );
+        } );
+
         [
             {
                 columns: 1,
@@ -223,6 +249,8 @@ describe( "ui.step.GridCollection", () =>
         it( "causes selection when group's content is clicked", () =>
         {
             let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
                 "select grid group 1"
             ];
 
@@ -292,7 +320,10 @@ describe( "ui.step.GridCollection", () =>
 
         it( "doesn't cause selection when a disabled group is clicked", () =>
         {
-            let expected: string[] = [];
+            let expected: string[] = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
+            ];
 
             const markup = createCollectionMarkup();
             const groups = createGroupsFromMarkup( markup );
@@ -322,6 +353,8 @@ describe( "ui.step.GridCollection", () =>
         it( "causes deselection when group's content is already selected", () =>
         {
             let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
                 "select grid group 1",
                 "deselect grid group 1"
             ];
@@ -357,6 +390,8 @@ describe( "ui.step.GridCollection", () =>
         it( "deselects a group that shares categories with the group that was clicked", () =>
         {
             let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
                 "deselect grid group 0",
                 "select grid group 1",
                 "deselect grid group 1",
@@ -401,6 +436,8 @@ describe( "ui.step.GridCollection", () =>
         it( "does not deselect a group when it does not share categories with a clicked group", () =>
         {
             let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
                 "select grid group 1",
             ];
 
@@ -432,6 +469,8 @@ describe( "ui.step.GridCollection", () =>
         {
             let expected = [
                 "closeDetails grid group 0",
+                "closeDetails grid group 1",
+                "closeDetails grid group 0",
                 "openDetails grid group 1"
             ];
 
@@ -462,7 +501,9 @@ describe( "ui.step.GridCollection", () =>
         {
             let expected = [
                 "closeDetails grid group 0",
-                "closeDetails grid group 1"
+                "closeDetails grid group 1",
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
             ];
 
             const markup = createCollectionMarkup();
