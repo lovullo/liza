@@ -620,6 +620,16 @@ function doRoute( program, request, data, resolve, reject )
             );
         } );
     }
+    else if ( cmd === 'autosave' )
+    {
+        acquireWriteLock( quote_id, request, function()
+        {
+            handleRequest( function( quote )
+            {
+                server.sendEmptyReply( request, quote );
+            } );
+        } );
+    }
     else if ( cmd === 'quicksave' )
     {
         // TODO: we keep this route around only as a heartbeat, for now; the
