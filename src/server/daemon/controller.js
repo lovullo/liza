@@ -665,7 +665,12 @@ function doRoute( program, request, data, resolve, reject )
             handleRequest( function( quote )
             {
                 server.handlePost(
-                    step_id, request, quote, program, session, true
+                    quote.getCurrentStepId(),
+                    request,
+                    quote,
+                    program,
+                    session,
+                    true
                 );
             } );
         } );

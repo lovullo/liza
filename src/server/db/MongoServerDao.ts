@@ -267,18 +267,20 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * fields because those results write to individual indexes and do not
      * rely on existing data.
      *
-     * @param quote     - the quote to save
-     * @param success   - function to call on success
-     * @param failure   - function to call if save fails
-     * @param save_data - quote data to save (optional)
-     * @param push_data - quote data to push (optional)
+     * @param quote         - the quote to save
+     * @param success       - function to call on success
+     * @param failure       - function to call if save fails
+     * @param save_data     - quote data to save (optional)
+     * @param push_data     - quote data to push (optional)
+     * @param force_publish - reset published indicator (optional)
      */
     saveQuote(
-        quote:      ServerSideQuote,
-        success:    Callback = () => {},
-        failure:    Callback = () => {},
-        save_data?: any,
-        push_data?: any,
+        quote:         ServerSideQuote,
+        success:       Callback = () => {},
+        failure:       Callback = () => {},
+        save_data?:    any,
+        push_data?:    any,
+        force_publish: boolean = true
     ): this
     {
         var dao = this;
@@ -307,7 +309,8 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             );
         }
 
-        var id = quote.getId();
+        const id      = quote.getId();
+        const save_ts = this._ts_ctor();
 
         // some data should always be saved because the quote will be created if
         // it does not yet exist
@@ -315,7 +318,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.env                = this._env;
         save_data.pver               = quote.getProgramVersion();
         save_data.importDirty        = 1;
-        save_data.published          = false;
         save_data.lastPremDate       = quote.getLastPremiumDate();
         save_data.retryAttempts      = quote.getRetryAttempts();
         save_data.initialRatedDate   = quote.getRatedDate();
@@ -323,8 +325,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.explicitLockStepId = quote.getExplicitLockStep();
         save_data.importedInd        = +quote.isImported();
         save_data.boundInd           = +quote.isBound();
-        save_data.lastUpdate         = this._ts_ctor();
+        save_data.lastUpdate         = save_ts;
         save_data.quoteSetId         = id;
+
+        if ( force_publish )
+        {
+            save_data.publishResetTs = save_ts;
+            save_data.published      = false;
+        }
 
         const exp_date         = quote.getExpirationDate();
         save_data.quoteExpDate = ( exp_date === Infinity ) ? 0 : exp_date;

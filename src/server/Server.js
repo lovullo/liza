@@ -1251,6 +1251,7 @@ module.exports = Class( 'Server' )
                                 data:            rdiff,
                                 concluding_save: ( concluding_save === 'true' ),
                                 timestamp:       server._ts_ctor(),
+                                step_id:         step_id,
                             }
                         };
                     }
@@ -1417,6 +1418,9 @@ module.exports = Class( 'Server' )
                         server.dao.saveQuoteState( quote );
                     }
 
+                    // only reset published indicator on a step save
+                    const force_publish = ( !autosave );
+
                     server.dao.saveQuote( quote,
                         // quote was saved successfully
                         function()
@@ -1440,7 +1444,8 @@ module.exports = Class( 'Server' )
                             c && c( false );
                         },
                         undefined,
-                        rdelta_data
+                        rdelta_data,
+                        force_publish
                     );
                 } );
             },
