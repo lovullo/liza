@@ -94,6 +94,9 @@ export class GridCollection implements Collection
         const column_count = this._getColumnCount();
 
         this._setColumnClass( column_count );
+
+        // Ensure all detail panes are closed
+        this._groups.forEach( g => g.closeDetails( this._stylers ) );
     }
 
 
@@ -177,13 +180,14 @@ export class GridCollection implements Collection
      */
     private _handleSelection( section: HTMLElement, group_element: HTMLElement )
     {
+        const is_invalid  = group_element.classList.contains( "invalid" );
         const is_disabled = group_element.classList.contains( "disabled" );
         const is_content  = section.classList.contains( "content" );
         const is_actions  = section.classList.contains( "actions" );
         const group       = this._getGroupFromElement( group_element );
 
         // If the group is disabled we don't take any action on selection
-        if ( is_disabled || !group )
+        if ( is_invalid || !group || ( is_disabled && !group.group.isInternal() ) )
         {
             return;
         }
