@@ -553,13 +553,13 @@ module.exports = Class( 'Client' )
                 client._hideLockedNotification();
             }
 
+            client._hookQuote();
+
             client.emit( client.__self.$( 'EVENT_QUOTE_CHANGE' ) );
 
             // kick off the classifier (it may not be kicked off on step change
             // if there are no questions on the step that are used by it)
             client._quote.forceClassify();
-
-            client._hookQuote();
         } );
     },
 
