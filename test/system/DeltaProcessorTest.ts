@@ -22,8 +22,9 @@
 import { DeltaProcessor as Sut } from '../../src/system/DeltaProcessor';
 import { AmqpPublisher } from '../../src/system/AmqpPublisher';
 import { DeltaDao } from '../../src/system/db/DeltaDao';
-import { DeltaDocument } from '../../src/bucket/delta';
+import { DeltaDocument, applyDelta } from '../../src/bucket/delta';
 import { DocumentId } from '../../src/document/Document';
+import { PositiveInteger } from '../../src/numeric';
 import { EventEmitter } from 'events';
 
 import { expect, use as chai_use } from 'chai';
@@ -365,14 +366,15 @@ describe( 'system.DeltaProcessor', () =>
             },
 
             {
-                label: 'trims delta array based on index',
+                label: 'trims delta array based on ts',
                 given: [
                     {
-                        id:         111,
-                        lastUpdate: 123123123,
-                        data:       { foo: [ 'second' ] },
-                        ratedata:   {},
-                        rdelta:     {
+                        id:               111,
+                        lastUpdate:       123123123,
+                        deltaPublishedTs: { data: <UnixTimestamp>123 },
+                        data:             { foo: [ 'second' ] },
+                        ratedata:         {},
+                        rdelta:           {
                             data: [
                                 {
                                     data:      { foo: [ '' ] },
@@ -398,12 +400,53 @@ describe( 'system.DeltaProcessor', () =>
                     },
                 ],
             },
+
+            {
+                label: 'Deltas with step_id higher than topSavedStepId ' +
+                            'are not published',
+                given: [
+                    {
+                        id:               111,
+                        lastUpdate:       123123123,
+                        deltaPublishedTs: { data: <UnixTimestamp>0 },
+                        topSavedStepId:   2,
+                        data:             { foo: [ 'second' ] },
+                        ratedata:         {},
+                        rdelta:           {
+                            data: [
+                                {
+                                    data:      { foo: [ '' ] },
+                                    step_id:   2,
+                                    timestamp: 123,
+                                },
+                                {
+                                    data:      { foo: [ 'first' ] },
+                                    step_id:   3,
+                                    timestamp: 234,
+                                },
+                            ],
+                        },
+                        totalPublishDelta: {
+                            data: 1,
+                        },
+                    },
+                ],
+                expected: [
+                    {
+                        doc_id:   111,
+                        rdelta:   { foo: [ '' ] },
+                        bucket:   { foo: [ 'first' ] },
+                        ratedata: {}
+                    },
+                ],
+            },
         ] ).forEach( ( { label, given, expected } ) => it( label, () =>
         {
-            let   published: any = [];
-            const dao            = createMockDeltaDao();
-            const publisher      = createMockDeltaPublisher();
-            const emitter        = new EventEmitter();
+            let   published: any    = [];
+            const dao               = createMockDeltaDao();
+            const publisher         = createMockDeltaPublisher();
+            const emitter           = new EventEmitter();
+            const mergeDeltasByType = ( deltas: any ) => deltas;
 
             dao.getUnprocessedDocuments = (): Promise<DeltaDocument[]> =>
             {
@@ -427,8 +470,15 @@ describe( 'system.DeltaProcessor', () =>
                 return Promise.resolve();
             }
 
-            return expect( new Sut( dao, publisher, emitter ).process() )
-                .to.eventually.deep.equal( undefined )
+            const sut = new Sut(
+                dao,
+                publisher,
+                emitter,
+                applyDelta,
+                mergeDeltasByType
+            );
+
+            return expect( sut.process() ).to.eventually.deep.equal( undefined )
                 .then( _ => expect( published ).to.deep.equal( expected ) );
         } ) );
 
@@ -473,10 +523,12 @@ describe( 'system.DeltaProcessor', () =>
         },
     ] ).forEach( ( { label, given, expected } ) => it( label, () =>
     {
-        let   published: any = [];
-        const dao            = createMockDeltaDao();
-        const publisher      = createMockDeltaPublisher();
-        const emitter        = new EventEmitter();
+        let   published: any    = [];
+        const dao               = createMockDeltaDao();
+        const publisher         = createMockDeltaPublisher();
+        const emitter           = new EventEmitter();
+        const applyDelta        = ( bucket: any, _: any ) => bucket;
+        const mergeDeltasByType = ( deltas: any ) => deltas;
 
         dao.getUnprocessedDocuments = (): Promise<DeltaDocument[]> =>
         {
@@ -500,8 +552,15 @@ describe( 'system.DeltaProcessor', () =>
             return Promise.resolve();
         }
 
-        return expect( new Sut( dao, publisher, emitter ).process() )
-            .to.eventually.deep.equal( undefined )
+        const sut = new Sut(
+            dao,
+            publisher,
+            emitter,
+            applyDelta,
+            mergeDeltasByType
+        );
+
+        return expect( sut.process() ).to.eventually.deep.equal( undefined )
             .then( _ => expect( published ).to.deep.equal( expected ) );
     } ) );
     } );
@@ -511,33 +570,38 @@ describe( 'system.DeltaProcessor', () =>
     {
         it( 'Marks document in error state and continues', () =>
         {
-            let   published: any = [];
-            let   error_flag_set = false;
-            const dao            = createMockDeltaDao();
-            const publisher      = createMockDeltaPublisher();
-            const emitter        = new EventEmitter();
-            const entity_num     = 'Some Agency';
-            const entity_id      = 4321;
-            const lastUpdate     = <UnixTimestamp>123123123;
-            const createdData    = <UnixTimestamp>234234234;
-            const exp_date       = <UnixTimestamp>123;
-            const doc            = <DeltaDocument[]>[ {
-                id:            <DocumentId>123,
-                programId:     'mega',
-                agentName:     entity_num,
-                agentEntityId: entity_id,
-                startDate:     createdData,
-                lastUpdate:    lastUpdate,
-                quoteExpDate:  exp_date,
-                quoteSetId:    <DocumentId>123,
-                data:          { foo: [ 'start_bar' ] },
-                ratedata:      {},
-                rdelta:        {
+            let   published: any    = [];
+            let   error_flag_set    = false;
+            const dao               = createMockDeltaDao();
+            const publisher         = createMockDeltaPublisher();
+            const emitter           = new EventEmitter();
+            const applyDelta        = ( bucket: any, _: any ) => bucket;
+            const mergeDeltasByType = ( deltas: any ) => deltas;
+            const entity_num        = 'Some Agency';
+            const entity_id         = 4321;
+            const lastUpdate        = <UnixTimestamp>123123123;
+            const createdData       = <UnixTimestamp>234234234;
+            const exp_date          = <UnixTimestamp>123;
+            const doc               = <DeltaDocument[]>[ {
+                id:               <DocumentId>123,
+                programId:        'mega',
+                agentName:        entity_num,
+                agentEntityId:    entity_id,
+                startDate:        createdData,
+                lastUpdate:       lastUpdate,
+                quoteExpDate:     exp_date,
+                quoteSetId:       <DocumentId>123,
+                topSavedStepId:   <PositiveInteger>1,
+                deltaPublishedTs: { data: <UnixTimestamp>1 },
+                data:             { foo: [ 'start_bar' ] },
+                ratedata:         {},
+                rdelta:           {
                     data: [
                         {
                             data:            { foo: [ 'first_bar' ] },
                             timestamp:       <UnixTimestamp>123123,
                             type:            'data',
+                            step_id:         <PositiveInteger>1,
                             concluding_save: false,
                         }
                     ],
@@ -545,22 +609,25 @@ describe( 'system.DeltaProcessor', () =>
                 },
             },
             {
-                id:            <DocumentId>234,
-                programId:     'mega',
-                agentName:     entity_num,
-                agentEntityId: entity_id,
-                startDate:     createdData,
-                lastUpdate:    <UnixTimestamp>123123123,
-                quoteExpDate:  exp_date,
-                quoteSetId:    <DocumentId>234,
-                data:          { foo: [ 'start_bar' ] },
-                ratedata:      {},
-                rdelta:        {
+                id:               <DocumentId>234,
+                programId:        'mega',
+                agentName:        entity_num,
+                agentEntityId:    entity_id,
+                startDate:        createdData,
+                lastUpdate:       <UnixTimestamp>123123123,
+                quoteExpDate:     exp_date,
+                quoteSetId:       <DocumentId>234,
+                topSavedStepId:   <PositiveInteger>1,
+                deltaPublishedTs: { data: <UnixTimestamp>1 },
+                data:             { foo: [ 'start_bar' ] },
+                ratedata:         {},
+                rdelta:           {
                     data: [
                         {
                             data:      { foo: [ 'first_bar' ] },
                             timestamp: <UnixTimestamp>123123,
                             type:      'data',
+                            step_id:   <PositiveInteger>1,
                         }
                     ],
                     ratedata: [],
@@ -570,14 +637,15 @@ describe( 'system.DeltaProcessor', () =>
             const expected_published = [
                 {
                     meta: {
-                        entity_id:   4321,
-                        entity_name: 'Some Agency',
-                        expDate:     123,
-                        id:          123,
-                        quoteSetId:  123,
-                        program:     'mega',
-                        lastUpdate:  123123123,
-                        startDate:   234234234,
+                        entity_id:      4321,
+                        entity_name:    'Some Agency',
+                        expDate:        123,
+                        id:             123,
+                        quoteSetId:     123,
+                        program:        'mega',
+                        lastUpdate:     123123123,
+                        startDate:      234234234,
+                        topSavedStepId: 1,
                     },
                     delta:     { foo: [ 'first_bar' ] },
                     bucket:    { foo: [ 'start_bar' ] },
@@ -585,14 +653,15 @@ describe( 'system.DeltaProcessor', () =>
                 },
                 {
                     meta: {
-                        entity_id:   4321,
-                        entity_name: 'Some Agency',
-                        expDate:     123,
-                        id:          234,
-                        quoteSetId:  234,
-                        program:     'mega',
-                        lastUpdate:  123123123,
-                        startDate:   234234234,
+                        entity_id:      4321,
+                        entity_name:    'Some Agency',
+                        expDate:        123,
+                        id:             234,
+                        quoteSetId:     234,
+                        program:        'mega',
+                        lastUpdate:     123123123,
+                        startDate:      234234234,
+                        topSavedStepId: 1,
                     },
                     delta:     { foo: [ 'first_bar' ] },
                     bucket:    { foo: [ 'start_bar' ] },
@@ -634,8 +703,15 @@ describe( 'system.DeltaProcessor', () =>
             // Prevent node from converting an error event into an error
             emitter.on( 'error', () => {} );
 
-            return expect( new Sut( dao, publisher, emitter ).process() )
-                .to.eventually.deep.equal( undefined )
+            const sut = new Sut(
+                dao,
+                publisher,
+                emitter,
+                applyDelta,
+                mergeDeltasByType
+            );
+
+            return expect( sut.process() ).to.eventually.deep.equal( undefined )
                 .then( _ =>
                 {
                     expect( error_flag_set ).to.be.true;
@@ -649,28 +725,33 @@ describe( 'system.DeltaProcessor', () =>
     {
         it( 'Failure to set document error state further processing', () =>
         {
-            let   published: any = [];
-            let   caught_error   = '';
-            const dao            = createMockDeltaDao();
-            const publisher      = createMockDeltaPublisher();
-            const emitter        = new EventEmitter();
-            const doc            = <DeltaDocument[]>[ {
-                id:            <DocumentId>123,
-                programId:     'mega',
-                agentName:     'Some Agency',
-                agentEntityId: 4321,
-                startDate:     <UnixTimestamp>234234234,
-                lastUpdate:    <UnixTimestamp>123123123,
-                quoteExpDate:  <UnixTimestamp>123123123,
-                quoteSetId:    <DocumentId>123,
-                data:          { foo: [ 'start_bar' ] },
-                ratedata:      {},
-                rdelta:        {
+            let   published: any    = [];
+            let   caught_error      = '';
+            const dao               = createMockDeltaDao();
+            const publisher         = createMockDeltaPublisher();
+            const emitter           = new EventEmitter();
+            const applyDelta        = ( bucket: any, _: any ) => bucket;
+            const mergeDeltasByType = ( deltas: any ) => deltas;
+            const doc               = <DeltaDocument[]>[ {
+                id:               <DocumentId>123,
+                programId:        'mega',
+                agentName:        'Some Agency',
+                agentEntityId:    4321,
+                startDate:        <UnixTimestamp>234234234,
+                lastUpdate:       <UnixTimestamp>123123123,
+                quoteExpDate:     <UnixTimestamp>123123123,
+                quoteSetId:       <DocumentId>123,
+                topSavedStepId:   <PositiveInteger>1,
+                deltaPublishedTs: { data: <UnixTimestamp>1 },
+                data:             { foo: [ 'start_bar' ] },
+                ratedata:         {},
+                rdelta:           {
                     data: [
                         {
                             data:            { foo: [ 'first_bar' ] },
                             timestamp:       <UnixTimestamp>123123,
                             type:            'data',
+                            step_id:         <PositiveInteger>1,
                             concluding_save: false,
                         }
                     ],
@@ -678,20 +759,23 @@ describe( 'system.DeltaProcessor', () =>
                 },
             },
             {
-                id:            <DocumentId>234,
-                programId:     'mega',
-                agentName:     'Some Agency',
-                agentEntityId: 4321,
-                startDate:     <UnixTimestamp>234234234,
-                lastUpdate:    <UnixTimestamp>123123123,
-                data:          { foo: [ 'start_bar' ] },
-                ratedata:      {},
-                rdelta:        {
+                id:               <DocumentId>234,
+                programId:        'mega',
+                agentName:        'Some Agency',
+                agentEntityId:    4321,
+                startDate:        <UnixTimestamp>234234234,
+                lastUpdate:       <UnixTimestamp>123123123,
+                topSavedStepId:   <PositiveInteger>1,
+                deltaPublishedTs: { data: <UnixTimestamp>1 },
+                data:             { foo: [ 'start_bar' ] },
+                ratedata:         {},
+                rdelta:           {
                     data: [
                         {
                             data:            { foo: [ 'first_bar' ] },
                             timestamp:       <UnixTimestamp>123123,
                             type:            'data',
+                            step_id:         <PositiveInteger>1,
                             concluding_save: false,
                         }
                     ],
@@ -702,14 +786,15 @@ describe( 'system.DeltaProcessor', () =>
             // Only one is published
             const expected_published = [ {
                 meta: {
-                    entity_id:   4321,
-                    entity_name: 'Some Agency',
-                    expDate:     123123123,
-                    id:          123,
-                    quoteSetId:  123,
-                    program:     'mega',
-                    lastUpdate:  123123123,
-                    startDate:   234234234,
+                    entity_id:      4321,
+                    entity_name:    'Some Agency',
+                    expDate:        123123123,
+                    id:             123,
+                    quoteSetId:     123,
+                    program:        'mega',
+                    lastUpdate:     123123123,
+                    startDate:      234234234,
+                    topSavedStepId: 1,
                 },
                 delta:     { foo: [ 'first_bar' ] },
                 bucket:    { foo: [ 'start_bar' ] },
@@ -747,8 +832,15 @@ describe( 'system.DeltaProcessor', () =>
             // Prevent node from converting an error event into an error
             emitter.on( 'error', () => {} );
 
-            return expect(
-                    new Sut( dao, publisher, emitter ).process()
+            const sut = new Sut(
+                dao,
+                publisher,
+                emitter,
+                applyDelta,
+                mergeDeltasByType
+            );
+
+            return expect( sut.process()
                         .catch( e => { caught_error = e.message } )
                 )
                 .to.eventually.deep.equal( undefined )
@@ -766,7 +858,7 @@ function createMockDeltaDao(): DeltaDao
 {
     return <DeltaDao>{
         getUnprocessedDocuments() { return Promise.resolve( [] ); },
-        advanceDeltaIndex()       { return Promise.resolve(); },
+        setPublishedTs()          { return Promise.resolve(); },
         markDocumentAsProcessed() { return Promise.resolve(); },
         setErrorFlag()            { return Promise.resolve(); },
         getErrorCount()           { return Promise.resolve( 0 ); },

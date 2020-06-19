@@ -28,7 +28,7 @@
  */
 
 import { DocumentId } from "../../document/Document";
-import { DeltaDocument } from "../../bucket/delta";
+import { DeltaDocument, DeltaType } from "../../bucket/delta";
 
 
 /** Manage deltas */
@@ -43,14 +43,16 @@ export interface DeltaDao
 
 
     /**
-     * Set the document's processed index
+     * Update the last published timestamp
      *
-     * @param doc_id - Document whose index will be set
+     * @param doc_id - Document to update
      * @param type   - Delta type
+     * @param ts     - Timestamp to set
      */
-    advanceDeltaIndex(
-        doc_id:   DocumentId,
-        type:     string,
+    setPublishedTs(
+        doc_id: DocumentId,
+        type:   DeltaType,
+        ts:     UnixTimestamp,
     ): Promise<void>
 
 

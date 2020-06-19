@@ -26,11 +26,12 @@ import { context, hasContext } from '../error/ContextError';
 import { EventEmitter } from 'events';
 import {
     DeltaType,
-    applyDelta,
     DeltaDocument,
     Delta,
     ReverseDelta,
+    DeltaResult,
 } from '../bucket/delta';
+
 
 /** Deltas and state of data prior to their application */
 type DeltaState = [
@@ -39,11 +40,17 @@ type DeltaState = [
     Record<string, any>,
 ];
 
+/** Type declaration for applyDelta function */
+type applyDelta = (
+    bucket: Record<string, any>,
+    delta:  DeltaResult<any>
+) => Record<string, any>;
+
+/** Type declaration for mergeDeltas function */
+type mergeDeltas = ( deltas: Delta<any>[] ) => Delta<any>[];
 
 /**
  * Process deltas for a quote and publish to a queue
- *
- * TODO: Decouple from applyDelta
  */
 export class DeltaProcessor
 {
@@ -57,14 +64,18 @@ export class DeltaProcessor
     /**
      * Initialize processor
      *
-     * @param _dao       - Delta dao
-     * @param _publisher - Amqp Publisher
-     * @param _emitter   - Event emiter instance
+     * @param _dao         - Delta dao
+     * @param _publisher   - Amqp Publisher
+     * @param _emitter     - Event emiter instance
+     * @param _applyDelta  - A function to apply deltas on a bucket
+     * @param _mergeDeltas - A function to merge similar deltas
      */
     constructor(
-        private readonly _dao:       DeltaDao,
-        private readonly _publisher: AmqpPublisher,
-        private readonly _emitter:   EventEmitter,
+        private readonly _dao:         DeltaDao,
+        private readonly _publisher:   AmqpPublisher,
+        private readonly _emitter:     EventEmitter,
+        private readonly _applyDelta:  applyDelta,
+        private readonly _mergeDeltas: mergeDeltas,
     ) {}
 
 
@@ -108,14 +119,15 @@ export class DeltaProcessor
         const bucket          = doc.data;
         const ratedata        = doc.ratedata || {};
         const meta            = {
-            id:          doc.id,
-            program:     doc.programId,
-            entity_name: doc.agentName,
-            entity_id:   +doc.agentEntityId,
-            startDate:   doc.startDate,
-            lastUpdate:  doc.lastUpdate,
-            expDate:     doc.quoteExpDate,
-            quoteSetId:  doc.quoteSetId,
+            id:             doc.id,
+            program:        doc.programId,
+            entity_name:    doc.agentName,
+            entity_id:      +doc.agentEntityId,
+            startDate:      doc.startDate,
+            lastUpdate:     doc.lastUpdate,
+            expDate:        doc.quoteExpDate,
+            quoteSetId:     doc.quoteSetId,
+            topSavedStepId: doc.topSavedStepId,
         };
 
         const history = this._applyDeltas( deltas, bucket, ratedata );
@@ -203,14 +215,14 @@ export class DeltaProcessor
 
             if ( delta.type === this.DELTA_DATA )
             {
-                bucket_state = applyDelta(
+                bucket_state = this._applyDelta(
                     bucket_state,
                     deltas[ i ].data,
                 );
             }
             else
             {
-                ratedata_state = applyDelta(
+                ratedata_state = this._applyDelta(
                     ratedata_state,
                     deltas[ i ].data,
                 );
@@ -239,12 +251,19 @@ export class DeltaProcessor
 
         const [ delta, bucket, ratedata ] = history[ 0 ];
 
+        if ( delta.step_id > meta.topSavedStepId )
+        {
+            return Promise.resolve();
+        }
+
         const delta_uid = meta.id + '_' + delta.timestamp + '_' + delta.type;
 
         this._emitter.emit( 'delta-process-start', delta_uid );
 
         return this._publisher.publish( meta, delta, bucket, ratedata )
-            .then( _ => this._dao.advanceDeltaIndex( meta.id, delta.type ) )
+            .then( _ => this._dao.setPublishedTs(
+                meta.id, delta.type, delta.timestamp
+            ) )
             .then( _ => this._emitter.emit( 'delta-process-end', delta_uid ) )
             .then( _ => this._processNextDelta( meta, history.slice( 1 ) ) );
     }
@@ -266,7 +285,7 @@ export class DeltaProcessor
 
         deltas.sort( this._sortByTimestamp );
 
-        return deltas;
+        return this._mergeDeltas( deltas );
     }
 
 
@@ -283,23 +302,26 @@ export class DeltaProcessor
         const deltas_obj           = doc.rdelta || <ReverseDelta<any>>{};
         const deltas: Delta<any>[] = deltas_obj[ type ] || [];
 
-        // Get type specific delta index
-        let published_count = 0;
-        if ( doc.totalPublishDelta )
-        {
-            published_count = doc.totalPublishDelta[ type ] || 0;
-        }
-
-        // Only return the unprocessed deltas
-        const deltas_trimmed = deltas.slice( published_count );
+        let filtered_deltas: Delta<any>[] = [];
 
         // Mark each delta with its type
-        deltas_trimmed.forEach( delta =>
+        deltas.forEach( delta =>
         {
             delta.type = type;
+
+            if (
+                doc?.deltaPublishedTs &&
+                doc.deltaPublishedTs[ type ] &&
+                delta.timestamp <= doc.deltaPublishedTs[ type ]
+            )
+            {
+                return;
+            }
+
+            filtered_deltas.push( delta )
         } );
 
-        return deltas_trimmed;
+        return filtered_deltas;
     }
 
 

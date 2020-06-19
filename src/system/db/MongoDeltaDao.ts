@@ -39,18 +39,19 @@ export class MongoDeltaDao implements DeltaDao
 
     /** The document fields to read */
     readonly RESULT_FIELDS: Record<string, number> = {
-        id:                1,
-        programId:         1,
-        agentName:         1,
-        agentEntityId:     1,
-        startDate:         1,
-        lastUpdate:        1,
-        quoteExpDate:      1,
-        quoteSetId:        1,
-        data:              1,
-        ratedata:          1,
-        rdelta:            1,
-        totalPublishDelta: 1,
+        id:               1,
+        programId:        1,
+        agentName:        1,
+        agentEntityId:    1,
+        startDate:        1,
+        lastUpdate:       1,
+        quoteExpDate:     1,
+        quoteSetId:       1,
+        data:             1,
+        ratedata:         1,
+        rdelta:           1,
+        topSavedStepId:   1,
+        deltaPublishedTs: 1,
     };
 
 
@@ -116,33 +117,37 @@ export class MongoDeltaDao implements DeltaDao
 
 
     /**
-     * Set the document's processed index
+     * Update the last published timestamp
      *
-     * @param doc_id - Document whose index will be set
+     * @param doc_id - Document to update
      * @param type   - Delta type
+     * @param ts     - Timestamp to set
      */
-    advanceDeltaIndex( doc_id: DocumentId, type: DeltaType ): Promise<void>
+    setPublishedTs(
+        doc_id: DocumentId,
+        type:   DeltaType,
+        ts:     UnixTimestamp,
+    ): Promise<void>
     {
         return new Promise( ( resolve, reject ) =>
         {
-            const inc_data: Record<string, any> = {};
+            const set_data: Record<string, any> = {};
 
-            inc_data[ 'totalPublishDelta.' + type ] = 1;
+            set_data[ 'deltaPublishedTs.' + type ] = ts;
 
             this._collection.update(
                 { id: doc_id },
-                { $inc: inc_data },
+                { $set: set_data },
                 { upsert: false },
                 e =>
                 {
                     if ( e )
                     {
                         reject( context(
-                            new DaoError( 'Error advancing delta index: ' + e ),
+                            new DaoError( 'Error updating published ts: ' + e ),
                             {
                                 doc_id:   doc_id,
                                 quote_id: doc_id,
-                                type:     type,
                             }
                         ) );
                         return;
