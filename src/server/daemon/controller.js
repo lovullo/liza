@@ -664,7 +664,14 @@ function doRoute( program, request, data, resolve, reject )
         {
             handleRequest( function( quote )
             {
-                server.sendEmptyReply( request, quote );
+                server.handlePost(
+                    quote.getCurrentStepId(),
+                    request,
+                    quote,
+                    program,
+                    session,
+                    true
+                );
             } );
         } );
     }

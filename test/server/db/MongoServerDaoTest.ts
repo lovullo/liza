@@ -71,6 +71,68 @@ describe( 'MongoServerDao', () =>
             } );
         } );
 
+        describe( "with force_publish", () =>
+        {
+            it( "forced_reset resets published indicator", done =>
+            {
+                const expected_ts   = <UnixTimestamp>12345;
+                const quote         = createStubQuote( { 'published': true } );
+                const sut           = new Sut(
+                    createMockDb(
+                        // update
+                        ( _selector: MongoSelector, data: MongoUpdate ) =>
+                        {
+                            expect( data.$set[ 'published' ] ).to.deep.equal( false );
+                            expect( data.$set[ 'publishResetTs' ] ).to.deep.equal( expected_ts );
+                            done();
+                        }
+                    ),
+                    'test',
+                    () => { return expected_ts; },
+                );
+
+                sut.init( () =>
+                    sut.saveQuote(
+                        quote,
+                        () => {},
+                        () => {},
+                        undefined,
+                        {},
+                        true
+                    )
+                );
+            } );
+
+            it( "not forced will not change published indicator", done =>
+            {
+                const quote = createStubQuote( { 'published': true } );
+                const sut = new Sut(
+                    createMockDb(
+                        // update
+                        ( _selector: MongoSelector, data: MongoUpdate ) =>
+                        {
+                            expect( data.$set[ 'published' ] ).to.not.exist;
+                            expect( data.$set[ 'publishResetTs' ] ).to.not.exist;
+                            done();
+                        }
+                    ),
+                    'test',
+                    () => { return <UnixTimestamp>123; },
+                );
+
+                sut.init( () =>
+                    sut.saveQuote(
+                        quote,
+                        () => {},
+                        () => {},
+                        undefined,
+                        {},
+                        false
+                    )
+                );
+            } );
+        } );
+
         describe( "with push data", () =>
         {
             it( "adds push data to the collection", done =>
