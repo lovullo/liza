@@ -383,6 +383,14 @@ module.exports = Class( 'ClientQuote' )
 
 
     /**
+     * Returns raw data from the quote
+     *
+     * @return {Object} raw bucket data
+     */
+    'public proxy getData': '_staging',
+
+
+    /**
      * Returns data from the quote
      *
      * @param {string} name name of data to retrieve
