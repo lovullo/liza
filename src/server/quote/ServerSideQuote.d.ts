@@ -112,13 +112,6 @@ export declare class ServerSideQuote extends BaseQuote
 
 
     /**
-     * Increments the number of retries attempted
-     *
-     * @return {ServerSideQuote} self
-     */
-    retryAttempted(): this;
-
-    /**
      * Retrieve the number of raters that are pending
      *
      * @param data (optional) Rate data

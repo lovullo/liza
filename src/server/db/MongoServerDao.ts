@@ -281,8 +281,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         push_data?: any,
     ): this
     {
-        var dao                       = this;
-        var meta: Record<string, any> = {};
+        var dao = this;
 
         // if we're not ready, then we can't save the quote!
         if ( this._ready === false )
@@ -306,9 +305,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
             Object.keys( quote_data ).forEach(
                 key => save_data[ 'data.' + key ] = quote_data[ key ]
             );
-
-            // full save will include all metadata
-            meta = quote.getMetabucket().getData();
         }
 
         var id = quote.getId();
@@ -334,15 +330,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao
         save_data.quoteExpDate = ( exp_date === Infinity ) ? 0 : exp_date;
 
         // meta will eventually take over for much of the above data
-        meta.liza_timestamp_initial_rated = [ quote.getRatedDate() ];
+        save_data[ 'meta.liza_timestamp_initial_rated' ] = [ quote.getRatedDate() ];
 
         // save the stack so we can track this call via the oplog
         save_data._stack = ( new Error() ).stack;
-
-        // avoid wiping out other metadata (since this may not be a full set)
-        Object.keys( meta ).forEach(
-            key => save_data[ 'meta.' + key ] = meta[ key ]
-        );
 
         // do not push empty objects
         const document = ( !push_data || !Object.keys( push_data ).length )
@@ -496,81 +487,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
 
     /**
-     * Saves the quote retry attempts
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteRateRetries(
-        quote:   ServerSideQuote,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        var update = { retryAttempts: quote.getRetryAttempts() };
-
-        return this.mergeData(
-            quote, update, success, failure
-        );
-    }
-
-
-    /**
-     * Synchronize the quote data needed for rating
-     *
-     * The provides the ability for quotes to refresh data that may have been
-     * changed since instantiation.
-     *
-     * retryAttempts, initialRatedDate, and currentStepId are needed for rating
-     * calculations and topSavedStepId is included so that it is not overwritten
-     * when setCurrentStepId invokes saveQuoteState
-     *
-     * @param quote - the quote to sync
-     *
-     * @returns a promise with an synchronized quote
-     */
-    syncRatingState( quote: ServerSideQuote ): Promise<ServerSideQuote>
-    {
-        return new Promise<ServerSideQuote>( resolve =>
-        {
-            this._collection!.find(
-                { id: quote.getId() },
-                {
-                    limit:  <PositiveInteger>1,
-                    fields: {
-                        retryAttempts:    1,
-                        initialRatedDate: 1,
-                        currentStepId:    1,
-                        topSavedStepId:   1,
-                    }
-                },
-                ( _err, cursor ) =>
-                {
-                    cursor.toArray( function( _err: NullableError, data: any[] )
-                    {
-                        // was the quote found?
-                        if ( data.length == 0 )
-                        {
-                            // Return the quote unchanged
-                            resolve( quote );
-                            return;
-                        }
-
-                        quote.setRetryAttempts( +data[ 0 ].retryAttempts );
-                        quote.setInitialRatedDate( +data[ 0 ].initialRatedDate );
-                        quote.setTopSavedStepId( +data[ 0 ].topSavedStepId ),
-                        quote.setCurrentStepId( +data[ 0 ].currentStepId );
-
-                        resolve( quote );
-                    } );
-                }
-            );
-        } );
-    }
-
-
-    /**
      * Ensure the quote has been rated before
      *
      * @param quote - the quote to validate
@@ -647,38 +563,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao
 
 
     /**
-     * Saves the quote class data
-     *
-     * @param quote   - the quote to save
-     * @param classed - the classes to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteClasses(
-        quote:   ServerSideQuote,
-        classes: any,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        const update: MongoUpdate = {};
-
-        for ( var key in classes )
-        {
-            update[ 'classData.' + key ] = classes[ key ];
-        }
-
-        return this.mergeData(
-            quote,
-            update,
-            success,
-            failure
-        );
-    }
-
-
-
-    /**
      * Save document metadata (meta field on document)
      *
      * Only the provided indexes will be modified (that is---data will be
@@ -690,13 +574,15 @@ export class MongoServerDao extends EventEmitter implements ServerDao
      * @param failure  - callback on error
      */
     saveQuoteMeta(
-        quote:    ServerSideQuote,
-        new_meta: Record<string, any>,
-        success: Callback = () => {},
-        failure: Callback = () => {},
+        quote:     ServerSideQuote,
+        new_meta?: Record<string, any>,
+        success:   Callback = () => {},
+        failure:   Callback = () => {},
     ): void
     {
         const update: MongoUpdate = {};
+
+        new_meta = new_meta || quote.getMetabucket().getData();
 
         for ( var key in new_meta )
         {

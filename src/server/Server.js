@@ -143,6 +143,11 @@ module.exports = Class( 'Server' )
      */
     'private _feature_flag': null,
 
+    /**
+     * A function to call when the dapi returns
+     * @type {function}
+     */
+    'private _postDapi': null,
 
     /**
      * Rater
@@ -459,6 +464,8 @@ module.exports = Class( 'Server' )
                         explicitLock:       quote.getExplicitLockReason(),
                         explicitLockStepId: quote.getExplicitLockStep(),
                     } );
+
+                    server.dao.saveQuoteMeta( quote );
                 }
 
                 callback.call( server );
@@ -660,17 +667,23 @@ module.exports = Class( 'Server' )
             // save the quote updates (but only if it was modified)
             if ( mod )
             {
+                var error_cb = function()
+                {
+                    _self.sendError( request,
+                        "Quote sanitization failed to commit"
+                    );
+                };
+
                 _self.dao.saveQuote( quote,
                     function()
                     {
-                        _self._processInit.apply( _self, args );
+                        _self.dao.saveQuoteMeta( quote, undefined, function()
+                        {
+                            _self._processInit.apply( _self, args );
+                        },
+                        error_cb );
                     },
-                    function()
-                    {
-                        _self.sendError( request,
-                            "Quote sanitization failed to commit"
-                        );
-                    }
+                    error_cb
                 );
             }
             else
@@ -1268,9 +1281,42 @@ module.exports = Class( 'Server' )
     },
 
 
+    /**
+     * Set a function to call when dapis return
+     *
+     * @param {function} postDapi a function which will return a promise
+     *
+     * @return {Server}
+     */
+    'public onDapiReturn': function( postDapi )
+    {
+        this._postDapi = postDapi;
+
+        return this;
+    },
+
+
+    /**
+     * Call the dapis and then perform post-call logic
+     *
+     * @param {ServerSideQuote} quote      - instance of quote to operate on
+     * @param {array<Promise>}  dapis      - dapis to call
+     * @param {Object}          meta_clear - old metadata to clear
+     * @param {UserRequest}     request    - request object
+     * @param {Program}         program    - program associated with the quote
+     *
+     * @return {undefined}
+     */
     'private _monitorMetadataPromise'( quote, dapis, meta_clear, request, program )
     {
-        quote.getMetabucket().setValues( meta_clear );
+        // Format the data so that it is saved as an array
+        const save_data = {};
+
+        Object.keys( meta_clear ).forEach(
+            key => save_data[ 'meta.' + key ] = meta_clear[ key ]
+        );
+
+        this.dao.mergeData( quote, save_data );
 
         dapis.map( promise => promise
             .then( ( { field, index, data } ) =>
@@ -1280,48 +1326,13 @@ module.exports = Class( 'Server' )
                     this.dao.saveQuoteMeta(
                         quote,
                         data,
-                        saved_quote =>
-                        {
-                            // Reinitialize the quote so that underlying data
-                            // changes are not affecting all returning DAPI
-                            // quotes
-                            const new_quote = Quote(
-                                quote.getId(),
-                                QuoteDataBucket()
-                            );
-
-                            new_quote.setMetabucket( QuoteDataBucket() );
-                            new_quote.setRateBucket( QuoteDataBucket() );
-
-                            this.initQuote(
-                                new_quote,
-                                program,
-                                request,
-                                () =>
-                                {
-                                    new_quote.setMetadata( data );
-                                    resolve( new_quote )
-                                },
-                                e => reject( e )
-                            );
-                        },
+                        saved_quote => resolve( quote ),
                         e => reject( e )
                     );
                 } )
             } )
             .then( quote => this.dao.ensurePriorRate( quote ) )
-            .then( quote =>
-            {
-                rating_service = new RatingService(
-                    this.logger,
-                    this.dao,
-                    this._rater,
-                    delta.createDelta,
-                    this._ts_ctor
-                );
-
-                rating_service.request( request.getSession(), quote, '', true );
-            } )
+            .then( quote => this._postDapi( quote.getId(), request, program ) )
             .catch( e =>
             {
                 if( /^No prior rate/.test( e.message ) ||
@@ -1363,11 +1374,13 @@ module.exports = Class( 'Server' )
         // unless this is a rating step
         if ( ( program.rateSteps || [] )[ step_id ] !== true )
         {
+            const meta = { liza_timestamp_rate_request: [ 0 ] }
+
             quote.setLastPremiumDate( 0 );
             quote.setRetryAttempts( 0 );
-            quote.setMetadata( {
-                liza_timestamp_rate_request: [ 0 ],
-            } );
+            quote.setMetadata( meta );
+
+            server.dao.saveQuoteMeta( quote, meta );
         }
 
         server.quoteFill( quote, step_id, request.getSession(),

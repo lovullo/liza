@@ -208,6 +208,8 @@ export class RatingService
                         rate_data, actions, quote.getProgram(), quote
                     );
 
+                    quote.setRatingData( rate_data );
+
                     const class_dest = {};
 
                     const cleaned = this._cleanRateData(
@@ -215,21 +217,24 @@ export class RatingService
                         class_dest
                     );
 
-                    // TODO: move me during refactoring
-                    this._dao.saveQuoteClasses( quote, class_dest );
-
                     // save all data server-side (important: do after
                     // post-processing); async
-                    this._saveRatingData( quote, rate_data, indv, () =>
-                    {
-                        const content = {
-                            data:             cleaned,
-                            initialRatedDate: quote.getRatedDate(),
-                            lastRatedDate:    quote.getLastPremiumDate()
-                        };
+                    this._saveRatingData(
+                        quote,
+                        rate_data,
+                        class_dest,
+                        indv,
+                        () =>
+                        {
+                            const content = {
+                                data:             cleaned,
+                                initialRatedDate: quote.getRatedDate(),
+                                lastRatedDate:    quote.getLastPremiumDate()
+                            };
 
-                        resolve( { content: content, actions: actions } );
-                    } );
+                            resolve( { content: content, actions: actions } );
+                        }
+                    );
                 },
                 ( message: string ) =>
                 {
@@ -255,10 +260,11 @@ export class RatingService
      * @param c     - callback
      */
     private _saveRatingData(
-        quote: ServerSideQuote,
-        data:  RateResult,
-        indv:  string,
-        c:     RequestCallback
+        quote:   ServerSideQuote,
+        data:    RateResult,
+        classes: Record<string, any>,
+        indv:    string,
+        c:       RequestCallback
     ): void
     {
         // only update the last premium calc date on the initial request
@@ -269,9 +275,9 @@ export class RatingService
             quote.setLastPremiumDate( cur_date );
             quote.setRatedDate( cur_date );
 
-            const quote_data  = quote.getRatingData();
-            const save_data   = { ratedata: data };
-            const rdelta_data = {
+            const quote_data                     = quote.getRatingData();
+            const save_data: Record<string, any> = { ratedata: data };
+            const rdelta_data                    = {
                 "rdelta.ratedata": {
                     data:            this._createDelta( data, quote_data ),
                     concluding_save: false,
@@ -279,22 +285,25 @@ export class RatingService
                 },
             };
 
+            // Save quote classes
+            for ( let key in classes )
+            {
+                save_data[ 'classData.' + key ] = classes[ key ];
+            }
+
             // save the last prem status (we pass an empty object as the save
             // data argument to ensure that we do not save the actual bucket
             // data, which may cause a race condition with the below merge call)
-            this._dao.saveQuote( quote, c, c, save_data, rdelta_data );
-        }
-        else
-        {
-            c();
+            this._dao.saveQuote(
+                quote,
+                () => {},
+                () => {},
+                save_data,
+                rdelta_data
+            );
         }
 
-        // we're not going to worry about whether or not this fails; if it does,
-        // an error will be automatically logged, but we still want to give the
-        // user a rate (if this save fails, it's likely we have bigger problems
-        // anyway); this can also be done concurrently with the above request
-        // since it only modifies a portion of the bucket
-        this._dao.mergeBucket( quote, data );
+        this._dao.mergeBucket( quote, data, c, c );
     }
 
 
@@ -542,10 +551,17 @@ export class RatingService
         const max_attempts  = ( retry_attempts >= this.RETRY_MAX_ATTEMPTS );
         const has_pending   = ( pending_count > 0 );
 
-        data[ '__rate_pending' ] = [ pending_count ];
+        // Clear retry attempts when we have no more pending rates
+        quote.setRetryAttempts( ( has_pending ) ? ( retry_attempts + 1 ) : 0 );
 
-        quote.retryAttempted();
-        this._dao.saveQuoteRateRetries( quote );
+        data[ '__rate_pending' ] = [ pending_count ];
+        this._dao.mergeData(
+            quote,
+            {
+                'ratedata.__rate_pending': [ pending_count ],
+                'retryAttempts':           quote.getRetryAttempts(),
+            }
+        );
 
         if ( has_pending && !max_attempts && is_rate_step )
         {
@@ -559,7 +575,7 @@ export class RatingService
                 },
             } );
         }
-        else
+        else if ( has_pending && max_attempts )
         {
             const clear_data = this._clearRetries( data );
             const save_data  = <RateResult>{};
@@ -577,6 +593,5 @@ export class RatingService
 
             this._dao.saveQuote( quote, () => {}, () => {}, save_data );
         }
-
     }
 }
