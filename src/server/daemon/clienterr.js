@@ -26,7 +26,7 @@ exports.route = function( request, log )
         return Promise.resolve( false );
     }
 
-    if ( !( request.getUri().match( /^clienterr/ ) ) )
+    if ( !( request.getUri().match( /^\/?clienterr/ ) ) )
     {
         return Promise.resolve( false );
     }
