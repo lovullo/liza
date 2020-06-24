@@ -1411,7 +1411,7 @@ module.exports = Class( 'Server' )
                     {
                         quote.setCurrentStepId( step_id );
                     }
-                    if ( step_id > quote.getTopSavedStepId() )
+                    if ( !autosave && step_id > quote.getTopSavedStepId() )
                     {
                         // only updated by saveQuoteState
                         quote.setTopSavedStepId( step_id );
