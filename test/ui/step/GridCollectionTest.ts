@@ -19,8 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Group = require( "../../../src/ui/group/GridGroupUi" );
-const sinon = require( 'sinon' );
+const Group     = require( '../../../src/ui/group/GridGroupUi' );
+const sinon     = require( 'sinon' );
+const jsdom     = require( 'jsdom' );
+const { JSDOM } = jsdom;
+const dom       = new JSDOM( '<!DOCTYPE html>' );
 
 import { AncestorAwareStyler } from "../../../src/ui/styler/AncestorAwareStyler";
 import { GridCollection as Sut, GroupList } from "../../../src/ui/step/GridCollection";
@@ -32,16 +35,6 @@ import {
     createQuote,
     createBoxContent
 } from "../group/CommonResources";
-
-
-
-before(function () {
-    this.jsdom = require( 'jsdom-global' )();
-});
-
-after(function () {
-    this.jsdom();
-});
 
 describe( "ui.step.GridCollection", () =>
 {
@@ -66,7 +59,7 @@ describe( "ui.step.GridCollection", () =>
                 expect( styler ).to.equal( styler_stub );
             };
 
-            const sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+            const sut = new Sut( markup, convertToGroupList( groups ), styler_stub, dom );
 
             sut.visit();
 
@@ -149,7 +142,7 @@ describe( "ui.step.GridCollection", () =>
                     actual_column_removed = class_name;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub() );
+                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub(), dom );
 
                 sut.visit();
 
@@ -208,7 +201,7 @@ describe( "ui.step.GridCollection", () =>
                     add_column_class = classname;
                 };
 
-                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub() );
+                const sut = new Sut( content, convertToGroupList( groups ), getStylerStub(), dom );
 
                 sut.visit();
 
@@ -259,7 +252,7 @@ describe( "ui.step.GridCollection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
 
             sut.visit();
 
@@ -287,7 +280,7 @@ describe( "ui.step.GridCollection", () =>
 
             const expected_selected_siblings = [ selected_value ];
 
-            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub, dom );
 
             sut.visit();
 
@@ -330,7 +323,7 @@ describe( "ui.step.GridCollection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
 
             sut.visit();
 
@@ -364,7 +357,7 @@ describe( "ui.step.GridCollection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
 
             sut.visit();
 
@@ -406,7 +399,7 @@ describe( "ui.step.GridCollection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "foo" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
 
             sut.visit();
 
@@ -449,7 +442,7 @@ describe( "ui.step.GridCollection", () =>
             groups[0].getCategories = sinon.stub().returns( [ "foo" ] );
             groups[1].getCategories = sinon.stub().returns( [ "bar" ] );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub() );
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
 
             sut.visit();
 
@@ -480,7 +473,7 @@ describe( "ui.step.GridCollection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub, dom );
 
             sut.visit();
 
@@ -512,7 +505,7 @@ describe( "ui.step.GridCollection", () =>
 
             overrideGroupSelection( groups );
 
-            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub, dom );
 
             sut.visit();
 
@@ -536,7 +529,7 @@ describe( "ui.step.GridCollection", () =>
             let open_calls = 0;
             let close_calls = 0;
 
-            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub );
+            let sut = new Sut( markup, convertToGroupList( groups ), styler_stub, dom );
 
             sut.visit();
 

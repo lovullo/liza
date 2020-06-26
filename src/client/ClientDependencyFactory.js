@@ -424,7 +424,8 @@ module.exports = Class( 'ClientDependencyFactory',
                         new WidthAncestorAwareStyler(),
                         new LeftAlignAncestorAwareStyler(),
                         new ExpandAncestorAwareStyler()
-                    ]
+                    ],
+                    this._document
                 );
         }
 

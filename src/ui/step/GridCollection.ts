@@ -64,11 +64,13 @@ export class GridCollection implements Collection
      * @param _content  - target collection element
      * @param groups    - list of groups
      * @param _stylers  - ancestor-aware styler
+     * @param document  - DOM
      */
     constructor(
         private _content:           HTMLElement,
         groups:                     GroupList,
-        private readonly _stylers:  AncestorAwareStyler[]
+        private readonly _stylers:  AncestorAwareStyler[],
+        document:                   Document
     ) {
         this._setGroups( groups );
 
@@ -79,6 +81,8 @@ export class GridCollection implements Collection
                 this._handleClick( e.target );
             }
         } );
+
+        document.defaultView?.addEventListener( 'resize',  () => this._resizeDetails() );
     }
 
 
@@ -377,6 +381,17 @@ export class GridCollection implements Collection
         {
             return ( g2.getCategories().indexOf( category ) > -1 );
         } ).length > 0;
+    }
+
+
+    /**
+     * Force re-open any open detail panes to apply resize
+     */
+    private _resizeDetails()
+    {
+        this._groups
+            .filter( ( g: GridGroupUi ) => g.areDetailsOpen() )
+            .forEach( ( g: GridGroupUi ) => g.openDetails( this._stylers ) );
     }
 }
 
