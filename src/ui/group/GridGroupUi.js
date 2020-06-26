@@ -101,6 +101,12 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
      */
     'private _is_visible': false,
 
+    /**
+     * Number of ancestors back to sync styles with
+     *
+     * @prop {number}
+     */
+    'private _relevant_style_ancestor': 4,
 
     /**
      * Get the group's visibility
@@ -339,9 +345,12 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         {
             this.content.classList.add( "details-open" );
 
-            const ancestor = 3;
-
-            stylers.forEach( styler => styler.style( this._details, ancestor ) );
+            stylers.forEach(
+                styler => styler.style(
+                    this._details,
+                    this._relevant_style_ancestor
+                )
+            );
         }
     },
 
@@ -357,9 +366,12 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
         {
             this.content.classList.remove( "details-open" );
 
-            const ancestor = 3;
-
-            stylers.forEach( styler => styler.style( this._details, ancestor ) );
+            stylers.forEach(
+                styler => styler.style(
+                    this._details,
+                    this._relevant_style_ancestor
+                )
+            );
         }
     },
 
