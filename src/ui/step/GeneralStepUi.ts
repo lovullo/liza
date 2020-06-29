@@ -1309,6 +1309,8 @@ export class GeneralStepUi extends EventEmitter implements StepUi
             {
                 this._styler.disableField( name, undefined, lock );
             }
+
+            this._collections.forEach( collection => collection.lock( lock ) );
         }
 
         this._locked = lock;

@@ -239,6 +239,35 @@ describe( "ui.step.GridCollection", () =>
             actual = [];
         } ) ;
 
+        it( "step lock disables click", () =>
+        {
+            let expected = [
+                "closeDetails grid group 0",
+                "closeDetails grid group 1",
+            ];
+
+            const markup = createCollectionMarkup();
+            const groups = createGroupsFromMarkup( markup );
+
+            overrideGroupSelection( groups );
+
+            let sut = new Sut( markup, convertToGroupList( groups ), getStylerStub(), dom );
+
+            sut.visit();
+            sut.lock( true );
+
+            const content = <HTMLElement> markup.querySelector( "#grid1 > .content" );
+
+            if ( content )
+            {
+                content.click();
+            } else {
+                throw new Error( "Unable to find grid content" );
+            }
+
+            expect( actual ).to.deep.equal( expected );
+        } );
+
         it( "causes selection when group's content is clicked", () =>
         {
             let expected = [

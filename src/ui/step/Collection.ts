@@ -27,4 +27,11 @@ export interface Collection {
      * Trigger visitation of the collection
      */
     visit(): void;
+
+    /**
+     * Lock/unlock a collection
+     *
+     * @param lock
+     */
+    lock( lock: boolean ): void
 }

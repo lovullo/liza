@@ -57,6 +57,11 @@ export class GridCollection implements Collection
      */
     protected _groups: GridGroupUi[] = [];
 
+    /**
+     * Whether the collection is locked (all elements disabled)
+     */
+    private _locked: boolean = false;
+
 
     /**
      * Create a new GridCollection instance
@@ -101,6 +106,20 @@ export class GridCollection implements Collection
 
         // Ensure all detail panes are closed
         this._groups.forEach( g => g.closeDetails( this._stylers ) );
+    }
+
+
+    /**
+     * Lock/unlock a collection (preventing modifications)
+     *
+     * If the lock status has changed, the click handlers
+     * will be disabled/enabled respectively.
+     *
+     * @param lock - whether collection should be locked
+     */
+    lock( lock: boolean ): void
+    {
+        this._locked = lock;
     }
 
 
@@ -157,6 +176,11 @@ export class GridCollection implements Collection
      */
     private _handleClick( target: EventTarget )
     {
+        if ( this._locked )
+        {
+            return;
+        }
+
         const element = <HTMLElement> target;
 
         if ( element.classList.contains( 'close' ) )
