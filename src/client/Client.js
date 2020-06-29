@@ -984,6 +984,7 @@ module.exports = Class( 'Client' )
                 } );
                 break;
 
+            case 'kickBack':
             case 'delay':
                 this._eventHandler.handle( action_type, function() {}, action );
                 break;
