@@ -1318,12 +1318,19 @@ module.exports = Class( 'Server' )
      */
     'private _monitorMetadataPromise'( quote, dapis, meta_clear, request, program )
     {
-        // Format the data so that it is saved as an array
         const save_data = {};
 
-        Object.keys( meta_clear ).forEach(
-            key => save_data[ 'meta.' + key ] = meta_clear[ key ]
-        );
+        // Format the data so that it is saved as an array. Dapis data with an
+        // empty value for meta_clear should not be saved
+        Object.keys( meta_clear ).forEach( key =>
+        {
+            const val = meta_clear[ key ];
+
+            if ( val && val.length > 0 )
+            {
+                save_data[ 'meta.' + key ] = val
+            }
+        } );
 
         this.dao.mergeData( quote, save_data );
 
