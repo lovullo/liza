@@ -19,6 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { DocumentId } from '../document/Document';
+import { PositiveInteger } from '../numeric';
 
 
 /** The data structure expected for a document's internal key/value store */
@@ -56,6 +57,7 @@ export type Delta<T> = {
     type:            DeltaType,
     timestamp:       UnixTimestamp,
     concluding_save: boolean,
+    step_id:         PositiveInteger,
     data:            DeltaResult<T>,
 }
 
@@ -109,11 +111,14 @@ export interface DeltaDocument
     /** The calculated reverse deltas */
     rdelta?: ReverseDelta<any>,
 
-    /** A count of how many of each delta type have been processed */
-    totalPublishDelta?: PublishDeltaCount,
-
     /** The quote set id */
     quoteSetId: DocumentId,
+
+    /** The top saved step */
+    topSavedStepId: PositiveInteger,
+
+    /** The timestamp of the last published delta */
+    deltaPublishedTs: Record< string, UnixTimestamp>,
 };
 
 
@@ -226,6 +231,142 @@ export function applyDelta<T, U extends Kv<T>, V extends Kv<T>>(
     } );
 
     return <U>appliedDelta;
+}
+
+
+/**
+ * Merge an array of deltas
+ *
+ * We will merge delta data by applying deltas on top of each other. The type
+ * should not change so we just use the most recent type. We will take the most
+ * recent timestamp and step_id and treat the presence of a concluding save in
+ * one delta as a concluding save for all deltas
+ *
+ * @param deltas - An array of deltas to merge
+ *
+ * @return A single merged delta or null if an empty array was supplied
+ */
+export function mergeSimilarDeltas<T>(
+    deltas: Delta<T>[],
+    apply:  ( bucket: Kv<T>, delta: DeltaResult<T> ) => Kv<T>
+): Delta<T> | null
+{
+    let merge_type                      = 'data',
+        merge_timestamp                 = 0,
+        merge_concluding_save           = false,
+        merge_step_id                   = 0,
+        merge_data: Record<string, any> = {};
+
+
+    if ( deltas.length === 0 )
+    {
+        return null;
+    }
+
+    deltas.forEach( delta =>
+    {
+        merge_timestamp       = Math.max( merge_timestamp, delta.timestamp );
+        merge_step_id         = Math.max( merge_step_id, delta.step_id );
+        merge_type            = delta.type;
+        merge_concluding_save = merge_concluding_save || delta.concluding_save;
+        merge_data            = apply( merge_data, delta.data )
+    } );
+
+    return <Delta<T>>{
+        type:            merge_type,
+        timestamp:       merge_timestamp,
+        concluding_save: merge_concluding_save,
+        step_id:         merge_step_id,
+        data:            merge_data,
+    };
+}
+
+
+/**
+ * Returns the mergeSimilarDeltas function with the apply argument already
+ * satisfied
+ *
+ * @param apply - A function to apply deltas
+ */
+export let createMergeSimilarDeltas = (
+    apply:  ( bucket: Kv, delta: DeltaResult<any> ) => Kv
+): <T>( deltas: Delta<T>[] ) => Delta<T> | null =>
+<T>( deltas: Delta<T>[] ) =>
+{
+    return mergeSimilarDeltas<T>( deltas, apply );
+}
+
+
+/**
+ * Merge deltas by type
+ *
+ * We will iterate through the deltas and merge only where appropriate.
+ *
+ * As we loop through we will add deltas which are available to be merged into
+ * an array. When we encounter a delta which is not eligible for merging we
+ * merge everything in the pending array and then start a new pernding array
+ * with the ineligible delta. Because of this pending array, we will need to
+ * finish this process by merging all pending deltas
+ *
+ * @param deltas - An array of deltas to merge
+ *
+ * @return An array of deltas which have been merged
+ */
+export function differentiateDeltas<T>(
+    deltas: Delta<T>[],
+    merge:  ( deltas: Delta<T>[] ) => Delta<T> | null,
+): Delta<T>[]
+{
+    const merged_deltas: Delta<any>[] = [];
+
+    let pending_merge: Delta<any>[]    = [];
+    let pending_type: DeltaType | null = null;
+    let pending_step: number           = 0;
+
+    deltas.forEach( delta =>
+    {
+        // If the delta is the same step and type then add
+        // to pending and proceed with the next delta
+        if (
+            ( delta.type === pending_type ) &&
+            ( delta.step_id === pending_step )
+        )
+        {
+            pending_type = delta.type;
+            pending_step = delta.step_id;
+
+            pending_merge.push( delta );
+
+            return;
+        }
+
+        let merged = merge( pending_merge );
+
+        if ( merged !== null )
+        {
+            merged_deltas.push( merged );
+        }
+
+        pending_merge = [ delta ];
+        pending_type  = delta.type;
+        pending_step  = delta.step_id;
+    } );
+
+    // Merge any pending deltas
+    return merged_deltas.concat( merge( pending_merge ) || [] );
+}
+
+
+/**
+ *
+ * @param delta - An array of deltas to merge
+ */
+export function mergeDeltas<T>( deltas: Delta<T>[] ): Delta<T>[]
+{
+    return differentiateDeltas(
+        deltas,
+        createMergeSimilarDeltas( applyDelta ),
+    );
 }
 
 

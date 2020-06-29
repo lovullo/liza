@@ -21,6 +21,7 @@
  * The term 'Quote' is synonymous with 'Document'; this project is moving
  * more toward the latter as it is further generalized.
  */
+import { PositiveInteger } from '../numeric';
 
 /**
  * Document identifier
@@ -65,4 +66,7 @@ export type DocumentMeta =
 
     /** The time the document will expire */
     expDate: UnixTimestamp,
+
+    /** The top saved step */
+    topSavedStepId: PositiveInteger,
 }

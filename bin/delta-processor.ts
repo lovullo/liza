@@ -26,6 +26,7 @@ import { DeltaPublisher } from '../src/system/DeltaPublisher';
 import { MongoCollection } from '../src/types/mongodb';
 import { createAvroEncoder } from '../src/system/avro/AvroFactory';
 import { V1MessageWriter } from '../src/system/avro/V1MessageWriter';
+import { applyDelta, mergeDeltas } from '../src/bucket/delta';
 import {
     createMongoConfig,
     createMongoDB,
@@ -97,7 +98,13 @@ getMongoCollection( db, db_conf )
 
         handleShutdown();
 
-        const processor = new DeltaProcessor( dao, publisher, emitter );
+        const processor = new DeltaProcessor(
+            dao,
+            publisher,
+            emitter,
+            applyDelta,
+            mergeDeltas,
+        );
 
         return new Promise( ( _resolve, reject ) =>
         {
