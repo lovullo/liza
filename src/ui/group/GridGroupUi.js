@@ -500,7 +500,7 @@ module.exports = Class( 'GridGroupUi' ).extend( GroupUi,
 
         this.content.classList[ operation ]( "disabled" );
 
-        if ( isDisabled )
+        if ( isDisabled && !this.group.isInternal() )
         {
             // Ensure the group is deselected
             this._setDeSelectedStatus();
