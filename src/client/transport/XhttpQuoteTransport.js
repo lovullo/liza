@@ -127,8 +127,16 @@ module.exports = Class( 'XhttpQuoteTransport' )
         const data = {};
 
         Object.keys( raw_data ).forEach( field =>
+        {
+            const val = raw_data[ field ];
+
+            if ( Array.isArray( val ) && val.length === 0 )
+            {
+                return;
+            }
+
             data[ field ] = this._truncateDiff( raw_data[ field ] )
-        );
+        } );
 
         return JSON.stringify( data );
     },

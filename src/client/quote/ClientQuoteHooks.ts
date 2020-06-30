@@ -66,7 +66,23 @@ export let createQuoteStagingHook = (
 
     quote.on( 'dataUpdate', diff =>
     {
-        if( !diff || ( Object.keys( diff ).length === 0 ) )
+        if ( !diff )
+        {
+            return;
+        }
+
+        const valid_diffs = Object
+            .keys( diff )
+            .reduce( ( total: number, key: string ): number =>
+            {
+                const val = diff[ key ];
+
+                return ( Array.isArray( val ) && val.length > 0 )
+                            ? total + 1
+                            : total;
+            }, 0 );
+
+        if(  valid_diffs === 0 )
         {
             return;
         }
