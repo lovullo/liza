@@ -19,6 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { Collection } from "../../../src/ui/step/Collection";
 import { GeneralStepUi as Sut } from "../../../src/ui/step/GeneralStepUi";
 import { GroupUi } from "../../../src/ui/group/GroupUi";
 import { WindowFeatureFlag } from "../../../src/system/flags/WindowFeatureFlag";
@@ -382,6 +383,44 @@ describe( 'ui.GeneralStepUi', function()
             expect( children_set ).to.equal( 2 );
         } );
     } );
+
+
+    describe( "#lock", () =>
+    {
+        it( "locks all collections", () =>
+        {
+            let set_lock_calls = 0;
+            const collection_0 = createCollection();
+            const collection_1 = createCollection();
+
+            var step = {
+                getExclusiveFieldNames: () =>
+                {
+                    return [];
+                }
+            };
+
+            const sut = createSut( {}, {}, step );
+
+            sut.collections = [ collection_0, collection_1 ];
+
+            collection_0.lock = ( lock: any ) =>
+            {
+                set_lock_calls++;
+                expect( lock ).to.equal( true );
+            };
+
+            collection_1.lock = ( lock: any ) =>
+            {
+                set_lock_calls++;
+                expect( lock ).to.equal( true );
+            };
+
+            sut.lock( true );
+
+            expect( set_lock_calls ).to.equal( 2 );
+        } );
+    } );
 } );
 
 
@@ -420,6 +459,22 @@ function createSut(
 
     return sut;
 }
+
+
+
+/**
+ * Create mock Collection
+ *
+ * @return {Object} Collection
+ */
+function createCollection()
+{
+    return <Collection>{
+        visit: ( ) => {},
+        lock: ( _: any ) => {},
+    };
+}
+
 
 
 /**
