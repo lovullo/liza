@@ -49,7 +49,6 @@ describe( "XhttpQuoteTransport", () =>
         // after truncating
         const expected_data = {
             none:           [ 'no', 'truncate' ],
-            empty:          [],
             one_null:       [ null ],
             all_null:       [ null ],
             tail_null:      [ 'a', 'b', null ],
