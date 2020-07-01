@@ -70,6 +70,16 @@ module.exports = Interface( 'Dialog',
 
 
     /**
+     * Sets whether the dialog can be dragged
+     *
+     * @param {boolean} draggable whether the dialog can be dragged
+     *
+     * @return {Dialog} self
+     */
+    'public setDraggable': [ 'true' ],
+
+
+    /**
      * Shows/hides the 'X' button, allowing the dialog to be manually closed
      * without use of a button
      *

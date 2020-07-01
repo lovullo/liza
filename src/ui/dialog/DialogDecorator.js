@@ -139,6 +139,20 @@ module.exports = AbstractClass
 
 
     /**
+     * Sets whether the dialog can be dragged
+     *
+     * @param {boolean} draggable whether the dialog can be dragged
+     *
+     * @return {DialogDecorator} self
+     */
+    'public setDraggable': function( draggable )
+    {
+        this._dialog.setDraggable( draggable );
+        return this;
+    },
+
+
+    /**
      * Shows/hides the 'X' button, allowing the dialog to be manually closed
      * without use of a button
      *
