@@ -154,6 +154,22 @@ module.exports = Class( 'JqueryDialog' )
 
 
     /**
+     * Sets whether the dialog can be dragged
+     *
+     * @param {boolean} draggable whether the dialog can be dragged
+     *
+     * @return {JqueryDialog} self
+     */
+    'public setDraggable': function( draggable )
+    {
+        draggable = ( draggable === undefined ) ? true : !!draggable;
+
+        this._$dialog.dialog( { draggable: draggable } );
+        return this;
+    },
+
+
+    /**
      * Shows/hides the 'X' button, allowing the dialog to be manually closed
      * without use of a button
      *
