@@ -71,5 +71,13 @@ export declare class ClientQuote extends BaseQuote
      * @param transport - Transport for the data
      * @param callback  - Function to call with results
      */
-    autosave( transport: QuoteTransport, callback?: any ): this
+    autosave( transport: QuoteTransport, callback?: any ): this;
+
+
+    /**
+     * Returns whether the quote is locked from modifications
+     *
+     * @return true if locked, otherwise false
+     */
+    isLocked(): boolean;
 }

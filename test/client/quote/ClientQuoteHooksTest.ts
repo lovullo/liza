@@ -53,6 +53,32 @@ describe( 'createQuoteStagingHook', () =>
         expect( quote_hooked ).to.be.false;
     } );
 
+
+    it( 'Do not hook quote when quote is locked', () =>
+    {
+        const {
+            quote:     quote,
+            program:   program,
+            transport: transport,
+        } = createStubs( { 'foo': [ 1 ] } );
+
+        let quote_hooked = false;
+
+        quote.isLocked = () => true;
+
+        quote.on = ( _: any ) =>
+        {
+            quote_hooked = true;
+
+            return quote;
+        }
+
+        sut( program, transport )( quote );
+
+        expect( quote_hooked ).to.be.false;
+    } );
+
+
     [
         {
             label: 'hook calls autosave',
@@ -100,6 +126,7 @@ function createStubClientQuote( diff: any = {} )
     return <ClientQuote><unknown>{
         on:       ( _: any, cb: any ) => cb( diff ),
         autosave: ( _: any ) => {},
+        isLocked: () => false,
     };
 }
 
