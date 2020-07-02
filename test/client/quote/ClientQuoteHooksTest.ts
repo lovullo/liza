@@ -20,6 +20,7 @@
  */
 
 import { createQuoteStagingHook as sut } from '../../../src/client/quote/ClientQuoteHooks';
+import { Client } from "../../../src/client/Client";
 import { ClientQuote } from '../../../src/client/quote/ClientQuote';
 import { Program } from '../../../src/program/Program';
 import { QuoteTransport } from '../../../src/client/transport/QuoteTransport';
@@ -32,6 +33,7 @@ describe( 'createQuoteStagingHook', () =>
     it( 'Do not hook quote when autosave is missing', () =>
     {
         const {
+            client:    client,
             quote:     quote,
             program:   program,
             transport: transport,
@@ -48,7 +50,7 @@ describe( 'createQuoteStagingHook', () =>
             return quote;
         }
 
-        sut( program, transport )( quote );
+        sut( client, program, transport )( quote );
 
         expect( quote_hooked ).to.be.false;
     } );
@@ -57,6 +59,7 @@ describe( 'createQuoteStagingHook', () =>
     it( 'Do not hook quote when quote is locked', () =>
     {
         const {
+            client:    client,
             quote:     quote,
             program:   program,
             transport: transport,
@@ -73,7 +76,7 @@ describe( 'createQuoteStagingHook', () =>
             return quote;
         }
 
-        sut( program, transport )( quote );
+        sut( client, program, transport )( quote );
 
         expect( quote_hooked ).to.be.false;
     } );
@@ -83,26 +86,36 @@ describe( 'createQuoteStagingHook', () =>
         {
             label: 'hook calls autosave',
             diff: { 'bar': [ 1 ] },
+            save_pending: false,
             expected_autosave_called: true,
         },
         {
             label: 'does not autosave an empty diff',
             diff: {},
+            save_pending: false,
             expected_autosave_called: false,
         },
         {
             label: 'does not autosave a diff with only empty arrays',
             diff: { 'foo': [] },
+            save_pending: false,
             expected_autosave_called: false,
         },
-    ].forEach( ( { label, diff, expected_autosave_called } ) => {
+        {
+            label: 'does not autosave when client is saving a step',
+            diff: { 'foo': [ 1 ] },
+            save_pending: true,
+            expected_autosave_called: false,
+        },
+    ].forEach( ( { label, diff, save_pending, expected_autosave_called } ) => {
         it( label, () =>
         {
             const {
+                client:    client,
                 quote:     quote,
                 program:   program,
                 transport: transport,
-            } = createStubs( diff );
+            } = createStubs( diff, save_pending );
 
             let autosave_called = false;
 
@@ -113,7 +126,7 @@ describe( 'createQuoteStagingHook', () =>
                 return quote;
             }
 
-            sut( program, transport )( quote );
+            sut( client, program, transport )( quote );
 
             expect( autosave_called ).to.equal( expected_autosave_called );
         } );
@@ -127,6 +140,14 @@ function createStubClientQuote( diff: any = {} )
         on:       ( _: any, cb: any ) => cb( diff ),
         autosave: ( _: any ) => {},
         isLocked: () => false,
+    };
+}
+
+
+function createStubClient( save_pending: boolean )
+{
+    return <Client><unknown>{
+        isSaving: () => save_pending
     };
 }
 
@@ -145,13 +166,15 @@ function createStubTransport()
 }
 
 
-function createStubs( diff: any = {} )
+function createStubs( diff: any = {}, save_pending: boolean = false )
 {
+    const client    = createStubClient( save_pending );
     const quote     = createStubClientQuote( diff );
     const program   = createStubProgram();
     const transport = createStubTransport();
 
     return {
+        client:    client,
         quote:     quote,
         program:   program,
         transport: transport,

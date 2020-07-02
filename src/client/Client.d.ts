@@ -85,4 +85,10 @@ export declare class Client
      * @param diff - Diff to validate
      */
     validateChange( diff: any ): void;
+
+
+    /**
+     * Whether there is a current save event
+     */
+    isSaving(): boolean;
 }

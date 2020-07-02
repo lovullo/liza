@@ -2473,6 +2473,7 @@ module.exports = Class( 'Client' )
         hooks.push( this._factory.createQuotePreStagingHook( this ) );
 
         hooks.push( this._factory.createQuoteStagingHook(
+            this,
             this.program,
             this._quote.getId(),
             this.dataProxy
