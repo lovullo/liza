@@ -59,7 +59,7 @@ export let createQuoteStagingHook = (
 ): QuoteHook =>
 ( quote ) =>
 {
-    if ( !program.autosave )
+    if ( !program.autosave || quote.isLocked())
     {
         return;
     }
