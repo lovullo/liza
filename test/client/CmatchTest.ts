@@ -455,6 +455,7 @@ function createStubClient( quote: ClientQuote, ui: Ui )
         handleError: ( _e: Error) => {},
         handleEvent: () => <Client>{},
         validateChange: ( _: any ) => {},
+        isSaving:() => false
     };
 }
 

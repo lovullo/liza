@@ -1432,10 +1432,18 @@ module.exports = Class( 'Server' )
                         // quote was saved successfully
                         function()
                         {
-                            server._postSubmit(
-                                request, quote, step_id, program,
-                                request.getSession().isInternal()
-                            );
+                            if ( autosave )
+                            {
+                                server._handlePostSubmitEvent(
+                                    request, quote, step_id, program, 'autosave'
+                                )
+                            }
+                            else
+                            {
+                                server._postSubmit(
+                                    request, quote, step_id, program
+                                );
+                            }
 
                             c && c( true );
                         },
@@ -1506,11 +1514,10 @@ module.exports = Class( 'Server' )
     },
 
 
-    'private _postSubmit': function( request, quote, step_id, program, internal )
+    'private _postSubmit': function( request, quote, step_id, program )
     {
         var server = this,
-            actions = [],
-            bucket  = null;
+            bucket = null;
 
         // XXX
         quote.visitData( function( b )
@@ -1521,79 +1528,125 @@ module.exports = Class( 'Server' )
         var result = program.postSubmit(
             step_id,
             bucket,
-            function( event, question_id, value )
-            {
-                switch ( event )
-                {
-                    // kick back to the given step, if they're already past it
-                    case 'kickBack':
-                        var step_id = +value;
-
-                        // clear any fields scheduled to be cleared on kickback
-                        var retdata = server._kbclear( program, quote );
-
-                        if ( quote.getTopVisitedStepId() > step_id )
-                        {
-                            // knock them back to the step if they're currently
-                            // further
-                            if ( quote.getCurrentStepId() > step_id )
-                            {
-                                quote.setCurrentStepId( step_id );
-                                actions.push( {
-                                    action: 'gostep',
-                                    id:     step_id,
-                                } );
-                            }
-                        }
-
-                        server.dao.mergeBucket( quote, retdata, function()
-                        {
-                            // if we're not internal, strip any potential
-                            // internal data from the response
-                            // XXX: maybe we should do this in
-                            // sendResponse() to ensure consistency
-                            if ( internal === false )
-                            {
-                                for ( id in program.internal )
-                                {
-                                    delete retdata[ id ];
-                                }
-                            }
-
-                            // don't send the response until the bucket
-                            // is saved; we don't want a race condition
-                            // if they're speeding through steps!
-                            finish( retdata );
-                        } );
-
-                        break;
-
-                    // Handle this case only to avoid logging errors
-                    case 'rate':
-                        break;
-
-                    default:
-                        server.logger.log( server.logger.PRIORITY_ERROR,
-                            "Unknown postSubmit event: %s",
-                            event
-                        );
-
-                        finish();
-                        return;
-                }
-
-                function finish( data )
-                {
-                    data = data || {};
-                    server.sendResponse( request, quote, data, actions );
-                }
-            }
+            ( event, quote_id, value ) => server._handlePostSubmitEvent(
+                request, quote, step_id, program, event, value
+            )
         );
 
         // if there's no events, then just respond with a generic OK
         if ( result === false )
         {
             server.sendResponse( request, quote );
+        }
+    },
+
+
+    /**
+     * Handle any post submit events and send response to client
+     *
+     * @param {Request} request - client request
+     * @param {Quote}   quote   - current quote for request
+     * @param {integer} step_id - id of submitted step
+     * @param {Program} program - associated with the quote
+     * @param {string}  event   - post submit event to handle
+     * @param {string}  value   - (optional) value supplied for event
+     *
+     * @todo: remove from this class
+     */
+    _handlePostSubmitEvent: function(
+        request,
+        quote,
+        step_id,
+        program,
+        event,
+        value
+    )
+    {
+        var internal = request.getSession().isInternal(),
+            actions  = [],
+            server   = this;
+
+        switch ( event )
+        {
+            // kick back to the given step, if they're already past it
+            case 'kickBack':
+                var to_step_id = +value;
+
+                if ( quote.getTopVisitedStepId() > to_step_id )
+                {
+                    // knock them back to the step if they're currently
+                    // further
+                    if ( quote.getCurrentStepId() > to_step_id )
+                    {
+                        quote.setCurrentStepId( to_step_id );
+                        actions.push( {
+                            action: 'gostep',
+                            id:     to_step_id,
+                        } );
+                    }
+                }
+
+                mergeAndFinish();
+                break;
+
+            // Handle this case only to avoid logging errors
+            case 'rate':
+                break;
+
+            // autosave event will respond with a kickBack action to prevent
+            // navigation to higher steps; this forces the user to save the step
+            case 'autosave':
+                quote.setCurrentStepId( step_id );
+                actions.push( {
+                    action : 'kickBack',
+                    stepId : step_id
+                } );
+
+                mergeAndFinish();
+                return;
+
+            default:
+                server.logger.log( server.logger.PRIORITY_ERROR,
+                    "Unknown postSubmit event: %s",
+                    event
+                );
+
+                finish();
+                return;
+        }
+
+
+        function mergeAndFinish()
+        {
+            // clear any fields scheduled to be cleared on kickback
+            var retdata = server._kbclear( program, quote );
+
+            server.dao.mergeBucket( quote, retdata, function()
+            {
+                // if we're not internal, strip any potential
+                // internal data from the response
+                // XXX: maybe we should do this in
+                // sendResponse() to ensure consistency
+                if ( internal === false )
+                {
+                    for ( id in program.internal )
+                    {
+                        delete retdata[ id ];
+                    }
+                }
+
+                // don't send the response until the bucket
+                // is saved; we don't want a race condition
+                // if they're speeding through steps!
+                finish( retdata );
+            } );
+        }
+
+
+        function finish( data )
+        {
+            data = data || {};
+            server.sendResponse( request, quote, data, actions );
         }
     },
 
