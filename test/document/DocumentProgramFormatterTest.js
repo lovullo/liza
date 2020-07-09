@@ -50,13 +50,19 @@ describe( 'DocumentProgramFormatter', () =>
         };
 
         const expected_object = {
+            stepIds : [
+                "Manage",
+                "General",
+            ],
             steps: [
                 {
-                    title: "Manage Quote",
-                    groups: []
+                    title:  "Manage Quote",
+                    id:     "Manage",
+                    groups: [],
                 },
                 {
-                    title: "General Information",
+                    title:  "General Information",
+                    id:     "General",
                     groups: [
                         {
                             id: "group_one",
@@ -197,6 +203,11 @@ function createStubBucket( metadata )
 function createStubProgram()
 {
     return {
+        stepIds: [
+            ,
+            "Manage",
+            "General",
+        ],
         steps: [
             {
                 title: "Index 0"

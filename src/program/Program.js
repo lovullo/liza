@@ -61,6 +61,13 @@ exports.Program = AbstractClass( 'Program' )
      */
     steps: [],
 
+
+    /**
+     * array of step ids
+     * @type {Array.<string>}
+     */
+    stepIds: [],
+
     /**
      * Contains sidebar data
      * @type {Object}
