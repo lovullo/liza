@@ -87,27 +87,43 @@ describe( 'createQuoteStagingHook', () =>
             label: 'hook calls autosave',
             diff: { 'bar': [ 1 ] },
             save_pending: false,
+            navigation_pending: false,
             expected_autosave_called: true,
         },
         {
             label: 'does not autosave an empty diff',
             diff: {},
             save_pending: false,
+            navigation_pending: false,
             expected_autosave_called: false,
         },
         {
             label: 'does not autosave a diff with only empty arrays',
             diff: { 'foo': [] },
             save_pending: false,
+            navigation_pending: false,
             expected_autosave_called: false,
         },
         {
             label: 'does not autosave when client is saving a step',
             diff: { 'foo': [ 1 ] },
             save_pending: true,
+            navigation_pending: false,
             expected_autosave_called: false,
         },
-    ].forEach( ( { label, diff, save_pending, expected_autosave_called } ) => {
+        {
+            label: 'does not autosave when navigation is in progress',
+            diff: { 'foo': [ 1 ] },
+            save_pending: false,
+            navigation_pending: true,
+            expected_autosave_called: false,
+        },
+    ].forEach( ( {
+             label,
+             diff,
+             save_pending,
+             navigation_pending,
+             expected_autosave_called } ) => {
         it( label, () =>
         {
             const {
@@ -115,7 +131,7 @@ describe( 'createQuoteStagingHook', () =>
                 quote:     quote,
                 program:   program,
                 transport: transport,
-            } = createStubs( diff, save_pending );
+            } = createStubs( diff, save_pending, navigation_pending );
 
             let autosave_called = false;
 
@@ -144,10 +160,11 @@ function createStubClientQuote( diff: any = {} )
 }
 
 
-function createStubClient( save_pending: boolean )
+function createStubClient( save_pending: boolean, navigation_pending: boolean )
 {
     return <Client><unknown>{
-        isSaving: () => save_pending
+        isSaving: () => save_pending,
+        isNavigating: () => navigation_pending
     };
 }
 
@@ -166,9 +183,13 @@ function createStubTransport()
 }
 
 
-function createStubs( diff: any = {}, save_pending: boolean = false )
+function createStubs(
+    diff: any = {},
+    save_pending: boolean = false,
+    navigation_pending: boolean = false
+)
 {
-    const client    = createStubClient( save_pending );
+    const client    = createStubClient( save_pending, navigation_pending );
     const quote     = createStubClientQuote( diff );
     const program   = createStubProgram();
     const transport = createStubTransport();

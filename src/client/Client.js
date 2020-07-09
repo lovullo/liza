@@ -217,6 +217,12 @@ module.exports = Class( 'Client' )
     'private _saveEvent': undefined,
 
     /**
+     * Current navigation event
+     * @type {boolean}
+     */
+    'private _is_navigating': false,
+
+    /**
      * UI styler controller
      * @type {UiStyler}
      */
@@ -1134,6 +1140,7 @@ module.exports = Class( 'Client' )
                 url     = client._quote.getId() + '/step/' + step_id + '/visit';
 
             client._quote.setCurrentStepId( step_id );
+            client._is_navigating = false;
 
             // run any visit hooks
             client._quote.visitData( function( bucket )
@@ -1153,6 +1160,7 @@ module.exports = Class( 'Client' )
             } );
         } ).on( 'preRenderStep', function( step, $content )
         {
+            client._is_navigating = true;
             client.elementStyler.setContext( $content );
         } );
     },
@@ -1756,9 +1764,25 @@ module.exports = Class( 'Client' )
     },
 
 
+    /**
+     * Whether there is a current save event
+     *
+     * @return {boolean}
+     */
     'public isSaving': function()
     {
         return ( this._saveEvent !== undefined );
+    },
+
+
+    /**
+     * Whether there is a navigation event in progress
+     *
+     * @return {boolean}
+     */
+    'public isNavigating': function()
+    {
+        return ( !!this._is_navigating );
     },
 
 
