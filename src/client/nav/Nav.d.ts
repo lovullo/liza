@@ -36,6 +36,23 @@ export declare class Nav
      * @return Integer id of the current step
      */
     getCurrentStepId(): PositiveInteger;
+
+
+    /**
+     * Set the ID of the top visited step
+     *
+     * @param step_id - ID of the step to set
+     */
+    setTopVisitedStepId( step_id: PositiveInteger ): void;
+
+
+    /**
+     * Navigate to a given step ID
+     *
+     * @param step_id - ID of the step to navigate to
+     * @param force   - Optionally force navigation which suppresses the UI dialog
+     */
+    navigateToStep( step_id: PositiveInteger, force?: boolean ): void;
 }
 
 

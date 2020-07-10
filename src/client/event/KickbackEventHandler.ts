@@ -19,48 +19,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventHandler = require( './EventHandler' );
+import { EventHandler } from "./EventHandler";
+import { Client } from "../Client";
+import { ClientAction, ClientActionType } from "../action/ClientAction";
+import { PositiveInteger } from "../../numeric";
+import { Nav } from "../nav/Nav";
+import { ClientQuote } from "../quote/ClientQuote";
+import { Ui } from "../../ui/Ui";
 
 
 /**
  * Handles kickback events
  */
-module.exports = Class( 'KickbackEventHandler' )
-    .implement( EventHandler )
-    .extend(
+export class KickbackEventHandler implements EventHandler
 {
-    /**
-     * Client that will perform requests on this handler
-     * @type {Client}
-     */
-    'private _client': null,
-
-
     /**
      * Initializes with client that will delegate the event
      *
-     * @param {Client} client client object
+     * @param client - client object
      */
-    __construct: function( client )
-    {
-        this._client = client;
-    },
+    constructor(
+        private readonly _client: Client,
+    ) {}
 
 
     /**
      * Handles kick-back
      *
-     * @param {string} type event id; ignored
-     *
-     * @param {function(*,Object)} continuation to invoke on completion
+     * @param type - event id; ignored
+     * @param c    - continuation to invoke on completion
+     * @param data - event data
      */
-    'public handle': function( type, c, data )
+    handle(
+        _type: ClientActionType,
+        c:     () => void,
+        data:  ClientAction
+    ): this
     {
-        var step_id = +data.stepId,
-            quote   = this._client.getQuote(),
-            nav     = this._client.nav,
-            ui      = this._client.getUi();
+        const step_id = <PositiveInteger>+data.stepId;
+        const quote: ClientQuote = this._client.getQuote();
+        const nav: Nav = this._client.nav;
+        const ui: Ui = this._client.getUi();
 
         if ( quote.getTopVisitedStepId() > step_id )
         {
@@ -76,5 +75,7 @@ module.exports = Class( 'KickbackEventHandler' )
         }
 
         c();
+
+        return this;
     }
-} );
+};

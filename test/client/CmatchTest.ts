@@ -402,7 +402,7 @@ function createStubProgram()
 
 function createStubUi( step: StepUi | null )
 {
-    return <Ui>{
+    return <Ui><unknown>{
         setCmatch: () => {},
         getCurrentStep: () => step
     }
