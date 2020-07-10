@@ -27,6 +27,7 @@ import { ClientQuote } from "../../../src/client/quote/ClientQuote";
 import { Client } from "../../../src/client/Client";
 import { Nav } from "../../../src/client/nav/Nav";
 import { Ui } from "../../../src/ui/Ui";
+import { ClientAction } from "../../../src/client/action/ClientAction";
 
 
 describe( 'Handle kickback event', () =>
@@ -90,6 +91,60 @@ describe( 'Handle kickback event', () =>
             );
 
             expect( navigate_to_step_called ).to.equal( expected_nav_called );
+            done();
+        } );
+    } );
+
+
+    [
+        {
+            label: 'navigates with force when set in event data',
+            data: {
+                action: 'backBack',
+                stepId: 1,
+                force: true
+            },
+            expected_with_force: true
+        },
+        {
+            label: 'does not navigate with force when not requested',
+            data: {
+                action: 'backBack',
+                stepId: 1,
+                force: false
+            },
+            expected_with_force: false
+        },
+        {
+            label: 'does not navigate with force when omitted from event data',
+            data: {
+                action: 'backBack',
+                stepId: 1
+            },
+            expected_with_force: false
+        },
+    ].forEach( ( { label, data, expected_with_force } ) => {
+        it( label, done =>
+        {
+            const {
+                nav,
+                client,
+            } = createStubs( 5, 5 );
+
+            let navigate_to_step_called = false;
+            let navigate_with_force = false;
+
+            nav.navigateToStep = ( _step_id: any, force: any ) =>
+            {
+                navigate_to_step_called = true;
+                navigate_with_force = force;
+            };
+
+            const sut = new Sut( client );
+            sut.handle( 'kickBack', function() {}, <ClientAction>data );
+
+            expect( navigate_to_step_called ).to.be.true;
+            expect( navigate_with_force ).to.equal( expected_with_force );
             done();
         } );
     } );

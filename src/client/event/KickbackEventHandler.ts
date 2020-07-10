@@ -68,7 +68,7 @@ export class KickbackEventHandler implements EventHandler
 
             if ( quote.getCurrentStepId() > step_id )
             {
-                nav.navigateToStep( step_id );
+                nav.navigateToStep( step_id, !!data?.force );
             }
 
             ui.redrawNav();
