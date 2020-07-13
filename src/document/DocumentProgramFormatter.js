@@ -99,19 +99,26 @@ module.exports = Class( 'DocumentProgramFormatter',
      */
     'private _parseSteps'( len, bucket, matches )
     {
-        const data = { steps: [] };
+        const data = {
+            steps:   [],
+            stepIds: [],
+        };
 
         for ( let i = 1; i < len; i++ )
         {
             const step = {};
             const step_groups = this._program.steps[ i ].groups;
 
-            const groups = this._parseGroups( step_groups, bucket, matches );
+            const groups  = this._parseGroups( step_groups, bucket, matches );
+            const title   = this._program.steps[ i ].title;
+            const step_id = this._program.stepIds[ i ];
 
-            step.title = this._program.steps[ i ].title;
+            step.title  = title;
             step.groups = groups;
+            step.id     = step_id;
 
             data.steps.push( step );
+            data.stepIds.push( step_id );
         }
 
         return data;
