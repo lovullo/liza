@@ -52,6 +52,11 @@ modindex: $(nsindex)
 	@echo "# THIS FILE IS GENERATED; DO NOT MODIFY!" > $@
 	( cd $*/ && find . -name '*.ts' -printf "%P\n" | sed 's/\.ts$$/.js/' ) >> $@
 
+# ignore style checks for generated js files
+.INTERMEDIATE: .prettiertmp
+.prettiertmp: .prettierignore .gitignore $(path_src)/.gitignore $(path_test)/.gitignore
+	grep -Pv '^#' $^ | sed -E 's#/?.(git|prettier)ignore:#/#;s#^./##;s#^/##' > .prettiertmp
+
 # tsc handles its own incremental builds, and in the past has gotten into
 # states where it did not recognize missing files as needing to be
 # built.  Since those files are not part of _our_ dependency graph here, we
@@ -65,8 +70,18 @@ check-ts-out:
 	      }; \
 	    done
 
+.PHONY: check-format
+check-format: .prettiertmp
+	npx prettier --ignore-path .prettiertmp --check "./**/*.[j,t]s"
+
+.PHONY: fix fmt format
+fix: fmt
+fmt: format
+format: .prettiertmp
+	npx prettier --ignore-path .prettiertmp --write './**/*.[j,t]s'
+
 test: check
-check: $(tsout) check-ts-out
+check: $(tsout) check-ts-out check-format
 	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
 		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \

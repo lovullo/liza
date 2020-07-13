@@ -30,15 +30,6 @@ eslint:
     allow_failure: true
     before_script: []
 
-prettier:
-    stage: build
-    image: $CI_REGISTRY/devops/docker-gts
-    script:
-        - cp /app/.prettierrc.json .
-        - prettier --check ./**/*.{j,t}s
-    allow_failure: true
-    before_script: []
-
 pages:
     stage: deploy
     script:
