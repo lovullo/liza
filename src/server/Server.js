@@ -1327,6 +1327,12 @@ module.exports = Class('Server').extend(EventEmitter, {
             quote.setTopSavedStepId(step_id);
             server.dao.saveQuoteState(quote);
           }
+          if (step_id < quote.getTopSavedStepId()) {
+            // data has been saved on an earlier step, force them back
+            quote.setTopSavedStepId(step_id);
+            quote.setTopVisitedStepId(step_id);
+            server.dao.saveQuoteState(quote);
+          }
 
           // only reset published indicator on a step save
           const force_publish = !autosave;
@@ -1490,7 +1496,6 @@ module.exports = Class('Server').extend(EventEmitter, {
       // autosave event will respond with a kickBack action to prevent
       // navigation to higher steps; this forces the user to save the step
       case 'autosave':
-        quote.setCurrentStepId(step_id);
         actions.push({
           action: 'kickBack',
           stepId: step_id,
