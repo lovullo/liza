@@ -21,6 +21,7 @@
 import { StagingBucket } from '../../bucket/StagingBucket';
 import { BaseQuote } from '../../quote/BaseQuote';
 import { QuoteTransport } from '../transport/QuoteTransport';
+import { PositiveInteger } from "../../numeric";
 
 export type Data = Record<string, any>;
 
@@ -80,4 +81,23 @@ export declare class ClientQuote extends BaseQuote
      * @return true if locked, otherwise false
      */
     isLocked(): boolean;
+
+
+    /**
+     * Sets the top visited step id
+     *
+     * If the provided step id is less than the current step, then the current
+     * step id is used instead.
+     *
+     * @param step_id - ID of the step to set
+     */
+    setTopVisitedStepId( step_id: PositiveInteger ): void;
+
+
+    /**
+     * Returns the id of the highest step the quote has reached
+     *
+     * @return top visited step id
+     */
+    getTopVisitedStepId(): PositiveInteger;
 }

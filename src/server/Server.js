@@ -1599,7 +1599,8 @@ module.exports = Class( 'Server' )
                 quote.setCurrentStepId( step_id );
                 actions.push( {
                     action : 'kickBack',
-                    stepId : step_id
+                    stepId : step_id,
+                    force  : true
                 } );
 
                 mergeAndFinish();

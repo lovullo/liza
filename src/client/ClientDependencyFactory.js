@@ -98,7 +98,6 @@ var Step          = require( '../step/Step' ),
     FieldVisibilityEventHandler = require( './event/FieldVisibilityEventHandler' ),
     IndvRateEventHandler        = require( './event/IndvRateEventHandler' ),
     RateEventHandler            = require( './event/RateEventHandler' ),
-    KickbackEventHandler        = require( './event/KickbackEventHandler' ),
     StatusEventHandler          = require( './event/StatusEventHandler' ),
     ValueSetEventHandler        = require( './event/ValueSetEventHandler' ),
     Cvv2DialogEventHandler      = require( './event/Cvv2DialogEventHandler' );
@@ -110,6 +109,7 @@ const { GridCollection }               = require( '../ui/step/GridCollection' );
 const { ContextParser }                = require( '../ui/context/ContextParser' );
 const { DelegateEventHandler }         = require( './event/DelegateEventHandler' );
 const { DelayEventHandler }            = require( './event/DelayEventHandler' );
+const { KickbackEventHandler }         = require( './event/KickbackEventHandler' );
 const { GroupContext }                 = require( '../ui/context/GroupContext' );
 const { WindowFeatureFlag }            = require( '../system/flags/WindowFeatureFlag' );
 const { GeneralStepUi }                = require( '../ui/step/GeneralStepUi' );
@@ -470,7 +470,7 @@ module.exports = Class( 'ClientDependencyFactory',
         return new DelegateEventHandler( {
             'indvRate':          IndvRateEventHandler( client, data_proxy ),
             'rate':              RateEventHandler( client, data_proxy ),
-            'kickBack':          KickbackEventHandler( client ),
+            'kickBack':          new KickbackEventHandler( client ),
             'status':            StatusEventHandler( styler ),
             'set':               ValueSetEventHandler( client ),
             'action$cvv2Dialog': Cvv2DialogEventHandler( jquery ),

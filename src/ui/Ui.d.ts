@@ -44,4 +44,10 @@ export declare class Ui
      * Set the Classification match data
      */
     setCmatch( cmatch: CmatchData ): void;
+
+
+    /**
+     * Redraw (style) the navigation bar
+     */
+    redrawNav(): this;
 }

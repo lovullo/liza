@@ -402,7 +402,7 @@ function createStubProgram()
 
 function createStubUi( step: StepUi | null )
 {
-    return <Ui>{
+    return <Ui><unknown>{
         setCmatch: () => {},
         getCurrentStep: () => step
     }
@@ -444,7 +444,7 @@ function createStubStepUi( field_names: ExclusiveFields  )
 
 function createStubClient( quote: ClientQuote, ui: Ui )
 {
-    return <Client>{
+    return <Client><unknown>{
         program: <Program>{},
         nav: <Nav>{
             getCurrentStepId: () => <PositiveInteger>0
