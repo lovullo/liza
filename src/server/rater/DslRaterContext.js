@@ -81,6 +81,12 @@ module.exports = Class( 'DslRaterContext' )
      */
     'private _total_count': 0,
 
+    /**
+     * Result ids
+     * @type {array<string>}
+     */
+    'private _result_ids': [],
+
 
     __construct: function( data, can_term )
     {
@@ -133,6 +139,8 @@ module.exports = Class( 'DslRaterContext' )
     {
         this._total_count += set.getResultCount();
         this._avail_count += set.getAvailableCount();
+
+        this._result_ids.push( set.getId() );
 
         this._checkGlobalSubmits( set );
 
@@ -354,6 +362,7 @@ module.exports = Class( 'DslRaterContext' )
         } );
 
         ret.__prem_avail_count = [ this._avail_count ];
+        ret.__result_ids       = this._result_ids;
 
         return ret;
     }

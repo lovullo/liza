@@ -183,7 +183,10 @@ describe( 'ServerSideQuote', () =>
                 'supplier-c__retry': [ 1 ],
                 'supplier-d__retry': [ 0 ],
             },
-            2,
+            {
+                field_count: 4,
+                true_count:  2,
+            },
         ],
         [
             "Nested arrays are handled",
@@ -193,7 +196,10 @@ describe( 'ServerSideQuote', () =>
                 'supplier-c__retry': [ 0 ],
                 'supplier-d__retry': [ [ 0 ] ],
             },
-            0,
+            {
+                field_count: 4,
+                true_count:  0,
+            },
         ],
         [
             "Only counts retries and not other data",
@@ -203,7 +209,10 @@ describe( 'ServerSideQuote', () =>
                 'supplier-c__reetry': [ 1 ],
                 'supplier-d__retry': [ 1 ],
             },
-            1,
+            {
+                field_count: 3,
+                true_count:  1,
+            },
         ],
     ] ).forEach( ([
         label,
@@ -215,7 +224,7 @@ describe( 'ServerSideQuote', () =>
         {
             const sut = Sut();
 
-            expect( sut.getRetryCount( data ) ).to.equal( expected_count );
+            expect( sut.getRetryCount( data ) ).to.deep.equal( expected_count );
         } );
     } );
 } );

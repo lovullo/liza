@@ -443,6 +443,58 @@ describe( 'RatingService', () =>
             } );
     } );
 
+
+    it( 'Consider missing retry flag to still be pending', () =>
+    {
+        const {
+            dao,
+            logger,
+            quote,
+            raters,
+            session,
+            createDelta,
+            ts_ctor,
+        } = getStubs();
+
+        // The stub rate data returned on rate has a total of 1 supplier and
+        // we are specifying that there are no retry fields, so one must be
+        // missing. Missing retry attempts should be treated as pending so we
+        // expect the retry attempt counter to be incremented
+        const total_retry_fields      = 0;
+        const retry_attempts_current  = 12;
+        const retry_attempts_expected = 13;
+
+        let retry_attempts_given: number;
+
+        quote.setRetryAttempts = ( attempts: number ) =>
+        {
+            retry_attempts_given = attempts;
+
+            return quote;
+        }
+
+        quote.getRetryCount = () =>
+        {
+            return {
+                field_count: total_retry_fields,
+                true_count:  0,
+            };
+        };
+
+        quote.getRetryAttempts = () => retry_attempts_current;
+
+        const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
+        return sut.request( session, quote, "" )
+            .then( ( result: RateRequestResult ) =>
+            {
+                // Expect that the missing field was added in once retries were
+                // cleared. The id from the stub rate data is foo
+                expect( result.content.data[ 'foo___retry' ] ).to.deep.equal( [ 0 ] );
+                expect( retry_attempts_given ).to.equal( retry_attempts_expected );
+            } );
+    } );
+
+
     ( <[
         string,
         Record<string, any>,
@@ -569,7 +621,13 @@ describe( 'RatingService', () =>
             quote.getProgram       = () => { return program; };
             quote.getCurrentStepId = () => { return step_id; };
             quote.getRetryAttempts = () => { return attempts; };
-            quote.getRetryCount    = () => { return retry_count; };
+            quote.getRetryCount    = () =>
+            {
+                return {
+                    field_count: 1,
+                    true_count:  retry_count
+                };
+            };
 
             const sut = new Sut( logger, dao, raters, createDelta, ts_ctor );
             return sut.request( session, quote, "" )
@@ -688,6 +746,7 @@ function getStubs()
 
     // rate reply
     const stub_rate_data: RateResult = {
+        __result_ids:     [ 'foo' ],
         _unavailable_all: '0',
     };
 
@@ -849,7 +908,7 @@ function getStubs()
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
-        getRetryCount:         () => 0,
+        getRetryCount:         () => { return { field_count: 1, true_count: 0 } },
         setInitialRatedDate:   () => quote,
         getExpirationDate:     () => 123,
     };

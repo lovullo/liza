@@ -656,7 +656,7 @@ function createStubQuote()
 {
     let quote_data: Record<string, any> = {};
 
-    return <ServerSideQuote>{
+    return <ServerSideQuote><unknown>{
         getRatedDate()
         {
             return <UnixTimestamp>1572292453;
