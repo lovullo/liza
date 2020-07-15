@@ -19,22 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+module.exports = require('./PatternFormatter')([
+  /^(0?[1-9]|1[012])[/ -]*(20\d{2})$/,
 
-module.exports = require( './PatternFormatter' )(
-    [
-        /^(0?[1-9]|1[012])[/ -]*(20\d{2})$/,
+  function (_, month, year) {
+    var curyear = new Date().getFullYear();
 
-        function( _, month, year )
-        {
-            var curyear = ( new Date() ).getFullYear();
+    if (year < curyear || year > curyear + 10) {
+      throw Error('Year outside of allowed range');
+    }
 
-            if ( ( year < curyear ) || ( year > ( curyear + 10 ) ) )
-            {
-                throw Error( 'Year outside of allowed range' );
-            }
-
-            return month + '/' + year;
-        }
-    ]
-);
-
+    return month + '/' + year;
+  },
+]);

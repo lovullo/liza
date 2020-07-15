@@ -21,9 +21,8 @@
 
 'use strict';
 
-const { Trait, Class } = require( 'easejs' );
-const Store            = require( './Store' );
-
+const {Trait, Class} = require('easejs');
+const Store = require('./Store');
 
 /**
  * Add and retrieve items from (possibly) nested Stores
@@ -47,27 +46,23 @@ const Store            = require( './Store' );
  *   outer.add( 'middle.inner.foo', "inner value add" )
  *       .then( () => inner.get( 'foo' ) );
  */
-module.exports = Trait( 'DelimitedKey' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Trait('DelimitedKey')
+  .implement(Store)
+  .extend({
     /**
      * Key delimiter
      * @type {string}
      */
     'private _delim': '',
 
-
     /**
      * Specify key delimiter
      *
      * @param {string} delim key delimiter
      */
-    __mixin( delim )
-    {
-        this._delim = ''+delim;
+    __mixin(delim) {
+      this._delim = '' + delim;
     },
-
 
     /**
      * Add item to (possibly) nested store under with value `value`
@@ -83,27 +78,23 @@ module.exports = Trait( 'DelimitedKey' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual abstract override public add'( key, value )
-    {
-        if ( typeof key !== 'string' )
-        {
-            return this.__super( key );
-        }
+    'virtual abstract override public add'(key, value) {
+      if (typeof key !== 'string') {
+        return this.__super(key);
+      }
 
-        const parts   = key.split( this._delim );
-        const maxi    = parts.length - 1;
-        const __super = this.__super;
+      const parts = key.split(this._delim);
+      const maxi = parts.length - 1;
+      const __super = this.__super;
 
-        return parts
-            .reduce(
-                ( promise, part, i ) => promise.then( store =>
-                    ( i < maxi ) ? store.get( part ) : store
-                ),
-                Promise.resolve( this )
-            )
-            .then( store => __super.call( this, parts[ maxi ], value ) );
+      return parts
+        .reduce(
+          (promise, part, i) =>
+            promise.then(store => (i < maxi ? store.get(part) : store)),
+          Promise.resolve(this)
+        )
+        .then(store => __super.call(this, parts[maxi], value));
     },
-
 
     /**
      * Retrieve item from (possibly) nested store
@@ -117,18 +108,16 @@ module.exports = Trait( 'DelimitedKey' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual abstract override public get'( key )
-    {
-        if ( typeof key !== 'string' )
-        {
-            return this.__super( key );
-        }
+    'virtual abstract override public get'(key) {
+      if (typeof key !== 'string') {
+        return this.__super(key);
+      }
 
-        const [ first, ...parts ] = key.split( this._delim );
+      const [first, ...parts] = key.split(this._delim);
 
-        return parts.reduce(
-            ( promise, part ) => promise.then( store => store.get( part ) ),
-            this.__super( first )
-        );
+      return parts.reduce(
+        (promise, part) => promise.then(store => store.get(part)),
+        this.__super(first)
+      );
     },
-} );
+  });

@@ -25,64 +25,58 @@
  * @end needsLove
  */
 
-import { EventEmitter } from "events";
-import { StagingBucket } from "../bucket/StagingBucket";
+import {EventEmitter} from 'events';
+import {StagingBucket} from '../bucket/StagingBucket';
 
-export type ExclusiveFields =  Record<string, boolean>;
+export type ExclusiveFields = Record<string, boolean>;
 
 /**
  * Represents a single step to be displayed in the UI
  */
-export interface Step extends EventEmitter
-{
-    /**
-     * Retrieve list of field names (no linked)
-     */
-    getExclusiveFieldNames(): ExclusiveFields
+export interface Step extends EventEmitter {
+  /**
+   * Retrieve list of field names (no linked)
+   */
+  getExclusiveFieldNames(): ExclusiveFields;
 
+  /**
+   * Return the bucket associated with this step
+   *
+   * XXX: Remove me; breaks encapsulation.
+   */
+  getBucket(): StagingBucket;
 
-    /**
-     * Return the bucket associated with this step
-     *
-     * XXX: Remove me; breaks encapsulation.
-     */
-    getBucket(): StagingBucket
+  /**
+   * Returns whether all the elements in the step contain valid data
+   *
+   * @param cmatch - cmatch data
+   *
+   * @return true if all elements are valid, otherwise false
+   */
+  isValid(cmatch: any): boolean;
 
+  /**
+   * Retrieve the next required value that is empty
+   *
+   * Aborts on first missing required field with its name and index.
+   *
+   * @param cmatch - cmatch data
+   *
+   * @return first missing required field
+   */
+  getNextRequired(cmatch: any): Array<string | number | boolean>;
 
-    /**
-     * Returns whether all the elements in the step contain valid data
-     *
-     * @param cmatch - cmatch data
-     *
-     * @return true if all elements are valid, otherwise false
-     */
-    isValid( cmatch: any ): boolean
+  /**
+   * Returns an explanation of what caused the step to be valid/invalid
+   *
+   * @returns an explanation of what caused the step to be valid/invalid
+   */
+  getValidCause(): string;
 
-
-    /**
-     * Retrieve the next required value that is empty
-     *
-     * Aborts on first missing required field with its name and index.
-     *
-     * @param cmatch - cmatch data
-     *
-     * @return first missing required field
-     */
-    getNextRequired( cmatch: any ): Array<string | number | boolean>
-
-
-    /**
-     * Returns an explanation of what caused the step to be valid/invalid
-     *
-     * @returns an explanation of what caused the step to be valid/invalid
-     */
-    getValidCause(): string
-
-
-    /**
-     * Executes a callback on each sorted group set
-     *
-     * @param c - callback to run on each set
-     */
-    eachSortedGroupSet( c: any ): void
+  /**
+   * Executes a callback on each sorted group set
+   *
+   * @param c - callback to run on each set
+   */
+  eachSortedGroupSet(c: any): void;
 }

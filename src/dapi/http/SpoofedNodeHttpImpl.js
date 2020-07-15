@@ -21,9 +21,8 @@
 
 'use strict';
 
-const { Trait } = require( 'easejs' );
-const HttpImpl  = require( './HttpImpl' );
-
+const {Trait} = require('easejs');
+const HttpImpl = require('./HttpImpl');
 
 /**
  * Spoof user session during request
@@ -31,27 +30,23 @@ const HttpImpl  = require( './HttpImpl' );
  * TODO: Implementing HttpImpl instead of overriding NodeHttpImpl to work
  * around a class extension bug; change once fixed.
  */
-module.exports = Trait( 'SpoofedNodeHttpImpl' )
-    .implement( HttpImpl )
-    .extend(
-{
+module.exports = Trait('SpoofedNodeHttpImpl')
+  .implement(HttpImpl)
+  .extend({
     /**
      * Session to spoof
      * @type {UserRequest}
      */
     'private _request': null,
 
-
     /**
      * Use session for spoofing requests
      *
      * @param {UserRequest} request session to spoof
      */
-    __mixin( request )
-    {
-        this._request = request;
+    __mixin(request) {
+      this._request = request;
     },
-
 
     /**
      * Set request options to spoof session
@@ -62,17 +57,16 @@ module.exports = Trait( 'SpoofedNodeHttpImpl' )
      *
      * @return {Object} request headers
      */
-    'virtual abstract override public setOptions'( options, method, data )
-    {
-        const cookie = this._request.getSessionIdName() + '=' +
-            this._request.getSessionId();
+    'virtual abstract override public setOptions'(options, method, data) {
+      const cookie =
+        this._request.getSessionIdName() + '=' + this._request.getSessionId();
 
-        options.headers = {
-            'User-Agent':      this._request.getUserAgent(),
-            'X-Forwarded-For': this._request.getRemoteAddr(),
-            'Cookie':          cookie,
-        };
+      options.headers = {
+        'User-Agent': this._request.getUserAgent(),
+        'X-Forwarded-For': this._request.getRemoteAddr(),
+        Cookie: cookie,
+      };
 
-        return this.__super( options, method, data );
-    }
-} );
+      return this.__super(options, method, data);
+    },
+  });

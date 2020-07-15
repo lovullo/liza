@@ -22,6 +22,6 @@
  * creating Error subtypes.
  */
 
-const { Class } = require( 'easejs' );
+const {Class} = require('easejs');
 
-export const UnknownTokenError = Class( 'UnknownTokenError' ).extend( Error, {} );
+export const UnknownTokenError = Class('UnknownTokenError').extend(Error, {});

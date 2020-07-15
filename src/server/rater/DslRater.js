@@ -19,321 +19,262 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventEmitter = require( '../../events' ).EventEmitter,
+var Class = require('easejs').Class,
+  EventEmitter = require('../../events').EventEmitter,
+  DslRaterContext = require('./DslRaterContext');
 
-    DslRaterContext = require( './DslRaterContext' );
+module.exports = Class('DslRater').extend(EventEmitter, {
+  /**
+   * List of raters
+   * @type {Array.<Object.<rate>>}
+   */
+  'private _raters': [],
 
+  /**
+   * ResultSet constructor (used in place of a factory)
+   * @type {Function}
+   */
+  'private _ResultSet': null,
 
-module.exports = Class( 'DslRater' )
-    .extend( EventEmitter,
-{
-    /**
-     * List of raters
-     * @type {Array.<Object.<rate>>}
-     */
-    'private _raters': [],
+  __construct: function (raters, ResultSet) {
+    this._raters = raters;
+    this._ResultSet = ResultSet;
+  },
 
-    /**
-     * ResultSet constructor (used in place of a factory)
-     * @type {Function}
-     */
-    'private _ResultSet': null,
+  'public rate': function (context) {
+    if (this._raters.length === 0) {
+      // TODO: this is a BS answer
+      callback(Error('No raters are available at this time.'), null);
+      return this;
+    }
 
+    if (!Class.isA(DslRaterContext, context)) {
+      throw TypeError('Invalid DslRaterContext provided');
+    }
 
-    __construct: function( raters, ResultSet )
-    {
-        this._raters    = raters;
-        this._ResultSet = ResultSet;
-    },
+    this._doRate(this._raters.slice(0), context);
+  },
 
+  'private _queueNext': function () {
+    var _self = this,
+      args = arguments;
 
-    'public rate': function( context )
-    {
-        if ( this._raters.length === 0 )
-        {
-            // TODO: this is a BS answer
-            callback(
-                Error( 'No raters are available at this time.' ),
-                null
-            );
-            return this;
+    process.nextTick(function () {
+      _self._doRate.apply(_self, args);
+    });
+  },
+
+  /**
+   * Process next available supplier until complete
+   */
+  'private _doRate': function (queue, context) {
+    var _self = this,
+      args = arguments;
+
+    var rater = queue.pop();
+    if (rater === undefined) {
+      this._complete(context);
+      return;
+    }
+
+    // null means that the rater failed to load
+    if (rater === null) {
+      // TODO: log error
+      this._queueNext.apply(this, args);
+      return;
+    }
+
+    var name = rater.supplier,
+      meta = rater.rater.meta,
+      set = this._ResultSet(name);
+
+    // give context the chance to augment the data and determine how many
+    // times we should rate with a given supplier; this continuation will be
+    // called for each time that the context wishes to perform rating
+    var data = context.rate(
+      name,
+      meta,
+      function (data, rcontext) {
+        try {
+          var can_term = context.canTerm();
+          var single = rater(data, can_term);
+
+          // ensures that any previous eligibility errors are cleared out
+          single.ineligible = '';
+          single.submit = '';
+        } catch (e) {
+          // ineligible.
+          single = {
+            ineligible: e.message,
+            submit: '',
+            premium: 0.0,
+          };
         }
 
-        if ( !( Class.isA( DslRaterContext, context ) ) )
-        {
-            throw TypeError( "Invalid DslRaterContext provided" );
-        }
+        // give the context to process the result of the rating before we
+        // perform any of our own processing (that way they can trigger
+        // submits, etc)
+        single = context.processResult(single, meta, rcontext);
 
-        this._doRate( this._raters.slice( 0 ), context );
-    },
+        _self
+          ._processProhibits(rater, single, context, data)
+          ._processSubmits(rater, single, context, data, rcontext)
+          ._flagEligibility(single)
+          ._cleanResult(single);
 
+        // purposely omitted third argument
+        set.addResult(single, rcontext);
+      },
+      complete
+    );
 
-    'private _queueNext': function()
-    {
-        var _self = this,
-            args  = arguments;
+    // to be called by context when rating is complete for this rater
+    function complete() {
+      context.addResultSet(name, set);
+      _self._queueNext.apply(_self, args);
+    }
+  },
 
-        process.nextTick( function()
-        {
-            _self._doRate.apply( _self, args );
-        } );
-    },
+  'private _processSubmits': function (rater, single, context, data, rcontext) {
+    // ineligible results cannot submit, as they did not complete rating
+    if (single.ineligible) {
+      return this;
+    }
 
+    // submission processing may be disabled (e.g. via a runtime flag)
+    if (!context.canSubmit(single, data, rcontext)) {
+      return this;
+    }
 
-    /**
-     * Process next available supplier until complete
-     */
-    'private _doRate': function( queue, context )
-    {
-        var _self = this,
-            args  = arguments;
+    var c = single.__classes;
 
-        var rater = queue.pop();
-        if ( rater === undefined )
-        {
-            this._complete( context );
-            return;
-        }
+    if (!c || !c.submit) {
+      return this;
+    }
 
-        // null means that the rater failed to load
-        if ( rater === null )
-        {
-            // TODO: log error
-            this._queueNext.apply( this, args );
-            return;
-        }
+    var submits = [];
+    for (cname in c) {
+      // Process submit classifications if they are *true*.  Classes
+      // that are suffixed with a dash represent a generated rule that
+      // should _not_ be displayed to the user
+      if (/^submit-.*[^-]$/.test(cname) && c[cname]) {
+        submits.push(this.getCdesc(cname, rater, data));
+      }
+    }
 
-        var name = rater.supplier,
-            meta = rater.rater.meta,
-            set  = this._ResultSet( name );
+    single.submit = submits.join('; ');
+    return this;
+  },
 
-        // give context the chance to augment the data and determine how many
-        // times we should rate with a given supplier; this continuation will be
-        // called for each time that the context wishes to perform rating
-        var data = context.rate( name, meta, function( data, rcontext )
-        {
-            try
-            {
-                var can_term = context.canTerm();
-                var single   = rater( data, can_term );
+  /**
+   *
+   * @param {Object}          rater   Supplier rater
+   * @param {Object}          single  Supplier UI options
+   * @param {DslRaterContext} context Rater context
+   * @param {Object}          data    Bucket data
+   *
+   * @return {DslRater}
+   */
+  'private _processProhibits': function (rater, single, context, data) {
+    // Don't process prohibits if rating can naturally terminate
+    if (context.canTerm()) {
+      return this;
+    }
 
-                // ensures that any previous eligibility errors are cleared out
-                single.ineligible = '';
-                single.submit     = '';
-            }
-            catch ( e )
-            {
-                // ineligible.
-                single = {
-                    ineligible: e.message,
-                    submit:     '',
-                    premium:    0.00,
-                };
-            }
+    var classes = single.__classes;
 
-            // give the context to process the result of the rating before we
-            // perform any of our own processing (that way they can trigger
-            // submits, etc)
-            single = context.processResult( single, meta, rcontext );
+    // An error was thrown during rating
+    if (classes === undefined) {
+      return this;
+    }
 
-            _self ._processProhibits( rater, single, context, data )
-                ._processSubmits( rater, single, context, data, rcontext )
-                ._flagEligibility( single )
-                ._cleanResult( single );
+    var prohibits = [];
+    var regex = {
+      prohibit: /^inelig-.+$/,
+      assertion: /^-assert-.+$/,
+    };
 
-            // purposely omitted third argument
-            set.addResult( single, rcontext );
-        }, complete );
+    for (className in classes) {
+      var foundProhibit =
+        regex.prohibit.test(className) || regex.assertion.test(className);
 
-        // to be called by context when rating is complete for this rater
-        function complete()
-        {
-            context.addResultSet( name, set );
-            _self._queueNext.apply( _self, args );
-        }
-    },
+      var classValue = classes[className];
 
+      if (foundProhibit && classValue) {
+        prohibits.push(this.getCdesc(className, rater, data));
+      }
+    }
 
-    'private _processSubmits': function(
-        rater, single, context, data, rcontext
-    )
-    {
-        // ineligible results cannot submit, as they did not complete rating
-        if ( single.ineligible )
-        {
-            return this;
-        }
+    // Backup when an error is thrown but no prohibit is found (unlikely)
+    if (this._isIneligible(classes, rater) && prohibits.length === 0) {
+      prohibits.push('This supplier is ineligible.');
+    }
 
-        // submission processing may be disabled (e.g. via a runtime flag)
-        if ( !( context.canSubmit( single, data, rcontext ) ) )
-        {
-            return this;
-        }
+    single.ineligible = this._filterProhibits(prohibits).join('; ');
 
-        var c = single.__classes;
+    return this;
+  },
 
-        if ( !c || !( c.submit ) )
-        {
-            return this;
-        }
+  /**
+   *
+   * @param  {Object}  classes Classification data
+   * @param {Object}   rater   Supplier rater
+   *
+   * @return {boolean}         If the data contain an error
+   */
+  'private _isIneligible': function (classes, rater) {
+    // XXX: use elig-class when propagated by tameld;
+    // this is a generated classification name
+    var eligKey = '--elig-suppliers-' + rater.supplier;
 
-        var submits = [];
-        for ( cname in c )
-        {
-            // Process submit classifications if they are *true*.  Classes
-            // that are suffixed with a dash represent a generated rule that
-            // should _not_ be displayed to the user
-            if ( /^submit-.*[^-]$/.test( cname ) && c[ cname ] )
-            {
-                submits.push( this.getCdesc( cname, rater, data ) );
-            }
-        }
+    if (classes[eligKey] === undefined) {
+      throw new Error('Missing supplier eligibility field: ' + eligKey);
+    }
 
-        single.submit = submits.join( '; ' );
-        return this;
-    },
+    return classes[eligKey] === false;
+  },
 
+  /**
+   * Remove generic and duplicated prohibit reasons
+   * Generic prohibits take the form of [{supplier-name} prohibit]
+   *
+   * @param  {string[]} prohibits A list of prohibit reasons
+   *
+   * @return {string[]}           A filtered list of prohibit reasons
+   */
+  'private _filterProhibits': function (prohibits) {
+    var unique = function (value, index, array) {
+      return array.indexOf(value) === index;
+    };
 
-    /**
-     *
-     * @param {Object}          rater   Supplier rater
-     * @param {Object}          single  Supplier UI options
-     * @param {DslRaterContext} context Rater context
-     * @param {Object}          data    Bucket data
-     *
-     * @return {DslRater}
-     */
-    'private _processProhibits': function(
-        rater, single, context, data
-    )
-    {
-        // Don't process prohibits if rating can naturally terminate
-        if ( context.canTerm() )
-        {
-            return this;
-        }
+    var hasSpecificProhibit = function (value, index, array) {
+      var generic = /^\[.+\sprohibit\]$/.test(value);
 
-        var classes = single.__classes;
+      return !generic;
+    };
 
-        // An error was thrown during rating
-        if ( classes === undefined )
-        {
-            return this;
-        }
+    return prohibits.filter(unique).filter(hasSpecificProhibit);
+  },
 
-        var prohibits = [];
-        var regex     =
-        {
-            prohibit:  /^inelig-.+$/,
-            assertion: /^-assert-.+$/
-        };
+  'private _flagEligibility': function (single) {
+    // from a broker's perspective
+    single._unavailable = single.submit || single.ineligible ? '1' : '0';
 
-        for ( className in classes )
-        {
-            var foundProhibit = regex.prohibit.test( className )
-                             || regex.assertion.test( className );
+    return this;
+  },
 
-            var classValue = classes[ className ];
+  'private _cleanResult': function (result) {
+    return this;
+  },
 
-            if ( foundProhibit && classValue )
-            {
-                prohibits.push( this.getCdesc( className, rater, data ) );
-            }
-        }
+  'virtual public getCdesc': function (cname, rater, data, default_value) {
+    default_value = default_value === undefined ? cname : default_value;
 
-        // Backup when an error is thrown but no prohibit is found (unlikely)
-        if ( this._isIneligible( classes, rater ) && prohibits.length === 0 )
-        {
-            prohibits.push( 'This supplier is ineligible.' );
-        }
+    return rater.rater.classify.desc[cname] || default_value;
+  },
 
-        single.ineligible = this._filterProhibits( prohibits ).join( "; " );
-
-        return this;
-    },
-
-
-    /**
-     *
-     * @param  {Object}  classes Classification data
-     * @param {Object}   rater   Supplier rater
-     *
-     * @return {boolean}         If the data contain an error
-     */
-    'private _isIneligible': function( classes, rater )
-    {
-        // XXX: use elig-class when propagated by tameld;
-        // this is a generated classification name
-        var eligKey = '--elig-suppliers-' + rater.supplier;
-
-        if ( classes[ eligKey ] === undefined )
-        {
-            throw new Error( 'Missing supplier eligibility field: ' + eligKey );
-        }
-
-        return classes[ eligKey ] === false;
-    },
-
-
-    /**
-     * Remove generic and duplicated prohibit reasons
-     * Generic prohibits take the form of [{supplier-name} prohibit]
-     *
-     * @param  {string[]} prohibits A list of prohibit reasons
-     *
-     * @return {string[]}           A filtered list of prohibit reasons
-     */
-    'private _filterProhibits': function( prohibits )
-    {
-
-        var unique = function( value, index, array )
-        {
-            return array.indexOf( value ) === index;
-        }
-
-        var hasSpecificProhibit = function( value, index, array )
-        {
-            var generic = /^\[.+\sprohibit\]$/.test( value );
-
-            return !generic;
-        }
-
-        return prohibits.filter( unique ).filter( hasSpecificProhibit );
-    },
-
-
-    'private _flagEligibility': function( single )
-    {
-        // from a broker's perspective
-        single._unavailable = ( single.submit || single.ineligible )
-            ? '1'
-            : '0';
-
-        return this;
-    },
-
-
-    'private _cleanResult': function( result )
-    {
-        return this;
-    },
-
-
-    'virtual public getCdesc': function( cname, rater, data, default_value )
-    {
-        default_value = ( default_value === undefined )
-            ? cname
-            : default_value;
-
-        return rater.rater.classify.desc[ cname ] || default_value;
-    },
-
-
-    'private _complete': function( context )
-    {
-        // let the context know that we're finished rating
-        context.complete();
-    },
-} );
-
+  'private _complete': function (context) {
+    // let the context know that we're finished rating
+    context.complete();
+  },
+});

@@ -19,30 +19,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Represents a tab within the developer dialog
  */
-module.exports = Interface( 'ClientDebugTab',
-{
-    /**
-     * Retrieve tab title
-     *
-     * @return {string} tab title
-     */
-    'public getTitle': [],
+module.exports = Interface('ClientDebugTab', {
+  /**
+   * Retrieve tab title
+   *
+   * @return {string} tab title
+   */
+  'public getTitle': [],
 
-
-    /**
-     * Retrieve tab content
-     *
-     * @param {Client}        client active client being debugged
-     * @param {StagingBucket} bucket bucket to reference for data
-     *
-     * @return {jQuery|string} tab content
-     */
-    'public getContent': [ 'client', 'bucket' ]
-} );
-
+  /**
+   * Retrieve tab content
+   *
+   * @param {Client}        client active client being debugged
+   * @param {StagingBucket} bucket bucket to reference for data
+   *
+   * @return {jQuery|string} tab content
+   */
+  'public getContent': ['client', 'bucket'],
+});

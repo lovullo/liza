@@ -21,46 +21,37 @@
 
 'use strict';
 
-const root   = require( '../../..' );
-const expect = require( 'chai' ).expect;
+const root = require('../../..');
+const expect = require('chai').expect;
 
-const {
-    DslRaterContext: Sut,
-} = root.server.rater;
+const {DslRaterContext: Sut} = root.server.rater;
 
-describe( 'DslRaterContext', () =>
-{
-    describe( 'Defaults', () =>
-    {
-        it( `canTerm is true if not included`, () =>
-        {
-            const expected = true;
-            const data     = { foo: 'bar' };
-            const sut      = Sut( data );
-            const actual   = sut.canTerm();
+describe('DslRaterContext', () => {
+  describe('Defaults', () => {
+    it(`canTerm is true if not included`, () => {
+      const expected = true;
+      const data = {foo: 'bar'};
+      const sut = Sut(data);
+      const actual = sut.canTerm();
 
-            expect( actual ).to.equal( expected );
-        } );
+      expect(actual).to.equal(expected);
+    });
 
+    it(`canTerm can be set to false`, () => {
+      const expected = false;
+      const data = {foo: 'bar'};
+      const sut = Sut(data, expected);
+      const actual = sut.canTerm();
 
-        it( `canTerm can be set to false`, () =>
-        {
-            const expected = false;
-            const data     = { foo: 'bar' };
-            const sut      = Sut( data, expected );
-            const actual   = sut.canTerm();
+      expect(actual).to.equal(expected);
+    });
 
-            expect( actual ).to.equal( expected );
-        } );
+    it(`data can be retrieved`, () => {
+      const expected = {foo: 'bar'};
+      const sut = Sut(expected);
+      const actual = sut.getSourceData();
 
-
-        it( `data can be retrieved`, () =>
-        {
-            const expected = { foo: 'bar' };
-            const sut      = Sut( expected );
-            const actual   = sut.getSourceData();
-
-            expect( actual ).to.deep.equal( expected );
-        } );
-    } );
-} );
+      expect(actual).to.deep.equal(expected);
+    });
+  });
+});

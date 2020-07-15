@@ -19,63 +19,51 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { EventHandler } from "./EventHandler";
-import { Client } from "../Client";
-import { ClientAction, ClientActionType } from "../action/ClientAction";
-import { PositiveInteger } from "../../numeric";
-import { Nav } from "../nav/Nav";
-import { ClientQuote } from "../quote/ClientQuote";
-import { Ui } from "../../ui/Ui";
-
+import {EventHandler} from './EventHandler';
+import {Client} from '../Client';
+import {ClientAction, ClientActionType} from '../action/ClientAction';
+import {PositiveInteger} from '../../numeric';
+import {Nav} from '../nav/Nav';
+import {ClientQuote} from '../quote/ClientQuote';
+import {Ui} from '../../ui/Ui';
 
 /**
  * Handles kickback events
  */
-export class KickbackEventHandler implements EventHandler
-{
-    /**
-     * Initializes with client that will delegate the event
-     *
-     * @param client - client object
-     */
-    constructor(
-        private readonly _client: Client,
-    ) {}
+export class KickbackEventHandler implements EventHandler {
+  /**
+   * Initializes with client that will delegate the event
+   *
+   * @param client - client object
+   */
+  constructor(private readonly _client: Client) {}
 
+  /**
+   * Handles kick-back
+   *
+   * @param type - event id; ignored
+   * @param c    - continuation to invoke on completion
+   * @param data - event data
+   */
+  handle(_type: ClientActionType, c: () => void, data: ClientAction): this {
+    const step_id = <PositiveInteger>+data.stepId;
+    const quote: ClientQuote = this._client.getQuote();
+    const nav: Nav = this._client.nav;
+    const ui: Ui = this._client.getUi();
 
-    /**
-     * Handles kick-back
-     *
-     * @param type - event id; ignored
-     * @param c    - continuation to invoke on completion
-     * @param data - event data
-     */
-    handle(
-        _type: ClientActionType,
-        c:     () => void,
-        data:  ClientAction
-    ): this
-    {
-        const step_id = <PositiveInteger>+data.stepId;
-        const quote: ClientQuote = this._client.getQuote();
-        const nav: Nav = this._client.nav;
-        const ui: Ui = this._client.getUi();
+    if (quote.getTopVisitedStepId() > step_id) {
+      quote.setTopVisitedStepId(step_id);
+      nav.setTopVisitedStepId(step_id);
 
-        if ( quote.getTopVisitedStepId() > step_id )
-        {
-            quote.setTopVisitedStepId( step_id );
-            nav.setTopVisitedStepId( step_id );
+      if (quote.getCurrentStepId() > step_id) {
+        nav.navigateToStep(step_id, !!data?.force);
+      }
 
-            if ( quote.getCurrentStepId() > step_id )
-            {
-                nav.navigateToStep( step_id, !!data?.force );
-            }
-
-            ui.redrawNav();
-        }
-
-        c();
-
-        return this;
+      ui.redrawNav();
     }
-};
+
+    c();
+
+    return this;
+  }
+}

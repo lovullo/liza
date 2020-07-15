@@ -19,25 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * Validates SSN and FEIN formats
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        /^[0-9- ]+$/, function( match )
-        {
-            var result = match.replace( /[ -]/g, '' );
+module.exports = require('./PatternFormatter')([
+  /^[0-9- ]+$/,
+  function (match) {
+    var result = match.replace(/[ -]/g, '');
 
-            // easier to perform the length check in here than the regex, once
-            // we strip everything out
-            if ( result.length !== 9 )
-            {
-                throw Error( 'Invalid length' );
-            }
+    // easier to perform the length check in here than the regex, once
+    // we strip everything out
+    if (result.length !== 9) {
+      throw Error('Invalid length');
+    }
 
-            return result;
-        }
-    ]
-);
-
+    return result;
+  },
+]);

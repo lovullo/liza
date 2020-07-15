@@ -19,15 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Any service responsible for fulfilling a user request for a given
  * document (quote)
  */
-module.exports = Interface( 'Service',
-{
-    'public request': [ 'request', 'response', 'quote', 'cmd', 'callback' ],
-} );
-
+module.exports = Interface('Service', {
+  'public request': ['request', 'response', 'quote', 'cmd', 'callback'],
+});

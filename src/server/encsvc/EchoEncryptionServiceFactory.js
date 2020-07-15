@@ -19,11 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
-    Service  = require( './EncryptionService' ),
-    Transfer = require( './EchoEncryptionServiceTransfer' );
-
+var Class = require('easejs').Class,
+  Service = require('./EncryptionService'),
+  Transfer = require('./EchoEncryptionServiceTransfer');
 
 /**
  * Factory for creating a dummy encryption service via the echo transfer
@@ -31,16 +29,13 @@ var Class = require( 'easejs' ).Class,
  * This is useful when the encryption service is unnecessary or unavailable,
  * such as local development
  */
-module.exports = Class( 'EchoEncryptionServiceFactory',
-{
-    /**
-     * Creates a new encryption service
-     *
-     * @return {EncryptionService}
-     */
-    'public create': function()
-    {
-        return Service( Transfer() );
-    },
-} );
-
+module.exports = Class('EchoEncryptionServiceFactory', {
+  /**
+   * Creates a new encryption service
+   *
+   * @return {EncryptionService}
+   */
+  'public create': function () {
+    return Service(Transfer());
+  },
+});

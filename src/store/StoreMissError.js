@@ -19,13 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
-
+var Class = require('easejs').Class;
 
 /**
  * Store key miss
  *
  * A key was not found in a store.
  */
-module.exports = Class( 'StoreMissError' )
-    .extend( ReferenceError, {} );
+module.exports = Class('StoreMissError').extend(ReferenceError, {});

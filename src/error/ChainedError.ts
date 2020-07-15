@@ -19,8 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ___Writable } from 'naughty';
-
+import {___Writable} from 'naughty';
 
 /**
  * An Error augmented to include information about an underlying cause
@@ -35,11 +34,9 @@ import { ___Writable } from 'naughty';
  * Chains may be nested to an arbitrary depth, but because of the nature of
  * JavaScript's errors, recursive chain type checks must be done at runtime.
  */
-export interface ChainedError<T extends Error = Error> extends Error
-{
-    readonly chain: T,
+export interface ChainedError<T extends Error = Error> extends Error {
+  readonly chain: T;
 }
-
 
 /**
  * Type predicate for `ChainedError`
@@ -51,9 +48,8 @@ export interface ChainedError<T extends Error = Error> extends Error
  *
  * @return whether `e` is of type ChainedError
  */
-export const isChained = ( e: Error ): e is ChainedError =>
-    ( <ChainedError>e ).chain !== undefined;
-
+export const isChained = (e: Error): e is ChainedError =>
+  (<ChainedError>e).chain !== undefined;
 
 /**
  * Chains two `Error`s
@@ -66,8 +62,7 @@ export const isChained = ( e: Error ): e is ChainedError =>
  *
  * @return `enew` with `eprev` chained
  */
-export function chain( enew: Error, eprev: Error ): ChainedError
-{
-    ( <___Writable<ChainedError>>enew ).chain = eprev;
-    return <ChainedError>enew;
+export function chain(enew: Error, eprev: Error): ChainedError {
+  (<___Writable<ChainedError>>enew).chain = eprev;
+  return <ChainedError>enew;
 }

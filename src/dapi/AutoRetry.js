@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait   = require( 'easejs' ).Trait,
-    DataApi = require( './DataApi' );
-
+var Trait = require('easejs').Trait,
+  DataApi = require('./DataApi');
 
 /**
  * Automatically retries requests while satisfying a given predicate
@@ -31,10 +30,9 @@ var Trait   = require( 'easejs' ).Trait,
  * whereas the latter indicates that a retry should be performed, but may
  * not necessarily imply a request failure.
  */
-module.exports = Trait( 'AutoRetry' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Trait('AutoRetry')
+  .implement(DataApi)
+  .extend({
     /**
      * Predicate function determining whether a retry is needed
      * @var {function(?Error,*): boolean}
@@ -54,7 +52,6 @@ module.exports = Trait( 'AutoRetry' )
      * @var {function(number,function(),function())} delay
      */
     'private _delay': null,
-
 
     /**
      * Initialize auto-retry
@@ -80,24 +77,24 @@ module.exports = Trait( 'AutoRetry' )
      *                                              to continue with the next
      *                                              request
      *
-    * @return {undefined}
-    */
-    __mixin: function( pred, tries, delay )
-    {
-        if ( typeof pred !== 'function' )
-        {
-            throw TypeError( 'Predicate must be a function' );
-        }
-        if ( delay && ( typeof delay !== 'function' ) )
-        {
-            throw TypeError( "Delay must be a function" );
-        }
+     * @return {undefined}
+     */
+    __mixin: function (pred, tries, delay) {
+      if (typeof pred !== 'function') {
+        throw TypeError('Predicate must be a function');
+      }
+      if (delay && typeof delay !== 'function') {
+        throw TypeError('Delay must be a function');
+      }
 
-        this._pred  = pred;
-        this._tries = +tries;
-        this._delay = delay || function( _, c, __ ) { c(); };
+      this._pred = pred;
+      this._tries = +tries;
+      this._delay =
+        delay ||
+        function (_, c, __) {
+          c();
+        };
     },
-
 
     /**
      * Perform an asynchronous request and invoke CALLBACK with the
@@ -121,13 +118,11 @@ module.exports = Trait( 'AutoRetry' )
      *
      * @return {DataApi} self
      */
-    'abstract override public request': function( input, callback, id )
-    {
-        this._try( input, callback, id, this._tries );
+    'abstract override public request': function (input, callback, id) {
+      this._try(input, callback, id, this._tries);
 
-        return this;
+      return this;
     },
-
 
     /**
      * Recursively perform request until retry predicate failure or try
@@ -141,47 +136,45 @@ module.exports = Trait( 'AutoRetry' )
      *
      * @return {undefined}
      */
-    'private _try': function( input, callback, id, n )
-    {
-        var _self = this;
+    'private _try': function (input, callback, id, n) {
+      var _self = this;
 
-        // the special case of 0 retries still invokes the callback, but has
-        // no data to return
-        if ( n === 0 )
-        {
-            callback( null, null );
-            return;
-        }
+      // the special case of 0 retries still invokes the callback, but has
+      // no data to return
+      if (n === 0) {
+        callback(null, null);
+        return;
+      }
 
-        // super ES3 compatibility (for now)
-        this.request['super'].call( this, input, function( err, output )
-        {
-            var complete = function()
-            {
-                callback( err, output );
-            };
+      // super ES3 compatibility (for now)
+      this.request['super'].call(
+        this,
+        input,
+        function (err, output) {
+          var complete = function () {
+            callback(err, output);
+          };
 
-            // predicate determines whether a retry is necessary
-            if ( !!_self._pred( err, output ) === false )
-            {
-                return complete();
-            }
+          // predicate determines whether a retry is necessary
+          if (!!_self._pred(err, output) === false) {
+            return complete();
+          }
 
-            // note that we intentionally do not want to check <= 1, so that
-            // we can proceed indefinitely (JavaScript does not wrap on overflow)
-            if ( n === 1 )
-            {
-                return complete();
-            }
+          // note that we intentionally do not want to check <= 1, so that
+          // we can proceed indefinitely (JavaScript does not wrap on overflow)
+          if (n === 1) {
+            return complete();
+          }
 
-            _self._delay(
-                ( n - 1 ),
-                function()
-                {
-                    _self._try( input, callback, id, ( n - 1 ) );
-                },
-                complete
-            );
-        }, id );
-    }
-} );
+          _self._delay(
+            n - 1,
+            function () {
+              _self._try(input, callback, id, n - 1);
+            },
+            complete
+          );
+        },
+        id
+      );
+    },
+  });

@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Class             = require( 'easejs' ).Class;
-const EventHandler      = require( './EventHandler' );
-const UnknownEventError = require( './UnknownEventError' );
-
+const Class = require('easejs').Class;
+const EventHandler = require('./EventHandler');
+const UnknownEventError = require('./UnknownEventError');
 
 /**
  * Shows/hides fields according to event id
@@ -30,10 +29,9 @@ const UnknownEventError = require( './UnknownEventError' );
  * @todo use something more appropriate than Ui
  * @todo should not be concerned with data validators
  */
-module.exports = Class( 'FieldVisibilityEventHandler' )
-    .implement( EventHandler )
-    .extend(
-{
+module.exports = Class('FieldVisibilityEventHandler')
+  .implement(EventHandler)
+  .extend({
     /**
      * Client UI
      * @type {Ui}
@@ -46,19 +44,16 @@ module.exports = Class( 'FieldVisibilityEventHandler' )
      */
     'private _data_validator': null,
 
-
     /**
      * Initialize with Client UI
      *
      * @param {Ui}            stepui         Client UI
      * @param {DataValidator} data_validator field data validator
      */
-    __construct( stepui, data_validator )
-    {
-        this._ui             = stepui;
-        this._data_validator = data_validator;
+    __construct(stepui, data_validator) {
+      this._ui = stepui;
+      this._data_validator = data_validator;
     },
-
 
     /**
      * Show/hide specified fields
@@ -75,37 +70,32 @@ module.exports = Class( 'FieldVisibilityEventHandler' )
      *
      * @return {EventHandler} self
      */
-    'public handle'( event_id, callback, { elementName: field_name, indexes } )
-    {
-        // TODO: Law of Demeter!
-        const group = this._ui.getCurrentStep()
-            .getElementGroup( field_name );
+    'public handle'(event_id, callback, {elementName: field_name, indexes}) {
+      // TODO: Law of Demeter!
+      const group = this._ui.getCurrentStep().getElementGroup(field_name);
 
-        // we probably should care, but we don't right now
-        if ( !group )
-        {
-            callback();
-            return;
-        }
-
-        const action = ( () =>
-        {
-            switch ( event_id )
-            {
-                case 'show':
-                    return group.showField.bind( group );
-
-                case 'hide':
-                    return group.hideField.bind( group );
-
-                default:
-                    throw UnknownEventError( `Unknown visibility event: ${event_id}` );
-            }
-        } )();
-
-        this._data_validator.clearFailures( { [field_name]: indexes } );
-        indexes.forEach( field_i => action( field_name, field_i ) );
-
+      // we probably should care, but we don't right now
+      if (!group) {
         callback();
-    }
-} );
+        return;
+      }
+
+      const action = (() => {
+        switch (event_id) {
+          case 'show':
+            return group.showField.bind(group);
+
+          case 'hide':
+            return group.hideField.bind(group);
+
+          default:
+            throw UnknownEventError(`Unknown visibility event: ${event_id}`);
+        }
+      })();
+
+      this._data_validator.clearFailures({[field_name]: indexes});
+      indexes.forEach(field_i => action(field_name, field_i));
+
+      callback();
+    },
+  });

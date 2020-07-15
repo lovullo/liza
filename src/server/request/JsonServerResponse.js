@@ -19,44 +19,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
+var Class = require('easejs').Class;
 
-
-exports.create = function ()
-{
-    return new JsonServerResponse();
+exports.create = function () {
+  return new JsonServerResponse();
 };
 
+var JsonServerResponse = Class.extend({
+  from: function (quote, content, actions) {
+    return JSON.stringify({
+      quoteId: quote.getId(),
+      content: content,
+      hasError: false,
+      actions: actions,
+    });
+  },
 
-var JsonServerResponse = Class.extend(
-{
-    from: function( quote, content, actions )
-    {
-        return JSON.stringify({
-            quoteId:
-                quote.getId(),
-            content:
-                content,
-            hasError:
-                false,
-            actions:
-                actions,
-        });
-    },
-
-
-    error: function( message, actions, btn_caption )
-    {
-        return JSON.stringify({
-            hasError:
-                true,
-            content:
-                message,
-            actions:
-                actions,
-            btnCaption:
-                btn_caption,
-        });
-    },
-} );
-
+  error: function (message, actions, btn_caption) {
+    return JSON.stringify({
+      hasError: true,
+      content: message,
+      actions: actions,
+      btnCaption: btn_caption,
+    });
+  },
+});

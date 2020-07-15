@@ -19,146 +19,126 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const store  = require( '../../' ).store;
-const chai   = require( 'chai' );
+const store = require('../../').store;
+const chai = require('chai');
 const expect = chai.expect;
-const Store  = store.MemoryStore;
-const Sut    = store.PatternProxy;
-const sinon  = require( 'sinon' );
+const Store = store.MemoryStore;
+const Sut = store.PatternProxy;
+const sinon = require('sinon');
 
-chai.use( require( 'chai-as-promised' ) );
+chai.use(require('chai-as-promised'));
 
+describe('store.PatternProxy', () => {
+  describe('fails on invalid pattern map', () => {
+    [
+      // not a pattern
+      [{}, Store()],
 
-describe( 'store.PatternProxy', () =>
-{
-    describe( 'fails on invalid pattern map', () =>
-    {
-        [
-            // not a pattern
-            [ {}, Store() ],
+      // not a Store
+      [/^./, {}],
 
-            // not a Store
-            [ /^./, {} ],
+      // missing Store
+      [/^./],
 
-            // missing Store
-            [ /^./ ],
+      // missing all
+      [],
+    ].forEach((patterns, i) =>
+      it(`(${i})`, () => {
+        expect(() => Store.use(Sut([patterns]))()).to.throw(TypeError);
+      })
+    );
+  });
 
-            // missing all
-            [],
-        ].forEach( ( patterns, i ) =>
-            it( `(${i})`, () =>
-            {
-                expect( () => Store.use( Sut( [ patterns ] ) )() )
-                    .to.throw( TypeError );
-            } )
-        );
-    } );
+  it('proxies #add by pattern', () => {
+    const store1 = Store();
+    const store2 = Store();
 
+    // second strips
+    const patterns = [
+      [/^foo:/, store1],
+      [/^bar:(.*)$/, store2],
+    ];
 
-    it( 'proxies #add by pattern', () =>
-    {
-        const store1 = Store();
-        const store2 = Store();
+    return Promise.all([
+      expect(
+        Store.use(Sut(patterns))()
+          .add('foo:moo', 'moo')
+          .then(store => store1.get('foo:moo'))
+      ).to.eventually.equal('moo'),
 
-        // second strips
-        const patterns = [
-            [ /^foo:/, store1 ],
-            [ /^bar:(.*)$/, store2 ],
-        ];
+      expect(
+        Store.use(Sut(patterns))()
+          .add('bar:quux', 'quuxval')
+          .then(store => store2.get('quux'))
+      ).to.eventually.equal('quuxval'),
+    ]);
+  });
 
-        return Promise.all( [
-            expect(
-                Store.use( Sut( patterns ) )()
-                    .add( 'foo:moo', 'moo' )
-                    .then( store => store1.get( 'foo:moo' ) )
-            ).to.eventually.equal( 'moo' ),
+  it('proxies #get by pattern', () => {
+    const store1 = Store();
+    const store2 = Store();
 
-            expect(
-                Store.use( Sut( patterns ) )()
-                    .add( 'bar:quux', 'quuxval' )
-                    .then( store => store2.get( 'quux' ) )
-            ).to.eventually.equal( 'quuxval' ),
-        ] );
-    } );
+    // second strips
+    const patterns = [
+      [/^foo:/, store1],
+      [/^bar:(.*)$/, store2],
+    ];
 
+    const sut = Store.use(Sut(patterns))();
 
-    it( 'proxies #get by pattern', () =>
-    {
-        const store1 = Store();
-        const store2 = Store();
+    return Promise.all([
+      expect(
+        store1.add('foo:bar', 'moo').then(() => sut.get('foo:bar'))
+      ).to.eventually.equal('moo'),
 
-        // second strips
-        const patterns = [
-            [ /^foo:/, store1 ],
-            [ /^bar:(.*)$/, store2 ],
-        ];
+      expect(
+        store2.add('quux', 'quuxval').then(() => sut.get('bar:quux'))
+      ).to.eventually.equal('quuxval'),
+    ]);
+  });
 
-        const sut = Store.use( Sut( patterns ) )();
+  // if no matches, error (like traditional functional pattern matching)
+  it('fails on #add or #get when match fails', () => {
+    const patterns = [[/moo/, Store()]];
 
-        return Promise.all( [
-            expect(
-                store1.add( 'foo:bar', 'moo' )
-                    .then( () => sut.get( 'foo:bar' ) )
-            ).to.eventually.equal( 'moo' ),
+    return Promise.all([
+      expect(
+        Store.use(Sut(patterns))().add('uh', 'no')
+      ).to.eventually.be.rejectedWith(store.StorePatternError),
 
-            expect(
-                store2.add( 'quux', 'quuxval' )
-                    .then( () => sut.get( 'bar:quux' ) )
-            ).to.eventually.equal( 'quuxval' ),
-        ] );
-    } );
+      expect(
+        Store.use(Sut(patterns))().get('sorry', 'sir')
+      ).to.eventually.be.rejectedWith(store.StorePatternError),
+    ]);
+  });
 
+  describe('#clear', () => {
+    it('invokes #clear on all contained stores', () => {
+      const store1 = Store();
+      const store2 = Store();
 
-    // if no matches, error (like traditional functional pattern matching)
-    it( 'fails on #add or #get when match fails', () =>
-    {
-        const patterns = [ [ /moo/, Store() ] ];
+      const mocks = [store1, store2].map(store => {
+        const mock = sinon.mock(store);
 
-        return Promise.all( [
-            expect(
-                Store.use( Sut( patterns ) )()
-                    .add( 'uh', 'no' )
-            ).to.eventually.be.rejectedWith( store.StorePatternError ),
+        mock.expects('clear').once();
+        return mock;
+      });
 
-            expect(
-                Store.use( Sut( patterns ) )()
-                    .get( 'sorry', 'sir' )
-            ).to.eventually.be.rejectedWith( store.StorePatternError ),
-        ] );
-    } );
+      const patterns = [
+        [/^a/, store1],
+        [/^b/, store2],
+      ];
 
+      const sut = Store.use(Sut(patterns))();
 
-    describe( '#clear', () =>
-    {
-        it( 'invokes #clear on all contained stores', () =>
-        {
-            const store1 = Store();
-            const store2 = Store();
-
-            const mocks = [ store1, store2 ].map( store =>
-            {
-                const mock = sinon.mock( store );
-
-                mock.expects( 'clear' ).once();
-                return mock;
-            } );
-
-            const patterns = [
-                [ /^a/, store1 ],
-                [ /^b/, store2 ],
-            ];
-
-            const sut = Store.use( Sut( patterns ) )();
-
-            return sut.clear()
-                .then( given_sut => {
-                    // TODO: uncomment once `this.__inst' in Traits is fixed
-                    // in GNU ease.js
-                    // expect( given_sut ).to.equal( sut );
-                    mocks.forEach( mock => mock.verify() );
-                } );
-        } );
-    } );
-} );
+      return sut.clear().then(given_sut => {
+        // TODO: uncomment once `this.__inst' in Traits is fixed
+        // in GNU ease.js
+        // expect( given_sut ).to.equal( sut );
+        mocks.forEach(mock => mock.verify());
+      });
+    });
+  });
+});

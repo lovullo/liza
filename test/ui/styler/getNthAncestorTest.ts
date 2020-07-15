@@ -19,21 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { getNthAncestor as Sut } from "../../../src/ui/styler/AncestorAwareStyler";
-import { PositiveInteger } from "../../../src/numeric";
-import { expect } from 'chai';
+import {getNthAncestor as Sut} from '../../../src/ui/styler/AncestorAwareStyler';
+import {PositiveInteger} from '../../../src/numeric';
+import {expect} from 'chai';
 
+describe('ui.styler.getNthAncestor', () => {
+  describe('getNthAncestor', () => {
+    it('gets the nth ancestor of an element', () => {
+      const container = document.createElement('div');
 
-describe( "ui.styler.getNthAncestor", () =>
-{
-    describe ( "getNthAncestor", () =>
-    {
-        it( "gets the nth ancestor of an element", () =>
-        {
-            const container = document.createElement( "div" );
-
-            container.innerHTML =
-                `<div id="ggparent">
+      container.innerHTML = `<div id="ggparent">
                     <div id="gparent">
                         <div id="parent">
                             <div class="foo">
@@ -43,32 +38,30 @@ describe( "ui.styler.getNthAncestor", () =>
                     </div>
                 </div>`;
 
-            const expected = [
-                <HTMLElement> container.querySelector( ".foo" ),
-                <HTMLElement> container.querySelector( "#parent" ),
-                <HTMLElement> container.querySelector( "#gparent" ),
-                <HTMLElement> container.querySelector( "#ggparent" )
-            ];
+      const expected = [
+        <HTMLElement>container.querySelector('.foo'),
+        <HTMLElement>container.querySelector('#parent'),
+        <HTMLElement>container.querySelector('#gparent'),
+        <HTMLElement>container.querySelector('#ggparent'),
+      ];
 
-            const target = expected[ 0 ];
+      const target = expected[0];
 
-            expected.forEach( ( elem: HTMLElement, index: number ) =>
-            {
-                const ancestor = Sut( target, <PositiveInteger> index );
-                expect( ancestor ).to.equal( elem );
-            });
-        } );
+      expected.forEach((elem: HTMLElement, index: number) => {
+        const ancestor = Sut(target, <PositiveInteger>index);
+        expect(ancestor).to.equal(elem);
+      });
+    });
 
-        it( "doesn't get a non-existent ancestor", () =>
-        {
-            const container = document.createElement( "div" );
+    it("doesn't get a non-existent ancestor", () => {
+      const container = document.createElement('div');
 
-            container.innerHTML = `<div class="foo">Foo bar</div>`;
+      container.innerHTML = `<div class="foo">Foo bar</div>`;
 
-            const target   =  <HTMLElement> container.querySelector( ".foo" );
-            const ancestor = Sut( target, <PositiveInteger> 100 );
+      const target = <HTMLElement>container.querySelector('.foo');
+      const ancestor = Sut(target, <PositiveInteger>100);
 
-            expect( ancestor ).to.be.null;
-        } );
-    } );
-} );
+      expect(ancestor).to.be.null;
+    });
+  });
+});

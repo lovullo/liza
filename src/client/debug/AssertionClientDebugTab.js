@@ -19,19 +19,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
-    ClientDebugTab = require( './ClientDebugTab' )
-;
-
-
+var Class = require('easejs').Class,
+  ClientDebugTab = require('./ClientDebugTab');
 /**
  * Monitors client-side assertions
  */
-module.exports = Class( 'AssertionClientDebugTab' )
-    .implement( ClientDebugTab )
-    .extend(
-{
+module.exports = Class('AssertionClientDebugTab')
+  .implement(ClientDebugTab)
+  .extend({
     /**
      * Client being monitored
      * @type {Client}
@@ -62,17 +57,14 @@ module.exports = Class( 'AssertionClientDebugTab' )
      */
     'private _stack': [],
 
-
     /**
      * Retrieve tab title
      *
      * @return {string} tab title
      */
-    'public getTitle': function()
-    {
-        return 'Assertions';
+    'public getTitle': function () {
+      return 'Assertions';
     },
-
 
     /**
      * Retrieve tab content
@@ -82,46 +74,41 @@ module.exports = Class( 'AssertionClientDebugTab' )
      *
      * @return {jQuery} tab content
      */
-    'public getContent': function( client, bucket )
-    {
-        // cut down on argument list
-        this._client = client;
+    'public getContent': function (client, bucket) {
+      // cut down on argument list
+      this._client = client;
 
-        return this._createAssertionsContent();
+      return this._createAssertionsContent();
     },
-
 
     /**
      * Create tab content
      *
      * @return {jQuery} tab content
      */
-    'private _createAssertionsContent': function()
-    {
-        var _self = this;
+    'private _createAssertionsContent': function () {
+      var _self = this;
 
-        this._hookAssertEvent();
-        this._hookTriggerEvent();
+      this._hookAssertEvent();
+      this._hookTriggerEvent();
 
-        return $( '<div> ' )
-            .append( $( '<p>' )
-                .text(
-                    "Below is a list of all assertions performed (in real " +
-                    "time)."
-                )
-                .append( $( '<button>' )
-                    .text( 'Clear' )
-                    .click( function()
-                    {
-                        return _self._clearTable();
-                    } )
-                )
+      return $('<div> ')
+        .append(
+          $('<p>')
+            .text(
+              'Below is a list of all assertions performed (in real ' + 'time).'
             )
-            .append( this._getAssertionsLegend() )
-            .append( this._getAssertionsTable() )
-        ;
+            .append(
+              $('<button>')
+                .text('Clear')
+                .click(function () {
+                  return _self._clearTable();
+                })
+            )
+        )
+        .append(this._getAssertionsLegend())
+        .append(this._getAssertionsTable());
     },
-
 
     /**
      * Monitor assertions
@@ -132,112 +119,98 @@ module.exports = Class( 'AssertionClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _hookAssertEvent': function()
-    {
-        var _self = this;
+    'private _hookAssertEvent': function () {
+      var _self = this;
 
-        this._client.program.on( 'assert', function()
-        {
-            // the hook needs to be refactored; too many arguments
-            var depth = arguments[ 7 ];
+      this._client.program.on('assert', function () {
+        // the hook needs to be refactored; too many arguments
+        var depth = arguments[7];
 
-            // add to the stack so that we can output the assertion and its
-            // subassertions once we reach the root node (this trigger is
-            // called in reverse order, since we don't know the end result
-            // of a parent assertion until we know the results of its
-            // children)
-            _self._stack.push( arguments );
-            if ( depth > 0 )
-            {
-                return;
-            }
+        // add to the stack so that we can output the assertion and its
+        // subassertions once we reach the root node (this trigger is
+        // called in reverse order, since we don't know the end result
+        // of a parent assertion until we know the results of its
+        // children)
+        _self._stack.push(arguments);
+        if (depth > 0) {
+          return;
+        }
 
-            // our depth is 0; output the log data
-            _self._processStack();
-        } );
+        // our depth is 0; output the log data
+        _self._processStack();
+      });
     },
-
 
     /**
      * Monitor triggers
      *
      * @return {undefined}
      */
-    'private _hookTriggerEvent': function()
-    {
-        var _self = this;
+    'private _hookTriggerEvent': function () {
+      var _self = this;
 
-        this._client.on( 'trigger', function( event_name, data )
-        {
-            _self._stack.push( [ 'trigger', event_name, data ] );
-        } );
+      this._client.on('trigger', function (event_name, data) {
+        _self._stack.push(['trigger', event_name, data]);
+      });
     },
-
 
     /**
      * Process stack, appending data to log table
      *
      * @return {undefined}
      */
-    'private _processStack': function()
-    {
-        var _self = this,
-            item;
+    'private _processStack': function () {
+      var _self = this,
+        item;
 
-        while ( item = this._stack.pop() )
-        {
-            if ( item[ 0 ] === 'trigger' )
-            {
-                _self._appendTrigger.apply( _self, item );
-            }
-            else
-            {
-                _self._appendAssertion.apply( _self, item );
-            }
+      while ((item = this._stack.pop())) {
+        if (item[0] === 'trigger') {
+          _self._appendTrigger.apply(_self, item);
+        } else {
+          _self._appendAssertion.apply(_self, item);
         }
+      }
     },
-
 
     /**
      * Clear all results from the assertions log table
      *
      * @return {boolean} true (to prevent navigation)
      */
-    'private _clearTable': function()
-    {
-        // remove all records and reset counter
-        this._getAssertionsTable().find( 'tbody tr' ).remove();
-        this._logIndex = 0;
+    'private _clearTable': function () {
+      // remove all records and reset counter
+      this._getAssertionsTable().find('tbody tr').remove();
+      this._logIndex = 0;
 
-        return true;
+      return true;
     },
-
 
     /**
      * Generate table to contain assertion log
      *
      * @return {jQuery} generated log table
      */
-    'private _getAssertionsTable': function()
-    {
-        return this._$table = ( this._$table || ( function()
-        {
-            return $( '<table>' )
-                .attr( 'id', 'assertions-table' )
-                .append( $( '<thead>' ).append( $( '<tr>' )
-                    .append( $( '<th>' ).text( '#' ) )
-                    .append( $( '<th>' ).text( 'question_id' ) )
-                    .append( $( '<th>' ).text( 'method' ) )
-                    .append( $( '<th>' ).text( 'expected' ) )
-                    .append( $( '<th>' ).text( 'given' ) )
-                    .append( $( '<th>' ).text( 'thisresult' ) )
-                    .append( $( '<th>' ).text( 'result' ) )
-                ) )
-                .append( $( '<tbody>' ) )
-            ;
-        } )() );
+    'private _getAssertionsTable': function () {
+      return (this._$table =
+        this._$table ||
+        (function () {
+          return $('<table>')
+            .attr('id', 'assertions-table')
+            .append(
+              $('<thead>').append(
+                $('<tr>')
+                  .append($('<th>').text('#'))
+                  .append($('<th>').text('question_id'))
+                  .append($('<th>').text('method'))
+                  .append($('<th>').text('expected'))
+                  .append($('<th>').text('given'))
+                  .append($('<th>').text('thisresult'))
+                  .append($('<th>').text('result'))
+              )
+            )
+            .append($('<tbody>'));
+        })());
     },
-
 
     /**
      * Append an assertion to the log
@@ -255,107 +228,88 @@ module.exports = Class( 'AssertionClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _appendAssertion': function(
-        assertion, qid, expected, given, thisresult, result, record, depth
-    )
-    {
-        this._getAssertionsTable().find( 'tbody' ).append( $( '<tr>' )
-            .addClass( ( result ) ? 'success' : 'failure' )
-            .addClass( ( thisresult ) ? 'thissuccess' : 'thisfailure' )
-            .addClass( ( record ) ? 'recorded' : '' )
-            .addClass( 'adepth' + depth )
-            .append( $( '<td>' )
-                .text( this._logIndex++ )
-                .addClass( 'index' )
+    'private _appendAssertion': function (
+      assertion,
+      qid,
+      expected,
+      given,
+      thisresult,
+      result,
+      record,
+      depth
+    ) {
+      this._getAssertionsTable()
+        .find('tbody')
+        .append(
+          $('<tr>')
+            .addClass(result ? 'success' : 'failure')
+            .addClass(thisresult ? 'thissuccess' : 'thisfailure')
+            .addClass(record ? 'recorded' : '')
+            .addClass('adepth' + depth)
+            .append(
+              $('<td>')
+                .text(this._logIndex++)
+                .addClass('index')
             )
-            .append( $( '<td>' ).append( $( '<span>' )
-                .attr( 'title', ( 'Depth: ' + depth ) )
-                .html(
-                    Array( ( depth + 1 ) * 4 ).join( '&nbsp;') + qid
-                )
-            ) )
-            .append( $( '<td>' ).text( assertion.getName() ) )
-            .append( $( '<td>' ).text( JSON.stringify( expected ) ) )
-            .append( $( '<td>' ).text( JSON.stringify( given ) ) )
-            .append( $( '<td>' ).text( ''+( thisresult ) ) )
-            .append( $( '<td>' ).text(
-                ''+( result ) + ( ( record ) ? '' : '*' )
-            ) )
+            .append(
+              $('<td>').append(
+                $('<span>')
+                  .attr('title', 'Depth: ' + depth)
+                  .html(Array((depth + 1) * 4).join('&nbsp;') + qid)
+              )
+            )
+            .append($('<td>').text(assertion.getName()))
+            .append($('<td>').text(JSON.stringify(expected)))
+            .append($('<td>').text(JSON.stringify(given)))
+            .append($('<td>').text('' + thisresult))
+            .append($('<td>').text('' + result + (record ? '' : '*')))
         );
 
-        // let the system know that the paint line should be drawn
-        this._paintLine();
+      // let the system know that the paint line should be drawn
+      this._paintLine();
     },
 
-
-    'private _appendTrigger': function( _, event_name, data )
-    {
-        this._getAssertionsTable().find( 'tbody' ).append( $( '<tr>' )
-            .addClass( 'trigger' )
-            .append( $( '<td>' ).text( ' ' ) )
-            .append( $( '<td>' ).text( event_name ) )
-            .append( $( '<td>' )
-                .attr( 'colspan', 6 )
-                .text( JSON.stringify( data ) )
-            )
+    'private _appendTrigger': function (_, event_name, data) {
+      this._getAssertionsTable()
+        .find('tbody')
+        .append(
+          $('<tr>')
+            .addClass('trigger')
+            .append($('<td>').text(' '))
+            .append($('<td>').text(event_name))
+            .append($('<td>').attr('colspan', 6).text(JSON.stringify(data)))
         );
 
-        this._paintLine();
+      this._paintLine();
     },
-
 
     /**
      * Generate assertions legend
      *
      * @return {jQuery} div containing legend
      */
-    'private _getAssertionsLegend': function()
-    {
-        return $( '<div>' )
-            .attr( 'id', 'assert-legend' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .addClass( 'root' )
-            )
-            .append( "<span>Root Assertion</span>" )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .text( '*' )
-            )
-            .append( "<span>Unrecorded</span>" )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .addClass( 'trigger' )
-            )
-            .append( "<span>Trigger</span>" )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .addClass( 'paint' )
-            )
-            .append( "<span>Paint</span>" )
-            .append( '<br />' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .addClass( 'failure' )
-            )
-            .append( "<span>Failure</span>" )
-            .append(
-                $( '<div>' )
-                    .addClass( 'assert-legend-item' )
-                    .addClass( 'unrecorded' )
-            )
-            .append(
-                "<span>Failure, but suceeded by subassertion or " +
-                "unrecorded</span>"
-            )
-        ;
+    'private _getAssertionsLegend': function () {
+      return $('<div>')
+        .attr('id', 'assert-legend')
+        .append($('<div>').addClass('assert-legend-item').addClass('root'))
+        .append('<span>Root Assertion</span>')
+        .append($('<div>').addClass('assert-legend-item').text('*'))
+        .append('<span>Unrecorded</span>')
+        .append($('<div>').addClass('assert-legend-item').addClass('trigger'))
+        .append('<span>Trigger</span>')
+        .append($('<div>').addClass('assert-legend-item').addClass('paint'))
+        .append('<span>Paint</span>')
+        .append('<br />')
+        .append($('<div>').addClass('assert-legend-item').addClass('failure'))
+        .append('<span>Failure</span>')
+        .append(
+          $('<div>').addClass('assert-legend-item').addClass('unrecorded')
+        )
+        .append(
+          '<span>Failure, but suceeded by subassertion or ' +
+            'unrecorded</span>'
+        );
     },
-
 
     /**
      * Draw paint line
@@ -370,16 +324,12 @@ module.exports = Class( 'AssertionClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _paintLine': function()
-    {
-        var _self = this;
+    'private _paintLine': function () {
+      var _self = this;
 
-        this._paintTimeout && clearTimeout( this._paintTimeout );
-        this._paintTimeout = setTimeout( function()
-        {
-            _self._getAssertionsTable().find( 'tr:last' )
-                .addClass( 'last-pre-paint' );
-        }, 25 );
-    }
-} );
-
+      this._paintTimeout && clearTimeout(this._paintTimeout);
+      this._paintTimeout = setTimeout(function () {
+        _self._getAssertionsTable().find('tr:last').addClass('last-pre-paint');
+      }, 25);
+    },
+  });

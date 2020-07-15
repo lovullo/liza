@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Rater } from "./Rater";
+import {Rater} from './Rater';
 
-
-export declare class ProcessManager
-{
-    /**
-    * Returns the rater associated with the given id
-    *
-    * @param id - rater id
-    *
-    * @return requested rater
-    */
-    byId( id: string ): Rater;
+export declare class ProcessManager {
+  /**
+   * Returns the rater associated with the given id
+   *
+   * @param id - rater id
+   *
+   * @return requested rater
+   */
+  byId(id: string): Rater;
 }

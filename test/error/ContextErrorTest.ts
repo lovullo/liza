@@ -19,50 +19,43 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as sut from "../../src/error/ContextError";
-import { expect } from 'chai';
+import * as sut from '../../src/error/ContextError';
+import {expect} from 'chai';
 
+describe('ContextError', () => {
+  it('can be created with generic error', () => {
+    const context = {foo: 'context'};
 
-describe( 'ContextError', () =>
-{
-    it( "can be created with generic error", () =>
-    {
-        const context = { foo: "context" };
+    expect(sut.context(new Error('test error'), context).context).to.equal(
+      context
+    );
+  });
 
-        expect( sut.context( new Error( "test error" ), context ).context )
-            .to.equal( context );
-    } );
+  it('provides type predicate for TypeScript', () => {
+    const context = {bar: 'baz context'};
 
+    // force to Error to discard ContextError type
+    const e: Error = sut.context(new Error('test error'), context);
 
-    it( "provides type predicate for TypeScript", () =>
-    {
-        const context = { bar: "baz context" };
+    if (sut.hasContext(e)) {
+      // if isChained was properly defined, then outer should now
+      // have type ChainedError, and so this should compile
+      expect(e.context).to.equal(context);
+    } else {
+      expect.fail();
+    }
+  });
 
-        // force to Error to discard ContextError type
-        const e: Error = sut.context( new Error( "test error" ), context );
+  it('can create typed contexts', () => {
+    type FooErrorContext = {foo: string};
 
-        if ( sut.hasContext( e ) )
-        {
-            // if isChained was properly defined, then outer should now
-            // have type ChainedError, and so this should compile
-            expect( e.context ).to.equal( context );
-        }
-        else
-        {
-            expect.fail();
-        }
-    } );
+    // this is the actual test
+    const e: sut.ContextError<FooErrorContext> = sut.context(
+      new Error('test error'),
+      {foo: 'context'}
+    );
 
-
-    it( "can create typed contexts", () =>
-    {
-        type FooErrorContext = { foo: string };
-
-        // this is the actual test
-        const e: sut.ContextError<FooErrorContext> =
-            sut.context( new Error( "test error" ), { foo: "context" } );
-
-        // contravariance check (would fail to compile)
-        expect( sut.hasContext( e ) ).to.be.true;
-    } );
-} );
+    // contravariance check (would fail to compile)
+    expect(sut.hasContext(e)).to.be.true;
+  });
+});

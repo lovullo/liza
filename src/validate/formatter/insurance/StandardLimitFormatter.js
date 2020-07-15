@@ -22,7 +22,7 @@
 /**
  * Pre-configured insurance limit of the form N(/N)+
  */
-module.exports = require( '../EchoFormatter' )
-    .use( require( '../Number' ) )
-    .use( require( './Limit' ) )
-    .use( require( '../MultiDelimited' )( '/' ) );
+module.exports = require('../EchoFormatter')
+  .use(require('../Number'))
+  .use(require('./Limit'))
+  .use(require('../MultiDelimited')('/'));

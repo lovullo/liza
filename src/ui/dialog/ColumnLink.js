@@ -19,27 +19,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait = require( 'easejs' ).Trait,
-
-    // TODO: this is only required temporarily until GNU ease.js 0.2.9,
-    // which hasn't yet been released because I'm still waiting for
-    // the copyright disclaimer from my (new, after purchase) employer!
-    ITableDialog = require( './ITableDialog' );
-
+var Trait = require('easejs').Trait,
+  // TODO: this is only required temporarily until GNU ease.js 0.2.9,
+  // which hasn't yet been released because I'm still waiting for
+  // the copyright disclaimer from my (new, after purchase) employer!
+  ITableDialog = require('./ITableDialog');
 
 /**
  * Styles table columns with image links
  */
-module.exports = Trait( 'ColumnLink' )
-    .implement( ITableDialog )
-    .extend(
-{
+module.exports = Trait('ColumnLink')
+  .implement(ITableDialog)
+  .extend({
     /**
      * Column id as key, image path as value
      * @type {Array.<string>}
      */
     'private _imgpath': [],
-
 
     /**
      * Style the given 0-indexed column with the given image that links to a URL
@@ -50,12 +46,10 @@ module.exports = Trait( 'ColumnLink' )
      *
      * @return {ColumnLink} self
      */
-    'public styleColumn': function( id, imgpath )
-    {
-        this._imgpath[ id ] = ''+( imgpath );
-        return this;
+    'public styleColumn': function (id, imgpath) {
+      this._imgpath[id] = '' + imgpath;
+      return this;
     },
-
 
     /**
      * Styles column as icon link before generating row
@@ -65,24 +59,20 @@ module.exports = Trait( 'ColumnLink' )
      * @param {TableDialogData} data table data to render
      * @return {string} generated HTML
      */
-    'abstract override createRow': function( row )
-    {
-        // create a copy of the array, since we're modifying it
-        var newrow = Array.prototype.slice.call( row, 0 );
+    'abstract override createRow': function (row) {
+      // create a copy of the array, since we're modifying it
+      var newrow = Array.prototype.slice.call(row, 0);
 
-        for ( var id in this._imgpath )
-        {
-            var path = this._imgpath[ id ];
-            if ( !path )
-            {
-                continue;
-            }
-
-            newrow[ id ] = '<a href="' + row[ id ] + '">' +
-                '<img src="' + path + '" />' + '</a>';
+      for (var id in this._imgpath) {
+        var path = this._imgpath[id];
+        if (!path) {
+          continue;
         }
 
-        return this.__super( newrow );
-    }
-} );
+        newrow[id] =
+          '<a href="' + row[id] + '">' + '<img src="' + path + '" />' + '</a>';
+      }
 
+      return this.__super(newrow);
+    },
+  });

@@ -19,11 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class                   = require( 'easejs' ).Class,
-    Bucket                  = require( '../Bucket' ),
-    BucketDiffContext       = require( './BucketDiffContext' ),
-    BucketSiblingDescriptor = require( '../BucketSiblingDescriptor' );
-
+var Class = require('easejs').Class,
+  Bucket = require('../Bucket'),
+  BucketDiffContext = require('./BucketDiffContext'),
+  BucketSiblingDescriptor = require('../BucketSiblingDescriptor');
 
 /**
  * Describe a context with which diffing may take place between buckets
@@ -32,10 +31,9 @@ var Class                   = require( 'easejs' ).Class,
  * context for performing a grouped diff on the siblings of a particular
  * group.
  */
-module.exports = Class( 'GroupedBucketDiffContext' )
-    .implement( BucketDiffContext )
-    .extend(
-{
+module.exports = Class('GroupedBucketDiffContext')
+  .implement(BucketDiffContext)
+  .extend({
     /**
      * Context to decorate
      * @type {BucketDiffContext}
@@ -60,7 +58,6 @@ module.exports = Class( 'GroupedBucketDiffContext' )
      */
     'private _leaders': {},
 
-
     /**
      * Prepare a context given an existing context and a sibling descriptor
      *
@@ -71,61 +68,46 @@ module.exports = Class( 'GroupedBucketDiffContext' )
      * @param {BucketSiblingDescriptor} desc    field relationship descriptor
      * @param {string}                  gid     id of group to diff
      */
-    __construct: function( context, desc, gid )
-    {
-        if ( !( Class.isA( BucketDiffContext, context ) ) )
-        {
-            throw TypeError( "Must provide a BucketDiffContext" );
-        }
-        else if ( !( Class.isA( BucketSiblingDescriptor, desc ) ) )
-        {
-            throw TypeError( "Must provide a BucketSiblingDescriptor" );
-        }
-        else if ( !gid )
-        {
-            throw Error( "Must provide a group identifier for diffing" );
-        }
+    __construct: function (context, desc, gid) {
+      if (!Class.isA(BucketDiffContext, context)) {
+        throw TypeError('Must provide a BucketDiffContext');
+      } else if (!Class.isA(BucketSiblingDescriptor, desc)) {
+        throw TypeError('Must provide a BucketSiblingDescriptor');
+      } else if (!gid) {
+        throw Error('Must provide a group identifier for diffing');
+      }
 
-        this._context = context;
-        this._desc    = desc;
-        this._gid     = ''+gid;
+      this._context = context;
+      this._desc = desc;
+      this._gid = '' + gid;
 
-        this._validateGroup();
-        this._processLeaders();
+      this._validateGroup();
+      this._processLeaders();
     },
-
 
     /**
      * Validates that the provided group exists and has at least one leader
      *
      * @throws {Error} if group does not exist or has no leaders
      */
-    'private _validateGroup': function()
-    {
-        // will throw an exception if group does not exist
-        if ( this._desc.getGroupLeaders( this._gid ).length === 0 )
-        {
-            throw Error(
-                "Group '" + this._gid + "' must have at least one leader"
-            );
-        }
+    'private _validateGroup': function () {
+      // will throw an exception if group does not exist
+      if (this._desc.getGroupLeaders(this._gid).length === 0) {
+        throw Error("Group '" + this._gid + "' must have at least one leader");
+      }
     },
-
 
     /**
      * Process group leaders into a hash table for speedy referencing
      */
-    'private _processLeaders': function()
-    {
-        var leaders = this._desc.getGroupLeaders( this._gid ),
-            i       = leaders.length;
+    'private _processLeaders': function () {
+      var leaders = this._desc.getGroupLeaders(this._gid),
+        i = leaders.length;
 
-        while ( i-- )
-        {
-            this._leaders[ leaders[ i ] ] = true;
-        }
+      while (i--) {
+        this._leaders[leaders[i]] = true;
+      }
     },
-
 
     /**
      * Invoke continuation for each field name in the intersection of the parent
@@ -138,30 +120,25 @@ module.exports = Class( 'GroupedBucketDiffContext' )
      *
      * @return {GroupedBucketDiffContext} self
      */
-    'public forEachField': function( c )
-    {
-        var gfields = {},
-            members = this._desc.getGroupMembers( this._gid ),
-            i       = members.length;
+    'public forEachField': function (c) {
+      var gfields = {},
+        members = this._desc.getGroupMembers(this._gid),
+        i = members.length;
 
-        // hash
-        while ( i-- )
-        {
-            gfields[ members[ i ] ] = true;
+      // hash
+      while (i--) {
+        gfields[members[i]] = true;
+      }
+
+      // filter all but members of the group
+      this._context.forEachField(function (name) {
+        if (!gfields[name]) {
+          return;
         }
 
-        // filter all but members of the group
-        this._context.forEachField( function( name )
-        {
-            if ( !( gfields[ name ] ) )
-            {
-                return;
-            }
-
-            c.apply( null, arguments );
-        } );
+        c.apply(null, arguments);
+      });
     },
-
 
     /**
      * Determines if the given field is a group leader
@@ -170,12 +147,9 @@ module.exports = Class( 'GroupedBucketDiffContext' )
      *
      * @return {boolean} true if field is a group leader, otherwise false
      */
-    'public isGroupLeader': function( field )
-    {
-        return this._leaders[ field ] || false;
+    'public isGroupLeader': function (field) {
+      return this._leaders[field] || false;
     },
 
-
-    'public proxy getFieldValues': '_context'
-} );
-
+    'public proxy getFieldValues': '_context',
+  });

@@ -18,15 +18,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { Duplex } from 'stream';
+import {Duplex} from 'stream';
 
-import * as avro from "avro-js";
+import * as avro from 'avro-js';
 
 /** The avro encoder constructor type */
-export type AvroEncoderCtr = ( type: avro.AvroSchema ) => Duplex;
+export type AvroEncoderCtr = (type: avro.AvroSchema) => Duplex;
 
 /** The avro encoder constructor */
-export function createAvroEncoder( schema: avro.AvroSchema ): Duplex
-{
-    return new avro.streams.BlockEncoder( schema );
+export function createAvroEncoder(schema: avro.AvroSchema): Duplex {
+  return new avro.streams.BlockEncoder(schema);
 }

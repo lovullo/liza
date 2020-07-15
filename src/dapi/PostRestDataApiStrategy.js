@@ -19,26 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class               = require( 'easejs' ).Class,
-    RestDataApiStrategy = require( './RestDataApiStrategy' ),
-
-    // XXX: decouple (this couples us to the client)!
-    HttpDataProxy = require( '../client/proxy/HttpDataProxy' );
-
+var Class = require('easejs').Class,
+  RestDataApiStrategy = require('./RestDataApiStrategy'),
+  // XXX: decouple (this couples us to the client)!
+  HttpDataProxy = require('../client/proxy/HttpDataProxy');
 
 /**
  * Requests data from a RESTful service, POSTing arguments
  */
-module.exports = Class( 'PostRestDataApiStrategy' )
-    .implement( RestDataApiStrategy )
-    .extend(
-{
+module.exports = Class('PostRestDataApiStrategy')
+  .implement(RestDataApiStrategy)
+  .extend({
     /**
      * Data proxy used to communicate with the service
      * @type {HttpDataProxy}
      */
     'private _proxy': null,
-
 
     /**
      * Initialize strategy
@@ -48,18 +44,13 @@ module.exports = Class( 'PostRestDataApiStrategy' )
      *
      * @param {HttpDataProxy} data_proxy proxy to handle all requests
      */
-    __construct: function( data_proxy )
-    {
-        if ( !( Class.isA( HttpDataProxy, data_proxy ) ) )
-        {
-            throw Error(
-                'Expected HttpDataProxy; given ' + data_proxy
-            );
-        }
+    __construct: function (data_proxy) {
+      if (!Class.isA(HttpDataProxy, data_proxy)) {
+        throw Error('Expected HttpDataProxy; given ' + data_proxy);
+      }
 
-        this._proxy = data_proxy;
+      this._proxy = data_proxy;
     },
-
 
     /**
      * Request data from the service
@@ -70,14 +61,11 @@ module.exports = Class( 'PostRestDataApiStrategy' )
      *
      * @return {RestDataApi} self
      */
-    'public requestData': function( url, data, callback )
-    {
-        this._proxy.post( url, data, function( retdata )
-        {
-            callback( retdata );
-        } );
+    'public requestData': function (url, data, callback) {
+      this._proxy.post(url, data, function (retdata) {
+        callback(retdata);
+      });
 
-        return this;
-    }
-} );
-
+      return this;
+    },
+  });

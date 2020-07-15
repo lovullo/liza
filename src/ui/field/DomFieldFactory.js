@@ -19,72 +19,61 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
+var Class = require('easejs').Class,
+  BucketField = require('../../field/BucketField'),
+  DomField = require('./DomField');
 
-    BucketField = require( '../../field/BucketField' ),
-    DomField    = require( './DomField' );
+module.exports = Class('DomFieldFactory', {
+  'private _elementStyler': null,
 
+  __construct: function (element_styler) {
+    this._elementStyler = element_styler;
+  },
 
-module.exports = Class( 'DomFieldFactory',
-{
-    'private _elementStyler': null,
+  /**
+   * Create a DomField from the given field description
+   *
+   * The provided DomField will wait to access the DOM until an operation
+   * requires it.
+   *
+   * @param {string} name  field name
+   * @param {number} index field index
+   *
+   * @param {function(HtmlElement)|HtmlElement} root root element containing
+   *                                                 the field (optionally
+   *                                                 lazy)
+   *
+   * @return {DomField} generated field
+   */
+  'public create': function (name, index, root) {
+    var _self = this;
 
+    return DomField(
+      BucketField(name, index),
 
-    __construct: function( element_styler )
-    {
-        this._elementStyler = element_styler;
-    },
+      // lazy load on first access
+      function (callback) {
+        // are we lazy?
+        if (typeof root === 'function') {
+          // wait to fulfill this request until after the element
+          // becomes available
+          root(function (result) {
+            root = result;
+            c();
+          });
 
+          return;
+        }
 
-    /**
-     * Create a DomField from the given field description
-     *
-     * The provided DomField will wait to access the DOM until an operation
-     * requires it.
-     *
-     * @param {string} name  field name
-     * @param {number} index field index
-     *
-     * @param {function(HtmlElement)|HtmlElement} root root element containing
-     *                                                 the field (optionally
-     *                                                 lazy)
-     *
-     * @return {DomField} generated field
-     */
-    'public create': function( name, index, root )
-    {
-        var _self = this;
+        // not lazy; continue immediately
+        c();
 
-        return DomField(
-            BucketField( name, index ),
-
-            // lazy load on first access
-            function( callback )
-            {
-                // are we lazy?
-                if ( typeof root === 'function' )
-                {
-                    // wait to fulfill this request until after the element
-                    // becomes available
-                    root( function( result )
-                    {
-                        root = result;
-                        c();
-                    } );
-
-                    return;
-                }
-
-                // not lazy; continue immediately
-                c();
-
-                function c()
-                {
-                    callback( _self._elementStyler.getElementByNameLax(
-                        name, index, null, root
-                    )[0] );
-                }
-            }
-        );
-    }
-} );
+        function c() {
+          callback(
+            _self._elementStyler.getElementByNameLax(name, index, null, root)[0]
+          );
+        }
+      }
+    );
+  },
+});

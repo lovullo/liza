@@ -22,285 +22,234 @@
  */
 
 // php compatibility
-var Class = require( 'easejs' ).Class,
-    php   = require( 'php' );
+var Class = require('easejs').Class,
+  php = require('php');
 
 /**
  * Stores/retrieves user PHP session data from memcached
  */
-module.exports = Class.extend( require( '../../events' ).EventEmitter,
-{
-    /**
-     * Session id
-     * @type {string}
-     */
-    'private _id': '',
+module.exports = Class.extend(require('../../events').EventEmitter, {
+  /**
+   * Session id
+   * @type {string}
+   */
+  'private _id': '',
 
-    /**
-     * Memcache client
-     * @type {memcache.Client}
-     */
-    'private _memcache': null,
+  /**
+   * Memcache client
+   * @type {memcache.Client}
+   */
+  'private _memcache': null,
 
-    /**
-     * Session data
-     * @type {object}
-     */
-    'private _data': {},
+  /**
+   * Session data
+   * @type {object}
+   */
+  'private _data': {},
 
+  /**
+   * Initializes a session from an existing PHP session
+   *
+   * @param String          id       session id
+   * @param memcache.Client memcache memcache client used to access session
+   *
+   * @return undefined
+   */
+  __construct: function (id, memcache) {
+    this._id = id || '';
+    this._memcache = memcache;
+    this._data = {};
 
-    /**
-     * Initializes a session from an existing PHP session
-     *
-     * @param String          id       session id
-     * @param memcache.Client memcache memcache client used to access session
-     *
-     * @return undefined
-     */
-    __construct: function( id, memcache )
-    {
-        this._id       = id || '';
-        this._memcache = memcache;
-        this._data     = {};
+    // parse the session data
+    var _self = this;
+    this._getSessionData(function (data) {
+      _self._data = data === null ? {} : data;
 
-        // parse the session data
-        var _self = this;
-        this._getSessionData( function( data )
-        {
-            _self._data = ( data === null ) ? {} : data;
+      // session data is now available
+      _self.emit('ready', data);
+    });
+  },
 
-            // session data is now available
-            _self.emit( 'ready', data );
-        } );
-    },
+  /**
+   * Returns the session data
+   *
+   * @return Object session data
+   */
+  getData: function () {
+    return this._data;
+  },
 
+  /**
+   * Returns whether the user is currently logged in
+   *
+   * This is determined simply by whether the agent id is available.
+   *
+   * @return Boolean
+   */
+  isLoggedIn: function () {
+    return this._data.agentID !== undefined ? true : false;
+  },
 
-    /**
-     * Returns the session data
-     *
-     * @return Object session data
-     */
-    getData: function()
-    {
-        return this._data;
-    },
+  /**
+   * Gets the agent id, if available
+   *
+   * @return Integer|undefined agent id or undefined if unavailable
+   */
+  agentId: function () {
+    return this._data.agentID || undefined;
+  },
 
+  /**
+   * Gets the agent name, if available
+   *
+   * @return String|undefined agent name or undefined if unavailable
+   */
+  agentName: function () {
+    return this._data.agentNAME || undefined;
+  },
 
-    /**
-     * Returns whether the user is currently logged in
-     *
-     * This is determined simply by whether the agent id is available.
-     *
-     * @return Boolean
-     */
-    isLoggedIn: function()
-    {
-        return ( this._data.agentID !== undefined )
-            ? true
-            : false;
-    },
+  /**
+   * Gets the user name, if available
+   *
+   * @return String|undefined user name or undefined if unavailable
+   */
+  userName: function () {
+    return this._data.user_name || undefined;
+  },
 
+  /**
+   * Whether the user is logged in as an internal user rather than a broker
+   *
+   * @return {boolean} true if internal user, otherwise false
+   */
+  isInternal: function () {
+    return this.agentId() === '900000' ? true : false;
+  },
 
-    /**
-     * Gets the agent id, if available
-     *
-     * @return Integer|undefined agent id or undefined if unavailable
-     */
-    agentId: function()
-    {
-        return this._data.agentID || undefined;
-    },
+  'public setAgentId': function (id) {
+    this._data.agentID = id;
+    return this;
+  },
 
+  /**
+   * Gets the broker entity id, if available
+   *
+   * @return Integer|undefined agent entity id or undefined if unavailable
+   */
+  agentEntityId: function () {
+    return this._data.broker_entity_id || undefined;
+  },
 
-    /**
-     * Gets the agent name, if available
-     *
-     * @return String|undefined agent name or undefined if unavailable
-     */
-    agentName: function()
-    {
-        return this._data.agentNAME || undefined;
-    },
+  /**
+   * Set session redirect for Symfony
+   *
+   * This will perform a redirect after login.
+   *
+   * @param {string}      url      url to redirect to
+   * @param {function()=} callback optional continuation
+   *
+   * @return {UserSession} self
+   */
+  'public setRedirect': function (url, callback) {
+    this._appendSessionData({s2_legacy_redirect: url}, callback);
 
+    return this;
+  },
 
-    /**
-     * Gets the user name, if available
-     *
-     * @return String|undefined user name or undefined if unavailable
-     */
-    userName: function()
-    {
-        return this._data.user_name || undefined;
-    },
+  'public setReturnQuoteNumber': function (number, callback) {
+    this._appendSessionData({lvqs_return_qn: +number}, callback);
 
+    return this;
+  },
 
-    /**
-     * Whether the user is logged in as an internal user rather than a broker
-     *
-     * @return {boolean} true if internal user, otherwise false
-     */
-    isInternal: function()
-    {
-        return ( this.agentId() === '900000' )
-            ? true
-            : false;
-    },
+  'public getReturnQuoteNumber': function () {
+    return this._data.lvqs_return_qn || 0;
+  },
 
+  'public clearReturnQuoteNumber': function (callback) {
+    this._data.lvqs_return_qn = 0;
+    this.setReturnQuoteNumber(0, callback);
 
-    'public setAgentId': function( id )
-    {
-        this._data.agentID = id;
-        return this;
-    },
+    return this;
+  },
 
+  /**
+   * Appends data to a session
+   *
+   * XXX: Note that this is not a reliable means of modifying session
+   * data---it servese its purpose for appending string data to a session, but
+   * should not be used for anything else (such as modifying existing session
+   * values).
+   *
+   * @param {Object}      data     key-value string data
+   * @param {function()=} callback optional continuation
+   *
+   * @return {undefined}
+   */
+  'private _appendSessionData': function (data, callback) {
+    var _self = this;
 
-    /**
-     * Gets the broker entity id, if available
-     *
-     * @return Integer|undefined agent entity id or undefined if unavailable
-     */
-    agentEntityId: function()
-    {
-        return this._data.broker_entity_id || undefined;
-    },
+    this._memcache.get(this._id, function (err, orig) {
+      if (err || !orig) {
+        // well we gave it a good shot! (right now we don't indicate
+        // error, because there's not much we can do about that...maybe
+        // in the future we'll want to be notified of errors)...we just
+        // don't want to potentially clear out all the session data
+        callback && callback();
+        return;
+      }
 
+      var newdata = orig;
 
-    /**
-     * Set session redirect for Symfony
-     *
-     * This will perform a redirect after login.
-     *
-     * @param {string}      url      url to redirect to
-     * @param {function()=} callback optional continuation
-     *
-     * @return {UserSession} self
-     */
-    'public setRedirect': function( url, callback )
-    {
-        this._appendSessionData(
-            { s2_legacy_redirect: url },
-            callback
-        );
+      for (var key in data) {
+        newdata += key + '|' + php.serialize(data[key]);
+      }
 
-        return this;
-    },
+      _self._memcache.set(_self._id, newdata, 0, function () {
+        callback && callback();
+      });
+    });
+  },
 
+  /**
+   * Parses PHP session data from memcache and returns an object with the data
+   *
+   * @param {function(data)} callback function to call with parsed data
+   *
+   * @return Object parsed session data
+   */
+  'private _getSessionData': function (callback) {
+    this._memcache.get(this._id, function (err, data) {
+      if (err || data === null) {
+        // failure
+        callback(null);
+        return;
+      }
 
-    'public setReturnQuoteNumber': function( number, callback )
-    {
-        this._appendSessionData(
-            { lvqs_return_qn: +number },
-            callback
-        );
+      var session_data = {};
 
-        return this;
-    },
+      if (data) {
+        // Due to limitations of Javascript's regex engine, we need to do
+        // this in a series of steps. First, split the string to find the
+        // keys and their serialized values.
+        var splits = data.split(/(\w+?)\|/),
+          len = splits.length;
 
+        // associate the keys with their values
+        for (var i = 1; i < len; i++) {
+          var key = splits[i],
+            val = splits[++i];
 
-    'public getReturnQuoteNumber': function()
-    {
-        return this._data.lvqs_return_qn || 0;
-    },
+          // the values are serialized PHP data; unserialize them
+          val = php.unserialize(val);
 
+          // add to the session data
+          session_data[key] = val;
+        }
+      }
 
-    'public clearReturnQuoteNumber': function( callback )
-    {
-        this._data.lvqs_return_qn = 0;
-        this.setReturnQuoteNumber( 0, callback );
-
-        return this;
-    },
-
-
-    /**
-     * Appends data to a session
-     *
-     * XXX: Note that this is not a reliable means of modifying session
-     * data---it servese its purpose for appending string data to a session, but
-     * should not be used for anything else (such as modifying existing session
-     * values).
-     *
-     * @param {Object}      data     key-value string data
-     * @param {function()=} callback optional continuation
-     *
-     * @return {undefined}
-     */
-    'private _appendSessionData': function( data, callback )
-    {
-        var _self = this;
-
-        this._memcache.get( this._id, function( err, orig )
-        {
-            if ( err || !orig )
-            {
-                // well we gave it a good shot! (right now we don't indicate
-                // error, because there's not much we can do about that...maybe
-                // in the future we'll want to be notified of errors)...we just
-                // don't want to potentially clear out all the session data
-                callback && callback();
-                return;
-            }
-
-            var newdata = orig;
-
-            for ( var key in data )
-            {
-                newdata += key + '|' + php.serialize( data[ key ] );
-            }
-
-            _self._memcache.set( _self._id, newdata, 0, function()
-            {
-                callback && callback();
-            } );
-        } );
-    },
-
-
-    /**
-     * Parses PHP session data from memcache and returns an object with the data
-     *
-     * @param {function(data)} callback function to call with parsed data
-     *
-     * @return Object parsed session data
-     */
-    'private _getSessionData': function( callback )
-    {
-        this._memcache.get( this._id, function( err, data )
-        {
-            if ( err || data === null )
-            {
-                // failure
-                callback( null );
-                return;
-            }
-
-            var session_data = {};
-
-            if ( data )
-            {
-                // Due to limitations of Javascript's regex engine, we need to do
-                // this in a series of steps. First, split the string to find the
-                // keys and their serialized values.
-                var splits = data.split( /(\w+?)\|/ ),
-                    len    = splits.length;
-
-                // associate the keys with their values
-                for ( var i = 1; i < len; i++ )
-                {
-                    var key = splits[ i ],
-                        val = splits[ ++i ];
-
-                    // the values are serialized PHP data; unserialize them
-                    val = php.unserialize( val );
-
-                    // add to the session data
-                    session_data[ key ] = val;
-                }
-            }
-
-            // return the parsed session data
-            callback( session_data );
-        } );
-    },
-} );
-
+      // return the parsed session data
+      callback(session_data);
+    });
+  },
+});

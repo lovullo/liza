@@ -19,61 +19,54 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class       = require( 'easejs' ).Class,
-    UserRequest = require( '../request/UserRequest' );
-
+var Class = require('easejs').Class,
+  UserRequest = require('../request/UserRequest');
 
 /**
  * Logs HTTP access in Apache's combined log format
  */
-module.exports = Class( 'AccessLog' )
-    .extend( require( './Log' ),
-{
-    /**
-     * Monitors a user request for the end of the connection and adds an entry
-     * to the access log
-     *
-     * @param UserRequest user_request
-     *
-     * @return AccessLog self
-     */
-    'public attach': function( user_request )
-    {
-        if ( !( Class.isA( UserRequest, user_request ) ) )
-        {
-            throw new TypeError(
-                'UserRequest expected, ' + ( user_request.toString() ) +
-                ' given'
-            );
-        }
-
-        var self    = this,
-            request = user_request.getRequest();
-
-        // log when the request is complete
-        user_request.on( 'end', function()
-        {
-            // determine the remote address (in case we're behind a proxy, look
-            // at X-Forwarded-For)
-            var remote_addr = user_request.getRemoteAddr(),
-                username = user_request.getSession().agentId() || '-';
-
-            // access log (apache combined log format)
-            self.write( '%s %s - - [%s] "%s %s HTTP/%s" %d %d "%s" "%s"',
-                remote_addr,
-                username,
-                new Date(),
-                request.method,
-                request.url,
-                request.httpVersion,
-                user_request.getResponseCode(),
-                user_request.getResponseLength(),
-                request.headers['referer'] || '-',
-                request.headers['user-agent'] || '-'
-            );
-        });
-
-        return this;
+module.exports = Class('AccessLog').extend(require('./Log'), {
+  /**
+   * Monitors a user request for the end of the connection and adds an entry
+   * to the access log
+   *
+   * @param UserRequest user_request
+   *
+   * @return AccessLog self
+   */
+  'public attach': function (user_request) {
+    if (!Class.isA(UserRequest, user_request)) {
+      throw new TypeError(
+        'UserRequest expected, ' + user_request.toString() + ' given'
+      );
     }
-} );
 
+    var self = this,
+      request = user_request.getRequest();
+
+    // log when the request is complete
+    user_request.on('end', function () {
+      // determine the remote address (in case we're behind a proxy, look
+      // at X-Forwarded-For)
+      var remote_addr = user_request.getRemoteAddr(),
+        username = user_request.getSession().agentId() || '-';
+
+      // access log (apache combined log format)
+      self.write(
+        '%s %s - - [%s] "%s %s HTTP/%s" %d %d "%s" "%s"',
+        remote_addr,
+        username,
+        new Date(),
+        request.method,
+        request.url,
+        request.httpVersion,
+        user_request.getResponseCode(),
+        user_request.getResponseLength(),
+        request.headers['referer'] || '-',
+        request.headers['user-agent'] || '-'
+      );
+    });
+
+    return this;
+  },
+});

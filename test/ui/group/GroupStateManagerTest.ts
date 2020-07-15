@@ -19,163 +19,146 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const expect = require( 'chai' ).expect,
-      sinon  = require( 'sinon' ),
-      Sut    = require( '../../../src/ui/group/GroupStateManager' ).GroupStateManager;
+const expect = require('chai').expect,
+  sinon = require('sinon'),
+  Sut = require('../../../src/ui/group/GroupStateManager').GroupStateManager;
 
 before(function () {
-    this.jsdom = require('jsdom-global')()
+  this.jsdom = require('jsdom-global')();
 });
 
 after(function () {
-    this.jsdom()
+  this.jsdom();
 });
 
-describe( 'ui.group.GroupStateManager', () =>
-{
-    describe( 'processDataAttributes', () =>
-    {
-        it( 'processes the data attributes', () =>
-        {
-            const sut = new Sut();
-            let data_was_read = false;
+describe('ui.group.GroupStateManager', () => {
+  describe('processDataAttributes', () => {
+    it('processes the data attributes', () => {
+      const sut = new Sut();
+      let data_was_read = false;
 
-            const elem = createHtmlElement();
+      const elem = createHtmlElement();
 
-            elem.getAttribute = () =>
-            {
-                data_was_read = true;
-                return 'foo_retry';
-            };
+      elem.getAttribute = () => {
+        data_was_read = true;
+        return 'foo_retry';
+      };
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            expect( data_was_read ).to.be.true;
-        } );
-    } );
+      expect(data_was_read).to.be.true;
+    });
+  });
 
-    describe( 'observes', () =>
-    {
-        it( 'detects when the state manager observes a valid state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+  describe('observes', () => {
+    it('detects when the state manager observes a valid state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            expect( sut.observes( 'pending' ) ).to.be.true;
-        } );
+      expect(sut.observes('pending')).to.be.true;
+    });
 
-        it( 'detects when the state manager does not observe an invalid state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+    it('detects when the state manager does not observe an invalid state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            elem.getAttribute = () => '';
+      elem.getAttribute = () => '';
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            expect( sut.observes( 'foo' ) ).to.be.false;
-        } );
-    } );
+      expect(sut.observes('foo')).to.be.false;
+    });
+  });
 
-    describe( 'isPending', () =>
-    {
-        it( 'detects a non-pending state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+  describe('isPending', () => {
+    it('detects a non-pending state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            const bucket = createBucket();
+      const bucket = createBucket();
 
-            bucket.getDataByName = () => [ 0 ];
+      bucket.getDataByName = () => [0];
 
-            expect( sut.is( "pending", bucket ) ).to.be.false;
-        } );
+      expect(sut.is('pending', bucket)).to.be.false;
+    });
 
-        it( 'detects a pending state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+    it('detects a pending state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            const bucket = createBucket();
+      const bucket = createBucket();
 
-            bucket.getDataByName = () => [ 1 ];
+      bucket.getDataByName = () => [1];
 
-            expect( sut.is( "pending", bucket ) ).to.be.true;
-        } );
+      expect(sut.is('pending', bucket)).to.be.true;
+    });
 
-        it( 'detects a multi-variate pending state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+    it('detects a multi-variate pending state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            elem.getAttribute = () => 'foo_retry bar_retry'
+      elem.getAttribute = () => 'foo_retry bar_retry';
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            const bucket = createBucket();
-            const bucket_values = {
-                foo_retry: [ 0 ],
-                bar_retry: [ 1 ]
-            }
+      const bucket = createBucket();
+      const bucket_values = {
+        foo_retry: [0],
+        bar_retry: [1],
+      };
 
-            bucket.getDataByName = ( key: 'foo_retry' | 'bar_retry' ) =>
-            {
-                return bucket_values[ key ];
-            };
+      bucket.getDataByName = (key: 'foo_retry' | 'bar_retry') => {
+        return bucket_values[key];
+      };
 
-            expect( sut.is( "pending", bucket ) ).to.be.true;
-        } );
-    } );
+      expect(sut.is('pending', bucket)).to.be.true;
+    });
+  });
 
-    describe( 'isDisabled', () =>
-    {
-        it( 'detects a non-disabled state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+  describe('isDisabled', () => {
+    it('detects a non-disabled state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            const bucket = createBucket();
+      const bucket = createBucket();
 
-            bucket.getDataByName = () => [ 0 ];
+      bucket.getDataByName = () => [0];
 
-            expect( sut.is( "disabled", bucket ) ).to.be.false;
-        } );
+      expect(sut.is('disabled', bucket)).to.be.false;
+    });
 
-        it( 'detects a disabled state', () =>
-        {
-            const sut = new Sut();
-            const elem = createHtmlElement();
+    it('detects a disabled state', () => {
+      const sut = new Sut();
+      const elem = createHtmlElement();
 
-            sut.processDataAttributes( elem );
+      sut.processDataAttributes(elem);
 
-            const bucket = createBucket();
+      const bucket = createBucket();
 
-            bucket.getDataByName = () => [ 1 ];
+      bucket.getDataByName = () => [1];
 
-            expect( sut.is( "disabled", bucket ) ).to.be.true;
-        } );
-    } );
-} );
+      expect(sut.is('disabled', bucket)).to.be.true;
+    });
+  });
+});
 
-const createBucket = () =>
-{
-    return {
-        getDataByName: sinon.stub()
-    }
-}
+const createBucket = () => {
+  return {
+    getDataByName: sinon.stub(),
+  };
+};
 
-const createHtmlElement = () =>
-{
-    let elem = document.createElement("div");
-    elem.getAttribute = () => 'foo_retry'
+const createHtmlElement = () => {
+  let elem = document.createElement('div');
+  elem.getAttribute = () => 'foo_retry';
 
-    return elem;
-}
+  return elem;
+};

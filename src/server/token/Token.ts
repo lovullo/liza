@@ -22,14 +22,11 @@
  * was designed to handle HTTP requests.
  */
 
-
 /** Identifier unique to token namespace */
 export type TokenId = NominalType<string, 'TokenId'>;
 
-
 /** Token namespace for identifiers */
 export type TokenNamespace = NominalType<string, 'TokenNamespace'>;
-
 
 /**
  * Token states
@@ -45,16 +42,17 @@ export type TokenNamespace = NominalType<string, 'TokenNamespace'>;
  * For valid state transitions, see `TokenTransition`.
  */
 export enum TokenState {
-    ACTIVE   = "ACTIVE",
-    DONE     = "DONE",
-    ACCEPTED = "ACCEPTED",
-    DEAD     = "DEAD",
-};
-
+  ACTIVE = 'ACTIVE',
+  DONE = 'DONE',
+  ACCEPTED = 'ACCEPTED',
+  DEAD = 'DEAD',
+}
 
 /** Tokens that can be killed (placed into a `DEAD` state) */
 export type TokenStateDeadable =
-    TokenState.ACTIVE | TokenState.DONE | TokenState.DEAD;
+  | TokenState.ACTIVE
+  | TokenState.DONE
+  | TokenState.DEAD;
 
 /** Tokens that can be completed (placed into a `DONE` state) */
 export type TokenStateDoneable = TokenState.ACTIVE;
@@ -62,54 +60,51 @@ export type TokenStateDoneable = TokenState.ACTIVE;
 /** Tokens that can be accepted (placed into an `ACCEPTED` state) */
 export type TokenStateAcceptable = TokenState.DONE;
 
-
 /**
  * Request token
  *
  * Tokens are basic state machines with a unique identifier, timestamp of
  * the last state transition, and associated string data.
  */
-export interface Token<T extends TokenState>
-{
-    /** Token identifier */
-    readonly id: TokenId;
+export interface Token<T extends TokenState> {
+  /** Token identifier */
+  readonly id: TokenId;
 
-    /** Token state */
-    readonly state: T
+  /** Token state */
+  readonly state: T;
 
-    /** Timestamp of most recent state transition */
-    readonly timestamp: UnixTimestamp;
+  /** Timestamp of most recent state transition */
+  readonly timestamp: UnixTimestamp;
 
-    /** Data associated with last state transition */
-    readonly data: string | null;
+  /** Data associated with last state transition */
+  readonly data: string | null;
 
-    /**
-     * Whether this token id differs from the last modified for a given
-     * document within a given namespace during the last database operation
-     *
-     * Whether or not this value is significant is dependent on the
-     * caller.  For example, when a new token is created, this value will
-     * always be `true`, because the last updated token couldn't possibly
-     * match a new token id.  However, when updating a token, this will only
-     * be `true` if another token in the same namespace for the same
-     * document has been modified since this token was last modified.
-     *
-     * This can be used to determine whether activity on a token should be
-     * ignored.  For example, a token that is not the latest may represent a
-     * stale request that should be ignored.
-     *
-     * This value can only be trusted within a context of the most recent
-     * database operation; other processes may have manipulated tokens since
-     * that time.
-     */
-    readonly last_mismatch: boolean;
+  /**
+   * Whether this token id differs from the last modified for a given
+   * document within a given namespace during the last database operation
+   *
+   * Whether or not this value is significant is dependent on the
+   * caller.  For example, when a new token is created, this value will
+   * always be `true`, because the last updated token couldn't possibly
+   * match a new token id.  However, when updating a token, this will only
+   * be `true` if another token in the same namespace for the same
+   * document has been modified since this token was last modified.
+   *
+   * This can be used to determine whether activity on a token should be
+   * ignored.  For example, a token that is not the latest may represent a
+   * stale request that should be ignored.
+   *
+   * This value can only be trusted within a context of the most recent
+   * database operation; other processes may have manipulated tokens since
+   * that time.
+   */
+  readonly last_mismatch: boolean;
 
-    /**
-     * Whether this was the most recently created token
-     *
-     * This is true iff the last token to have been in the `ACTIVE` status
-     * is shares the same token id.
-     */
-    readonly last_created: boolean;
+  /**
+   * Whether this was the most recently created token
+   *
+   * This is true iff the last token to have been in the `ACTIVE` status
+   * is shares the same token id.
+   */
+  readonly last_created: boolean;
 }
-

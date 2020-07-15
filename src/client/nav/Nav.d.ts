@@ -19,8 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-import { PositiveInteger } from "../../numeric";
+import {PositiveInteger} from '../../numeric';
 
 /**
  * Handles navigation logic
@@ -28,31 +27,26 @@ import { PositiveInteger } from "../../numeric";
  * The step_builder function should accept two arguments: the step id and a
  * callback to be executed once the step has reached its ready state.
  */
-export declare class Nav
-{
-    /**
-     * Returns the id of the current step
-     *
-     * @return Integer id of the current step
-     */
-    getCurrentStepId(): PositiveInteger;
+export declare class Nav {
+  /**
+   * Returns the id of the current step
+   *
+   * @return Integer id of the current step
+   */
+  getCurrentStepId(): PositiveInteger;
 
+  /**
+   * Set the ID of the top visited step
+   *
+   * @param step_id - ID of the step to set
+   */
+  setTopVisitedStepId(step_id: PositiveInteger): void;
 
-    /**
-     * Set the ID of the top visited step
-     *
-     * @param step_id - ID of the step to set
-     */
-    setTopVisitedStepId( step_id: PositiveInteger ): void;
-
-
-    /**
-     * Navigate to a given step ID
-     *
-     * @param step_id - ID of the step to navigate to
-     * @param force   - Optionally force navigation which suppresses the UI dialog
-     */
-    navigateToStep( step_id: PositiveInteger, force?: boolean ): void;
+  /**
+   * Navigate to a given step ID
+   *
+   * @param step_id - ID of the step to navigate to
+   * @param force   - Optionally force navigation which suppresses the UI dialog
+   */
+  navigateToStep(step_id: PositiveInteger, force?: boolean): void;
 }
-
-

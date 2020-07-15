@@ -21,36 +21,31 @@
 
 'use strict';
 
-const { Class } = require( 'easejs' );
-
+const {Class} = require('easejs');
 
 /**
  * Represents error in performing HTTP request
  */
-module.exports = Class( 'HttpError' )
-    .extend( Error,
-{
-    /**
-     * HTTP status code
-     * @type {number}
-     */
-    'public statuscode': 500,
+module.exports = Class('HttpError').extend(Error, {
+  /**
+   * HTTP status code
+   * @type {number}
+   */
+  'public statuscode': 500,
 
-
-    /**
-     * Set error message and HTTP status code
-     *
-     * The HTTP status code defaults to 500 if not set.  No check is
-     * performed to determine whether the given status code is a valid error
-     * code.
-     *
-     * The mesage is _not_ automatically set from the status code.
-     *
-     * @param {string}  message    error message
-     * @param {number=} statuscode HTTP status code
-     */
-    __construct( message, statuscode )
-    {
-        this.statuscode = statuscode || 500;
-    },
-} );
+  /**
+   * Set error message and HTTP status code
+   *
+   * The HTTP status code defaults to 500 if not set.  No check is
+   * performed to determine whether the given status code is a valid error
+   * code.
+   *
+   * The mesage is _not_ automatically set from the status code.
+   *
+   * @param {string}  message    error message
+   * @param {number=} statuscode HTTP status code
+   */
+  __construct(message, statuscode) {
+    this.statuscode = statuscode || 500;
+  },
+});

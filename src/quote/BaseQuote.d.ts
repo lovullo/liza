@@ -21,156 +21,139 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-import { Program } from "../program/Program";
-import { Quote, QuoteId } from "./Quote";
-import { QuoteDataBucket } from "../bucket/QuoteDataBucket";
-import { PositiveInteger } from "../numeric";
+import {Program} from '../program/Program';
+import {Quote, QuoteId} from './Quote';
+import {QuoteDataBucket} from '../bucket/QuoteDataBucket';
+import {PositiveInteger} from '../numeric';
 
+export declare class BaseQuote implements Quote {
+  /**
+   * Retrieve Program associated with quote
+   *
+   * @return quote program
+   */
+  getProgram(): Program;
 
-export declare class BaseQuote implements Quote
-{
-    /**
-     * Retrieve Program associated with quote
-     *
-     * @return quote program
-     */
-    getProgram(): Program;
+  /**
+   * Returns the program id associated with the quote
+   *
+   * @return program id
+   */
+  getProgramId(): string;
 
+  /**
+   * Returns the quote id
+   *
+   * The quote id is immutable. A different quote id would represent a
+   * different quote, therefore a new object should be created with the
+   * desired quote id.
+   *
+   * @return quote id
+   */
+  getId(): QuoteId;
 
-    /**
-     * Returns the program id associated with the quote
-     *
-     * @return program id
-     */
-    getProgramId(): string;
+  /**
+   * Returns the id of the current step
+   *
+   * @return id of current step
+   */
+  getCurrentStepId(): number;
 
+  /**
+   * Sets the id of the current step
+   *
+   * @param id of current step
+   */
+  setCurrentStepId(step_id: number): this;
 
-    /**
-     * Returns the quote id
-     *
-     * The quote id is immutable. A different quote id would represent a
-     * different quote, therefore a new object should be created with the
-     * desired quote id.
-     *
-     * @return quote id
-     */
-    getId(): QuoteId;
+  /**
+   * Sets an explicit lock, providing a reason for doing so
+   *
+   * @param reason - lock reason
+   * @param step   - step that user may not navigate prior
+   *
+   * @return self
+   */
+  setExplicitLock(reason: string, step: number): this;
 
+  /**
+   * Set the date that the premium was calculated as a Unix timestamp
+   *
+   * @param timestamp - Unix timestamp representing premium date
+   *
+   * @return self
+   */
+  setLastPremiumDate(timestamp: UnixTimestamp): this;
 
-    /**
-     * Returns the id of the current step
-     *
-     * @return id of current step
-     */
-    getCurrentStepId(): number;
+  /**
+   * Retrieve the last time the premium was calculated
+   *
+   * @return last calculated time or 0
+   */
+  getLastPremiumDate(): UnixTimestamp;
 
+  /**
+   * Returns the bucket used to store the quote form data
+   *
+   * @return the data bucket
+   */
+  getBucket(): QuoteDataBucket;
 
-    /**
-     * Sets the id of the current step
-     *
-     * @param id of current step
-     */
-    setCurrentStepId( step_id: number ): this;
+  /**
+   * Retrieves the reason for an explicit lock
+   *
+   * @return lock reason
+   */
+  getExplicitLockReason(): string;
 
+  /**
+   * Returns the maximum step to which the explicit lock applies
+   *
+   * If no step restriction is set, then 0 will be returned.
+   *
+   * @return {number} locked max step or 0 if not applicable
+   */
+  getExplicitLockStep(): PositiveInteger;
 
-    /**
-     * Sets an explicit lock, providing a reason for doing so
-     *
-     * @param reason - lock reason
-     * @param step   - step that user may not navigate prior
-     *
-     * @return self
-     */
-    setExplicitLock( reason: string, step: number ): this;
+  /**
+   * Returns whether the quote has been imported
+   *
+   * @return true if imported, otherwise false
+   */
+  isImported(): boolean;
 
+  /**
+   * Returns whether the quote has been bound
+   *
+   * @return true if bound, otherwise false
+   */
+  isBound(): boolean;
 
-    /**
-     * Set the date that the premium was calculated as a Unix timestamp
-     *
-     * @param timestamp - Unix timestamp representing premium date
-     *
-     * @return self
-     */
-    setLastPremiumDate( timestamp: UnixTimestamp ): this;
+  /**
+   * Returns the id of the highest step the quote has reached
+   *
+   * @return top visited step id
+   */
+  getTopVisitedStepId(): PositiveInteger;
 
+  /**
+   * Returns the id of the highest step the quote has saved
+   *
+   * @return top saved step id
+   */
+  getTopSavedStepId(): PositiveInteger;
 
-    /**
-     * Retrieve the last time the premium was calculated
-     *
-     * @return last calculated time or 0
-     */
-    getLastPremiumDate(): UnixTimestamp;
+  /**
+   * Sets the id of the highest step the quote has saved
+   *
+   * @param top saved step id
+   */
+  setTopSavedStepId(id: number): this;
 
-
-    /**
-     * Returns the bucket used to store the quote form data
-     *
-     * @return the data bucket
-     */
-    getBucket(): QuoteDataBucket;
-
-
-    /**
-     * Retrieves the reason for an explicit lock
-     *
-     * @return lock reason
-     */
-    getExplicitLockReason(): string;
-
-
-    /**
-     * Returns the maximum step to which the explicit lock applies
-     *
-     * If no step restriction is set, then 0 will be returned.
-     *
-     * @return {number} locked max step or 0 if not applicable
-     */
-    getExplicitLockStep(): PositiveInteger;
-
-
-    /**
-     * Returns whether the quote has been imported
-     *
-     * @return true if imported, otherwise false
-     */
-    isImported(): boolean;
-
-
-    /**
-     * Returns whether the quote has been bound
-     *
-     * @return true if bound, otherwise false
-     */
-    isBound(): boolean;
-
-
-    /**
-     * Returns the id of the highest step the quote has reached
-     *
-     * @return top visited step id
-     */
-    getTopVisitedStepId(): PositiveInteger;
-
-
-    /**
-     * Returns the id of the highest step the quote has saved
-     *
-     * @return top saved step id
-     */
-    getTopSavedStepId(): PositiveInteger;
-
-
-    /**
-     * Sets the id of the highest step the quote has saved
-     *
-     * @param top saved step id
-     */
-    setTopSavedStepId( id: number ): this;
-
-    /**
-     * Returns the quote's expiration date
-     *
-     * @return quote's expiration date
-     */
-    getExpirationDate(): number;
+  /**
+   * Returns the quote's expiration date
+   *
+   * @return quote's expiration date
+   */
+  getExpirationDate(): number;
 }

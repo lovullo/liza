@@ -19,76 +19,68 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContextContent, FieldContext, NullableContextContent } from "./FieldContext";
-
+import {
+  ContextContent,
+  FieldContext,
+  NullableContextContent,
+} from './FieldContext';
 
 /**
  * Context responsible for a specific sub field (option)
  */
-export class SubFieldContext extends FieldContext
-{
-    /**
-     * Parent of field element within the content
-     */
-    private _field_parent_element: NullableContextContent = null;
+export class SubFieldContext extends FieldContext {
+  /**
+   * Parent of field element within the content
+   */
+  private _field_parent_element: NullableContextContent = null;
 
-    /**
-     * Field element within the content
-     */
-    private _field_element: NullableContextContent = null;
+  /**
+   * Field element within the content
+   */
+  private _field_element: NullableContextContent = null;
 
-
-    /**
-     * Attach the subfield to its parent
-     *
-     * @param to - Parent to attach to
-     * @param next_element - Next element to attach before
-     */
-    attach( _to: ContextContent, _next_element: NullableContextContent ): void
-    {
-        if ( this._field_element === null )
-        {
-            this._field_element = this._setFieldElement();
-        }
-
-        if ( this._field_parent_element !== null )
-        {
-            this._field_parent_element.appendChild( this._field_element );
-        }
-
-        this.is_attached = true;
-        this.is_visible  = true;
+  /**
+   * Attach the subfield to its parent
+   *
+   * @param to - Parent to attach to
+   * @param next_element - Next element to attach before
+   */
+  attach(_to: ContextContent, _next_element: NullableContextContent): void {
+    if (this._field_element === null) {
+      this._field_element = this._setFieldElement();
     }
 
-
-    /**
-     * Detach the subfield from its parent
-     */
-    detach(): void
-    {
-        if ( this._field_element === null )
-        {
-            this._field_element = this._setFieldElement();
-        }
-
-        if ( this._field_element.parentElement !== null )
-        {
-            // save its parent before detaching
-            this._field_parent_element = this._field_element.parentElement;
-
-            this._field_parent_element.removeChild( this._field_element );
-        }
-
-        this.is_attached = false;
-        this.is_visible  = false;
+    if (this._field_parent_element !== null) {
+      this._field_parent_element.appendChild(this._field_element);
     }
 
+    this.is_attached = true;
+    this.is_visible = true;
+  }
 
-    /**
-     * Query to get the field element
-     */
-    private _setFieldElement(): ContextContent
-    {
-        return <ContextContent>this.content.querySelector( "#" + this.element_id );
+  /**
+   * Detach the subfield from its parent
+   */
+  detach(): void {
+    if (this._field_element === null) {
+      this._field_element = this._setFieldElement();
     }
+
+    if (this._field_element.parentElement !== null) {
+      // save its parent before detaching
+      this._field_parent_element = this._field_element.parentElement;
+
+      this._field_parent_element.removeChild(this._field_element);
+    }
+
+    this.is_attached = false;
+    this.is_visible = false;
+  }
+
+  /**
+   * Query to get the field element
+   */
+  private _setFieldElement(): ContextContent {
+    return <ContextContent>this.content.querySelector('#' + this.element_id);
+  }
 }

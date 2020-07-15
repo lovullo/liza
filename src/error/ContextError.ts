@@ -24,8 +24,7 @@
  * existing `Error` objects.
  */
 
-import { ___Writable } from 'naughty';
-
+import {___Writable} from 'naughty';
 
 /**
  * Error with additional context regarding its cause
@@ -44,11 +43,9 @@ import { ___Writable } from 'naughty';
  * case an explicit context should be used.
  */
 export interface ContextError<T extends ErrorContext = ErrorContext>
-    extends Error
-{
-    readonly context: T,
+  extends Error {
+  readonly context: T;
 }
-
 
 /**
  * Key/value context for an error
@@ -58,8 +55,7 @@ export interface ContextError<T extends ErrorContext = ErrorContext>
  * in the future, the type will remain unchanged.  The values, however, may
  * include any arbitrary data.
  */
-export type ErrorContext = { readonly [P: string]: any };
-
+export type ErrorContext = {readonly [P: string]: any};
 
 /**
  * Type predicate for `ContextError`
@@ -72,9 +68,8 @@ export type ErrorContext = { readonly [P: string]: any };
  *
  * @return whether `e` is of type `ContextError`
  */
-export const hasContext = ( e: Error ): e is ContextError =>
-    ( <ContextError>e ).context !== undefined;
-
+export const hasContext = (e: Error): e is ContextError =>
+  (<ContextError>e).context !== undefined;
 
 /**
  * Adds context to an error
@@ -85,9 +80,10 @@ export const hasContext = ( e: Error ): e is ContextError =>
  * @param enew    error object to add context to
  * @param context key/value context information
  */
-export function context<T = ErrorContext>( enew: Error, context: T ):
-    ContextError<T>
-{
-    ( <___Writable<ContextError<T>>>enew ).context = context;
-    return <ContextError<T>>enew;
+export function context<T = ErrorContext>(
+  enew: Error,
+  context: T
+): ContextError<T> {
+  (<___Writable<ContextError<T>>>enew).context = context;
+  return <ContextError<T>>enew;
 }

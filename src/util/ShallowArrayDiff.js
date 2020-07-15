@@ -19,14 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class     = require( 'easejs' ).Class,
-    ArrayDiff = require( './ArrayDiff' );
+var Class = require('easejs').Class,
+  ArrayDiff = require('./ArrayDiff');
 
-
-module.exports = Class( 'ShallowArrayDiff' )
-    .implement( ArrayDiff )
-    .extend(
-{
+module.exports = Class('ShallowArrayDiff')
+  .implement(ArrayDiff)
+  .extend({
     /**
      * Return the strictly non-matching indexes and their values
      *
@@ -39,22 +37,18 @@ module.exports = Class( 'ShallowArrayDiff' )
      *
      * @return {Array.Array.<*>} an array of non-matching values
      */
-    'public diff': function( a, b )
-    {
-        var longer  = ( a.length > b.length ) ? a : b,
-            i       = longer.length,
-            changed = [];
+    'public diff': function (a, b) {
+      var longer = a.length > b.length ? a : b,
+        i = longer.length,
+        changed = [];
 
-        // for each index, return both values if they do not strictly match
-        while ( i-- )
-        {
-            if ( a[ i ] !== b[ i ] )
-            {
-                changed[ i ] = [ a[ i ], b[ i ] ];
-            }
+      // for each index, return both values if they do not strictly match
+      while (i--) {
+        if (a[i] !== b[i]) {
+          changed[i] = [a[i], b[i]];
         }
+      }
 
-        return changed;
-    }
-} );
-
+      return changed;
+    },
+  });

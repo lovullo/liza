@@ -19,31 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ClientActionType } from "../action/ClientAction";
+import {ClientActionType} from '../action/ClientAction';
 
-
-export interface EventHandler
-{
-    /**
-     * Handle an event of the given type
-     *
-     * An exception should be thrown if the event cannot be handled.
-     *
-     * The handler should always return itself; if a return value is needed to
-     * the caller, then a callback should be provided as an argument to the
-     * handler.
-     *
-     * @param _type - event id; ignored
-     * @param c     - to invoke on completion
-     * @param data  - additional event data
-     */
-    handle(
-        _type: ClientActionType,
-        c:     () => void,
-        data:  any
-    ): this
+export interface EventHandler {
+  /**
+   * Handle an event of the given type
+   *
+   * An exception should be thrown if the event cannot be handled.
+   *
+   * The handler should always return itself; if a return value is needed to
+   * the caller, then a callback should be provided as an argument to the
+   * handler.
+   *
+   * @param _type - event id; ignored
+   * @param c     - to invoke on completion
+   * @param data  - additional event data
+   */
+  handle(_type: ClientActionType, c: () => void, data: any): this;
 }
 
 export type EventHandlers = {
-    [P: string]: EventHandler
-}
+  [P: string]: EventHandler;
+};

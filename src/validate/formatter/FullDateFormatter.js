@@ -19,27 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var date_parts = require( './DateValidator' )();
-
+var date_parts = require('./DateValidator')();
 
 /**
  * Normalizes the date to a common YYYY-MM-DD format
  *
  * Will format as MM/DD/YYYY for diplay in rater
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        date_parts.getDateRegExp(),
+module.exports = require('./PatternFormatter')(
+  [
+    date_parts.getDateRegExp(),
 
-        function( match, p1, p1_str, p2, p2_str, p3 )
-        {
-            return date_parts.normalizeFullDate(
-                match, p1, p1_str, p2, p2_str, p3
-            );
-        }
-    ],
+    function (match, p1, p1_str, p2, p2_str, p3) {
+      return date_parts.normalizeFullDate(match, p1, p1_str, p2, p2_str, p3);
+    },
+  ],
 
-    // returns results formatted in MM/DD/YYYY format
-    [ /^(\d{4})-0?(\d{1,2})-0?(\d{1,2})$/, "$2/$3/$1" ]
+  // returns results formatted in MM/DD/YYYY format
+  [/^(\d{4})-0?(\d{1,2})-0?(\d{1,2})$/, '$2/$3/$1']
 );
-

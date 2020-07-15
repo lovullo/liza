@@ -24,16 +24,14 @@
  *
  * instantiate objects for MongoDb
  */
-import { MongoDb, MongoDbConfig, MongoCollection } from '../../types/mongodb';
-import { DaoError } from '../../error/DaoError';
-
+import {MongoDb, MongoDbConfig, MongoCollection} from '../../types/mongodb';
+import {DaoError} from '../../error/DaoError';
 
 const {
-    Db:             MongoDb,
-    Server:         MongoServer,
-    ReplSetServers: ReplSetServers,
-} = require( 'mongodb' );
-
+  Db: MongoDb,
+  Server: MongoServer,
+  ReplSetServers: ReplSetServers,
+} = require('mongodb');
 
 /**
  * Create a mongodb configuration from the environment
@@ -42,21 +40,19 @@ const {
  *
  * @return the mongo configuration
  */
-export function createMongoConfig( env: NodeJS.ProcessEnv ): MongoDbConfig
-{
-    return <MongoDbConfig>{
-        'port':       +( env.MONGODB_PORT || 0 ),
-        'ha':         +( env.LIZA_MONGODB_HA || 0 ) == 1,
-        'replset':    env.LIZA_MONGODB_REPLSET,
-        'host':       env.MONGODB_HOST,
-        'host_a':     env.LIZA_MONGODB_HOST_A,
-        'port_a':     +( env.LIZA_MONGODB_PORT_A || 0 ),
-        'host_b':     env.LIZA_MONGODB_HOST_B,
-        'port_b':     +( env.LIZA_MONGODB_PORT_B || 0 ),
-        'collection': 'quotes',
-    };
+export function createMongoConfig(env: NodeJS.ProcessEnv): MongoDbConfig {
+  return <MongoDbConfig>{
+    port: +(env.MONGODB_PORT || 0),
+    ha: +(env.LIZA_MONGODB_HA || 0) == 1,
+    replset: env.LIZA_MONGODB_REPLSET,
+    host: env.MONGODB_HOST,
+    host_a: env.LIZA_MONGODB_HOST_A,
+    port_a: +(env.LIZA_MONGODB_PORT_A || 0),
+    host_b: env.LIZA_MONGODB_HOST_B,
+    port_b: +(env.LIZA_MONGODB_PORT_B || 0),
+    collection: 'quotes',
+  };
 }
-
 
 /**
  * Create the database connection
@@ -65,36 +61,30 @@ export function createMongoConfig( env: NodeJS.ProcessEnv ): MongoDbConfig
  *
  * @return the mongodb connection
  */
-export function createMongoDB( conf: MongoDbConfig ): MongoDb
-{
-    if( conf.ha )
-    {
-        var mongodbPort = conf.port || 27017;
-        var mongodbReplSet = conf.replset || 'rs0';
-        var dbServers = new ReplSetServers(
-            [
-                new MongoServer( conf.host_a, conf.port_a || mongodbPort),
-                new MongoServer( conf.host_b, conf.port_b || mongodbPort),
-            ],
-            {rs_name: mongodbReplSet, auto_reconnect: true}
-        );
-    }
-    else
-    {
-        var dbServers = new MongoServer(
-            conf.host || '127.0.0.1',
-            conf.port || 27017,
-            {auto_reconnect: true}
-        );
-    }
-    var db = new MongoDb(
-        'program',
-        dbServers,
-        {native_parser: false, safe: false}
+export function createMongoDB(conf: MongoDbConfig): MongoDb {
+  if (conf.ha) {
+    var mongodbPort = conf.port || 27017;
+    var mongodbReplSet = conf.replset || 'rs0';
+    var dbServers = new ReplSetServers(
+      [
+        new MongoServer(conf.host_a, conf.port_a || mongodbPort),
+        new MongoServer(conf.host_b, conf.port_b || mongodbPort),
+      ],
+      {rs_name: mongodbReplSet, auto_reconnect: true}
     );
-    return db;
+  } else {
+    var dbServers = new MongoServer(
+      conf.host || '127.0.0.1',
+      conf.port || 27017,
+      {auto_reconnect: true}
+    );
+  }
+  var db = new MongoDb('program', dbServers, {
+    native_parser: false,
+    safe: false,
+  });
+  return db;
 }
-
 
 /**
  * Attempts to connect to the database and retrieve the collection
@@ -107,83 +97,62 @@ export function createMongoDB( conf: MongoDbConfig ): MongoDb
  * @return the collection
  */
 export function getMongoCollection(
-    db:   MongoDb,
-    conf: MongoDbConfig
-): Promise<MongoCollection>
-{
-    return new Promise( ( resolve, reject ) =>
-    {
-        // attempt to connect to the database
-        db.open( ( e: any, db: any ) =>
-        {
-            // if there was an error, don't bother with anything else
-            if ( e )
-            {
-                // in some circumstances, it may just be telling us that
-                // we're already connected (even though the connection may
-                // have been broken)
-                if ( e.errno !== undefined )
-                {
-                    reject( new Error(
-                        'Error opening mongo connection: ' + e
-                    ) );
-                    return;
-                }
-            } else if ( db == null )
-            {
-                reject( new DaoError( 'No database connection' ) );
-                return;
-            }
+  db: MongoDb,
+  conf: MongoDbConfig
+): Promise<MongoCollection> {
+  return new Promise((resolve, reject) => {
+    // attempt to connect to the database
+    db.open((e: any, db: any) => {
+      // if there was an error, don't bother with anything else
+      if (e) {
+        // in some circumstances, it may just be telling us that
+        // we're already connected (even though the connection may
+        // have been broken)
+        if (e.errno !== undefined) {
+          reject(new Error('Error opening mongo connection: ' + e));
+          return;
+        }
+      } else if (db == null) {
+        reject(new DaoError('No database connection'));
+        return;
+      }
 
-            // quotes collection
-            db.collection(
-                conf.collection,
-                ( e: any, collection: MongoCollection ) =>
-                {
-                    if ( e )
-                    {
-                        reject( new DaoError(
-                            'Error creating collection: ' + e
-                        ) );
-                        return;
-                    }
+      // quotes collection
+      db.collection(conf.collection, (e: any, collection: MongoCollection) => {
+        if (e) {
+          reject(new DaoError('Error creating collection: ' + e));
+          return;
+        }
 
-                    let createdCount = 0
-                    const checkAllCreated = (): void =>
-                    {
-                        if( createdCount >= 3 )
-                        {
-                            resolve( collection );
-                        }
-                    };
+        let createdCount = 0;
+        const checkAllCreated = (): void => {
+          if (createdCount >= 3) {
+            resolve(collection);
+          }
+        };
 
-                    const cb = ( e: any, _index: { [P: string]: any } ): void =>
-                    {
-                        if ( e )
-                        {
-                            reject( new DaoError(
-                                'Error creating index: ' + e
-                            ) );
-                            return;
-                        }
+        const cb = (e: any, _index: {[P: string]: any}): void => {
+          if (e) {
+            reject(new DaoError('Error creating index: ' + e));
+            return;
+          }
 
-                        createdCount++;
-                        checkAllCreated();
-                    };
+          createdCount++;
+          checkAllCreated();
+        };
 
-                    // initialize indexes
-                    collection.createIndex( [ ['published', 1] ], false, cb );
-                    collection.createIndex( [ ['deltaError', 1] ], false, cb);
-                    collection.createIndex(
-                        [
-                            [ 'published', 1 ],
-                            [ 'deltaError', 1 ],
-                        ],
-                        false,
-                        cb
-                    );
-                }
-            );
-        } );
-    } );
+        // initialize indexes
+        collection.createIndex([['published', 1]], false, cb);
+        collection.createIndex([['deltaError', 1]], false, cb);
+        collection.createIndex(
+          [
+            ['published', 1],
+            ['deltaError', 1],
+          ],
+          false,
+          cb
+        );
+      });
+    });
+  });
 }

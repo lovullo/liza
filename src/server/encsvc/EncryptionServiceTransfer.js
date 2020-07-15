@@ -19,37 +19,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Facilitates data transfer between encryption service and client
  */
-module.exports = Interface( 'EncryptionServiceTransfer',
-{
-    /**
-     * Encrypt the provided data
-     *
-     * This operation is asynchronous.
-     *
-     * @param {string}             data     data to encrypt
-     * @param {function( Buffer )} callback function to call with encrypted data
-     *
-     * @return undefined
-     */
-    'public encrypt': [ 'data', 'callback' ],
+module.exports = Interface('EncryptionServiceTransfer', {
+  /**
+   * Encrypt the provided data
+   *
+   * This operation is asynchronous.
+   *
+   * @param {string}             data     data to encrypt
+   * @param {function( Buffer )} callback function to call with encrypted data
+   *
+   * @return undefined
+   */
+  'public encrypt': ['data', 'callback'],
 
-
-    /**
-     * Decrypts the provided data
-     *
-     * This operation is asynchronous.
-     *
-     * @param {Buffer}             data     data to decrypt
-     * @param {function( string )} callback function to call with decrypted data
-     *
-     * @return undefined
-     */
-    'public decrypt': [ 'data', 'callback' ],
-} );
-
+  /**
+   * Decrypts the provided data
+   *
+   * This operation is asynchronous.
+   *
+   * @param {Buffer}             data     data to decrypt
+   * @param {function( string )} callback function to call with decrypted data
+   *
+   * @return undefined
+   */
+  'public decrypt': ['data', 'callback'],
+});

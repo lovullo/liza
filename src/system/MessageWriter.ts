@@ -20,25 +20,24 @@
  *
  * Write a message to be published to a queue
  */
-import { DocumentMeta } from '../document/Document';
-import { DeltaResult } from '../bucket/delta';
+import {DocumentMeta} from '../document/Document';
+import {DeltaResult} from '../bucket/delta';
 
-export interface MessageWriter
-{
-    /**
-     * Write the data to a message
-     *
-     * @param ts       - timestamp
-     * @param meta     - document meta data
-     * @param delta    - current delta
-     * @param bucket   - data bucket
-     * @param ratedata - ratedata bucket
-     */
-    write(
-        ts:          UnixTimestamp,
-        meta:        DocumentMeta,
-        delta:       DeltaResult<any>,
-        bucket:      Record<string, any>,
-        ratedata:    Record<string, any>,
-    ): Promise<Buffer>
+export interface MessageWriter {
+  /**
+   * Write the data to a message
+   *
+   * @param ts       - timestamp
+   * @param meta     - document meta data
+   * @param delta    - current delta
+   * @param bucket   - data bucket
+   * @param ratedata - ratedata bucket
+   */
+  write(
+    ts: UnixTimestamp,
+    meta: DocumentMeta,
+    delta: DeltaResult<any>,
+    bucket: Record<string, any>,
+    ratedata: Record<string, any>
+  ): Promise<Buffer>;
 }

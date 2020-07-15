@@ -21,45 +21,37 @@
 
 'use strict';
 
-const { expect }   = require( 'chai' );
-const { Class }    = require( 'easejs' );
-const DummyDataApi = require( '../DummyDataApi' );
+const {expect} = require('chai');
+const {Class} = require('easejs');
+const DummyDataApi = require('../DummyDataApi');
 
 const {
-    DataApi,
-    format: {
-        ResponseApply: Sut
-    },
-} = require( '../../../' ).dapi;
+  DataApi,
+  format: {ResponseApply: Sut},
+} = require('../../../').dapi;
 
+describe('ResponseApply', () => {
+  it('applies function to response', done => {
+    const expected = {};
+    const given = {given: 'data'};
 
-describe( 'ResponseApply', () =>
-{
-    it( 'applies function to response', done =>
-    {
-        const expected = {};
-        const given    = { given: 'data' };
+    const f = src => {
+      expect(src).to.equal(given);
+      return expected;
+    };
 
-        const f = src =>
-        {
-            expect( src ).to.equal( given );
-            return expected;
-        };
+    DummyDataApi.use(Sut(f))((_, c) => c(null, given)).request(
+      given,
+      (e, data) => {
+        expect(data).to.equal(expected);
+        done();
+      }
+    );
+  });
 
-        DummyDataApi.use( Sut( f ) )( ( _, c ) => c( null, given ) )
-            .request( given, ( e, data ) =>
-            {
-                expect( data ).to.equal( expected );
-                done();
-            } );
-    } );
+  it('returns self', () => {
+    const sut = DummyDataApi.use(Sut(_ => {}))(_ => {});
 
-
-    it( 'returns self', () =>
-    {
-        const sut = DummyDataApi.use( Sut( _ => {} ) )( _ => {} );
-
-        expect( sut.request( {}, () => {} ) )
-            .to.equal( sut );
-    } );
-} );
+    expect(sut.request({}, () => {})).to.equal(sut);
+  });
+});

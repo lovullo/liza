@@ -19,48 +19,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ClientActions } from "../client/action/ClientAction";
-import { ServerSideQuote } from "./quote/ServerSideQuote";
-import { UserRequest } from "./request/UserRequest";
-
+import {ClientActions} from '../client/action/ClientAction';
+import {ServerSideQuote} from './quote/ServerSideQuote';
+import {UserRequest} from './request/UserRequest';
 
 /**
  * General server actions
  */
-export declare class Server
-{
-    /**
-     * Send response to user
-     *
-     * @param request - request to respond to
-     * @param quote   - quote associated with request
-     * @param data    - data with which to reply
-     * @param actions - optional client actions
-     *
-     * @return self
-     */
-    sendResponse(
-        request:  UserRequest,
-        quote:    ServerSideQuote,
-        data:     Record<string, any>,
-        actions?: ClientActions,
-    ): this;
+export declare class Server {
+  /**
+   * Send response to user
+   *
+   * @param request - request to respond to
+   * @param quote   - quote associated with request
+   * @param data    - data with which to reply
+   * @param actions - optional client actions
+   *
+   * @return self
+   */
+  sendResponse(
+    request: UserRequest,
+    quote: ServerSideQuote,
+    data: Record<string, any>,
+    actions?: ClientActions
+  ): this;
 
-
-    /**
-     * Send response to user
-     *
-     * @param request     - request to respond to
-     * @param message     - message to display to user
-     * @param actions     - optional client actions
-     * @param btn_caption - optional caption for acknowledgement button
-     *
-     * @return self
-     */
-    sendError(
-        request:      UserRequest,
-        message:      string,
-        actions?:     ClientActions,
-        btn_caption?: string,
-    ): this;
+  /**
+   * Send response to user
+   *
+   * @param request     - request to respond to
+   * @param message     - message to display to user
+   * @param actions     - optional client actions
+   * @param btn_caption - optional caption for acknowledgement button
+   *
+   * @return self
+   */
+  sendError(
+    request: UserRequest,
+    message: string,
+    actions?: ClientActions,
+    btn_caption?: string
+  ): this;
 }

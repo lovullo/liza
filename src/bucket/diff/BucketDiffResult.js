@@ -19,15 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-
-module.exports = Interface( 'BucketDiffResult',
-{
-    /**
-     * Describes what fields have changed using boolean flags; does not include
-     * unchanged fields
-     */
-    'public describeChanged': []
-} );
-
+module.exports = Interface('BucketDiffResult', {
+  /**
+   * Describes what fields have changed using boolean flags; does not include
+   * unchanged fields
+   */
+  'public describeChanged': [],
+});

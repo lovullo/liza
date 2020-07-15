@@ -20,19 +20,18 @@
  */
 
 import {
-    Token,
-    TokenId,
-    TokenNamespace,
-    TokenState,
-    TokenStateAcceptable,
-    TokenStateDeadable,
-    TokenStateDoneable,
-} from "../Token";
+  Token,
+  TokenId,
+  TokenNamespace,
+  TokenState,
+  TokenStateAcceptable,
+  TokenStateDeadable,
+  TokenStateDoneable,
+} from '../Token';
 
-import { TokenStore } from "./TokenStore";
-import { TokenDao, TokenData } from "../TokenDao";
-import { DocumentId } from "../../../document/Document";
-
+import {TokenStore} from './TokenStore';
+import {TokenDao, TokenData} from '../TokenDao';
+import {DocumentId} from '../../../document/Document';
 
 /**
  * Persistent token storage
@@ -87,193 +86,189 @@ import { DocumentId } from "../../../document/Document";
  *
  * For more information on tokens, see `Token`.
  */
-export class PersistentTokenStore implements TokenStore
-{
-    /**
-     * Initialize store
-     *
-     * @param _dao      data access layer
-     * @param _doc_id   constrain store to given document id
-     * @param _token_ns token namespace
-     * @param _idgen    token id generator
-     */
-    constructor(
-        private readonly _dao:      TokenDao,
-        private readonly _doc_id:   DocumentId,
-        private readonly _token_ns: TokenNamespace,
-        private readonly _idgen:    () => TokenId
-    ) {}
+export class PersistentTokenStore implements TokenStore {
+  /**
+   * Initialize store
+   *
+   * @param _dao      data access layer
+   * @param _doc_id   constrain store to given document id
+   * @param _token_ns token namespace
+   * @param _idgen    token id generator
+   */
+  constructor(
+    private readonly _dao: TokenDao,
+    private readonly _doc_id: DocumentId,
+    private readonly _token_ns: TokenNamespace,
+    private readonly _idgen: () => TokenId
+  ) {}
 
+  /**
+   * Look up an existing token by id
+   *
+   * This looks up the given token id `token_id` for the document,
+   * constrained to this store's namespace and document id.
+   *
+   * The state of the returned token cannot be determined until runtime,
+   * so the caller is responsible for further constraining the type.
+   *
+   * @param token_id token id
+   *
+   * @return requested token, if it exists
+   */
+  lookupToken(token_id: TokenId): Promise<Token<TokenState>> {
+    return this._dao
+      .getToken(this._doc_id, this._token_ns, token_id)
+      .then(data => this._tokenDataToToken(data, data.status.type));
+  }
 
-    /**
-     * Look up an existing token by id
-     *
-     * This looks up the given token id `token_id` for the document,
-     * constrained to this store's namespace and document id.
-     *
-     * The state of the returned token cannot be determined until runtime,
-     * so the caller is responsible for further constraining the type.
-     *
-     * @param token_id token id
-     *
-     * @return requested token, if it exists
-     */
-    lookupToken( token_id: TokenId ): Promise<Token<TokenState>>
-    {
-        return this._dao.getToken( this._doc_id, this._token_ns, token_id )
-            .then( data => this._tokenDataToToken( data, data.status.type ) );
-    }
+  /**
+   * Create a new token for the given document within the store's
+   * namespace
+   *
+   * The returned token will always be `ACTIVE` and will always have
+   * `last_mistmatch` set.
+   */
+  createToken(): Promise<Token<TokenState.ACTIVE>> {
+    return this._dao
+      .updateToken(
+        this._doc_id,
+        this._token_ns,
+        this._idgen(),
+        TokenState.ACTIVE,
+        null
+      )
+      .then(data => this._tokenDataToToken(data, TokenState.ACTIVE, true));
+  }
 
+  /**
+   * Convert raw token data to a higher-level `Token`
+   *
+   * The token state must be provided in addition to the token data for
+   * compile-time type checking, where permissable.
+   *
+   * A token will have `last_mistmatch` set if the last token before a
+   * database operation does not match `data.id`.
+   *
+   * @param data  raw token data
+   * @param state token state
+   *
+   * @return new token
+   */
+  private _tokenDataToToken<T extends TokenState>(
+    data: TokenData,
+    state: T,
+    created: boolean = false
+  ): Token<T> {
+    return {
+      id: data.id,
+      state: state,
+      timestamp: data.status.timestamp,
+      data: data.status.data,
+      last_mismatch: this._isLastMistmatch(data),
+      last_created: created || this._isLastCreated(data),
+    };
+  }
 
-    /**
-     * Create a new token for the given document within the store's
-     * namespace
-     *
-     * The returned token will always be `ACTIVE` and will always have
-     * `last_mistmatch` set.
-     */
-    createToken(): Promise<Token<TokenState.ACTIVE>>
-    {
-        return this._dao.updateToken(
-            this._doc_id, this._token_ns, this._idgen(), TokenState.ACTIVE, null
-        )
-            .then( data => this._tokenDataToToken(
-                data, TokenState.ACTIVE, true
-            ) );
-    }
+  /**
+   * Determine whether the given token data represents a mismatch on the
+   * previous last token id
+   *
+   * For more information on what this means, see `Token.last_mistmatch`.
+   *
+   * @param data raw token data
+   */
+  private _isLastMistmatch(data: TokenData): boolean {
+    return data.prev_last === null || data.id !== data.prev_last.id;
+  }
 
+  /**
+   * Whether the token represents the most recently created token
+   *
+   * @param data raw token data
+   *
+   * @return whether token was the most recently created
+   */
+  private _isLastCreated(data: TokenData): boolean {
+    return (
+      data.prev_state !== undefined &&
+      data.prev_state[TokenState.ACTIVE] === data.id
+    );
+  }
 
-    /**
-     * Convert raw token data to a higher-level `Token`
-     *
-     * The token state must be provided in addition to the token data for
-     * compile-time type checking, where permissable.
-     *
-     * A token will have `last_mistmatch` set if the last token before a
-     * database operation does not match `data.id`.
-     *
-     * @param data  raw token data
-     * @param state token state
-     *
-     * @return new token
-     */
-    private _tokenDataToToken<T extends TokenState>(
-        data:    TokenData,
-        state:   T,
-        created: boolean = false
-    ):
-        Token<T>
-    {
-        return {
-            id:            data.id,
-            state:         state,
-            timestamp:     data.status.timestamp,
-            data:          data.status.data,
-            last_mismatch: this._isLastMistmatch( data ),
-            last_created:  created || this._isLastCreated( data ),
-        };
-    }
+  /**
+   * Complete a token
+   *
+   * Completing a token places it into a `DONE` state.  Only certain
+   * types of tokens can be completed (`TokenStateDoneable`).
+   *
+   * A token that in a `DONE` state means that processing has completed
+   * and is waiting acknowledgement from the system responsible for
+   * handling the response.
+   *
+   * @param src  token to complete
+   * @param data optional response data
+   *
+   * @return token in `DONE` state
+   */
+  completeToken(
+    src: Token<TokenStateDoneable>,
+    data: string | null
+  ): Promise<Token<TokenState.DONE>> {
+    return this._dao
+      .updateToken(this._doc_id, this._token_ns, src.id, TokenState.DONE, data)
+      .then(data => this._tokenDataToToken(data, TokenState.DONE));
+  }
 
+  /**
+   * Acknowledge a token as accepted
+   *
+   * Accepting a token places it into an `ACCEPTED` state.  Only certain
+   * types of tokens can be accepted (`TokenStateAcceptable`).
+   *
+   * A token that in an `ACCEPTED` state means that a previously completed
+   * token has been acknowledged and all resources related to the
+   * processing of the token can be freed.
+   *
+   * @param src  token to accept
+   * @param data optional accept reason
+   *
+   * @return token in `ACCEPTED` state
+   */
+  acceptToken(
+    src: Token<TokenStateAcceptable>,
+    data: string | null
+  ): Promise<Token<TokenState.ACCEPTED>> {
+    return this._dao
+      .updateToken(
+        this._doc_id,
+        this._token_ns,
+        src.id,
+        TokenState.ACCEPTED,
+        data
+      )
+      .then(data => this._tokenDataToToken(data, TokenState.ACCEPTED));
+  }
 
-    /**
-     * Determine whether the given token data represents a mismatch on the
-     * previous last token id
-     *
-     * For more information on what this means, see `Token.last_mistmatch`.
-     *
-     * @param data raw token data
-     */
-    private _isLastMistmatch( data: TokenData ): boolean
-    {
-        return ( data.prev_last === null )
-            || ( data.id !== data.prev_last.id );
-    }
-
-
-    /**
-     * Whether the token represents the most recently created token
-     *
-     * @param data raw token data
-     *
-     * @return whether token was the most recently created
-     */
-    private _isLastCreated( data: TokenData ): boolean
-    {
-        return ( data.prev_state !== undefined )
-            && ( data.prev_state[ TokenState.ACTIVE ] === data.id );
-    }
-
-
-    /**
-     * Complete a token
-     *
-     * Completing a token places it into a `DONE` state.  Only certain
-     * types of tokens can be completed (`TokenStateDoneable`).
-     *
-     * A token that in a `DONE` state means that processing has completed
-     * and is waiting acknowledgement from the system responsible for
-     * handling the response.
-     *
-     * @param src  token to complete
-     * @param data optional response data
-     *
-     * @return token in `DONE` state
-     */
-    completeToken( src: Token<TokenStateDoneable>, data: string | null ):
-        Promise<Token<TokenState.DONE>>
-    {
-        return this._dao.updateToken(
-            this._doc_id, this._token_ns, src.id, TokenState.DONE, data
-        )
-            .then( data => this._tokenDataToToken( data, TokenState.DONE ) );
-    }
-
-
-    /**
-     * Acknowledge a token as accepted
-     *
-     * Accepting a token places it into an `ACCEPTED` state.  Only certain
-     * types of tokens can be accepted (`TokenStateAcceptable`).
-     *
-     * A token that in an `ACCEPTED` state means that a previously completed
-     * token has been acknowledged and all resources related to the
-     * processing of the token can be freed.
-     *
-     * @param src  token to accept
-     * @param data optional accept reason
-     *
-     * @return token in `ACCEPTED` state
-     */
-    acceptToken( src: Token<TokenStateAcceptable>, data: string | null ):
-        Promise<Token<TokenState.ACCEPTED>>
-    {
-        return this._dao.updateToken(
-            this._doc_id, this._token_ns, src.id, TokenState.ACCEPTED, data
-        )
-            .then( data => this._tokenDataToToken( data, TokenState.ACCEPTED ) );
-    }
-
-
-    /**
-     * Kill a token
-     *
-     * Killing a token places it into a `DEAD` state.  Only certain types of
-     * tokens can be killed (`TokenStateDeadable`).
-     *
-     * A token that in a `DEAD` state means that any processing related to
-     * that token should be aborted.
-     *
-     * @param src  token to kill
-     * @param data optional kill reason
-     *
-     * @return token in `DEAD` state
-     */
-    killToken( src: Token<TokenStateDeadable>, data: string | null ):
-        Promise<Token<TokenState.DEAD>>
-    {
-        return this._dao.updateToken(
-            this._doc_id, this._token_ns, src.id, TokenState.DEAD, data
-        )
-            .then( data => this._tokenDataToToken( data, TokenState.DEAD ) );
-    }
+  /**
+   * Kill a token
+   *
+   * Killing a token places it into a `DEAD` state.  Only certain types of
+   * tokens can be killed (`TokenStateDeadable`).
+   *
+   * A token that in a `DEAD` state means that any processing related to
+   * that token should be aborted.
+   *
+   * @param src  token to kill
+   * @param data optional kill reason
+   *
+   * @return token in `DEAD` state
+   */
+  killToken(
+    src: Token<TokenStateDeadable>,
+    data: string | null
+  ): Promise<Token<TokenState.DEAD>> {
+    return this._dao
+      .updateToken(this._doc_id, this._token_ns, src.id, TokenState.DEAD, data)
+      .then(data => this._tokenDataToToken(data, TokenState.DEAD));
+  }
 }

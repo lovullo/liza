@@ -28,11 +28,10 @@
  *
  * Disabled - A disabled state represents that the group is not active.
  */
-enum GroupState
-{
-    Pending = "pending",
-    Disabled = "disabled"
-};
+enum GroupState {
+  Pending = 'pending',
+  Disabled = 'disabled',
+}
 
 /**
  * The data standard on which stateful applications depend
@@ -42,7 +41,7 @@ enum GroupState
  * state.
  */
 type StateLegend = {
-    [ K in GroupState ]: string[]
+  [K in GroupState]: string[];
 };
 
 /**
@@ -51,75 +50,63 @@ type StateLegend = {
  * The GroupStateManager registers flags stored in data attributes of the
  * group's markup which are references to keys in the bucket.
  */
-export class GroupStateManager
-{
+export class GroupStateManager {
+  /**
+   * A legend that maps possible states to their bucket triggers
+   */
+  private _legend: StateLegend = {
+    pending: [],
+    disabled: [],
+  };
 
-    /**
-     * A legend that maps possible states to their bucket triggers
-     */
-    private _legend: StateLegend = {
-        pending: [],
-        disabled: []
+  /**
+   * Determine if the state manager observes the bucket for a certain state
+   *
+   * @param state - state name
+   *
+   * @return if pending is observed by the manager
+   */
+  public observes(state: GroupState): boolean {
+    return (this._legend[state]?.length ?? 0) > 0;
+  }
+
+  /**
+   * Read and store relevant state attributes from an HTML element
+   *
+   * @param target - element containing state data
+   */
+  public processDataAttributes(target: HTMLElement) {
+    const pending = target.getAttribute('data-pending-when') || '';
+    const disabled = target.getAttribute('data-disabled-when') || '';
+
+    this._legend['pending'] = pending ? pending.split(' ') : [];
+    this._legend['disabled'] = disabled ? disabled.split(' ') : [];
+  }
+
+  /**
+   * Determine if a particular state is enabled for the group
+   *
+   * @param state  - state to check
+   * @param bucket - bucket
+   *
+   * @return if a group's state is enabled
+   */
+  public is(state: GroupState, bucket: any): boolean {
+    if (!this.observes(state)) {
+      return false;
     }
 
+    for (let index in this._legend[state]) {
+      let key = this._legend[state][index];
+      let data = bucket.getDataByName(key) || [];
 
-    /**
-     * Determine if the state manager observes the bucket for a certain state
-     *
-     * @param state - state name
-     *
-     * @return if pending is observed by the manager
-     */
-    public observes( state: GroupState ): boolean
-    {
-        return ( this._legend[ state ]?.length ?? 0 ) > 0;
-    }
-
-
-    /**
-     * Read and store relevant state attributes from an HTML element
-     *
-     * @param target - element containing state data
-     */
-    public processDataAttributes( target: HTMLElement )
-    {
-        const pending = target.getAttribute( 'data-pending-when' ) || '';
-        const disabled = target.getAttribute( 'data-disabled-when' ) || '';
-
-        this._legend[ "pending" ] = pending ? pending.split( ' ' ) : [];
-        this._legend[ "disabled" ] = disabled ? disabled.split( ' ' ) : [];
-    }
-
-
-    /**
-     * Determine if a particular state is enabled for the group
-     *
-     * @param state  - state to check
-     * @param bucket - bucket
-     *
-     * @return if a group's state is enabled
-     */
-    public is( state: GroupState, bucket: any ): boolean
-    {
-        if ( !this.observes( state ) )
-        {
-            return false;
+      for (let data_index in data) {
+        if (+data[data_index] > 0) {
+          return true;
         }
-
-        for ( let index in this._legend[ state ] )
-        {
-            let key = this._legend[ state ][ index ];
-            let data = bucket.getDataByName( key ) || [];
-
-            for ( let data_index in data )
-            {
-                if ( +data[ data_index ] > 0 )
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+      }
     }
+
+    return false;
+  }
 }

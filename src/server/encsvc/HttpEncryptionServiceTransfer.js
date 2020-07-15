@@ -19,24 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-    http  = require( 'http' ),
-
-    /**
-     * Interface
-     * @type {EncryptionServiceTransfer}
-     */
-    EncryptionServiceTransfer = require( './EncryptionServiceTransfer' );
-
+var Class = require('easejs').Class,
+  http = require('http'),
+  /**
+   * Interface
+   * @type {EncryptionServiceTransfer}
+   */
+  EncryptionServiceTransfer = require('./EncryptionServiceTransfer');
 
 /**
  * Responsible for performing encrypt/decryption through use of a RESTful
  * service
  */
-module.exports = Class( 'HttpEncryptionServiceTransfer' )
-    .implement( EncryptionServiceTransfer )
-    .extend(
-{
+module.exports = Class('HttpEncryptionServiceTransfer')
+  .implement(EncryptionServiceTransfer)
+  .extend({
     /**
      * Path to provide for encryption request
      * @type {string}
@@ -48,7 +45,6 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      * @type {string}
      */
     'private const PATH_DEC': '/dec',
-
 
     /**
      * Holds URI of encryption REST service
@@ -62,7 +58,6 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      */
     'private _port': 0,
 
-
     /**
      * Initializes client
      *
@@ -71,12 +66,10 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      *
      * @return undefined
      */
-    'public __construct': function( host, port )
-    {
-        this._host  = ''+host;
-        this._port = +port;
+    'public __construct': function (host, port) {
+      this._host = '' + host;
+      this._port = +port;
     },
-
 
     /**
      * Connect to the remote service
@@ -89,18 +82,16 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      *
      * @return {http.ClientRequest}
      */
-    'virtual protected connect': function( host, port, path )
-    {
-        var options = {
-            host:   host,
-            port:   port,
-            path:   path,
-            method: 'POST',
-        };
+    'virtual protected connect': function (host, port, path) {
+      var options = {
+        host: host,
+        port: port,
+        path: path,
+        method: 'POST',
+      };
 
-        return http.request( options );
+      return http.request(options);
     },
-
 
     /**
      * Encrypt the provided data
@@ -112,15 +103,13 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      *
      * @return undefined
      */
-    'public encrypt': function( data, callback )
-    {
-        this._send(
-            this.connect( this._host, this._port, this.__self.$('PATH_ENC') ),
-            data,
-            callback
-        );
+    'public encrypt': function (data, callback) {
+      this._send(
+        this.connect(this._host, this._port, this.__self.$('PATH_ENC')),
+        data,
+        callback
+      );
     },
-
 
     /**
      * Decrypts the provided data
@@ -132,15 +121,13 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      *
      * @return undefined
      */
-    'public decrypt': function( data, callback )
-    {
-        this._send(
-            this.connect( this._host, this._port, this.__self.$('PATH_DEC') ),
-            data,
-            callback
-        );
+    'public decrypt': function (data, callback) {
+      this._send(
+        this.connect(this._host, this._port, this.__self.$('PATH_DEC')),
+        data,
+        callback
+      );
     },
-
 
     /**
      * Sends a request to the server
@@ -151,27 +138,22 @@ module.exports = Class( 'HttpEncryptionServiceTransfer' )
      *
      * @return  {undefined}
      */
-    'private _send': function( client, data, callback )
-    {
-        client.on( 'response', function( response )
-        {
-            var response_data = '';
+    'private _send': function (client, data, callback) {
+      client.on('response', function (response) {
+        var response_data = '';
 
-            response.setEncoding( 'binary' );
+        response.setEncoding('binary');
 
-            response
-                .on( 'data', function( chunk )
-                {
-                    response_data += chunk;
-                })
-                .on( 'end', function()
-                {
-                    callback( new Buffer( response_data, 'binary' ) );
-                });
-        });
+        response
+          .on('data', function (chunk) {
+            response_data += chunk;
+          })
+          .on('end', function () {
+            callback(new Buffer(response_data, 'binary'));
+          });
+      });
 
-        client.write( data, 'binary' );
-        client.end();
-    }
-} );
-
+      client.write(data, 'binary');
+      client.end();
+    },
+  });

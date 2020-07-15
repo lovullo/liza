@@ -19,11 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-module.exports = require( './PatternFormatter' )(
-    [
-        // brace yourselves.
-        /^[12][0-9]{3}$/, '$&'
-    ]
-);
-
+module.exports = require('./PatternFormatter')([
+  // brace yourselves.
+  /^[12][0-9]{3}$/,
+  '$&',
+]);

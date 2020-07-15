@@ -19,18 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class          = require( 'easejs' ).Class,
-    EventEmitter   = require( '../../events' ).EventEmitter,
-    ClientDebugTab = require( './ClientDebugTab' );
-
+var Class = require('easejs').Class,
+  EventEmitter = require('../../events').EventEmitter,
+  ClientDebugTab = require('./ClientDebugTab');
 
 /**
  * Provides additional information and manipulation options for buckets
  */
-module.exports = Class( 'BucketClientDebugTab' )
-    .implement( ClientDebugTab )
-    .extend( EventEmitter,
-{
+module.exports = Class('BucketClientDebugTab')
+  .implement(ClientDebugTab)
+  .extend(EventEmitter, {
     /**
      * Current index of bucket monitor
      * @type {number}
@@ -55,17 +53,14 @@ module.exports = Class( 'BucketClientDebugTab' )
      */
     'private _paintTimeout': null,
 
-
     /**
      * Retrieve tab title
      *
      * @return {string} tab title
      */
-    'public getTitle': function()
-    {
-        return 'Bucket';
+    'public getTitle': function () {
+      return 'Bucket';
     },
-
 
     /**
      * Retrieve tab content
@@ -75,12 +70,10 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {jQuery|string} tab content
      */
-    'public getContent': function( client, bucket )
-    {
-        return this._$content =
-            ( this._content || this._createBaseContent( bucket ) );
+    'public getContent': function (client, bucket) {
+      return (this._$content =
+        this._content || this._createBaseContent(bucket));
     },
-
 
     /**
      * Create content
@@ -89,67 +82,69 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {jQuery} div containing tab content
      */
-    'private _createBaseContent': function( staging )
-    {
-        this._getBucketMonitorTable();
-        this._hookBucket( staging );
+    'private _createBaseContent': function (staging) {
+      this._getBucketMonitorTable();
+      this._hookBucket(staging);
 
-        return $( '<div>' )
-            .append( this._getHeader() )
-            .append( $( '<fieldset>' )
-                .append( $( '<legend>' ).text( "Staging Bucket" ) )
-                .append( $( '<p>' ).text(
-                    "The staging bucket contains modified data that has not " +
-                        "yet been committed to the quote data bucket in " +
-                        "addition to the actual quote data. This " +
-                        "bucket will be passed to assertions."
-                ) )
-                .append( this._getStagingButtons( staging ) )
-                .append( this._getBucketMonitorLegend() )
-                .append( this._getBucketMonitorTable() )
+      return $('<div>')
+        .append(this._getHeader())
+        .append(
+          $('<fieldset>')
+            .append($('<legend>').text('Staging Bucket'))
+            .append(
+              $('<p>').text(
+                'The staging bucket contains modified data that has not ' +
+                  'yet been committed to the quote data bucket in ' +
+                  'addition to the actual quote data. This ' +
+                  'bucket will be passed to assertions.'
+              )
             )
-        ;
+            .append(this._getStagingButtons(staging))
+            .append(this._getBucketMonitorLegend())
+            .append(this._getBucketMonitorTable())
+        );
     },
-
 
     /**
      * Generate tab header text
      *
      * @return {jQuery} div containing header paragraphs
      */
-    'private _getHeader': function()
-    {
-        var _self = this;
+    'private _getHeader': function () {
+      var _self = this;
 
-        return $( '<div>' )
-            .append( $( '<p>' ).text(
-                "All quote data is contained within the buckets. The Client " +
-                    "exists purely to populate the quote data bucket."
-            ) )
-            .append( $( '<p>' ).html(
-                "<strong>N.B.</strong> This tab does not currently bind " +
-                "to the new data bucket on quote change. Please refresh " +
-                "the page when changing quotes if you wish to use this tab."
-            ) )
-            .append( $( '<p>' )
-                .append( $( '<input>' )
-                    .attr( 'type', 'checkbox' )
-                    .attr( 'id', 'field-overlay' )
-                    .change( function()
-                    {
-                        // trigger toggle event
-                        _self.emit( 'fieldOverlayToggle',
-                            $( this ).is( ':checked' )
-                        );
-                    } )
-                )
-                .append( $( '<label>' )
-                    .attr( 'for', 'field-overlay' )
-                    .text( 'Render field overlays (requires modern browser)' )
-                )
-            );
+      return $('<div>')
+        .append(
+          $('<p>').text(
+            'All quote data is contained within the buckets. The Client ' +
+              'exists purely to populate the quote data bucket.'
+          )
+        )
+        .append(
+          $('<p>').html(
+            '<strong>N.B.</strong> This tab does not currently bind ' +
+              'to the new data bucket on quote change. Please refresh ' +
+              'the page when changing quotes if you wish to use this tab.'
+          )
+        )
+        .append(
+          $('<p>')
+            .append(
+              $('<input>')
+                .attr('type', 'checkbox')
+                .attr('id', 'field-overlay')
+                .change(function () {
+                  // trigger toggle event
+                  _self.emit('fieldOverlayToggle', $(this).is(':checked'));
+                })
+            )
+            .append(
+              $('<label>')
+                .attr('for', 'field-overlay')
+                .text('Render field overlays (requires modern browser)')
+            )
+        );
     },
-
 
     /**
      * Generate staging bucket buttons
@@ -160,179 +155,147 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {jQuery} div containing buttons
      */
-    'private _getStagingButtons': function( staging )
-    {
-        var _self = this;
+    'private _getStagingButtons': function (staging) {
+      var _self = this;
 
-        return $( '<div>' )
-            .append( $( '<button>' )
-                .text( 'Data To Console' )
-                .click( function()
-                {
-                    console.log( staging.getData() );
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Diff To Console' )
-                .click( function()
-                {
-                    console.log( staging.getDiff() );
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Commit' )
-                .click( function()
-                {
-                    staging.commit();
-                    console.info(
-                        'Commited staged changes to data bucket'
-                    );
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Editor' )
-                .click( function()
-                {
-                    _self.showBucketEditor(
-                        staging,
-                        function( name, value )
-                        {
-                            var data = {};
-                            data[ name ] = value;
-                            data[ name ].push( null );
+      return $('<div>')
+        .append(
+          $('<button>')
+            .text('Data To Console')
+            .click(function () {
+              console.log(staging.getData());
+            })
+        )
+        .append(
+          $('<button>')
+            .text('Diff To Console')
+            .click(function () {
+              console.log(staging.getDiff());
+            })
+        )
+        .append(
+          $('<button>')
+            .text('Commit')
+            .click(function () {
+              staging.commit();
+              console.info('Commited staged changes to data bucket');
+            })
+        )
+        .append(
+          $('<button>')
+            .text('Editor')
+            .click(function () {
+              _self.showBucketEditor(staging, function (name, value) {
+                var data = {};
+                data[name] = value;
+                data[name].push(null);
 
-                            // set the data
-                            staging.setValues( data );
-                            console.log( "%s updated", name, data );
-                        }
-                    );
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Clear Monitor' )
-                .click( function()
-                {
-                    return _self._clearTable();
-                } )
-            );
+                // set the data
+                staging.setValues(data);
+                console.log('%s updated', name, data);
+              });
+            })
+        )
+        .append(
+          $('<button>')
+            .text('Clear Monitor')
+            .click(function () {
+              return _self._clearTable();
+            })
+        );
     },
-
 
     /**
      * Clear all results from the assertions log table
      *
      * @return {boolean} true (to prevent navigation)
      */
-    'private _clearTable': function()
-    {
-        // clear monitor and reset count
-        this._$bmonTable.find( 'tbody tr' ).remove();
-        this._bmonIndex = 0;
+    'private _clearTable': function () {
+      // clear monitor and reset count
+      this._$bmonTable.find('tbody tr').remove();
+      this._bmonIndex = 0;
 
-        // re-filter table
-        this._filterBucketTable();
+      // re-filter table
+      this._filterBucketTable();
 
-        return true;
+      return true;
     },
-
 
     /**
      * Generate bucket monitor table or return existing table
      *
      * @return {jQuery} bucket monitor table
      */
-    'private _getBucketMonitorTable': function()
-    {
-        return this._$bmonTable = ( this._$bmonTable || ( function()
-        {
-            return $( '<table>' )
-                .attr( 'id', 'bmon-table' )
-                .append( $( '<thead>' ).append( $( '<tr>' )
-                    .append( $( '<th>' ).text( '#' ) )
-                    .append( $( '<th>' ).text( 'key' ) )
-                    .append( $( '<th>' ).text( 'staged value' ) )
-                    .append( $( '<th>' ).text( 'prev. staged value' ) )
-                    .append( $( '<th>' ).text( 'modifier' ) )
-                    .append( $( '<th>' ).text( 'bucket value' ) )
-                ) )
-                .append( $( '<tbody>' ) )
-            ;
-        } )() );
+    'private _getBucketMonitorTable': function () {
+      return (this._$bmonTable =
+        this._$bmonTable ||
+        (function () {
+          return $('<table>')
+            .attr('id', 'bmon-table')
+            .append(
+              $('<thead>').append(
+                $('<tr>')
+                  .append($('<th>').text('#'))
+                  .append($('<th>').text('key'))
+                  .append($('<th>').text('staged value'))
+                  .append($('<th>').text('prev. staged value'))
+                  .append($('<th>').text('modifier'))
+                  .append($('<th>').text('bucket value'))
+              )
+            )
+            .append($('<tbody>'));
+        })());
     },
-
 
     /**
      * Generate legend for bucket monitor
      *
      * @return {jQuery} div containing legend
      */
-    'private _getBucketMonitorLegend': function()
-    {
-        return $( '<div>' )
-            .attr( 'id', 'bmon-legend' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'bmon-legend-item' )
-                    .addClass( 'set' )
-            )
-            .append( '<span>End of set</span>' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'bmon-legend-item' )
-                    .addClass( 'paint' )
-            )
-            .append( '<span>Paint</span>' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'bmon-legend-item' )
-                    .addClass( 'commit' )
-            )
-            .append( '<span>Commit</span>' )
-            .append(
-                $( '<div>' )
-                    .addClass( 'bmon-legend-item' )
-                    .addClass( 'nochange' )
-            )
-            .append( '<span>Unchanged</span>' )
-            .append( this._getBucketMonitorFilter() )
-        ;
+    'private _getBucketMonitorLegend': function () {
+      return $('<div>')
+        .attr('id', 'bmon-legend')
+        .append($('<div>').addClass('bmon-legend-item').addClass('set'))
+        .append('<span>End of set</span>')
+        .append($('<div>').addClass('bmon-legend-item').addClass('paint'))
+        .append('<span>Paint</span>')
+        .append($('<div>').addClass('bmon-legend-item').addClass('commit'))
+        .append('<span>Commit</span>')
+        .append($('<div>').addClass('bmon-legend-item').addClass('nochange'))
+        .append('<span>Unchanged</span>')
+        .append(this._getBucketMonitorFilter());
     },
-
 
     /**
      * Generate filter for bucket monitor
      *
      * @return {jQuery} div containing filter
      */
-    'private _getBucketMonitorFilter': function()
-    {
-        var _self = this;
+    'private _getBucketMonitorFilter': function () {
+      var _self = this;
 
-        return this._$bmonTableFilter = $( '<input>' )
-            .keyup(
-                function() { _self._filterBucketTable() }
-            );
+      return (this._$bmonTableFilter = $('<input>').keyup(function () {
+        _self._filterBucketTable();
+      }));
     },
-
 
     /**
      * Filter bucket monitor table
      */
-    'private _filterBucketTable': function()
-    {
-        var search_qry = this._$bmonTableFilter.val();
-        this._$bmonTable.find( 'tbody tr' ).show();
+    'private _filterBucketTable': function () {
+      var search_qry = this._$bmonTableFilter.val();
+      this._$bmonTable.find('tbody tr').show();
 
-        if ( search_qry != "" )
-        {
-            var reg = new RegExp( search_qry );
-            this._$bmonTable.find( 'tbody tr' )
-                .filter( function() { return !$( this ).find( 'td' ).eq( 1 ).text().match( reg ) } )
-                .hide();
-        }
-
+      if (search_qry != '') {
+        var reg = new RegExp(search_qry);
+        this._$bmonTable
+          .find('tbody tr')
+          .filter(function () {
+            return !$(this).find('td').eq(1).text().match(reg);
+          })
+          .hide();
+      }
     },
-
 
     /**
      * Perform all necessary hooks for bucket monitor
@@ -341,12 +304,10 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _hookBucket': function( staging )
-    {
-        this._hookBucketUpdate( staging );
-        this._hookBucketCommit( staging );
+    'private _hookBucket': function (staging) {
+      this._hookBucketUpdate(staging);
+      this._hookBucketCommit(staging);
     },
-
 
     /**
      * Hook staging bucket for updates
@@ -355,89 +316,76 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _hookBucketUpdate': function( staging )
-    {
-        var _self  = this,
-            $table = this._$bmonTable,
-            pre    = {};
+    'private _hookBucketUpdate': function (staging) {
+      var _self = this,
+        $table = this._$bmonTable,
+        pre = {};
 
-        staging.on( 'preStagingUpdate', function( data )
-        {
-            // set previous data so we can output it after the update (when we
-            // output the actual row in the table)
-            for ( var key in data )
-            {
-                pre[ key ] = staging.getDataByName( key );
-            }
-        } );
+      staging.on('preStagingUpdate', function (data) {
+        // set previous data so we can output it after the update (when we
+        // output the actual row in the table)
+        for (var key in data) {
+          pre[key] = staging.getDataByName(key);
+        }
+      });
 
-        staging.on( 'stagingUpdate', function( data )
-        {
-            for ( var key in data )
-            {
-                // get the new value
-                var value   = JSON.stringify( staging.getDataByName( key ) ),
-                    pre_val = JSON.stringify( pre[ key ] ),
-                    pre_out = ( pre_val === value )
-                        ? '(identical)'
-                        : ( ( pre_val !== undefined )
-                            ? pre_val
-                            : '(undefined)'
-                        ),
+      staging.on('stagingUpdate', function (data) {
+        for (var key in data) {
+          // get the new value
+          var value = JSON.stringify(staging.getDataByName(key)),
+            pre_val = JSON.stringify(pre[key]),
+            pre_out =
+              pre_val === value
+                ? '(identical)'
+                : pre_val !== undefined
+                ? pre_val
+                : '(undefined)',
+            orig_value = JSON.stringify(staging.getOriginalDataByName(key)),
+            orig_out =
+              orig_value === value
+                ? '(identical)'
+                : orig_value !== undefined
+                ? orig_value
+                : '(undefined)',
+            err = Error(),
+            // get stack trace
+            stack =
+              err.stack &&
+              err.stack.replace(/(.*\n){2}/, key + ' set stack trace:\n');
+          $table.find('tbody').append(
+            $('<tr>')
+              .addClass(pre_val === value ? 'nochange' : '')
+              .append(
+                $('<td>')
+                  .text(_self._bmonIndex++)
+                  .addClass('index')
+              )
+              .append($('<td>').text(key))
+              .append($('<td>').text(value))
+              .append($('<td>').text(pre_out))
+              .append($('<td>').text(JSON.stringify(data[key])))
+              .append($('<td>').text(orig_out))
+              .click(
+                (function (stack_trace) {
+                  return function () {
+                    console.log(stack_trace);
+                  };
+                })(stack)
+              )
+          );
+        }
 
-                    orig_value = JSON.stringify(
-                        staging.getOriginalDataByName( key )
-                    ),
-                    orig_out   = ( ( orig_value === value )
-                        ? '(identical)'
-                        : ( ( orig_value !== undefined )
-                            ? orig_value
-                            : '(undefined)'
-                        )
-                    ),
+        $table.find('tr:last').addClass('last-in-set');
 
-                    err = Error(),
+        _self._paintLine();
 
-                    // get stack trace
-                    stack = err.stack && err.stack.replace(
-                        /(.*\n){2}/,
-                        ( key + ' set stack trace:\n' )
-                    )
-                ;
+        // clear out prev. data
+        pre = {};
 
-                $table.find( 'tbody' ).append( $( '<tr>' )
-                    .addClass( ( pre_val === value ) ? 'nochange' : '' )
-                    .append( $( '<td>' )
-                        .text( _self._bmonIndex++ )
-                        .addClass( 'index' ) )
-                    .append( $( '<td>' ).text( key ) )
-                    .append( $( '<td>' ).text( value ) )
-                    .append( $( '<td>' ).text( pre_out ) )
-                    .append( $( '<td>' ).text( JSON.stringify( data[ key ] ) ) )
-                    .append( $( '<td>' ).text( orig_out ) )
-                    .click( ( function( stack_trace )
-                    {
-                        return function()
-                        {
-                            console.log( stack_trace );
-                        };
-                    } )( stack ) )
-                );
-            }
-
-            $table.find( 'tr:last' )
-                .addClass( 'last-in-set' );
-
-            _self._paintLine();
-
-            // clear out prev. data
-            pre = {};
-
-            // re-filter table
-            _self._filterBucketTable();
-        } );
+        // re-filter table
+        _self._filterBucketTable();
+      });
     },
-
 
     /**
      * Hook staging bucket for commits
@@ -446,40 +394,34 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _hookBucketCommit': function( staging )
-    {
-        var _self  = this,
-            $table = this._getBucketMonitorTable();
+    'private _hookBucketCommit': function (staging) {
+      var _self = this,
+        $table = this._getBucketMonitorTable();
 
-        staging.on( 'preCommit', function()
-        {
-            var data  = staging.getDiff();
+      staging.on('preCommit', function () {
+        var data = staging.getDiff();
 
-            for ( var key in data )
-            {
-                var value        = JSON.stringify( data[ key ] ),
-                    commit_value = JSON.stringify(
-                        staging.getDataByName( key )
-                    );
+        for (var key in data) {
+          var value = JSON.stringify(data[key]),
+            commit_value = JSON.stringify(staging.getDataByName(key));
 
-                $table.find( 'tbody' ).append( $( '<tr>' )
-                    .addClass( 'commit' )
-                    .append( $( '<td>' )
-                        .text( _self._bmonIndex++ )
-                        .addClass( 'index' ) )
-                    .append( $( '<td>' ).text( key ) )
-                    .append( $( '<td>' ).text( commit_value ) )
-                    .append( $( '<td>' )
-                        .attr( 'colspan', 3 )
-                        .text( value )
-                    )
-                );
+          $table.find('tbody').append(
+            $('<tr>')
+              .addClass('commit')
+              .append(
+                $('<td>')
+                  .text(_self._bmonIndex++)
+                  .addClass('index')
+              )
+              .append($('<td>').text(key))
+              .append($('<td>').text(commit_value))
+              .append($('<td>').attr('colspan', 3).text(value))
+          );
 
-                _self._paintLine();
-            }
-        } );
+          _self._paintLine();
+        }
+      });
     },
-
 
     /**
      * Draw paint line
@@ -494,18 +436,17 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _paintLine': function()
-    {
-        var _self = this;
+    'private _paintLine': function () {
+      var _self = this;
 
-        this._paintTimeout && clearTimeout( this._paintTimeout );
-        this._paintTimeout = setTimeout( function()
-        {
-            _self._getBucketMonitorTable().find( 'tr:last' )
-                .addClass( 'last-pre-paint' );
-        }, 25 );
+      this._paintTimeout && clearTimeout(this._paintTimeout);
+      this._paintTimeout = setTimeout(function () {
+        _self
+          ._getBucketMonitorTable()
+          .find('tr:last')
+          .addClass('last-pre-paint');
+      }, 25);
     },
-
 
     /**
      * Displays the bucket editor
@@ -518,62 +459,53 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @todo move into another class
      */
-    'public showBucketEditor': function( staging, change_callback )
-    {
-        var $editor = $( '<div>' )
-            .dialog( {
-                title:       "Bucket Editor",
-                dialogClass: "liza-bucket-editor",
+    'public showBucketEditor': function (staging, change_callback) {
+      var $editor = $('<div>').dialog({
+          title: 'Bucket Editor',
+          dialogClass: 'liza-bucket-editor',
 
-                // this dialog is resizable, so we can't set this with CSS
-                width:  500,
-                height: 600,
+          // this dialog is resizable, so we can't set this with CSS
+          width: 500,
+          height: 600,
 
-                close: function()
-                {
-                    staging.removeListener( 'stagingUpdate', listener );
-                }
-            } ),
-
-            listener = function( data )
-            {
-                for ( let name in data )
-                {
-                    $editor.find( 'input[name="' + name + '"]' )
-                        .val( JSON.stringify(
-                            // get the full data set for this key
-                            staging.getDataByName( name )
-                        ) );
-                }
-            }
-        ;
-
-        staging.on( 'stagingUpdate', listener );
-
-        $editor
-            .append( $( '<button>' )
-                .text( 'Import' )
-                .click( function()
-                {
-                    var data = prompt( 'Paste bucket JSON' );
-                    if ( data )
-                    {
-                        console.log( 'Overwriting bucket.' );
-                        staging.overwriteValues( JSON.parse( data ) );
-                    }
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Dump' )
-                .click( function()
-                {
-                    console.log( staging.getDataJson() );
-                } )
+          close: function () {
+            staging.removeListener('stagingUpdate', listener);
+          },
+        }),
+        listener = function (data) {
+          for (let name in data) {
+            $editor.find('input[name="' + name + '"]').val(
+              JSON.stringify(
+                // get the full data set for this key
+                staging.getDataByName(name)
+              )
             );
+          }
+        };
+      staging.on('stagingUpdate', listener);
 
-        this._genBucketEditorFields( staging, $editor, change_callback );
+      $editor
+        .append(
+          $('<button>')
+            .text('Import')
+            .click(function () {
+              var data = prompt('Paste bucket JSON');
+              if (data) {
+                console.log('Overwriting bucket.');
+                staging.overwriteValues(JSON.parse(data));
+              }
+            })
+        )
+        .append(
+          $('<button>')
+            .text('Dump')
+            .click(function () {
+              console.log(staging.getDataJson());
+            })
+        );
+
+      this._genBucketEditorFields(staging, $editor, change_callback);
     },
-
 
     /**
      * Generates a field for each value in the bucket
@@ -584,42 +516,41 @@ module.exports = Class( 'BucketClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _genBucketEditorFields': function(
-        staging, $editor, change_callback
-    )
-    {
-        var data = staging.getData();
+    'private _genBucketEditorFields': function (
+      staging,
+      $editor,
+      change_callback
+    ) {
+      var data = staging.getData();
 
-        for ( let name in data )
-        {
-            // The data we've been provided with does not include the staging
-            // data.  If we request it by name, however, that data will then be
-            // merged in.
-            var vals = staging.getDataByName( name );
+      for (let name in data) {
+        // The data we've been provided with does not include the staging
+        // data.  If we request it by name, however, that data will then be
+        // merged in.
+        var vals = staging.getDataByName(name);
 
-            $editor.append(
-                $( '<div>' )
-                    .append( $( '<div class="liza-bucket-field">' )
-                        .text( name )
-                    .append( $( '<input>' )
-                        .attr( {
-                            name: name,
-                            type: 'text'
-                        } )
-                        .val( JSON.stringify( vals ) )
-                        .change( ( function( name )
-                        {
-                            return function()
-                            {
-                                var $this = $( this );
-                                change_callback(
-                                    name, JSON.parse( $this.val() )
-                                );
-                            }
-                        } )( name ) )
-                    )
-                )
-            );
-        }
-    }
-} );
+        $editor.append(
+          $('<div>').append(
+            $('<div class="liza-bucket-field">')
+              .text(name)
+              .append(
+                $('<input>')
+                  .attr({
+                    name: name,
+                    type: 'text',
+                  })
+                  .val(JSON.stringify(vals))
+                  .change(
+                    (function (name) {
+                      return function () {
+                        var $this = $(this);
+                        change_callback(name, JSON.parse($this.val()));
+                      };
+                    })(name)
+                  )
+              )
+          )
+        );
+      }
+    },
+  });

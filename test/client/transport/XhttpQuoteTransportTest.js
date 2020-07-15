@@ -19,61 +19,57 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const expect = require( 'chai' ).expect;
-const Class  = require( 'easejs' ).Class;
+const expect = require('chai').expect;
+const Class = require('easejs').Class;
 
-const { XhttpQuoteTransport: Sut } = require( '../../../' ).client.transport;
+const {XhttpQuoteTransport: Sut} = require('../../../').client.transport;
 
+describe('XhttpQuoteTransport', () => {
+  it('truncates index removals', done => {
+    // before truncating
+    const bucket = {
+      getFilledDiff: () => ({
+        none: ['no', 'truncate'],
+        empty: [],
+        one_null: [null],
+        all_null: [null, null, null],
+        tail_null: ['a', 'b', null],
+        tail_null_many: ['a', 'b', null, null, null],
+        undefined_null: [undefined, 'b', undefined, null, null],
 
-describe( "XhttpQuoteTransport", () =>
-{
-    it( "truncates index removals", done =>
-    {
-        // before truncating
-        const bucket = { getFilledDiff: () => ( {
-            none:           [ 'no', 'truncate' ],
-            empty:          [],
-            one_null:       [ null ],
-            all_null:       [ null, null, null ],
-            tail_null:      [ 'a', 'b', null ],
-            tail_null_many: [ 'a', 'b', null, null, null ],
-            undefined_null: [ undefined, 'b', undefined, null, null ],
+        // this shouldn't ever happen, but let's make sure the behavior
+        // is sane anyway
+        bs: [null, 'should', 'not', 'ever', 'happen'],
+      }),
+    };
 
-            // this shouldn't ever happen, but let's make sure the behavior
-            // is sane anyway
-            bs: [ null, 'should', 'not', 'ever', 'happen' ],
-        } ) };
+    // after truncating
+    const expected_data = {
+      none: ['no', 'truncate'],
+      one_null: [null],
+      all_null: [null],
+      tail_null: ['a', 'b', null],
+      tail_null_many: ['a', 'b', null],
+      undefined_null: [null, 'b', null, null],
+      bs: [null],
+    };
 
-        // after truncating
-        const expected_data = {
-            none:           [ 'no', 'truncate' ],
-            one_null:       [ null ],
-            all_null:       [ null ],
-            tail_null:      [ 'a', 'b', null ],
-            tail_null_many: [ 'a', 'b', null ],
-            undefined_null: [ null, 'b', null, null ],
-            bs:             [ null ],
-        };
+    const concluding_save = true;
 
-        const concluding_save = true;
+    const stub_quote = {visitData: c => c(bucket)};
 
-        const stub_quote  = { visitData: c => c( bucket ) };
+    const mock_proxy = {
+      post(_, data) {
+        expect(JSON.parse(data.data)).to.deep.equal(expected_data);
 
-        const mock_proxy = {
-            post( _, data )
-            {
-                expect( JSON.parse( data.data ) )
-                    .to.deep.equal( expected_data );
+        expect(JSON.parse(data.concluding_save)).to.deep.equal(concluding_save);
 
-                expect( JSON.parse( data.concluding_save ) )
-                    .to.deep.equal( concluding_save );
+        done();
+      },
+    };
 
-                done();
-            },
-        };
-
-        Sut( '', mock_proxy, concluding_save ).send( stub_quote );
-    } );
-} );
+    Sut('', mock_proxy, concluding_save).send(stub_quote);
+  });
+});

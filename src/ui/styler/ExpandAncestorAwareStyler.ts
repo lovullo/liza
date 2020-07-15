@@ -19,35 +19,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AncestorAwareStyler, getNthAncestor } from "./AncestorAwareStyler";
-import { PositiveInteger } from "../../numeric";
-
+import {AncestorAwareStyler, getNthAncestor} from './AncestorAwareStyler';
+import {PositiveInteger} from '../../numeric';
 
 /**
  * Expand an HTML element's ancestor's size
  */
-export class ExpandAncestorAwareStyler implements AncestorAwareStyler
-{
-    /**
-     * Expand an ancestor to account for spill-over caused by the element
-     *
-     * @param element - target element
-     * @param n       - number of generations back
-     */
-    public style( element: HTMLElement, generation: PositiveInteger ): void
-    {
-        const ancestor = getNthAncestor( element, generation );
+export class ExpandAncestorAwareStyler implements AncestorAwareStyler {
+  /**
+   * Expand an ancestor to account for spill-over caused by the element
+   *
+   * @param element - target element
+   * @param n       - number of generations back
+   */
+  public style(element: HTMLElement, generation: PositiveInteger): void {
+    const ancestor = getNthAncestor(element, generation);
 
-        if ( !ancestor )
-        {
-            return;
-        }
+    if (!ancestor) {
+      return;
+    }
 
-        const ancestor_rect = ancestor.getBoundingClientRect();
-        const element_rect  = element.getBoundingClientRect();
+    const ancestor_rect = ancestor.getBoundingClientRect();
+    const element_rect = element.getBoundingClientRect();
 
-        const margin = Math.max( 0, element_rect.bottom - ancestor_rect.bottom );
+    const margin = Math.max(0, element_rect.bottom - ancestor_rect.bottom);
 
-        ancestor.style.marginBottom = `${margin}px`;
-    };
+    ancestor.style.marginBottom = `${margin}px`;
+  }
 }

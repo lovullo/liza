@@ -20,96 +20,81 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var liza          = require( '../../../' ),
-    expect        = require( 'chai' ).expect,
-    Sut           = liza.validate.formatter.StringFormat,
-    EchoFormatter = liza.validate.formatter.EchoFormatter,
-    common        = require( './common' );
+var liza = require('../../../'),
+  expect = require('chai').expect,
+  Sut = liza.validate.formatter.StringFormat,
+  EchoFormatter = liza.validate.formatter.EchoFormatter,
+  common = require('./common');
 
+describe('validate.formatter.StringFormat', function () {
+  common.testValidate(EchoFormatter.use(Sut('PRE%sPOST'))(), {
+    // basic prefix/suffix
+    '': ['', 'PREPOST'],
+    foo: ['foo', 'PREfooPOST'],
+    PREfoo: ['foo', 'PREfooPOST'],
+    barPOST: ['bar', 'PREbarPOST'],
+    PREbazPOST: ['baz', 'PREbazPOST'],
 
-describe( 'validate.formatter.StringFormat', function()
-{
-    common.testValidate( EchoFormatter.use( Sut( 'PRE%sPOST' ) )(), {
-        // basic prefix/suffix
-        "":           [ "",    "PREPOST" ],
-        "foo":        [ "foo", "PREfooPOST" ],
-        "PREfoo":     [ "foo", "PREfooPOST" ],
-        "barPOST":    [ "bar", "PREbarPOST" ],
-        "PREbazPOST": [ "baz", "PREbazPOST" ],
+    // only prefix/suffix
+    PRE: ['', 'PREPOST'],
+    POST: ['', 'PREPOST'],
+    PREPOST: ['', 'PREPOST'],
 
-        // only prefix/suffix
-        "PRE":     [ "", "PREPOST" ],
-        "POST":    [ "", "PREPOST" ],
-        "PREPOST": [ "", "PREPOST" ],
+    // repeated prefix/suffix normalization
+    PREPREfoo: ['foo', 'PREfooPOST'],
+    barPOSTPOST: ['bar', 'PREbarPOST'],
+    PREPREbazPOSTPOSTPOST: ['baz', 'PREbazPOST'],
+    PREPREPOSTPOST: ['', 'PREPOST'],
 
-        // repeated prefix/suffix normalization
-        "PREPREfoo":             [ "foo", "PREfooPOST" ],
-        "barPOSTPOST":           [ "bar", "PREbarPOST" ],
-        "PREPREbazPOSTPOSTPOST": [ "baz", "PREbazPOST" ],
-        "PREPREPOSTPOST":        [ "",    "PREPOST"   ],
+    // convoluted interpretations
+    PREfooPOSTPRE: ['fooPOSTPRE', 'PREfooPOSTPREPOST'],
+    PREmooPREfooPOST: ['mooPREfoo', 'PREmooPREfooPOST'],
+    mooPREfoo: ['mooPREfoo', 'PREmooPREfooPOST'],
+  });
 
-        // convoluted interpretations
-        "PREfooPOSTPRE":    [ "fooPOSTPRE", "PREfooPOSTPREPOST"   ],
-        "PREmooPREfooPOST": [ "mooPREfoo",  "PREmooPREfooPOST" ],
-        "mooPREfoo":        [ "mooPREfoo",  "PREmooPREfooPOST" ],
-    } );
+  // only prefix format
+  common.testValidate(EchoFormatter.use(Sut('BEG%s'))(), {
+    foo: ['foo', 'BEGfoo'],
+    BEGfoo: ['foo', 'BEGfoo'],
+  });
 
+  // only suffix format
+  common.testValidate(EchoFormatter.use(Sut('%sEND'))(), {
+    fooEND: ['foo', 'fooEND'],
+    fooEND: ['foo', 'fooEND'],
+  });
 
-    // only prefix format
-    common.testValidate( EchoFormatter.use( Sut( 'BEG%s' ) )(), {
-        "foo":    [ "foo", "BEGfoo" ],
-        "BEGfoo": [ "foo", "BEGfoo" ],
-    } );
+  // no prefix or suffix
+  common.testValidate(EchoFormatter.use(Sut('%s'))(), {
+    foo: ['foo', 'foo'],
+  });
 
+  describe('given multiple %s', function () {
+    it('throws an error', function () {
+      expect(function () {
+        EchoFormatter.use(Sut('foo%sbar%sbaz'))();
+      }).to.throw(Error);
+    });
+  });
 
-    // only suffix format
-    common.testValidate( EchoFormatter.use( Sut( '%sEND' ) )(), {
-        "fooEND": [ "foo", "fooEND" ],
-        "fooEND": [ "foo", "fooEND" ],
-    } );
+  describe('given no %s', function () {
+    it('throws an error', function () {
+      expect(function () {
+        EchoFormatter.use(Sut(''))();
+      }).to.throw(Error);
 
+      expect(function () {
+        EchoFormatter.use(Sut('Foo'))();
+      }).to.throw(Error);
+    });
+  });
 
-    // no prefix or suffix
-    common.testValidate( EchoFormatter.use( Sut( '%s' ) )(), {
-        "foo": [ "foo", "foo" ],
-    } );
-
-
-    describe( 'given multiple %s', function()
-    {
-        it( 'throws an error', function()
-        {
-            expect( function()
-            {
-                EchoFormatter.use( Sut( 'foo%sbar%sbaz' ) )();
-            } ).to.throw( Error );
-        } );
-    } );
-
-
-    describe( 'given no %s', function()
-    {
-        it( 'throws an error', function()
-        {
-            expect( function()
-            {
-                EchoFormatter.use( Sut( '' ) )();
-            } ).to.throw( Error );
-
-            expect( function()
-            {
-                EchoFormatter.use( Sut( 'Foo' ) )();
-            } ).to.throw( Error );
-        } );
-    } );
-
-
-    common.testMixin(
-        EchoFormatter,
-        Sut( 'PRE%sPOST' ),
-        'base',
-        'PREfooPOST',
-        'basefoo',
-        'PREbasePREfooPOSTPOST'
-    );
-} );
+  common.testMixin(
+    EchoFormatter,
+    Sut('PRE%sPOST'),
+    'base',
+    'PREfooPOST',
+    'basefoo',
+    'PREbasePREfooPOSTPOST'
+  );
+});

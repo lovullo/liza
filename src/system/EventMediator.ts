@@ -21,75 +21,67 @@
  * Hook events and log them
  */
 
-import { EventEmitter } from 'events';
-import { PsrLogger } from './PsrLogger';
-import { hasContext } from '../error/ContextError';
+import {EventEmitter} from 'events';
+import {PsrLogger} from './PsrLogger';
+import {hasContext} from '../error/ContextError';
 
-export class EventMediator
-{
-    /**
-     * Initialize mediator
-     *
-     * @param _log     - A PSR-3 style logger
-     * @param _emitter - An event emitter
-     */
-    constructor(
-        private readonly _log:     PsrLogger,
-        private readonly _emitter: EventEmitter,
-    ) {
-        this._emitter.on( 'delta-publish', ( msg ) => this._log.notice(
-            'Published delta to exchange',
-            msg
-        ) );
+export class EventMediator {
+  /**
+   * Initialize mediator
+   *
+   * @param _log     - A PSR-3 style logger
+   * @param _emitter - An event emitter
+   */
+  constructor(
+    private readonly _log: PsrLogger,
+    private readonly _emitter: EventEmitter
+  ) {
+    this._emitter.on('delta-publish', msg =>
+      this._log.notice('Published delta to exchange', msg)
+    );
 
-        this._emitter.on( 'document-processed', ( msg ) => this._log.notice(
-            'Deltas on document processed successfully. Document has been '
-                + 'marked as completely processed.',
-            msg
-        ) );
+    this._emitter.on('document-processed', msg =>
+      this._log.notice(
+        'Deltas on document processed successfully. Document has been ' +
+          'marked as completely processed.',
+        msg
+      )
+    );
 
-        this._emitter.on( 'amqp-conn-warn', ( msg ) =>
-            this._log.warning( 'AMQP Connection Error', msg ) );
+    this._emitter.on('amqp-conn-warn', msg =>
+      this._log.warning('AMQP Connection Error', msg)
+    );
 
-        this._emitter.on( 'amqp-reconnect', () =>
-            this._log.warning(
-                '...attempting to re-establish AMQP connection'
-            )
-        );
+    this._emitter.on('amqp-reconnect', () =>
+      this._log.warning('...attempting to re-establish AMQP connection')
+    );
 
-        this._emitter.on( 'amqp-reconnected', () =>
-            this._log.warning(
-                'AMQP re-connected'
-            )
-        );
+    this._emitter.on('amqp-reconnected', () =>
+      this._log.warning('AMQP re-connected')
+    );
 
-        this._emitter.on( 'error', ( arg ) =>
-            this._handleError( arg ) );
+    this._emitter.on('error', arg => this._handleError(arg));
+  }
+
+  /**
+   * Handle an error event
+   *
+   * @param e - any
+   */
+  private _handleError(e: any): void {
+    let msg: string = '';
+    let context: Record<string, any> = {};
+
+    if (e instanceof Error) {
+      msg = e.message;
+
+      if (hasContext(e)) {
+        context = e.context;
+      }
+
+      context.stack = e.stack;
     }
 
-
-    /**
-     * Handle an error event
-     *
-     * @param e - any
-     */
-    private _handleError( e: any ): void
-    {
-        let msg: string                  = '';
-        let context: Record<string, any> = {};
-
-        if ( e instanceof( Error ) )
-        {
-            msg = e.message;
-
-            if ( hasContext( e ) )
-            {
-                context = e.context;
-            }
-
-            context.stack = e.stack;
-        }
-
-        this._log.error( msg, context );
-    }
+    this._log.error(msg, context);
+  }
 }

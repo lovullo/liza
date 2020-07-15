@@ -20,38 +20,32 @@
  */
 
 var pobox_regex = new RegExp(
-    '\\b' +
+  '\\b' +
     '(' +
-        '(' +
-            'p(ost)?' +
-            '\\W?\\s*' +
-            '(\\d+|o(ff(ice)?)?)' +
-            '\\W?\\s*' +
-            '(b(in|ox)?)?' +
-            '\\W?\\s*' +
-        ')' +
-        '|' +
-        'b(in|ox)?' +
-        '\\W?\\s*' +
+    '(' +
+    'p(ost)?' +
+    '\\W?\\s*' +
+    '(\\d+|o(ff(ice)?)?)' +
+    '\\W?\\s*' +
+    '(b(in|ox)?)?' +
+    '\\W?\\s*' +
+    ')' +
+    '|' +
+    'b(in|ox)?' +
+    '\\W?\\s*' +
     ')' +
     '\\s*\\b',
-    'i'
+  'i'
 );
 
+module.exports = require('./PatternFormatter')([
+  /^[a-zA-Z0-9-.]+ +[a-zA-Z0-9 &\/'.,-]+$/,
 
-module.exports = require( './PatternFormatter' )(
-    [
-        /^[a-zA-Z0-9-.]+ +[a-zA-Z0-9 &\/'.,-]+$/,
+  function (match) {
+    if (pobox_regex.test(match)) {
+      throw Error('PO Box');
+    }
 
-        function( match )
-        {
-            if ( pobox_regex.test( match ) )
-            {
-                throw Error( "PO Box" );
-            }
-
-            return match;
-        }
-    ]
-);
-
+    return match;
+  },
+]);

@@ -19,46 +19,38 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
-  * Global feature flag for new UI
-  *
-  * TODO: replace with a proper feature flag solution
-  */
-export class WindowFeatureFlag
-{
-    private static instance: WindowFeatureFlag;
+ * Global feature flag for new UI
+ *
+ * TODO: replace with a proper feature flag solution
+ */
+export class WindowFeatureFlag {
+  private static instance: WindowFeatureFlag;
 
+  /**
+   * Initialize FeatureFlag
+   */
+  private constructor() {}
 
-    /**
-     * Initialize FeatureFlag
-     */
-    private constructor() {}
-
-
-    /**
-     * Get instance of FeatureFlag
-     */
-    public static getInstance(): WindowFeatureFlag
-    {
-        if ( !WindowFeatureFlag.instance )
-        {
-            WindowFeatureFlag.instance = new WindowFeatureFlag();
-        }
-
-        return WindowFeatureFlag.instance;
+  /**
+   * Get instance of FeatureFlag
+   */
+  public static getInstance(): WindowFeatureFlag {
+    if (!WindowFeatureFlag.instance) {
+      WindowFeatureFlag.instance = new WindowFeatureFlag();
     }
 
+    return WindowFeatureFlag.instance;
+  }
 
-    /**
-     * Look up a feature flag by key
-     *
-     * @param key - the key to lookup
-     *
-     * @return whether or not this feature flag is enabled
-     */
-    isEnabled( key: string ): boolean
-    {
-        return ( !!(<any>window)[ key ] );
-    }
+  /**
+   * Look up a feature flag by key
+   *
+   * @param key - the key to lookup
+   *
+   * @return whether or not this feature flag is enabled
+   */
+  isEnabled(key: string): boolean {
+    return !!(<any>window)[key];
+  }
 }

@@ -19,30 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait              = require( 'easejs' ).Trait,
-    ValidatorFormatter = require( '../../ValidatorFormatter' );
-
+var Trait = require('easejs').Trait,
+  ValidatorFormatter = require('../../ValidatorFormatter');
 
 /**
  * Formats insurance limit(s)
  */
-module.exports = Trait( 'Limit' )
-    .implement( ValidatorFormatter )
-    .extend(
-{    /**
+module.exports = Trait('Limit')
+  .implement(ValidatorFormatter)
+  .extend({
+    /**
      * Parse item as a number
      *
      * @param {string} data data to parse
      *
      * @return {string} data formatted for storage
      */
-    'virtual abstract override public parse': function( data )
-    {
-        return ( isNaN( parseInt( data ) ) )
-            ? data
-            : this.__super( data );
+    'virtual abstract override public parse': function (data) {
+      return isNaN(parseInt(data)) ? data : this.__super(data);
     },
-
 
     /**
      * Format number with thousands separators
@@ -51,20 +46,14 @@ module.exports = Trait( 'Limit' )
      *
      * @return {string} data formatted for display
      */
-    'virtual abstract override public retrieve': function( data )
-    {
-        var number     = parseFloat( data ),
-            is_numeric = !isNaN( number );
+    'virtual abstract override public retrieve': function (data) {
+      var number = parseFloat(data),
+        is_numeric = !isNaN(number);
 
-        if ( !is_numeric )
-        {
-            return data;
-        }
+      if (!is_numeric) {
+        return data;
+      }
 
-        return this.__super(
-            ( number < 1000 )
-                ? ''+( number * 1000 )
-                : data
-        );
-    }
-} );
+      return this.__super(number < 1000 ? '' + number * 1000 : data);
+    },
+  });

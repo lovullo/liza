@@ -19,19 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { Class }   = require( 'easejs' );
-const { DataApi } = require( '../../' ).dapi;
-
+const {Class} = require('easejs');
+const {DataApi} = require('../../').dapi;
 
 /**
  * Dummy DataApi implementation for testing
  *
  * This should not be used in production.
  */
-module.exports = Class( 'DummyDataApi' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Class('DummyDataApi')
+  .implement(DataApi)
+  .extend({
     /**
      * #request callback
      *
@@ -39,17 +37,14 @@ module.exports = Class( 'DummyDataApi' )
      */
     'private _reqCallback': () => {},
 
-
     /**
      * Initialize with `#request` method callback
      *
      * @param {Function} req_callback #request method callback
      */
-    constructor( req_callback )
-    {
-        this._reqCallback = req_callback;
+    constructor(req_callback) {
+      this._reqCallback = req_callback;
     },
-
 
     /**
      * Dummy method that invokes the callback provided via constructor
@@ -59,9 +54,8 @@ module.exports = Class( 'DummyDataApi' )
      *
      * @return {DataApi} self
      */
-    'virtual public request'( data, callback, id )
-    {
-        this._reqCallback( data, callback, id );
-        return this;
+    'virtual public request'(data, callback, id) {
+      this._reqCallback(data, callback, id);
+      return this;
     },
-} );
+  });

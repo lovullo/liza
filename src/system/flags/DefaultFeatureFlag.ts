@@ -19,45 +19,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FeatureFlag, FeatureFlagConditions } from "./FeatureFlag";
-
+import {FeatureFlag, FeatureFlagConditions} from './FeatureFlag';
 
 /**
-  * Default feature flag
-  */
-export class DefaultFeatureFlag implements FeatureFlag
-{
-    /**
-     * Initialize FeatureFlag
-     */
-    constructor(
-        private readonly _defaults: FeatureFlagConditions
-    )
-    {}
+ * Default feature flag
+ */
+export class DefaultFeatureFlag implements FeatureFlag {
+  /**
+   * Initialize FeatureFlag
+   */
+  constructor(private readonly _defaults: FeatureFlagConditions) {}
 
+  /**
+   * No connections or variables to resolve
+   */
+  close(): void {}
 
-    /**
-     * No connections or variables to resolve
-     */
-    close(): void {}
+  /**
+   * Look up a feature flag by key
+   *
+   * @param key - the key to lookup
+   *
+   * @return whether or not this feature flag is enabled
+   */
+  isEnabled(key: string): Promise<boolean> {
+    const value = this._defaults[key];
 
-
-    /**
-     * Look up a feature flag by key
-     *
-     * @param key - the key to lookup
-     *
-     * @return whether or not this feature flag is enabled
-     */
-    isEnabled( key: string ): Promise<boolean>
-    {
-        const value = this._defaults[ key ];
-
-        if( value === undefined )
-        {
-            return Promise.reject( 'Feature flag "' + key + '" is undefined');
-        }
-
-        return Promise.resolve( !!value );
+    if (value === undefined) {
+      return Promise.reject('Feature flag "' + key + '" is undefined');
     }
+
+    return Promise.resolve(!!value);
+  }
 }

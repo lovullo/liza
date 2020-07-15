@@ -19,7 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export declare class Group
-{
-    public isInternal(): boolean;
+export declare class Group {
+  public isInternal(): boolean;
 }

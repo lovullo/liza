@@ -19,80 +19,78 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { expect } = require( 'chai' );
-const { Class }  = require( 'easejs' );
-const styler     = require( '../../../' ).ui.styler;
+const {expect} = require('chai');
+const {Class} = require('easejs');
+const styler = require('../../../').ui.styler;
 
-const Sut = styler.FieldStyler.extend(
-{
-    getId() {},
-    isApplied( field, element ) {},
-    applyStyle( field, element, row ) {},
-    revokeStyle( field, element, row ) {},
-    add( element, cls ) { this.addClass( element, cls ); },
-    remove( element, cls ) { this.removeClass( element, cls ); },
-} );
+const Sut = styler.FieldStyler.extend({
+  getId() {},
+  isApplied(field, element) {},
+  applyStyle(field, element, row) {},
+  revokeStyle(field, element, row) {},
+  add(element, cls) {
+    this.addClass(element, cls);
+  },
+  remove(element, cls) {
+    this.removeClass(element, cls);
+  },
+});
 
-
-describe( 'ui/styler/FieldStyler', () =>
-{
-    [
-        {
-            label:    'adds class using #addClass on empty',
-            given:    '',
-            add:      'foo',
-            expected: ' foo',
-        },
-
-        {
-            label:    'adds class using #addClass with existing',
-            given:    'foo bar',
-            add:      'baz',
-            expected: 'foo bar baz',
-        },
-
-        {
-            label:    'removes class added by #addClass',
-            given:    'cow',
-            add:      'moo',
-            remove:   'moo',
-            expected: 'cow',
-        },
-
-        {
-            label:    'removes class added by #addClass on empty',
-            given:    '',
-            add:      'moo',
-            remove:   'moo',
-            expected: '',
-        },
-
-        {
-            label:    'removes classes added externally',
-            given:    'cow moo',
-            remove:   'cow',
-            expected: ' moo',
-        },
-
-        {
-            label:    'removes duplicate classes',
-            given:    'moo cow cow and',
-            remove:   'cow',
-            expected: 'moo and',
-        },
-    ].forEach( ( { label, given, add, remove, expected } ) =>
+describe('ui/styler/FieldStyler', () => {
+  [
     {
-        it( label, () =>
-        {
-            const element = { className: given };
-            const sut     = Sut();
+      label: 'adds class using #addClass on empty',
+      given: '',
+      add: 'foo',
+      expected: ' foo',
+    },
 
-            // #addClass and #removeClass respectively
-            add && sut.add( element, add )
-            remove && sut.remove( element, remove );
+    {
+      label: 'adds class using #addClass with existing',
+      given: 'foo bar',
+      add: 'baz',
+      expected: 'foo bar baz',
+    },
 
-            expect( element.className )
-                .to.equal( expected );
-        } );
-    } );
-} );
+    {
+      label: 'removes class added by #addClass',
+      given: 'cow',
+      add: 'moo',
+      remove: 'moo',
+      expected: 'cow',
+    },
+
+    {
+      label: 'removes class added by #addClass on empty',
+      given: '',
+      add: 'moo',
+      remove: 'moo',
+      expected: '',
+    },
+
+    {
+      label: 'removes classes added externally',
+      given: 'cow moo',
+      remove: 'cow',
+      expected: ' moo',
+    },
+
+    {
+      label: 'removes duplicate classes',
+      given: 'moo cow cow and',
+      remove: 'cow',
+      expected: 'moo and',
+    },
+  ].forEach(({label, given, add, remove, expected}) => {
+    it(label, () => {
+      const element = {className: given};
+      const sut = Sut();
+
+      // #addClass and #removeClass respectively
+      add && sut.add(element, add);
+      remove && sut.remove(element, remove);
+
+      expect(element.className).to.equal(expected);
+    });
+  });
+});

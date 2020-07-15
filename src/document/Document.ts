@@ -21,13 +21,12 @@
  * The term 'Quote' is synonymous with 'Document'; this project is moving
  * more toward the latter as it is further generalized.
  */
-import { PositiveInteger } from '../numeric';
+import {PositiveInteger} from '../numeric';
 
 /**
  * Document identifier
  */
 export type DocumentId = NominalType<number, 'DocumentId'>;
-
 
 /**
  * Quote (Document) id
@@ -37,36 +36,34 @@ export type DocumentId = NominalType<number, 'DocumentId'>;
  */
 export type QuoteId = DocumentId;
 
-
 /**
  * Document meta data
  */
-export type DocumentMeta =
-{
-    /** The document id */
-    id: DocumentId,
+export type DocumentMeta = {
+  /** The document id */
+  id: DocumentId;
 
-    /** The quote set id */
-    quoteSetId: DocumentId,
+  /** The quote set id */
+  quoteSetId: DocumentId;
 
-    /** The source program */
-    program: string,
+  /** The source program */
+  program: string;
 
-    /** The entity name */
-    entity_name: string,
+  /** The entity name */
+  entity_name: string;
 
-    /** The entity id */
-    entity_id: number,
+  /** The entity id */
+  entity_id: number;
 
-    /** The time the document was created */
-    startDate: UnixTimestamp,
+  /** The time the document was created */
+  startDate: UnixTimestamp;
 
-    /** The time the document was updated */
-    lastUpdate: UnixTimestamp,
+  /** The time the document was updated */
+  lastUpdate: UnixTimestamp;
 
-    /** The time the document will expire */
-    expDate: UnixTimestamp,
+  /** The time the document will expire */
+  expDate: UnixTimestamp;
 
-    /** The top saved step */
-    topSavedStepId: PositiveInteger,
-}
+  /** The top saved step */
+  topSavedStepId: PositiveInteger;
+};

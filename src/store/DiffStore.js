@@ -19,12 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const Class          = require( 'easejs' ).Class;
-const Store          = require( './Store' );
-const StoreMissError = require( './StoreMissError' );
-
+const Class = require('easejs').Class;
+const Store = require('./Store');
+const StoreMissError = require('./StoreMissError');
 
 /**
  * Lazily compute diffs since last change
@@ -94,10 +93,9 @@ const StoreMissError = require( './StoreMissError' );
  *
  * For more examples, see the `DiffStoreTest` test case.
  */
-module.exports = Class( 'DiffStore' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Class('DiffStore')
+  .implement(Store)
+  .extend({
     /**
      * New data staged for committing
      * @type {Object}
@@ -109,7 +107,6 @@ module.exports = Class( 'DiffStore' )
      * @type {Object}
      */
     'private _commit': {},
-
 
     /**
      * Proxy item with value `value` to internal store matching against `key`
@@ -124,13 +121,11 @@ module.exports = Class( 'DiffStore' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public add'( key, value )
-    {
-        this._staged[ key ] = value;
+    'virtual public add'(key, value) {
+      this._staged[key] = value;
 
-        return Promise.resolve( this.__inst );
+      return Promise.resolve(this.__inst);
     },
-
 
     /**
      * Populate store with each element in object `obj`
@@ -147,15 +142,9 @@ module.exports = Class( 'DiffStore' )
      *
      * @return {Array.<Promise.<Store>>} array of #add promises
      */
-    'virtual public populate'( obj )
-    {
-        return Promise.all(
-            Object.keys( obj ).map(
-                key => this.add( key, obj[ key ] )
-            )
-        );
+    'virtual public populate'(obj) {
+      return Promise.all(Object.keys(obj).map(key => this.add(key, obj[key])));
     },
-
 
     /**
      * Retrieve diff of `key`
@@ -171,20 +160,13 @@ module.exports = Class( 'DiffStore' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual public get'( key )
-    {
-        if ( ( this._staged[ key ] || this._commit[ key ] ) === undefined )
-        {
-            return Promise.reject(
-                StoreMissError( `Key '${key}' does not exist` )
-            );
-        }
+    'virtual public get'(key) {
+      if ((this._staged[key] || this._commit[key]) === undefined) {
+        return Promise.reject(StoreMissError(`Key '${key}' does not exist`));
+      }
 
-        return Promise.resolve(
-            this.diff( this._staged[ key ], this._commit[ key ] )
-        );
+      return Promise.resolve(this.diff(this._staged[key], this._commit[key]));
     },
-
 
     /**
      * Commit staged data and clear diffs
@@ -196,17 +178,15 @@ module.exports = Class( 'DiffStore' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public clear'()
-    {
-        Object.keys( this._staged ).forEach(
-            key => this._commit[ key ] = this._staged[ key ]
-        );
+    'virtual public clear'() {
+      Object.keys(this._staged).forEach(
+        key => (this._commit[key] = this._staged[key])
+      );
 
-        this._staged = {};
+      this._staged = {};
 
-        return Promise.resolve( this.__inst );
+      return Promise.resolve(this.__inst);
     },
-
 
     /**
      * Recursively diff two objects or scalars `data` and `orig`
@@ -231,32 +211,24 @@ module.exports = Class( 'DiffStore' )
      *
      * @return {*} diff
      */
-    'virtual protected diff'( data, orig )
-    {
-        if ( orig === undefined )
-        {
-            // no previous, then data must be new, and so _is_ the diff
-            return data;
-        }
-        else if ( typeof data !== 'object' )
-        {
-            // only compare scalars (we'll recurse on objects)
-            return ( data === orig )
-                ? undefined
-                : data;
-        }
+    'virtual protected diff'(data, orig) {
+      if (orig === undefined) {
+        // no previous, then data must be new, and so _is_ the diff
+        return data;
+      } else if (typeof data !== 'object') {
+        // only compare scalars (we'll recurse on objects)
+        return data === orig ? undefined : data;
+      }
 
-        const keys = this._getKeyUnion( data, orig );
-        let diff   = ( Array.isArray( data ) ) ? [] : {};
+      const keys = this._getKeyUnion(data, orig);
+      let diff = Array.isArray(data) ? [] : {};
 
-        for ( let key of keys )
-        {
-            diff[ key ] = this.diff( data[ key ], orig[ key ] );
-        }
+      for (let key of keys) {
+        diff[key] = this.diff(data[key], orig[key]);
+      }
 
-        return diff;
+      return diff;
     },
-
 
     /**
      * Calculate the union of the keys of `first` and `second`
@@ -268,16 +240,13 @@ module.exports = Class( 'DiffStore' )
      *
      * @return {Set} Object.keys(first) ∪ Object.keys(second)
      */
-    'private _getKeyUnion'( first, second )
-    {
-        const keys = new Set( Object.keys( first ) );
+    'private _getKeyUnion'(first, second) {
+      const keys = new Set(Object.keys(first));
 
-        Object.keys( second )
-            .forEach( key => keys.add( key ) );
+      Object.keys(second).forEach(key => keys.add(key));
 
-        return keys;
+      return keys;
     },
-
 
     /**
      * Fold (reduce) all staged values
@@ -299,20 +268,13 @@ module.exports = Class( 'DiffStore' )
      *
      * @return {Promise} promise of a folded value (final accumulator value)
      */
-    'public reduce'( callback, initial )
-    {
-        return Promise.resolve(
-            Object.keys( this._staged).reduce(
-                ( accum, key ) => {
-                    const value = this.diff(
-                        this._staged[ key ],
-                        this._commit[ key ]
-                    );
+    'public reduce'(callback, initial) {
+      return Promise.resolve(
+        Object.keys(this._staged).reduce((accum, key) => {
+          const value = this.diff(this._staged[key], this._commit[key]);
 
-                    return callback( accum, value, key );
-                },
-                initial
-            )
-        );
+          return callback(accum, value, key);
+        }, initial)
+      );
     },
-} );
+  });

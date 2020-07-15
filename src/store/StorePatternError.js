@@ -19,13 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
-
+var Class = require('easejs').Class;
 
 /**
  * Store pattern matching failure
  *
  * A key request did not match any patterns known to the Store.
  */
-module.exports = Class( 'StorePatternError' )
-    .extend( ReferenceError, {} );
+module.exports = Class('StorePatternError').extend(ReferenceError, {});

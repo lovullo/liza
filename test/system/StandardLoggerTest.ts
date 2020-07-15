@@ -19,161 +19,157 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { StandardLogger as Sut } from '../../src/system/StandardLogger';
-import { LogLevel } from '../../src/system/PsrLogger';
-import { expect } from 'chai';
+import {StandardLogger as Sut} from '../../src/system/StandardLogger';
+import {LogLevel} from '../../src/system/PsrLogger';
+import {expect} from 'chai';
 
-const sinon = require( 'sinon' );
+const sinon = require('sinon');
 
 declare interface MockConsole extends Console {
-    getLevel(): string,
-    getStr(): string,
+  getLevel(): string;
+  getStr(): string;
 }
 
-describe( 'system.StandardLogger captures and logs events', () =>
-{
-    it( 'debug triggers console output level: info', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+describe('system.StandardLogger captures and logs events', () => {
+  it('debug triggers console output level: info', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.debug( 'Foo' );
+    sut.debug('Foo');
 
-        expect( con.getLevel() ).to.equal( 'info' );
-    } );
+    expect(con.getLevel()).to.equal('info');
+  });
 
-    it( 'info triggers console output level: info', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('info triggers console output level: info', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.info( 'Foo' );
+    sut.info('Foo');
 
-        expect( con.getLevel() ).to.equal( 'info' );
-    } );
+    expect(con.getLevel()).to.equal('info');
+  });
 
-    it( 'notice triggers console output level: log', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('notice triggers console output level: log', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.notice( 'Foo' );
+    sut.notice('Foo');
 
-        expect( con.getLevel() ).to.equal( 'log' );
-    } );
+    expect(con.getLevel()).to.equal('log');
+  });
 
-    it( 'warning triggers console output level: warn', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('warning triggers console output level: warn', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.warning( 'Foo' );
+    sut.warning('Foo');
 
-        expect( con.getLevel() ).to.equal( 'warn' );
-    } );
+    expect(con.getLevel()).to.equal('warn');
+  });
 
-    it( 'error triggers console output level: error', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('error triggers console output level: error', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.error( 'Foo' );
+    sut.error('Foo');
 
-        expect( con.getLevel() ).to.equal( 'error' );
-    } );
+    expect(con.getLevel()).to.equal('error');
+  });
 
-    it( 'critical triggers console output level: error', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('critical triggers console output level: error', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.critical( 'Foo' );
+    sut.critical('Foo');
 
-        expect( con.getLevel() ).to.equal( 'error' );
-    } );
+    expect(con.getLevel()).to.equal('error');
+  });
 
-    it( 'alert triggers console output level: error', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('alert triggers console output level: error', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.alert( 'Foo' );
+    sut.alert('Foo');
 
-        expect( con.getLevel() ).to.equal( 'error' );
-    } );
+    expect(con.getLevel()).to.equal('error');
+  });
 
-    it( 'emergency triggers console output level: error', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('emergency triggers console output level: error', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.emergency( 'Foo' );
+    sut.emergency('Foo');
 
-        expect( con.getLevel() ).to.equal( 'error' );
-    } );
+    expect(con.getLevel()).to.equal('error');
+  });
 
-    it( 'log triggers corresponding log level', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
+  it('log triggers corresponding log level', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
 
-        sut.log( LogLevel.ERROR, 'Foo' );
+    sut.log(LogLevel.ERROR, 'Foo');
 
-        expect( con.getLevel() ).to.equal( 'error' );
-    } );
+    expect(con.getLevel()).to.equal('error');
+  });
 
-    it( 'Context is included in structured output', () =>
-    {
-        const con = createMockConsole();
-        const env = 'test';
-        const sut = new Sut( con, ts_ctor, env );
-        const context = { bar: 'baz' };
-        const expected_output = {
-            message:   'Foo',
-            timestamp: '1970-01-02T10:12:03.000Z',
-            service:   'quote-server',
-            env:       'test',
-            severity:  'NOTICE',
-            context:   {
-                bar: 'baz',
-            },
-        };
+  it('Context is included in structured output', () => {
+    const con = createMockConsole();
+    const env = 'test';
+    const sut = new Sut(con, ts_ctor, env);
+    const context = {bar: 'baz'};
+    const expected_output = {
+      message: 'Foo',
+      timestamp: '1970-01-02T10:12:03.000Z',
+      service: 'quote-server',
+      env: 'test',
+      severity: 'NOTICE',
+      context: {
+        bar: 'baz',
+      },
+    };
 
-        sut.notice( 'Foo', context );
+    sut.notice('Foo', context);
 
-        expect( con.getStr() )
-            .to.deep.equal( JSON.stringify( expected_output ) );
-    } );
-} );
+    expect(con.getStr()).to.deep.equal(JSON.stringify(expected_output));
+  });
+});
 
-
-function ts_ctor(): UnixTimestamp
-{
-    return <UnixTimestamp>123123;
+function ts_ctor(): UnixTimestamp {
+  return <UnixTimestamp>123123;
 }
 
+function createMockConsole(): MockConsole {
+  const mock = sinon.mock(console);
 
-function createMockConsole(): MockConsole
-{
-    const mock = sinon.mock( console );
+  mock.lvl = '';
+  mock.str = '';
+  mock.info = (str: string) => {
+    mock.str = str;
+    mock.lvl = 'info';
+  };
+  mock.log = (str: string) => {
+    mock.str = str;
+    mock.lvl = 'log';
+  };
+  mock.warn = (str: string) => {
+    mock.str = str;
+    mock.lvl = 'warn';
+  };
+  mock.error = (str: string) => {
+    mock.str = str;
+    mock.lvl = 'error';
+  };
+  mock.getLevel = () => mock.lvl;
+  mock.getStr = () => mock.str;
 
-    mock.lvl      = '';
-    mock.str      = '';
-    mock.info     = ( str: string ) => { mock.str = str; mock.lvl = 'info'; };
-    mock.log      = ( str: string ) => { mock.str = str; mock.lvl = 'log'; };
-    mock.warn     = ( str: string ) => { mock.str = str; mock.lvl = 'warn'; };
-    mock.error    = ( str: string ) => { mock.str = str; mock.lvl = 'error'; };
-    mock.getLevel = () => mock.lvl;
-    mock.getStr   = () => mock.str;
-
-    return mock;
+  return mock;
 }

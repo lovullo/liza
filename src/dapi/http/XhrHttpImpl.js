@@ -21,18 +21,16 @@
 
 'use strict';
 
-const Class     = require( 'easejs' ).Class;
-const HttpImpl  = require( './HttpImpl' );
-const HttpError = require( './HttpError' );
-
+const Class = require('easejs').Class;
+const HttpImpl = require('./HttpImpl');
+const HttpError = require('./HttpError');
 
 /**
  * An HTTP implementation using the standardized XMLHttpRequest prototype.
  */
-module.exports = Class( 'XhrHttpImpl' )
-    .implement( HttpImpl )
-    .extend(
-{
+module.exports = Class('XhrHttpImpl')
+  .implement(HttpImpl)
+  .extend({
     /**
      * XMLHttpRequest constructor
      * @type {XMLHttpRequest}
@@ -40,18 +38,15 @@ module.exports = Class( 'XhrHttpImpl' )
      */
     'private _Xhr': null,
 
-
     /**
      * Initializes with constructor to the object through which XHRs will be
      * made
      *
      * @param {Object} XMLHttpRequest ctor to object to perform requests
      */
-    __construct: function( XMLHttpRequest )
-    {
-        this._Xhr = XMLHttpRequest;
+    __construct: function (XMLHttpRequest) {
+      this._Xhr = XMLHttpRequest;
     },
-
 
     /**
      * Perform HTTP request using the standard XMLHttpRequest
@@ -71,36 +66,29 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {HttpImpl} self
      */
-    'virtual public requestData': function( url, method, data, callback )
-    {
-        if ( typeof data !== 'string' )
-        {
-            throw TypeError(
-                "Request data must be a string; " + typeof data + " given"
-            );
-        }
+    'virtual public requestData': function (url, method, data, callback) {
+      if (typeof data !== 'string') {
+        throw TypeError(
+          'Request data must be a string; ' + typeof data + ' given'
+        );
+      }
 
-        var req = new this._Xhr(),
-            url = this._genUrl( url, method, data );
+      var req = new this._Xhr(),
+        url = this._genUrl(url, method, data);
 
-        try
-        {
-            this.openRequest( req, url, method );
-            this.onLoad( req, function( err, resp )
-            {
-                callback( err, resp );
-            } );
+      try {
+        this.openRequest(req, url, method);
+        this.onLoad(req, function (err, resp) {
+          callback(err, resp);
+        });
 
-            req.send( this._getSendData( method, data ) );
-        }
-        catch ( e )
-        {
-            callback( e, null );
-        }
+        req.send(this._getSendData(method, data));
+      } catch (e) {
+        callback(e, null);
+      }
 
-        return this;
+      return this;
     },
-
 
     /**
      * Generate URL according to METHOD and provided DATA
@@ -115,20 +103,13 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {string} original URL, or appended with params
      */
-    'private _genUrl': function( url, method, data )
-    {
-        if ( method !== 'GET' )
-        {
-            return url;
-        }
+    'private _genUrl': function (url, method, data) {
+      if (method !== 'GET') {
+        return url;
+      }
 
-        return url +
-            ( ( data )
-              ? ( '?' + data )
-              : ''
-            );
+      return url + (data ? '?' + data : '');
     },
-
 
     /**
      * Determine what DATA to post to the server
@@ -140,24 +121,20 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {string|undefined} data to post to server
      */
-    'private _getSendData': function( method, data )
-    {
-        if ( method === 'GET' )
-        {
-            return undefined;
-        }
+    'private _getSendData': function (method, data) {
+      if (method === 'GET') {
+        return undefined;
+      }
 
-        // TODO: reject nonsense types, including arrays
-        switch ( typeof data )
-        {
-            case 'object':
-                return this._encodeKeys( data );
+      // TODO: reject nonsense types, including arrays
+      switch (typeof data) {
+        case 'object':
+          return this._encodeKeys(data);
 
-            default:
-                return data;
-        }
+        default:
+          return data;
+      }
     },
-
 
     /**
      * Prepares a request to the given URL using the given HTTP method
@@ -176,20 +153,17 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {undefined}
      */
-    'virtual protected openRequest': function( req, url, method )
-    {
-        // alway async
-        req.open( method, url, true );
+    'virtual protected openRequest': function (req, url, method) {
+      // alway async
+      req.open(method, url, true);
 
-        if ( method === 'POST' )
-        {
-            req.setRequestHeader(
-                'Content-Type',
-                'application/x-www-form-urlencoded'
-            );
-        }
+      if (method === 'POST') {
+        req.setRequestHeader(
+          'Content-Type',
+          'application/x-www-form-urlencoded'
+        );
+      }
     },
-
 
     /**
      * Hooks ready state change to handle data
@@ -211,28 +185,22 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @throws {Error} if non-200 response received from server
      */
-    'virtual protected onLoad': function( req, callback )
-    {
-        var _self = this;
+    'virtual protected onLoad': function (req, callback) {
+      var _self = this;
 
-        req.onreadystatechange = function()
-        {
-            // ready state of 4 (DONE) indicates that the request is complete
-            if ( req.readyState !== 4 )
-            {
-                return;
-            }
-            else if ( !( _self.isSuccessful( req.status ) ) )
-            {
-                _self.serveError( req, callback );
-                return;
-            }
+      req.onreadystatechange = function () {
+        // ready state of 4 (DONE) indicates that the request is complete
+        if (req.readyState !== 4) {
+          return;
+        } else if (!_self.isSuccessful(req.status)) {
+          _self.serveError(req, callback);
+          return;
+        }
 
-            // successful
-            callback( null, req.responseText );
-        };
+        // successful
+        callback(null, req.responseText);
+      };
     },
-
 
     /**
      * Determine whether the given HTTP status indicates a success or
@@ -245,11 +213,9 @@ module.exports = Class( 'XhrHttpImpl' )
      *
      * @return {bool} whether HTTP status represents a success
      */
-    'virtual protected isSuccessful': function( status )
-    {
-        return ( +status >= 200 ) && ( +status < 300 );
+    'virtual protected isSuccessful': function (status) {
+      return +status >= 200 && +status < 300;
     },
-
 
     /**
      * Serve an error response
@@ -273,17 +239,14 @@ module.exports = Class( 'XhrHttpImpl' )
      *                                           response
      * @return {undefined}
      */
-    'virtual protected serveError': function( req, callback )
-    {
-        var e = HttpError( req.status + " error from server" );
-        e.status = req.status;
+    'virtual protected serveError': function (req, callback) {
+      var e = HttpError(req.status + ' error from server');
+      e.status = req.status;
 
-        callback( e, req.responseText );
+      callback(e, req.responseText);
     },
 
-
-    'public setOptions'()
-    {
-        // TOOD: remove (see HttpImpl)
-    }
-} );
+    'public setOptions'() {
+      // TOOD: remove (see HttpImpl)
+    },
+  });

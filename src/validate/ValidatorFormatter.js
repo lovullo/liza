@@ -19,39 +19,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var Interface = require('easejs').Interface;
 
-var Interface = require( 'easejs' ).Interface;
+module.exports = Interface('ValidatorFormatter', {
+  /**
+   * Format the given data or fail if no match is found
+   *
+   * If the given data matches a pattern, it will be formatted with
+   * respect to the first matched pattern.  Otherwise, an error will
+   * be thrown indicating a validation failure.
+   *
+   * @param {string} data data to parse
+   *
+   * @return {string} formatted string, if a match is found
+   */
+  'public parse': ['data'],
 
-
-module.exports = Interface( 'ValidatorFormatter',
-{
-    /**
-     * Format the given data or fail if no match is found
-     *
-     * If the given data matches a pattern, it will be formatted with
-     * respect to the first matched pattern.  Otherwise, an error will
-     * be thrown indicating a validation failure.
-     *
-     * @param {string} data data to parse
-     *
-     * @return {string} formatted string, if a match is found
-     */
-    'public parse': [ 'data' ],
-
-
-    /**
-     * Retrieve data that may require formatting for display
-     *
-     * Return formatting is optional. No formatting will be done if no pattern
-     * was given when the instance was constructed.
-     *
-     * To ensure consistency and correctness, *any data returned by this method
-     * must be reversible* --- that is, parse( retrieve( data ) ) should not
-     * throw an exception.
-     *
-     * @param {string} data data to format for display
-     *
-     * @return {string} data formatted for display
-     */
-    'public retrieve': [ 'data' ]
-} );
+  /**
+   * Retrieve data that may require formatting for display
+   *
+   * Return formatting is optional. No formatting will be done if no pattern
+   * was given when the instance was constructed.
+   *
+   * To ensure consistency and correctness, *any data returned by this method
+   * must be reversible* --- that is, parse( retrieve( data ) ) should not
+   * throw an exception.
+   *
+   * @param {string} data data to format for display
+   *
+   * @return {string} data formatted for display
+   */
+  'public retrieve': ['data'],
+});

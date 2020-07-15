@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait = require( 'easejs' ).Trait,
-    Class = require( 'easejs' ).Class,
-    Store = require( './Store' );
-
+var Trait = require('easejs').Trait,
+  Class = require('easejs').Class,
+  Store = require('./Store');
 
 /**
  * Automatically try to look up values on store miss
@@ -57,10 +56,9 @@ var Trait = require( 'easejs' ).Trait,
  * providing a miss function that is effectively a noop for a given
  * situation.
  */
-module.exports = Trait( 'MissLookup' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Trait('MissLookup')
+  .implement(Store)
+  .extend({
     /**
      * Store miss key lookup function
      *
@@ -75,7 +73,6 @@ module.exports = Trait( 'MissLookup' )
      */
     'private _misses': {},
 
-
     /**
      * Initialize key miss lookup
      *
@@ -87,16 +84,13 @@ module.exports = Trait( 'MissLookup' )
      *
      * @param {function(string): Promise} lookup store miss key lookup
      */
-    __mixin: function( lookup )
-    {
-        if ( typeof lookup !== 'function' )
-        {
-            throw TypeError( 'Lookup function must be a function' );
-        }
+    __mixin: function (lookup) {
+      if (typeof lookup !== 'function') {
+        throw TypeError('Lookup function must be a function');
+      }
 
-        this._lookup = lookup;
+      this._lookup = lookup;
     },
-
 
     /**
      * Retrieve item from the store under `key`, attempting lookup on
@@ -122,42 +116,37 @@ module.exports = Trait( 'MissLookup' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual abstract override public get': function( key )
-    {
-        var _self   = this,
-            __super = this.__super.bind( this );
+    'virtual abstract override public get': function (key) {
+      var _self = this,
+        __super = this.__super.bind(this);
 
-        // to prevent stampeding, return any existing unresolved
-        // promise for this key
-        if ( this._misses[ key ] )
-        {
-            return this._misses[ key ];
-        }
+      // to prevent stampeding, return any existing unresolved
+      // promise for this key
+      if (this._misses[key]) {
+        return this._misses[key];
+      }
 
-        // note that we have to store the reference immediately so we
-        // don't have two concurrent failures, so this will store a
-        // promise even if the key already exists (which is okay)
-        return this._misses[ key ] = this.__super( key )
-            .then( function( value )
-            {
-                // already exists
-                delete _self._misses[ key ];
+      // note that we have to store the reference immediately so we
+      // don't have two concurrent failures, so this will store a
+      // promise even if the key already exists (which is okay)
+      return (this._misses[key] = this.__super(key)
+        .then(function (value) {
+          // already exists
+          delete _self._misses[key];
 
-                return value;
-            } )
-            .catch( function()
-            {
-                delete _self._misses[ key ];
+          return value;
+        })
+        .catch(function () {
+          delete _self._misses[key];
 
-                return _self._lookup( key )
-                    .then( function( value )
-                    {
-                        return _self.add( key, value );
-                    } )
-                    .then( function()
-                    {
-                        return __super( key );
-                    } );
-            } );
+          return _self
+            ._lookup(key)
+            .then(function (value) {
+              return _self.add(key, value);
+            })
+            .then(function () {
+              return __super(key);
+            });
+        }));
     },
-} );
+  });

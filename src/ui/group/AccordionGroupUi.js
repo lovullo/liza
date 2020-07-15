@@ -21,33 +21,28 @@
 
 'use strict';
 
-const { Class }      = require( 'easejs' );
-const StackedGroupUi = require( './StackedGroupUi' );
-
+const {Class} = require('easejs');
+const StackedGroupUi = require('./StackedGroupUi');
 
 /**
  * Collapsable stacked group
  */
-module.exports = Class( 'AccordionGroupUi' )
-    .extend( StackedGroupUi,
-{
-    /**
-     * Make stack body collapsable when header is clicked
-     *
-     * @param {jQuery} $dl   definition list for group
-     * @param {number} index index to make clickable
-     *
-     * @return {AccordionGroupUi} self
-     */
-    'protected override postAddRow': function( $dl, index )
-    {
-        const header = $dl[ 0 ].firstElementChild;
+module.exports = Class('AccordionGroupUi').extend(StackedGroupUi, {
+  /**
+   * Make stack body collapsable when header is clicked
+   *
+   * @param {jQuery} $dl   definition list for group
+   * @param {number} index index to make clickable
+   *
+   * @return {AccordionGroupUi} self
+   */
+  'protected override postAddRow': function ($dl, index) {
+    const header = $dl[0].firstElementChild;
 
-        header.addEventListener( 'click', () =>
-        {
-            header.parentElement.classList.toggle( 'liza-collapsed' );
-        } );
+    header.addEventListener('click', () => {
+      header.parentElement.classList.toggle('liza-collapsed');
+    });
 
-        return this.__super( $dl, index );
-    },
-} );
+    return this.__super($dl, index);
+  },
+});

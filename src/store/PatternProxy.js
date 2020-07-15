@@ -19,13 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const Trait             = require( 'easejs' ).Trait;
-const Class             = require( 'easejs' ).Class;
-const Store             = require( './Store' );
-const StorePatternError = require( './StorePatternError' );
-
+const Trait = require('easejs').Trait;
+const Class = require('easejs').Class;
+const Store = require('./Store');
+const StorePatternError = require('./StorePatternError');
 
 /**
  * Proxy to sub-stores based on key patterns
@@ -66,16 +65,14 @@ const StorePatternError = require( './StorePatternError' );
  * provide a default pattern, create a regular expression that matches on
  * any input (e.g. `/./`).)
  */
-module.exports = Trait( 'PatternProxy' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Trait('PatternProxy')
+  .implement(Store)
+  .extend({
     /**
      * Pattern mapping to internal store
      * @type {Array.<Array.<RegExp,Store>>}
      */
     'private _patterns': [],
-
 
     /**
      * Define pattern map
@@ -91,11 +88,9 @@ module.exports = Trait( 'PatternProxy' )
      *
      * @param {Array.<Array.<RegExp,Store>>} patterns pattern map
      */
-    __mixin( patterns )
-    {
-        this._patterns = this._validatePatternMap( patterns );
+    __mixin(patterns) {
+      this._patterns = this._validatePatternMap(patterns);
     },
-
 
     /**
      * Verify that pattern map contains valid mappings
@@ -104,33 +99,23 @@ module.exports = Trait( 'PatternProxy' )
      *
      * @return {Array} `patterns` argument
      */
-    'private _validatePatternMap'( patterns )
-    {
-        if ( !Array.isArray( patterns ) )
-        {
-            throw TypeError( "Pattern map must be an array" );
+    'private _validatePatternMap'(patterns) {
+      if (!Array.isArray(patterns)) {
+        throw TypeError('Pattern map must be an array');
+      }
+
+      patterns.forEach(([pattern, store], i) => {
+        if (!(pattern instanceof RegExp)) {
+          throw TypeError(`Pattern must be a RegExp at index ${i}`);
         }
 
-        patterns.forEach( ( [ pattern, store ], i ) =>
-        {
-            if ( !( pattern instanceof RegExp  ) )
-            {
-                throw TypeError(
-                    `Pattern must be a RegExp at index ${i}`
-                );
-            }
+        if (!Class.isA(Store, store)) {
+          throw TypeError(`Pattern must map to Store at index ${i}`);
+        }
+      });
 
-            if ( !Class.isA( Store, store ) )
-            {
-                throw TypeError(
-                    `Pattern must map to Store at index ${i}`
-                );
-            }
-        } );
-
-        return patterns;
+      return patterns;
     },
-
 
     /**
      * Proxy item with value `value` to internal store matching against `key`
@@ -145,12 +130,11 @@ module.exports = Trait( 'PatternProxy' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public abstract override add'( key, value )
-    {
-        return this.matchKeyToStore( key )
-            .then( ( { store, key:skey } ) => store.add( skey, value ) );
+    'virtual public abstract override add'(key, value) {
+      return this.matchKeyToStore(key).then(({store, key: skey}) =>
+        store.add(skey, value)
+      );
     },
-
 
     /**
      * Retrieve item from an internal store matching against `key`
@@ -165,13 +149,12 @@ module.exports = Trait( 'PatternProxy' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual public abstract override get'( key )
-    {
-        // XXX
-        return this.matchKeyToStore( key )
-            .then( ( { store, key:skey } ) => store.get( skey ) );
+    'virtual public abstract override get'(key) {
+      // XXX
+      return this.matchKeyToStore(key).then(({store, key: skey}) =>
+        store.get(skey)
+      );
     },
-
 
     /**
      * Attempt to map `key` to a Store
@@ -183,26 +166,22 @@ module.exports = Trait( 'PatternProxy' )
      * @return {Promise.<Object>} {store,key} on success,
      *                             StorePatternError on failure
      */
-    'protected matchKeyToStore'( key )
-    {
-        for ( let [ pattern, store ] of this._patterns )
-        {
-            const [ match, skey=key ] = key.match( pattern ) || [];
+    'protected matchKeyToStore'(key) {
+      for (let [pattern, store] of this._patterns) {
+        const [match, skey = key] = key.match(pattern) || [];
 
-            if ( match !== undefined )
-            {
-                return Promise.resolve( {
-                    store: store,
-                    key:   skey
-                } );
-            }
+        if (match !== undefined) {
+          return Promise.resolve({
+            store: store,
+            key: skey,
+          });
         }
+      }
 
-        return Promise.reject( StorePatternError(
-            `Key '${key}' does not match any pattern`
-        ) );
+      return Promise.reject(
+        StorePatternError(`Key '${key}' does not match any pattern`)
+      );
     },
-
 
     /**
      * Clear all pattern stores
@@ -213,10 +192,7 @@ module.exports = Trait( 'PatternProxy' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public abstract override clear'()
-    {
-        return Promise.all(
-            this._patterns.map( ( [ , store ] ) => store.clear() )
-        );
+    'virtual public abstract override clear'() {
+      return Promise.all(this._patterns.map(([, store]) => store.clear()));
     },
-} );
+  });

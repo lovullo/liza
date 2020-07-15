@@ -21,9 +21,8 @@
 
 'use strict';
 
-const { Trait, Class } = require( 'easejs' );
-const Store            = require( './Store' );
-
+const {Trait, Class} = require('easejs');
+const Store = require('./Store');
 
 /**
  * Convert objects into sub-stores containing its key/value pairs
@@ -50,10 +49,9 @@ const Store            = require( './Store' );
  *   store.add( 'foo', "bar" );
  *   store.get( 'foo' );         // "bar"
  */
-module.exports = Trait( 'AutoObjectStore' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Trait('AutoObjectStore')
+  .implement(Store)
+  .extend({
     /**
      * Constructor for object sub-stores
      * @type {function(Object):Store}
@@ -66,7 +64,6 @@ module.exports = Trait( 'AutoObjectStore' )
      */
     'private _stores': {},
 
-
     /**
      * Initialize with Store constructor
      *
@@ -74,11 +71,9 @@ module.exports = Trait( 'AutoObjectStore' )
      *
      * @param {function():Store} ctor Store constructor
      */
-    __mixin( ctor )
-    {
-        this._ctor = ctor;
+    __mixin(ctor) {
+      this._ctor = ctor;
     },
-
 
     /**
      * Add item to store under `key` with value `value`
@@ -92,16 +87,12 @@ module.exports = Trait( 'AutoObjectStore' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual abstract override public add'( key, value )
-    {
-        return this.__super( key, value )
-            .then( ret =>
-            {
-                delete this._stores[ key ];
-                return ret;
-            } );
+    'virtual abstract override public add'(key, value) {
+      return this.__super(key, value).then(ret => {
+        delete this._stores[key];
+        return ret;
+      });
     },
-
 
     /**
      * Retrieve item from store under `key`
@@ -117,34 +108,27 @@ module.exports = Trait( 'AutoObjectStore' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual abstract override public get'( key )
-    {
-        if ( this._stores[ key ] !== undefined )
-        {
-            return Promise.resolve( this._stores[ key ] );
+    'virtual abstract override public get'(key) {
+      if (this._stores[key] !== undefined) {
+        return Promise.resolve(this._stores[key]);
+      }
+
+      return this.__super(key).then(value => {
+        if (!this._isConvertable(value)) {
+          return value;
         }
 
-        return this.__super( key )
-            .then( value =>
-            {
-                if ( !this._isConvertable( value ) )
-                {
-                    return value;
-                }
+        // create and cache store (we cache _before_ populating,
+        // otherwise another request might come in and create yet
+        // another store before we have a chance to complete
+        // populating)
+        const substore = this._ctor();
 
-                // create and cache store (we cache _before_ populating,
-                // otherwise another request might come in and create yet
-                // another store before we have a chance to complete
-                // populating)
-                const substore = this._ctor();
+        this._stores[key] = substore;
 
-                this._stores[ key ] = substore;
-
-                return substore.populate( value )
-                    .then( () => substore );
-            } );
+        return substore.populate(value).then(() => substore);
+      });
     },
-
 
     /**
      * Determine whether given value should be converted into a Store
@@ -156,22 +140,19 @@ module.exports = Trait( 'AutoObjectStore' )
      *
      * @return {boolean} whether to convert `value`
      */
-    'private _isConvertable'( value )
-    {
-        if ( typeof value !== 'object' )
-        {
-            return false;
-        };
+    'private _isConvertable'(value) {
+      if (typeof value !== 'object') {
+        return false;
+      }
 
-        const ctor = value.constructor || {};
+      const ctor = value.constructor || {};
 
-        // instances of prototypes should be left alone, so we should ignore
-        // everything that's not a vanilla object
-        if ( ctor !== Object )
-        {
-            return false;
-        }
+      // instances of prototypes should be left alone, so we should ignore
+      // everything that's not a vanilla object
+      if (ctor !== Object) {
+        return false;
+      }
 
-        return true;
+      return true;
     },
-} );
+  });

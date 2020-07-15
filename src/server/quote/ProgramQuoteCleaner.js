@@ -21,197 +21,168 @@
 
 'use strict';
 
-const { Class }   = require( 'easejs' );
+const {Class} = require('easejs');
 
+module.exports = Class('ProgramQuoteCleaner', {
+  /**
+   * Program associated with the quote
+   * @type {Program}
+   */
+  'private _program': null,
 
-module.exports = Class( 'ProgramQuoteCleaner',
-{
-    /**
-     * Program associated with the quote
-     * @type {Program}
-     */
-    'private _program': null,
+  __construct: function (program) {
+    this._program = program;
+  },
 
+  /**
+   * "Clean" quote, getting it into a stable state
+   *
+   * Quote cleaning will ensure that all group fields share at least the
+   * same number of indexes as its leader, and that meta fields are
+   * initialized.  This is useful when questions or meta fields are added.
+   *
+   * @param {Quote}    quote    target quote
+   * @param {Function} callback continuation
+   */
+  'public clean': function (quote, callback) {
+    // consider it an error to attempt cleaning a quote with the incorrect
+    // program, which would surely corrupt it [even further]
+    if (quote.getProgramId() !== this._program.getId()) {
+      callback(null);
+      return;
+    }
 
-    __construct: function( program )
-    {
-        this._program = program;
-    },
+    // correct group indexes
+    Object.keys(this._program.groupIndexField || {}).forEach(group_id =>
+      this._fixGroup(group_id, quote)
+    );
 
+    this._fixMeta(quote);
 
-    /**
-     * "Clean" quote, getting it into a stable state
-     *
-     * Quote cleaning will ensure that all group fields share at least the
-     * same number of indexes as its leader, and that meta fields are
-     * initialized.  This is useful when questions or meta fields are added.
-     *
-     * @param {Quote}    quote    target quote
-     * @param {Function} callback continuation
-     */
-    'public clean': function( quote, callback )
-    {
-        // consider it an error to attempt cleaning a quote with the incorrect
-        // program, which would surely corrupt it [even further]
-        if ( quote.getProgramId() !== this._program.getId() )
-        {
-            callback( null );
-            return;
-        }
+    callback(null);
+  },
 
-        // correct group indexes
-        Object.keys( this._program.groupIndexField || {} ).forEach(
-            group_id => this._fixGroup( group_id, quote )
-        );
+  /**
+   * Correct group fields to be at least the length of the leader
+   *
+   * If a group is part of a link, then its leader may be part of another
+   * group, and the length of the fields of all linked groups will match
+   * be at least the length of the leader.
+   *
+   * Unlike previous implementations, this _does not_ truncate fields,
+   * since that risks data loss.  Instead, field length should be
+   * validated on save.
+   *
+   * @param {string} group_id group identifier
+   * @param {Quote}  quote    target quote
+   *
+   * @return {undefined} data are set on QUOTE
+   */
+  'private _fixGroup'(group_id, quote) {
+    const length = +this._getGroupLength(group_id, quote);
 
-        this._fixMeta( quote );
+    // if we cannot accurately determine the length then it's too
+    // dangerous to proceed and risk screwing up the data; abort
+    // processing this group (this should never happen unless a program
+    // is either not properly compiled or is out of date)
+    if (isNaN(length)) {
+      return;
+    }
 
-        callback( null );
-    },
+    const update = {};
 
+    const group_fields = this._program.groupExclusiveFields[group_id];
+    const qtypes = this._program.meta.qtypes || {};
 
-    /**
-     * Correct group fields to be at least the length of the leader
-     *
-     * If a group is part of a link, then its leader may be part of another
-     * group, and the length of the fields of all linked groups will match
-     * be at least the length of the leader.
-     *
-     * Unlike previous implementations, this _does not_ truncate fields,
-     * since that risks data loss.  Instead, field length should be
-     * validated on save.
-     *
-     * @param {string} group_id group identifier
-     * @param {Quote}  quote    target quote
-     *
-     * @return {undefined} data are set on QUOTE
-     */
-    'private _fixGroup'( group_id, quote )
-    {
-        const length = +this._getGroupLength( group_id, quote );
+    group_fields.forEach(field => {
+      const flen = (quote.getDataByName(field) || []).length;
 
-        // if we cannot accurately determine the length then it's too
-        // dangerous to proceed and risk screwing up the data; abort
-        // processing this group (this should never happen unless a program
-        // is either not properly compiled or is out of date)
-        if ( isNaN( length ) )
-        {
-            return;
-        }
+      // generated questions with no types should never be part of
+      // the bucket
+      if (!this._isKnownType(qtypes[field])) {
+        return;
+      }
 
-        const update = {};
+      if (flen >= length) {
+        return;
+      }
 
-        const group_fields = this._program.groupExclusiveFields[ group_id ];
-        const qtypes       = this._program.meta.qtypes || {};
+      const data = [];
+      const field_default = this._program.defaults[field] || '';
 
-        group_fields.forEach( field =>
-        {
-            const flen = ( quote.getDataByName( field ) || [] ).length;
+      for (var i = flen; i < length; i++) {
+        data[i] = field_default;
+      }
 
-            // generated questions with no types should never be part of
-            // the bucket
-            if ( !this._isKnownType( qtypes[ field ] ) )
-            {
-                return;
-            }
+      update[field] = data;
+    });
 
-            if ( flen >= length )
-            {
-                return;
-            }
+    quote.setData(update);
+  },
 
-            const data          = [];
-            const field_default = this._program.defaults[ field ] || '';
+  /**
+   * Determine length of group GROUP_ID
+   *
+   * The length of a group is the length of its leader, which may be part
+   * of another group (if the group is linked).
+   *
+   * @param {string} group_id group identifier
+   * @param {Quote}  quote    target quote
+   *
+   * @return {number} length of group GROUP_ID
+   */
+  'private _getGroupLength'(group_id, quote) {
+    const index_field = this._program.groupIndexField[group_id];
 
-            for ( var i = flen; i < length; i++ )
-            {
-                data[ i ] = field_default;
-            }
+    // we don't want to give the wrong answer, so just abort
+    if (!index_field) {
+      return NaN;
+    }
 
-            update[ field ] = data;
-        } );
+    const data = quote.getDataByName(index_field);
 
-        quote.setData( update );
-    },
+    return Array.isArray(data) ? data.length : NaN;
+  },
 
+  /**
+   * Initialize missing metadata
+   *
+   * This is similar to bucket initialization, except there are no leaders
+   * or default values---just empty arrays.  That may change in the future.
+   *
+   * @param {ServerSideQuote} quote quote containing metabucket
+   *
+   * @return {undefined}
+   */
+  'private _fixMeta'(quote) {
+    const {fields = {}} = this._program.meta;
+    const metabucket = quote.getMetabucket();
+    const metadata = metabucket.getData();
 
-    /**
-     * Determine length of group GROUP_ID
-     *
-     * The length of a group is the length of its leader, which may be part
-     * of another group (if the group is linked).
-     *
-     * @param {string} group_id group identifier
-     * @param {Quote}  quote    target quote
-     *
-     * @return {number} length of group GROUP_ID
-     */
-    'private _getGroupLength'( group_id, quote )
-    {
-        const index_field = this._program.groupIndexField[ group_id ];
+    Object.keys(fields).forEach(field_name => {
+      if (Array.isArray(metadata[field_name])) {
+        return;
+      }
 
-        // we don't want to give the wrong answer, so just abort
-        if ( !index_field )
-        {
-            return NaN;
-        }
+      metabucket.setValues({[field_name]: []});
+    });
+  },
 
-        const data = quote.getDataByName( index_field );
+  /**
+   * Determine whether question type QTYPE is known
+   *
+   * This assumes that the type is known unless QTYPE.type is
+   * "undefined".  Ancient versions (pre-"liza") represented QTYPE as a
+   * string rather than an object.
+   *
+   * @param {Object|string} qtype type data for question
+   *
+   * @return {boolean} whether type is known
+   */
+  'private _isKnownType'(qtype) {
+    // this was a string in ancient versions (pre-"liza")
+    const type = typeof qtype === 'object' ? qtype.type : qtype;
 
-        return ( Array.isArray( data ) )
-            ? data.length
-            : NaN;
-    },
-
-
-    /**
-     * Initialize missing metadata
-     *
-     * This is similar to bucket initialization, except there are no leaders
-     * or default values---just empty arrays.  That may change in the future.
-     *
-     * @param {ServerSideQuote} quote quote containing metabucket
-     *
-     * @return {undefined}
-     */
-    'private _fixMeta'( quote )
-    {
-        const { fields = {} } = this._program.meta;
-        const metabucket = quote.getMetabucket();
-        const metadata   = metabucket.getData();
-
-        Object.keys( fields ).forEach( field_name =>
-        {
-            if ( Array.isArray( metadata[ field_name ] ) )
-            {
-                return;
-            }
-
-            metabucket.setValues( { [field_name]: [] } );
-        } );
-    },
-
-
-    /**
-     * Determine whether question type QTYPE is known
-     *
-     * This assumes that the type is known unless QTYPE.type is
-     * "undefined".  Ancient versions (pre-"liza") represented QTYPE as a
-     * string rather than an object.
-     *
-     * @param {Object|string} qtype type data for question
-     *
-     * @return {boolean} whether type is known
-     */
-    'private _isKnownType'( qtype )
-    {
-        // this was a string in ancient versions (pre-"liza")
-        const type = ( typeof qtype === 'object' )
-            ? qtype.type
-            : qtype;
-
-        return ( typeof type === 'string' )
-            && ( type !== 'undefined' );
-    },
-} );
-
+    return typeof type === 'string' && type !== 'undefined';
+  },
+});

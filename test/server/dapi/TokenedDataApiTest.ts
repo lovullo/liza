@@ -19,224 +19,185 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { TokenedDataApi as Sut } from "../../../src/server/dapi/TokenedDataApi";
+import {TokenedDataApi as Sut} from '../../../src/server/dapi/TokenedDataApi';
 
-import { DataApi, DataApiInput, DataApiResult } from "../../../src/dapi/DataApi";
-import { TokenStore } from "../../../src/server/token/store/TokenStore";
+import {DataApi, DataApiInput, DataApiResult} from '../../../src/dapi/DataApi';
+import {TokenStore} from '../../../src/server/token/store/TokenStore';
 import {
-    Token,
-    TokenId,
-    TokenNamespace,
-    TokenState,
-    TokenStateDoneable,
-} from "../../../src/server/token/Token";
-import { hasContext } from "../../../src/error/ContextError";
+  Token,
+  TokenId,
+  TokenNamespace,
+  TokenState,
+  TokenStateDoneable,
+} from '../../../src/server/token/Token';
+import {hasContext} from '../../../src/error/ContextError';
 
-import { expect } from 'chai';
+import {expect} from 'chai';
 
+describe('TokenedDataApi', () => {
+  const expected_ns = 'foo_ns';
 
-describe( 'TokenedDataApi', () =>
-{
-    const expected_ns = 'foo_ns';
+  (<[string, boolean, (e: NullableError) => void][]>[
+    [
+      'creates token and returns data if last_created',
+      true,
+      e => expect(e).to.equal(null),
+    ],
+    [
+      'creates token and does not callback if not last_created',
+      false,
+      e => {
+        expect(e).to.be.instanceof(Error);
 
+        // this awkwardness can be mitigated in TS 3.7
+        // (see https://github.com/microsoft/TypeScript/pull/32695)
+        if (e instanceof Error) {
+          expect(e.message).to.contain('superceded');
+          expect(hasContext(e)).to.be.true;
 
-    ( <[string, boolean, ( e: NullableError ) => void][]>[
-        [
-            "creates token and returns data if last_created",
-            true,
-            e => expect( e ).to.equal( null ),
-        ],
-        [
-            "creates token and does not callback if not last_created",
-            false,
-            e =>
-            {
-                expect( e ).to.be.instanceof( Error );
+          if (hasContext(e)) {
+            expect(e.context.id).to.equal(expected_ns);
+          }
+        }
+      },
+    ],
+  ]).forEach(([label, last_created, expected_err]) =>
+    it(label, done => {
+      const expected_data = {given: 'data'};
+      const dapi_ret_data = [{return: 'data'}];
 
-                // this awkwardness can be mitigated in TS 3.7
-                // (see https://github.com/microsoft/TypeScript/pull/32695)
-                if ( e instanceof Error )
-                {
-                    expect( e.message ).to.contain( "superceded" );
-                    expect( hasContext( e ) ).to.be.true;
+      const stub_tok: Token<TokenState.ACTIVE> = createStubToken(last_created);
 
-                    if ( hasContext( e ) )
-                    {
-                        expect( e.context.id ).to.equal( expected_ns );
-                    }
-                }
-            },
-        ],
-    ] ).forEach( ( [ label, last_created, expected_err ] ) => it( label, done =>
-    {
-        const expected_data = { given: "data" };
-        const dapi_ret_data = [ { return: "data" } ];
+      let tok_completed = false;
+      let tok_ackd = false;
 
-        const stub_tok: Token<TokenState.ACTIVE> =
-            createStubToken( last_created );
+      const mock_tstore = new (class implements TokenStore {
+        lookupToken() {
+          return Promise.reject(Error('not used'));
+        }
 
-        let tok_completed = false;
-        let tok_ackd      = false;
+        createToken() {
+          return Promise.resolve(stub_tok);
+        }
 
-        const mock_tstore = new class implements TokenStore
-        {
-            lookupToken()
-            {
-                return Promise.reject( Error( "not used" ) );
-            }
+        completeToken(
+          given_tok: Token<TokenStateDoneable>,
+          given_data: string
+        ) {
+          expect(given_tok).to.equal(stub_tok);
+          expect(given_data).to.equal(JSON.stringify(dapi_ret_data));
 
-            createToken()
-            {
-                return Promise.resolve( stub_tok );
-            }
+          const ret = Object.create(stub_tok);
+          ret.state = TokenState.DONE;
 
-            completeToken(
-                given_tok:  Token<TokenStateDoneable>,
-                given_data: string,
-            )
-            {
-                expect( given_tok ).to.equal( stub_tok );
-                expect( given_data ).to.equal(
-                    JSON.stringify( dapi_ret_data )
-                );
+          tok_completed = true;
 
-                const ret = Object.create( stub_tok );
-                ret.state = TokenState.DONE;
+          return Promise.resolve(ret);
+        }
 
-                tok_completed = true;
+        acceptToken() {
+          expect(tok_completed).to.be.true;
+          expect(last_created).to.be.true;
 
-                return Promise.resolve( ret );
-            }
+          tok_ackd = true;
+          return Promise.resolve(Object.create(stub_tok));
+        }
 
-            acceptToken()
-            {
-                expect( tok_completed ).to.be.true;
-                expect( last_created ).to.be.true;
+        killToken() {
+          expect(tok_completed).to.be.true;
+          expect(last_created).to.be.false;
 
-                tok_ackd = true;
-                return Promise.resolve( Object.create( stub_tok ) );
-            }
+          tok_ackd = true;
+          return Promise.resolve(Object.create(stub_tok));
+        }
+      })();
 
-            killToken()
-            {
-                expect( tok_completed ).to.be.true;
-                expect( last_created ).to.be.false;
+      const mock_dapi = new (class implements DataApi {
+        request(
+          given_data: DataApiInput,
+          callback: NodeCallback<DataApiResult>,
+          given_id: string
+        ): this {
+          expect(given_data).to.equal(expected_data);
+          expect(given_id).to.equal(expected_ns);
 
-                tok_ackd = true;
-                return Promise.resolve( Object.create( stub_tok ) );
-            }
-        }();
+          callback(null, dapi_ret_data);
 
-        const mock_dapi = new class implements DataApi
-        {
-            request(
-                given_data: DataApiInput,
-                callback:   NodeCallback<DataApiResult>,
-                given_id:   string,
-            ): this
-            {
-                expect( given_data ).to.equal( expected_data );
-                expect( given_id ).to.equal( expected_ns );
+          return this;
+        }
+      })();
 
-                callback( null, dapi_ret_data );
+      const ctor = (ns: TokenNamespace) => {
+        expect(ns).to.equal(expected_ns);
+        return mock_tstore;
+      };
 
-                return this;
-            }
-        };
+      const callback: NodeCallback<DataApiResult> = (e, data) => {
+        expect(tok_ackd).to.be.true;
 
-        const ctor = ( ns:TokenNamespace ) =>
-        {
-            expect( ns ).to.equal( expected_ns );
-            return mock_tstore;
-        };
+        expected_err(e);
 
-        const callback: NodeCallback<DataApiResult> = ( e, data ) =>
-        {
-            expect( tok_ackd ).to.be.true;
+        expect(data).to.equal(last_created ? dapi_ret_data : null);
 
-            expected_err( e );
+        done();
+      };
 
-            expect( data ).to.equal(
-                ( last_created ) ? dapi_ret_data : null
-            );
+      new Sut(mock_dapi, ctor).request(expected_data, callback, expected_ns);
+    })
+  );
 
-            done();
-        };
+  it('propagates dapi request errors', done => {
+    const expected_err = Error('test dapi error');
 
-        new Sut( mock_dapi, ctor )
-            .request( expected_data, callback, expected_ns );
-    } ) );
+    const stub_tok: Token<TokenState.ACTIVE> = createStubToken(true);
 
+    const mock_tstore = new (class implements TokenStore {
+      lookupToken() {
+        return Promise.reject(Error('not used'));
+      }
 
-    it( "propagates dapi request errors", done =>
-    {
-        const expected_err = Error( "test dapi error" );
+      createToken() {
+        return Promise.resolve(stub_tok);
+      }
 
-        const stub_tok: Token<TokenState.ACTIVE> =
-            createStubToken( true );
+      completeToken() {
+        return Promise.reject(Error('not used'));
+      }
 
-        const mock_tstore = new class implements TokenStore
-        {
-            lookupToken()
-            {
-                return Promise.reject( Error( "not used" ) );
-            }
+      acceptToken() {
+        return Promise.reject(Error('not used'));
+      }
 
-            createToken()
-            {
-                return Promise.resolve( stub_tok );
-            }
+      killToken() {
+        return Promise.reject(Error('not used'));
+      }
+    })();
 
-            completeToken()
-            {
-                return Promise.reject( Error( "not used" ) );
-            }
+    const mock_dapi = new (class implements DataApi {
+      request(_: any, callback: NodeCallback<DataApiResult>) {
+        callback(expected_err, null);
+        return this;
+      }
+    })();
 
-            acceptToken()
-            {
-                return Promise.reject( Error( "not used" ) );
-            }
+    const callback: NodeCallback<DataApiResult> = (e, data) => {
+      expect(data).to.equal(null);
+      expect(e).to.equal(expected_err);
 
-            killToken()
-            {
-                return Promise.reject( Error( "not used" ) );
-            }
-        }();
-
-        const mock_dapi = new class implements DataApi
-        {
-            request(
-                _:        any,
-                callback: NodeCallback<DataApiResult>,
-            )
-            {
-                callback( expected_err, null );
-                return this;
-            }
-        };
-
-        const callback: NodeCallback<DataApiResult> = ( e, data ) =>
-        {
-            expect( data ).to.equal( null );
-            expect( e ).to.equal( expected_err );
-
-            done();
-        };
-
-        new Sut( mock_dapi, () => mock_tstore )
-            .request( {}, callback, expected_ns );
-    } );
-} );
-
-
-function createStubToken( last_created: boolean ): Token<TokenState.ACTIVE>
-{
-    return {
-        id:            <TokenId>'dummy-id',
-        state:         TokenState.ACTIVE,
-        timestamp:     <UnixTimestamp>0,
-        data:          "",
-        last_mismatch: false,
-        last_created:  last_created,
+      done();
     };
+
+    new Sut(mock_dapi, () => mock_tstore).request({}, callback, expected_ns);
+  });
+});
+
+function createStubToken(last_created: boolean): Token<TokenState.ACTIVE> {
+  return {
+    id: <TokenId>'dummy-id',
+    state: TokenState.ACTIVE,
+    timestamp: <UnixTimestamp>0,
+    data: '',
+    last_mismatch: false,
+    last_created: last_created,
+  };
 }

@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class             = require( 'easejs' ).Class,
-    BucketDiffContext = require( './BucketDiffContext' );
-    BucketDiffResult  = require( './BucketDiffResult' );
-
+var Class = require('easejs').Class,
+  BucketDiffContext = require('./BucketDiffContext');
+BucketDiffResult = require('./BucketDiffResult');
 
 /**
  * Result of performing a standard ("dumb") diff on bucket data
@@ -32,10 +31,9 @@ var Class             = require( 'easejs' ).Class,
  * list of the changes, which an instance of this class may either return
  * directly or retrieve the field data from the provided context.
  */
-module.exports = Class( 'StdBucketDiffResult' )
-    .implement( BucketDiffResult )
-    .extend(
-{
+module.exports = Class('StdBucketDiffResult')
+  .implement(BucketDiffResult)
+  .extend({
     /**
      * Context used to produce the diff
      * @type {BucketDiffContext}
@@ -48,20 +46,14 @@ module.exports = Class( 'StdBucketDiffResult' )
      */
     'private _changes': null,
 
+    __construct: function (context, changes) {
+      if (!Class.isA(BucketDiffContext, context)) {
+        throw TypeError('Expected BucketDiffContext; received ' + context);
+      }
 
-    __construct: function( context, changes )
-    {
-        if ( !( Class.isA( BucketDiffContext, context ) ) )
-        {
-            throw TypeError(
-                "Expected BucketDiffContext; received " + context
-            );
-        }
-
-        this._context = context;
-        this._changes = changes;
+      this._context = context;
+      this._changes = changes;
     },
-
 
     /**
      * Describes what fields have changed using boolean flags; does not include
@@ -72,11 +64,9 @@ module.exports = Class( 'StdBucketDiffResult' )
      *
      * @return {Object} hash of arrays of boolean flags representing changes
      */
-    'public describeChanged': function()
-    {
-        return this._changes;
+    'public describeChanged': function () {
+      return this._changes;
     },
-
 
     /**
      * Describes changes in values by listing either undefined if no change or
@@ -88,33 +78,26 @@ module.exports = Class( 'StdBucketDiffResult' )
      *
      * @return {Object} value changes
      */
-    'public describeChangedValues': function()
-    {
-        var ret = {};
+    'public describeChangedValues': function () {
+      var ret = {};
 
-        for ( var field in this._changes )
-        {
-            var change = this._changes[ field ],
-                i      = change.length,
-                values = this._context.getFieldValues( field );
+      for (var field in this._changes) {
+        var change = this._changes[field],
+          i = change.length,
+          values = this._context.getFieldValues(field);
 
-            ret[ field ] = [];
-            while ( i-- )
-            {
-                if ( change[ i ] !== true )
-                {
-                    ret[ field ][ i ] = undefined;
-                    continue;
-                }
+        ret[field] = [];
+        while (i--) {
+          if (change[i] !== true) {
+            ret[field][i] = undefined;
+            continue;
+          }
 
-                // return both the current and previous values respectively
-                ret[ field ][ i ] = [
-                    values[ 0 ][ i ],
-                    values[ 1 ][ i ],
-                ];
-            }
+          // return both the current and previous values respectively
+          ret[field][i] = [values[0][i], values[1][i]];
         }
+      }
 
-        return ret;
-    }
-} );
+      return ret;
+    },
+  });

@@ -19,886 +19,769 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ServerDao, Callback } from "./ServerDao";
-import { MongoCollection, MongoUpdate, MongoDb } from "mongodb";
-import { PositiveInteger } from "../../numeric";
-import { ServerSideQuote } from "../quote/ServerSideQuote";
-import { QuoteId } from "../../document/Document";
-import { WorksheetData } from "../rater/Rater";
+import {ServerDao, Callback} from './ServerDao';
+import {MongoCollection, MongoUpdate, MongoDb} from 'mongodb';
+import {PositiveInteger} from '../../numeric';
+import {ServerSideQuote} from '../quote/ServerSideQuote';
+import {QuoteId} from '../../document/Document';
+import {WorksheetData} from '../rater/Rater';
 
-const EventEmitter = require( 'events' ).EventEmitter;
+const EventEmitter = require('events').EventEmitter;
 
-type ErrorCallback = ( err: NullableError ) => void;
+type ErrorCallback = (err: NullableError) => void;
 
 /**
  * Uses MongoDB as a data store
  */
-export class MongoServerDao extends EventEmitter implements ServerDao
-{
-    /** Collection used to store quotes */
-    readonly COLLECTION: string = 'quotes';
+export class MongoServerDao extends EventEmitter implements ServerDao {
+  /** Collection used to store quotes */
+  readonly COLLECTION: string = 'quotes';
 
-    /** Sequence (auto-increment) collection */
-    readonly COLLECTION_SEQ: string = 'seq';
+  /** Sequence (auto-increment) collection */
+  readonly COLLECTION_SEQ: string = 'seq';
 
-    /** Sequence key for quote ids */
-    readonly SEQ_QUOTE_ID: string = 'quoteId';
+  /** Sequence key for quote ids */
+  readonly SEQ_QUOTE_ID: string = 'quoteId';
 
-    /** Sequence quoteId default */
-    readonly SEQ_QUOTE_ID_DEFAULT: number = 200000;
+  /** Sequence quoteId default */
+  readonly SEQ_QUOTE_ID_DEFAULT: number = 200000;
 
+  /** Whether the DAO is initialized and ready to be used */
+  private _ready: boolean = false;
 
-    /** Whether the DAO is initialized and ready to be used */
-    private _ready: boolean = false;
+  /** Collection to save data to */
+  private _collection?: MongoCollection | null;
 
-    /** Collection to save data to */
-    private _collection?: MongoCollection | null;
+  /** Collection to read sequences (auto-increments) from */
+  private _seqCollection?: MongoCollection | null;
 
-    /** Collection to read sequences (auto-increments) from */
-    private _seqCollection?: MongoCollection | null;
+  /**
+   * Initializes DAO
+   *
+   * @param _db      - mongo database connection
+   * @param _env     - the name of the current environment
+   * @param _ts_ctor - a timestamp constructor
+   */
+  constructor(
+    private readonly _db: MongoDb,
+    private readonly _env: string,
+    private readonly _ts_ctor: () => UnixTimestamp
+  ) {
+    super();
+  }
 
+  /**
+   * Initializes error events and attempts to connect to the database
+   *
+   * connectError event will be emitted on failure.
+   *
+   * @param success - function to call when connection is complete
+   *                          (will not be called if connection fails)
+   */
+  init(success: () => void): this {
+    var dao = this;
 
-    /**
-     * Initializes DAO
-     *
-     * @param _db      - mongo database connection
-     * @param _env     - the name of the current environment
-     * @param _ts_ctor - a timestamp constructor
-     */
-    constructor(
-        private readonly _db:      MongoDb,
-        private readonly _env:     string,
-        private readonly _ts_ctor: () => UnixTimestamp,
-    )
-    {
-        super();
-    }
+    // map db error event (on connection error) to our connectError event
+    this._db.on('error', function (err: Error) {
+      dao._ready = false;
+      dao._collection = null;
 
+      dao.emit('connectError', err);
+    });
 
-    /**
-     * Initializes error events and attempts to connect to the database
-     *
-     * connectError event will be emitted on failure.
-     *
-     * @param success - function to call when connection is complete
-     *                          (will not be called if connection fails)
-     */
-    init( success: () => void ): this
-    {
-        var dao = this;
+    this.connect(success);
+    return this;
+  }
 
-        // map db error event (on connection error) to our connectError event
-        this._db.on( 'error', function( err: Error )
-        {
-            dao._ready      = false;
-            dao._collection = null;
+  /**
+   * Attempts to connect to the database
+   *
+   * connectError event will be emitted on failure.
+   *
+   * @param success - function to call when connection is complete
+   *                          (will not be called if connection fails)
+   */
+  connect(success: () => void): this {
+    var dao = this;
 
-            dao.emit( 'connectError', err );
+    // attempt to connect to the database
+    this._db.open(function (err: any, db: any) {
+      // if there was an error, don't bother with anything else
+      if (err) {
+        // in some circumstances, it may just be telling us that we're
+        // already connected (even though the connection may have been
+        // broken)
+        if (err.errno !== undefined) {
+          dao.emit('connectError', err);
+          return;
+        }
+      }
+
+      var ready_count = 0;
+      var check_ready = function () {
+        if (++ready_count < 2) {
+          return;
+        }
+
+        // we're ready to roll!
+        dao._ready = true;
+        dao.emit('ready');
+
+        // connection was successful; call the callback
+        if (success instanceof Function) {
+          success.call(dao);
+        }
+      };
+
+      // quotes collection
+      db.collection(dao.COLLECTION, function (
+        _err: any,
+        collection: MongoCollection
+      ) {
+        // for some reason this gets called more than once
+        if (collection == null) {
+          return;
+        }
+
+        // initialize indexes
+        collection.createIndex([['id', 1]], true, function (
+          _err: NullableError,
+          _index: {[P: string]: any}
+        ) {
+          // mark the DAO as ready to be used
+          dao._collection = collection;
+          check_ready();
         });
+      });
 
-        this.connect( success );
-        return this;
+      // seq collection
+      db.collection(dao.COLLECTION_SEQ, function (
+        err: Error,
+        collection: MongoCollection
+      ) {
+        if (err) {
+          dao.emit('seqError', err);
+          return;
+        }
+
+        if (collection == null) {
+          return;
+        }
+
+        dao._seqCollection = collection;
+
+        // has the sequence we'll be referencing been initialized?
+        collection.find(
+          {_id: dao.SEQ_QUOTE_ID},
+          {limit: <PositiveInteger>1},
+          function (err: NullableError, cursor) {
+            if (err) {
+              dao._initQuoteIdSeq(check_ready);
+              return;
+            }
+
+            cursor.toArray(function (_err: Error, data: any[]) {
+              if (data.length == 0) {
+                dao._initQuoteIdSeq(check_ready);
+                return;
+              }
+
+              check_ready();
+            });
+          }
+        );
+      });
+    });
+
+    return this;
+  }
+
+  /**
+   * Initialize the quote id sequence collection
+   *
+   * @param success - a function to call once it has been initialized
+   */
+  private _initQuoteIdSeq(success: () => void) {
+    var dao = this;
+
+    this._seqCollection!.insert(
+      {
+        _id: this.SEQ_QUOTE_ID,
+        val: this.SEQ_QUOTE_ID_DEFAULT,
+      },
+      function (err: NullableError, _docs: any) {
+        if (err) {
+          dao.emit('seqError', err);
+          return;
+        }
+
+        dao.emit('seqInit', dao.SEQ_QUOTE_ID);
+        success.call(dao);
+      }
+    );
+  }
+
+  /**
+   * Saves a quote to the database
+   *
+   * A full save will include all metadata.  This should not cause any
+   * problems with race conditions for pending Data API calls on meta
+   * fields because those results write to individual indexes and do not
+   * rely on existing data.
+   *
+   * @param quote         - the quote to save
+   * @param success       - function to call on success
+   * @param failure       - function to call if save fails
+   * @param save_data     - quote data to save (optional)
+   * @param push_data     - quote data to push (optional)
+   * @param force_publish - reset published indicator (optional)
+   */
+  saveQuote(
+    quote: ServerSideQuote,
+    success: Callback = () => {},
+    failure: Callback = () => {},
+    save_data?: any,
+    push_data?: any,
+    force_publish: boolean = true
+  ): this {
+    var dao = this;
+
+    // if we're not ready, then we can't save the quote!
+    if (this._ready === false) {
+      this.emit(
+        'saveQuoteError',
+        {message: 'Database server not ready'},
+        Error('Database not ready'),
+        quote
+      );
+
+      failure.call(this, quote);
+      return dao;
     }
 
+    if (save_data === undefined) {
+      save_data = {};
 
-    /**
-     * Attempts to connect to the database
-     *
-     * connectError event will be emitted on failure.
-     *
-     * @param success - function to call when connection is complete
-     *                          (will not be called if connection fails)
-     */
-    connect( success: () => void ): this
-    {
-        var dao = this;
+      const quote_data = quote.getBucket().getData();
 
-        // attempt to connect to the database
-        this._db.open( function( err: any, db: any )
+      Object.keys(quote_data).forEach(
+        key => (save_data['data.' + key] = quote_data[key])
+      );
+    }
+
+    const id = quote.getId();
+    const save_ts = this._ts_ctor();
+
+    // some data should always be saved because the quote will be created if
+    // it does not yet exist
+    save_data.id = id;
+    save_data.env = this._env;
+    save_data.pver = quote.getProgramVersion();
+    save_data.importDirty = 1;
+    save_data.lastPremDate = quote.getLastPremiumDate();
+    save_data.retryAttempts = quote.getRetryAttempts();
+    save_data.initialRatedDate = quote.getRatedDate();
+    save_data.explicitLock = quote.getExplicitLockReason();
+    save_data.explicitLockStepId = quote.getExplicitLockStep();
+    save_data.importedInd = +quote.isImported();
+    save_data.boundInd = +quote.isBound();
+    save_data.lastUpdate = save_ts;
+    save_data.quoteSetId = id;
+
+    if (force_publish) {
+      save_data.publishResetTs = save_ts;
+      save_data.published = false;
+    }
+
+    const exp_date = quote.getExpirationDate();
+    save_data.quoteExpDate = exp_date === Infinity ? 0 : exp_date;
+
+    // meta will eventually take over for much of the above data
+    save_data['meta.liza_timestamp_initial_rated'] = [quote.getRatedDate()];
+
+    // save the stack so we can track this call via the oplog
+    save_data._stack = new Error().stack;
+
+    // do not push empty objects
+    const document =
+      !push_data || !Object.keys(push_data).length
+        ? {$set: save_data}
+        : {$set: save_data, $push: push_data};
+
+    // update the quote data if it already exists (same id), otherwise
+    // insert it
+    this._collection!.update(
+      {id: id},
+      document,
+
+      // create record if it does not yet exist
+      {upsert: true},
+
+      // on complete
+      function (err, _docs) {
+        // if an error occurred, then we cannot continue
+        if (err) {
+          dao.emit('saveQuoteError', err, quote);
+
+          // let the caller handle the error
+          if (failure instanceof Function) {
+            failure.call(dao, quote);
+          }
+
+          return;
+        }
+
+        // successful
+        if (success instanceof Function) {
+          success.call(dao, quote);
+        }
+      }
+    );
+
+    return this;
+  }
+
+  /**
+   * Merges quote data with the existing (rather than overwriting)
+   *
+   * @param quote   - quote to save
+   * @param data    - quote data
+   * @param success - successful callback
+   * @param failure - failure callback
+   */
+  mergeData(
+    quote: ServerSideQuote,
+    data: MongoUpdate,
+    success: Callback = () => {},
+    failure: Callback = () => {}
+  ): this {
+    // we do not want to alter the original data; use it as a prototype
+    var update = data;
+
+    // save the stack so we can track this call via the oplog
+    var _self = this;
+    this._collection!.update(
+      {id: quote.getId()},
+      {$set: update},
+      {},
+
+      function (err, _docs) {
+        if (err) {
+          _self.emit('saveQuoteError', err, quote);
+
+          if (typeof failure === 'function') {
+            failure(quote);
+          }
+
+          return;
+        }
+
+        if (typeof success === 'function') {
+          success(quote);
+        }
+      }
+    );
+
+    return this;
+  }
+
+  /**
+   * Merges bucket data with the existing bucket (rather than overwriting the
+   * entire bucket)
+   *
+   * @param quote   - quote to save
+   * @param data    - bucket data
+   * @param success - successful callback
+   * @param failure - failure callback
+   */
+  mergeBucket(
+    quote: ServerSideQuote,
+    data: MongoUpdate,
+    success: Callback = () => {},
+    failure: Callback = () => {}
+  ): this {
+    var update: MongoUpdate = {};
+
+    for (var field in data) {
+      if (!field) {
+        continue;
+      }
+
+      update['data.' + field] = data[field];
+    }
+
+    return this.mergeData(quote, update, success, failure);
+  }
+
+  /**
+   * Saves the quote state to the database
+   *
+   * The quote state includes the current step, the top visited step and the
+   * explicit lock message.
+   *
+   * @param quote   - the quote to save
+   * @param success - function to call on success
+   * @param failure - function to call if save fails
+   */
+  saveQuoteState(
+    quote: ServerSideQuote,
+    success: Callback = () => {},
+    failure: Callback = () => {}
+  ): this {
+    var update = {
+      currentStepId: quote.getCurrentStepId(),
+      topVisitedStepId: quote.getTopVisitedStepId(),
+      topSavedStepId: quote.getTopSavedStepId(),
+    };
+
+    return this.mergeData(quote, update, success, failure);
+  }
+
+  /**
+   * Ensure the quote has been rated before
+   *
+   * @param quote - the quote to validate
+   *
+   * @returns a promise with the quote
+   */
+  ensurePriorRate(quote: ServerSideQuote): Promise<ServerSideQuote> {
+    return new Promise<ServerSideQuote>((resolve, reject) => {
+      this._collection!.find(
+        {id: quote.getId()},
         {
-            // if there was an error, don't bother with anything else
-            if ( err )
-            {
-                // in some circumstances, it may just be telling us that we're
-                // already connected (even though the connection may have been
-                // broken)
-                if ( err.errno !== undefined )
-                {
-                    dao.emit( 'connectError', err );
-                    return;
-                }
+          limit: <PositiveInteger>1,
+          fields: {
+            'meta.liza_timestamp_rate_request': 1,
+            lastPremDate: 1,
+          },
+        },
+        (_err, cursor) => {
+          cursor.toArray(function (_err: NullableError, data: any[]) {
+            // was the quote found?
+            if (data.length == 0) {
+              // Return the quote unchanged
+              reject(new Error('Could not find quote ' + quote.getId()));
+              return;
             }
 
-            var ready_count = 0;
-            var check_ready = function()
-            {
-                if ( ++ready_count < 2 )
-                {
-                    return;
-                }
-
-                // we're ready to roll!
-                dao._ready = true;
-                dao.emit( 'ready' );
-
-                // connection was successful; call the callback
-                if ( success instanceof Function )
-                {
-                    success.call( dao );
-                }
+            if (data[0]?.lastPremDate > 0) {
+              resolve(quote);
+              return;
             }
 
-            // quotes collection
-            db.collection(
-                dao.COLLECTION,
-                function(
-                    _err:       any,
-                    collection: MongoCollection,
-                ) {
-                    // for some reason this gets called more than once
-                    if ( collection == null )
-                    {
-                        return;
-                    }
+            const meta = data[0].meta;
 
-                    // initialize indexes
-                    collection.createIndex(
-                        [ ['id', 1] ],
-                        true,
-                        function(
-                            _err:   NullableError,
-                            _index: { [P: string]: any,
-                        } )
-                        {
-                            // mark the DAO as ready to be used
-                            dao._collection = collection;
-                            check_ready();
-                        }
-                    );
-                }
-            );
+            if (!meta) {
+              reject(new Error('No meta data for quote ' + quote.getId()));
+              return;
+            }
 
-            // seq collection
-            db.collection(
-                dao.COLLECTION_SEQ,
-                function(
-                    err:        Error,
-                    collection: MongoCollection,
-                ) {
-                    if ( err )
-                    {
-                        dao.emit( 'seqError', err );
-                        return;
-                    }
+            const rate_request = meta.liza_timestamp_rate_request;
 
-                    if ( collection == null )
-                    {
-                        return;
-                    }
+            if (
+              !rate_request ||
+              rate_request.length === 0 ||
+              +rate_request[0] === 0
+            ) {
+              reject(new Error('No prior rate for quote ' + quote.getId()));
+              return;
+            }
 
-                    dao._seqCollection = collection;
+            resolve(quote);
+          });
+        }
+      );
+    });
+  }
 
-                    // has the sequence we'll be referencing been initialized?
-                    collection.find(
-                        { _id: dao.SEQ_QUOTE_ID },
-                        { limit: <PositiveInteger>1 },
-                        function( err: NullableError, cursor )
-                        {
-                            if ( err )
-                            {
-                                dao._initQuoteIdSeq( check_ready )
-                                return;
-                            }
+  /**
+   * Save document metadata (meta field on document)
+   *
+   * Only the provided indexes will be modified (that is---data will be
+   * merged with what is already in the database).
+   *
+   * @param quote    - destination quote
+   * @param new_meta - bucket-formatted data to write
+   * @param success  - callback on success
+   * @param failure  - callback on error
+   */
+  saveQuoteMeta(
+    quote: ServerSideQuote,
+    new_meta?: Record<string, any>,
+    success: Callback = () => {},
+    failure: Callback = () => {}
+  ): void {
+    const update: MongoUpdate = {};
 
-                            cursor.toArray( function( _err: Error, data: any[] )
-                            {
-                                if ( data.length == 0 )
-                                {
-                                    dao._initQuoteIdSeq( check_ready );
-                                    return;
-                                }
+    new_meta = new_meta || quote.getMetabucket().getData();
 
-                                check_ready();
-                            });
-                        }
-                    );
-                }
-            );
+    for (var key in new_meta) {
+      var meta = new_meta[key];
+
+      for (var i in meta) {
+        update['meta.' + key + '.' + i] = new_meta[key][i];
+      }
+    }
+
+    this.mergeData(quote, update, success, failure);
+  }
+
+  /**
+   * Saves the quote lock state to the database
+   *
+   * @param quote   - the quote to save
+   * @param success - function to call on success
+   * @param failure - function to call if save fails
+   */
+  saveQuoteLockState(
+    quote: ServerSideQuote,
+    success: Callback = () => {},
+    failure: Callback = () => {}
+  ): this {
+    // lock state is saved by default
+    return this.saveQuote(quote, success, failure, {});
+  }
+
+  /**
+   * Pulls quote data from the database
+   *
+   * @param quote_id - id of quote
+   * @param callback - function to call when data is available
+   */
+  pullQuote(
+    quote_id: PositiveInteger,
+    callback: (data: Record<string, any> | null) => void
+  ): this {
+    var dao = this;
+
+    // XXX: TODO: Do not read whole of record into memory; filter out
+    // revisions!
+    this._collection!.find(
+      {id: quote_id},
+      {limit: <PositiveInteger>1},
+      function (_err, cursor) {
+        cursor.toArray(function (_err: NullableError, data: any[]) {
+          // was the quote found?
+          if (data.length == 0) {
+            callback.call(dao, null);
+            return;
+          }
+
+          // return the quote data
+          callback.call(dao, data[0]);
         });
+      }
+    );
 
-        return this;
-    }
+    return this;
+  }
 
+  /**
+   * Returns the minimum allowable quote id
+   *
+   * @param callback - function to call with minimum quote id
+   */
+  getMinQuoteId(callback: (min_id: number) => void): this {
+    // just in case it's asynchronous later on
+    callback.call(this, this.SEQ_QUOTE_ID_DEFAULT);
 
-    /**
-     * Initialize the quote id sequence collection
-     *
-     * @param success - a function to call once it has been initialized
-     */
-    private _initQuoteIdSeq( success: () => void )
-    {
-        var dao = this;
+    return this;
+  }
 
-        this._seqCollection!.insert(
-            {
-                _id: this.SEQ_QUOTE_ID,
-                val: this.SEQ_QUOTE_ID_DEFAULT,
-            },
-            function( err: NullableError, _docs: any )
-            {
-                if ( err )
-                {
-                    dao.emit( 'seqError', err );
-                    return;
-                }
+  /**
+   * Returns the current highest quote id
+   *
+   * @param callback - function to call with current highest quote id
+   */
+  getMaxQuoteId(callback: (max_id: number) => void): void {
+    var dao = this;
 
-                dao.emit( 'seqInit', dao.SEQ_QUOTE_ID );
-                success.call( dao );
-            }
-        );
-    }
+    this._seqCollection!.find(
+      {_id: this.SEQ_QUOTE_ID},
+      {limit: <PositiveInteger>1},
+      function (_err, cursor) {
+        cursor.toArray(function (_err: NullableError, data: any[]) {
+          if (data.length == 0) {
+            callback.call(dao, 0);
+            return;
+          }
 
+          // return the max quote id
+          callback.call(dao, data[0].val);
+        });
+      }
+    );
+  }
 
-    /**
-     * Saves a quote to the database
-     *
-     * A full save will include all metadata.  This should not cause any
-     * problems with race conditions for pending Data API calls on meta
-     * fields because those results write to individual indexes and do not
-     * rely on existing data.
-     *
-     * @param quote         - the quote to save
-     * @param success       - function to call on success
-     * @param failure       - function to call if save fails
-     * @param save_data     - quote data to save (optional)
-     * @param push_data     - quote data to push (optional)
-     * @param force_publish - reset published indicator (optional)
-     */
-    saveQuote(
-        quote:         ServerSideQuote,
-        success:       Callback = () => {},
-        failure:       Callback = () => {},
-        save_data?:    any,
-        push_data?:    any,
-        force_publish: boolean = true
-    ): this
-    {
-        var dao = this;
+  /**
+   * Returns the next available quote id
+   *
+   * @param callback - function to call with next available quote id
+   */
+  getNextQuoteId(callback: (quote_id: number) => void): this {
+    var dao = this;
 
-        // if we're not ready, then we can't save the quote!
-        if ( this._ready === false )
-        {
-            this.emit( 'saveQuoteError',
-                { message: 'Database server not ready' },
-                Error( 'Database not ready' ),
-                quote
-            );
+    this._seqCollection!.findAndModify(
+      {_id: this.SEQ_QUOTE_ID},
+      [['val', 'descending']],
+      {$inc: {val: 1}},
+      {new: true},
 
-            failure.call( this, quote );
-            return dao;
+      function (err, doc) {
+        if (err) {
+          dao.emit('seqError', err);
+
+          callback.call(dao, 0);
+          return;
         }
 
-        if ( save_data === undefined )
-        {
-            save_data = {};
+        // return the new id
+        callback.call(dao, doc.val);
+      }
+    );
 
-            const quote_data = quote.getBucket().getData();
+    return this;
+  }
 
-            Object.keys( quote_data ).forEach(
-                key => save_data[ 'data.' + key ] = quote_data[ key ]
-            );
+  /**
+   * Create a new revision with the provided quote data
+   *
+   * The revision will contain the whole the quote. If space is a concern, we
+   * can (in the future) calculate a delta instead (Mike recommends the Git
+   * model of storing the deltas in previous revisions and the whole of the
+   * bucket in the most recently created revision).
+   *
+   * @param quote    - the quote to create a revision with
+   * @param callback - function to call on error
+   */
+  createRevision(quote: ServerSideQuote, callback: ErrorCallback): void {
+    var _self = this,
+      qid = quote.getId(),
+      data = quote.getBucket().getData();
+
+    this._collection!.update(
+      {id: qid},
+      {$push: {revisions: {data: data}}},
+
+      // create record if it does not yet exist
+      {upsert: true},
+
+      // on complete
+      function (err) {
+        if (err) {
+          _self.emit('mkrevError', err);
         }
 
-        const id      = quote.getId();
-        const save_ts = this._ts_ctor();
+        callback(err);
+        return;
+      }
+    );
+  }
 
-        // some data should always be saved because the quote will be created if
-        // it does not yet exist
-        save_data.id                 = id;
-        save_data.env                = this._env;
-        save_data.pver               = quote.getProgramVersion();
-        save_data.importDirty        = 1;
-        save_data.lastPremDate       = quote.getLastPremiumDate();
-        save_data.retryAttempts      = quote.getRetryAttempts();
-        save_data.initialRatedDate   = quote.getRatedDate();
-        save_data.explicitLock       = quote.getExplicitLockReason();
-        save_data.explicitLockStepId = quote.getExplicitLockStep();
-        save_data.importedInd        = +quote.isImported();
-        save_data.boundInd           = +quote.isBound();
-        save_data.lastUpdate         = save_ts;
-        save_data.quoteSetId         = id;
+  /**
+   * Get a quote revision by its revision id
+   *
+   * @param quote    - the quote
+   * @param revid    - the revision id
+   * @param callback - a function to call with results
+   */
+  getRevision(
+    quote: ServerSideQuote,
+    revid: PositiveInteger,
+    callback: ErrorCallback
+  ): void {
+    revid = <PositiveInteger>+revid;
 
-        if ( force_publish )
-        {
-            save_data.publishResetTs = save_ts;
-            save_data.published      = false;
+    // XXX: TODO: Filter out all but the revision we want
+    this._collection!.find(
+      {id: quote.getId()},
+      {limit: <PositiveInteger>1},
+      function (_err, cursor) {
+        cursor.toArray(function (_err: NullableError, data: any[]) {
+          // was the quote found?
+          if (data.length === 0 || data[0].revisions.length < revid + 1) {
+            callback(null);
+            return;
+          }
+
+          // return the quote data
+          callback(data[0].revisions[revid]);
+        });
+      }
+    );
+  }
+
+  /**
+   * Set worksheet data
+   *
+   * @param qid      - The quote id
+   * @param data     - worksheet data
+   * @param failure  - a function to call on error
+   */
+  setWorksheets(
+    qid: QuoteId,
+    data: MongoUpdate,
+    failure: NodeCallback<void>
+  ): void {
+    this._collection!.update(
+      {id: qid},
+      {$set: {worksheets: {data: data}}},
+
+      // create record if it does not yet exist
+      {upsert: true},
+
+      // on complete
+      function (err) {
+        failure(err);
+        return;
+      }
+    );
+  }
+
+  /**
+   * Retrieve worksheet data for a given quote id and supplier
+   *
+   * @param qid      - the quote id
+   * @param supplier - the supplier to retrieve the worksheet for
+   * @param index    - the worksheet index
+   *
+   * @return Promise with worksheet data
+   */
+  getWorksheet(
+    qid: QuoteId,
+    supplier: string,
+    index: PositiveInteger
+  ): Promise<WorksheetData> {
+    return new Promise((resolve, reject) => {
+      this._collection!.find({id: qid}, {limit: <PositiveInteger>1}, function (
+        err,
+        cursor
+      ) {
+        if (err) {
+          reject(err);
+          return;
         }
 
-        const exp_date         = quote.getExpirationDate();
-        save_data.quoteExpDate = ( exp_date === Infinity ) ? 0 : exp_date;
-
-        // meta will eventually take over for much of the above data
-        save_data[ 'meta.liza_timestamp_initial_rated' ] = [ quote.getRatedDate() ];
-
-        // save the stack so we can track this call via the oplog
-        save_data._stack = ( new Error() ).stack;
-
-        // do not push empty objects
-        const document = ( !push_data || !Object.keys( push_data ).length )
-            ? { '$set': save_data }
-            : { '$set': save_data, '$push': push_data };
-
-        // update the quote data if it already exists (same id), otherwise
-        // insert it
-        this._collection!.update( { id: id },
-            document,
-
-            // create record if it does not yet exist
-            { upsert: true },
-
-            // on complete
-            function( err, _docs )
-            {
-                // if an error occurred, then we cannot continue
-                if ( err )
-                {
-                    dao.emit( 'saveQuoteError', err, quote );
-
-                    // let the caller handle the error
-                    if ( failure instanceof Function )
-                    {
-                        failure.call( dao, quote );
-                    }
-
-                    return;
-                }
-
-                // successful
-                if ( success instanceof Function )
-                {
-                    success.call( dao, quote );
-                }
-            }
-        );
-
-        return this;
-    }
-
-
-    /**
-     * Merges quote data with the existing (rather than overwriting)
-     *
-     * @param quote   - quote to save
-     * @param data    - quote data
-     * @param success - successful callback
-     * @param failure - failure callback
-     */
-    mergeData(
-        quote:   ServerSideQuote,
-        data:    MongoUpdate,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        // we do not want to alter the original data; use it as a prototype
-        var update = data;
-
-        // save the stack so we can track this call via the oplog
-        var _self = this;
-        this._collection!.update( { id: quote.getId() },
-            { '$set': update },
-            {},
-
-            function( err, _docs )
-            {
-                if ( err )
-                {
-                    _self.emit( 'saveQuoteError', err, quote );
-
-                    if ( typeof failure === 'function' )
-                    {
-                        failure( quote );
-                    }
-
-                    return;
-                }
-
-                if ( typeof success === 'function' )
-                {
-                    success( quote );
-                }
-            }
-        );
-
-        return this;
-    }
-
-
-    /**
-     * Merges bucket data with the existing bucket (rather than overwriting the
-     * entire bucket)
-     *
-     * @param quote   - quote to save
-     * @param data    - bucket data
-     * @param success - successful callback
-     * @param failure - failure callback
-     */
-    mergeBucket(
-        quote:   ServerSideQuote,
-        data:    MongoUpdate,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        var update: MongoUpdate = {};
-
-        for ( var field in data )
-        {
-            if ( !field )
-            {
-                continue;
-            }
-
-            update[ 'data.' + field ] = data[ field ];
-        }
-
-        return this.mergeData( quote, update, success, failure );
-    }
-
-
-    /**
-     * Saves the quote state to the database
-     *
-     * The quote state includes the current step, the top visited step and the
-     * explicit lock message.
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteState(
-        quote:   ServerSideQuote,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        var update = {
-            currentStepId:    quote.getCurrentStepId(),
-            topVisitedStepId: quote.getTopVisitedStepId(),
-            topSavedStepId:   quote.getTopSavedStepId(),
-        };
-
-        return this.mergeData(
-            quote, update, success, failure
-        );
-    }
-
-
-    /**
-     * Ensure the quote has been rated before
-     *
-     * @param quote - the quote to validate
-     *
-     * @returns a promise with the quote
-     */
-    ensurePriorRate( quote: ServerSideQuote ): Promise<ServerSideQuote>
-    {
-        return new Promise<ServerSideQuote>( ( resolve, reject ) =>
-        {
-            this._collection!.find(
-                { id: quote.getId() },
-                {
-                    limit:  <PositiveInteger>1,
-                    fields: {
-                        'meta.liza_timestamp_rate_request': 1,
-                        'lastPremDate':                     1,
-                    }
-                },
-                ( _err, cursor ) =>
-                {
-                    cursor.toArray( function( _err: NullableError, data: any[] )
-                    {
-                        // was the quote found?
-                        if ( data.length == 0 )
-                        {
-                            // Return the quote unchanged
-                            reject(
-                                new Error(
-                                    'Could not find quote ' + quote.getId()
-                                )
-                            );
-                            return;
-                        }
-
-                        if( data[ 0 ]?.lastPremDate > 0 )
-                        {
-                            resolve( quote );
-                            return;
-                        }
-
-                        const meta = data[ 0 ].meta;
-
-                        if( !meta )
-                        {
-                            reject(
-                                new Error(
-                                    'No meta data for quote ' + quote.getId()
-                                )
-                            );
-                            return;
-                        }
-
-                        const rate_request = meta.liza_timestamp_rate_request;
-
-                        if( !rate_request ||
-                            rate_request.length === 0 ||
-                            +rate_request[ 0 ] === 0 )
-                        {
-                            reject(
-                                new Error(
-                                    'No prior rate for quote ' + quote.getId()
-                                )
-                            );
-                            return;
-                        }
-
-                        resolve( quote );
-                    });
-                }
-            );
-        } );
-    }
-
-
-    /**
-     * Save document metadata (meta field on document)
-     *
-     * Only the provided indexes will be modified (that is---data will be
-     * merged with what is already in the database).
-     *
-     * @param quote    - destination quote
-     * @param new_meta - bucket-formatted data to write
-     * @param success  - callback on success
-     * @param failure  - callback on error
-     */
-    saveQuoteMeta(
-        quote:     ServerSideQuote,
-        new_meta?: Record<string, any>,
-        success:   Callback = () => {},
-        failure:   Callback = () => {},
-    ): void
-    {
-        const update: MongoUpdate = {};
-
-        new_meta = new_meta || quote.getMetabucket().getData();
-
-        for ( var key in new_meta )
-        {
-            var meta = new_meta[ key ];
-
-            for ( var i in meta )
-            {
-                update[ 'meta.' + key + '.' + i ] = new_meta[ key ][ i ];
-            }
-        }
-
-        this.mergeData( quote, update, success, failure );
-    }
-
-
-    /**
-     * Saves the quote lock state to the database
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteLockState(
-        quote:   ServerSideQuote,
-        success: Callback = () => {},
-        failure: Callback = () => {},
-    ): this
-    {
-        // lock state is saved by default
-        return this.saveQuote( quote, success, failure, {} );
-    }
-
-
-    /**
-     * Pulls quote data from the database
-     *
-     * @param quote_id - id of quote
-     * @param callback - function to call when data is available
-     */
-    pullQuote(
-        quote_id: PositiveInteger,
-        callback: ( data: Record<string, any> | null ) => void
-    ): this
-    {
-        var dao = this;
-
-        // XXX: TODO: Do not read whole of record into memory; filter out
-        // revisions!
-        this._collection!.find( { id: quote_id }, { limit: <PositiveInteger>1 },
-            function( _err, cursor )
-            {
-                cursor.toArray( function( _err: NullableError, data: any[] )
-                {
-                    // was the quote found?
-                    if ( data.length == 0 )
-                    {
-                        callback.call( dao, null );
-                        return;
-                    }
-
-                    // return the quote data
-                    callback.call( dao, data[ 0 ] );
-                });
-            }
-        );
-
-        return this;
-    }
-
-
-    /**
-     * Returns the minimum allowable quote id
-     *
-     * @param callback - function to call with minimum quote id
-     */
-    getMinQuoteId( callback: ( min_id: number ) => void ): this
-    {
-        // just in case it's asynchronous later on
-        callback.call( this, this.SEQ_QUOTE_ID_DEFAULT );
-
-        return this;
-    }
-
-
-    /**
-     * Returns the current highest quote id
-     *
-     * @param callback - function to call with current highest quote id
-     */
-    getMaxQuoteId( callback: ( max_id: number ) => void ): void
-    {
-        var dao = this;
-
-        this._seqCollection!.find(
-            { _id: this.SEQ_QUOTE_ID },
-            { limit: <PositiveInteger>1 },
-            function( _err, cursor )
-            {
-                cursor.toArray( function( _err: NullableError, data: any[] )
-                {
-                    if ( data.length == 0 )
-                    {
-                        callback.call( dao, 0 );
-                        return;
-                    }
-
-                    // return the max quote id
-                    callback.call( dao, data[ 0 ].val );
-                });
-            }
-        );
-    }
-
-
-    /**
-     * Returns the next available quote id
-     *
-     * @param callback - function to call with next available quote id
-     */
-    getNextQuoteId( callback: ( quote_id: number ) => void ): this
-    {
-        var dao = this;
-
-        this._seqCollection!.findAndModify(
-            { _id: this.SEQ_QUOTE_ID },
-            [ [ 'val', 'descending' ] ],
-            { $inc: { val: 1 } },
-            { 'new': true },
-
-            function( err, doc )
-            {
-                if ( err )
-                {
-                    dao.emit( 'seqError', err );
-
-                    callback.call( dao, 0 );
-                    return;
-                }
-
-                // return the new id
-                callback.call( dao, doc.val );
-            }
-        );
-
-        return this;
-    }
-
-
-    /**
-     * Create a new revision with the provided quote data
-     *
-     * The revision will contain the whole the quote. If space is a concern, we
-     * can (in the future) calculate a delta instead (Mike recommends the Git
-     * model of storing the deltas in previous revisions and the whole of the
-     * bucket in the most recently created revision).
-     *
-     * @param quote    - the quote to create a revision with
-     * @param callback - function to call on error
-     */
-    createRevision(
-        quote:    ServerSideQuote,
-        callback: ErrorCallback,
-    ): void
-    {
-        var _self = this,
-            qid   = quote.getId(),
-            data  = quote.getBucket().getData();
-
-        this._collection!.update( { id: qid },
-            { '$push': { revisions: { data: data } } },
-
-            // create record if it does not yet exist
-            { upsert: true },
-
-            // on complete
-            function( err )
-            {
-                if ( err )
-                {
-                    _self.emit( 'mkrevError', err );
-                }
-
-                callback( err );
-                return;
-            }
-        );
-    }
-
-
-    /**
-     * Get a quote revision by its revision id
-     *
-     * @param quote    - the quote
-     * @param revid    - the revision id
-     * @param callback - a function to call with results
-     */
-    getRevision(
-        quote:    ServerSideQuote,
-        revid:    PositiveInteger,
-        callback: ErrorCallback,
-    ): void
-    {
-        revid = <PositiveInteger>+revid;
-
-        // XXX: TODO: Filter out all but the revision we want
-        this._collection!.find(
-            { id: quote.getId() },
-            { limit: <PositiveInteger>1 },
-            function( _err, cursor )
-            {
-                cursor.toArray( function( _err: NullableError, data: any[] )
-                {
-                    // was the quote found?
-                    if ( ( data.length === 0 )
-                        || ( data[ 0 ].revisions.length < ( revid + 1 ) )
-                    )
-                    {
-                        callback( null );
-                        return;
-                    }
-
-                    // return the quote data
-                    callback( data[ 0 ].revisions[ revid ] );
-                });
-            }
-        );
-    }
-
-
-    /**
-     * Set worksheet data
-     *
-     * @param qid      - The quote id
-     * @param data     - worksheet data
-     * @param failure  - a function to call on error
-     */
-    setWorksheets(
-        qid:     QuoteId,
-        data:    MongoUpdate,
-        failure: NodeCallback<void>,
-    ): void
-    {
-        this._collection!.update( { id: qid },
-            { '$set': { worksheets: { data: data } } },
-
-            // create record if it does not yet exist
-            { upsert: true },
-
-            // on complete
-            function( err )
-            {
-                failure( err );
-                return;
-            }
-        );
-    }
-
-
-    /**
-     * Retrieve worksheet data for a given quote id and supplier
-     *
-     * @param qid      - the quote id
-     * @param supplier - the supplier to retrieve the worksheet for
-     * @param index    - the worksheet index
-     *
-     * @return Promise with worksheet data
-     */
-    getWorksheet(
-        qid:      QuoteId,
-        supplier: string,
-        index:    PositiveInteger,
-    ): Promise<WorksheetData>
-    {
-        return new Promise( ( resolve, reject ) =>
-        {
-            this._collection!.find(
-                { id: qid },
-                { limit: <PositiveInteger>1 },
-                function( err, cursor )
-                {
-                    if ( err )
-                    {
-                        reject( err );
-                        return;
-                    }
-
-                    cursor.toArray( function( _err: NullableError, data: any[] )
-                    {
-                        // was the quote found?
-                        if ( ( data.length === 0 )
-                            || ( !data[ 0 ].worksheets )
-                            || ( !data[ 0 ].worksheets.data )
-                            || ( !data[ 0 ].worksheets.data[ supplier ] )
-                        )
-                        {
-                            reject( 'Worksheet data not found' );
-                            return;
-                        }
-
-                        // return the quote data
-                        const worksheet_data: WorksheetData = {
-                            data: data[ 0 ].worksheets.data[ supplier ][ index ]
-                        }
-
-                        resolve( worksheet_data );
-                    } );
-                }
-            );
-        } );
-    }
-};
+        cursor.toArray(function (_err: NullableError, data: any[]) {
+          // was the quote found?
+          if (
+            data.length === 0 ||
+            !data[0].worksheets ||
+            !data[0].worksheets.data ||
+            !data[0].worksheets.data[supplier]
+          ) {
+            reject('Worksheet data not found');
+            return;
+          }
+
+          // return the quote data
+          const worksheet_data: WorksheetData = {
+            data: data[0].worksheets.data[supplier][index],
+          };
+
+          resolve(worksheet_data);
+        });
+      });
+    });
+  }
+}

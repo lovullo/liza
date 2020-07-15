@@ -19,138 +19,114 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const chai   = require( 'chai' );
+const chai = require('chai');
 const expect = chai.expect;
 
-import { readFile } from "fs";
+import {readFile} from 'fs';
 
-import { ConfLoader as Sut } from "../../src/conf/ConfLoader";
+import {ConfLoader as Sut} from '../../src/conf/ConfLoader';
 
-type FsLike = { readFile: typeof readFile };
+type FsLike = {readFile: typeof readFile};
 
 const {
-    store: {
-        MemoryStore: Store,
-    },
-} = require( '../../' );
+  store: {MemoryStore: Store},
+} = require('../../');
 
-chai.use( require( 'chai-as-promised' ) );
+chai.use(require('chai-as-promised'));
 
+describe('ConfLoader', () => {
+  it("loads Store'd configuration from file", () => {
+    const expected_path = '/foo/bar/baz.json';
+    const expected_data = '{ "foo": "bar" }';
 
-describe( 'ConfLoader', () =>
-{
-    it( "loads Store'd configuration from file", () =>
-    {
-        const expected_path = "/foo/bar/baz.json";
-        const expected_data = '{ "foo": "bar" }';
+    const fs = <FsLike>{
+      readFile(path: string, encoding: string, callback: any) {
+        expect(path).to.equal(expected_path);
+        expect(encoding).to.equal('utf8');
 
-        const fs = <FsLike>{
-            readFile( path: string, encoding: string, callback: any )
-            {
-                expect( path ).to.equal( expected_path );
-                expect( encoding ).to.equal( 'utf8' );
+        callback(null, expected_data);
+      },
+    };
 
-                callback( null, expected_data );
-            },
-        };
+    return expect(
+      new Sut(fs, Store).fromFile(expected_path).then(conf => conf.get('foo'))
+    ).to.eventually.deep.equal(JSON.parse(expected_data).foo);
+  });
 
-        return expect(
-            new Sut( fs, Store )
-                .fromFile( expected_path )
-                .then( conf => conf.get( 'foo' ) )
-        ).to.eventually.deep.equal( JSON.parse( expected_data ).foo );
-    } );
+  it('fails on read error', () => {
+    const expected_err = Error('rejected');
 
+    const fs = <FsLike>{
+      readFile(_: any, __: any, callback: any) {
+        callback(expected_err, null);
+      },
+    };
 
-    it( "fails on read error", () =>
-    {
-        const expected_err = Error( 'rejected' );
+    return expect(
+      new Sut(fs, Store).fromFile('')
+    ).to.eventually.be.rejectedWith(expected_err);
+  });
 
-        const fs = <FsLike>{
-            readFile( _: any, __: any, callback: any )
-            {
-                callback( expected_err, null );
-            },
-        };
+  it('can override #parseConfData for custom parser', () => {
+    const result = {foo: {}};
+    const input = 'foo';
 
-        return expect( new Sut( fs, Store ).fromFile( '' ) )
-            .to.eventually.be.rejectedWith( expected_err );
-    } );
+    const fs = <FsLike>{
+      readFile(_: any, __: any, callback: any) {
+        callback(null, input);
+      },
+    };
 
+    const sut = new (class extends Sut {
+      parseConfData(given_input: string) {
+        expect(given_input).to.equal(input);
+        return Promise.resolve(result);
+      }
+    })(fs, Store);
 
-    it( "can override #parseConfData for custom parser", () =>
-    {
-        const result = { foo: {} };
-        const input  = "foo";
+    return expect(
+      sut.fromFile('').then(conf => conf.get('foo'))
+    ).to.eventually.equal(result.foo);
+  });
 
-        const fs = <FsLike>{
-            readFile( _: any, __: any, callback: any )
-            {
-                callback( null, input );
-            },
-        };
+  it('rejects promise on parsing error', () => {
+    const expected_err = SyntaxError('test parsing error');
 
-        const sut = new class extends Sut
-        {
-            parseConfData( given_input: string )
-            {
-                expect( given_input ).to.equal( input );
-                return Promise.resolve( result );
-            }
-        }( fs, Store );
+    const fs = <FsLike>{
+      readFile(_: any, __: any, callback: any) {
+        // make async so that we clear the stack, and therefore
+        // try/catch
+        process.nextTick(() => callback(null, ''));
+      },
+    };
 
-        return expect(
-            sut.fromFile( '' )
-                .then( conf => conf.get( 'foo' ) )
-        ).to.eventually.equal( result.foo );
-    } );
+    const sut = new (class extends Sut {
+      parseConfData(_given_input: string): never {
+        throw expected_err;
+      }
+    })(fs, Store);
 
+    return expect(sut.fromFile('')).to.eventually.be.rejectedWith(expected_err);
+  });
 
-    it( 'rejects promise on parsing error', () =>
-    {
-        const expected_err = SyntaxError( 'test parsing error' );
+  it('rejects promise on Store ctor error', () => {
+    const expected_err = Error('test Store ctor error');
 
-        const fs = <FsLike>{
-            readFile( _: any, __: any, callback: any )
-            {
-                // make async so that we clear the stack, and therefore
-                // try/catch
-                process.nextTick( () => callback( null, '' ) );
-            },
-        };
+    const fs = <FsLike>{
+      readFile: (_: any, __: any, callback: any) => callback(null, ''),
+    };
 
-        const sut = new class extends Sut
-        {
-            parseConfData( _given_input: string ): never
-            {
-                throw expected_err;
-            }
-        }( fs, Store );
+    const badstore = () => {
+      throw expected_err;
+    };
 
-        return expect( sut.fromFile( '' ) )
-            .to.eventually.be.rejectedWith( expected_err );
-    } );
+    return expect(
+      new Sut(fs, badstore).fromFile('')
+    ).to.eventually.be.rejectedWith(expected_err);
+  });
 
-
-    it( "rejects promise on Store ctor error", () =>
-    {
-        const expected_err = Error( 'test Store ctor error' );
-
-        const fs = <FsLike>{
-            readFile: ( _: any, __: any, callback: any ) =>
-                callback( null, '' ),
-        };
-
-        const badstore = () => { throw expected_err };
-
-        return expect( new Sut( fs, badstore ).fromFile( '' ) )
-            .to.eventually.be.rejectedWith( expected_err );
-    } );
-
-
-    it( "rejects promise on bad fs call", () =>
-    {
-        return expect( new Sut( <FsLike>{}, Store ).fromFile( '' ) )
-            .to.eventually.be.rejected;
-    } );
-} );
+  it('rejects promise on bad fs call', () => {
+    return expect(new Sut(<FsLike>{}, Store).fromFile('')).to.eventually.be
+      .rejected;
+  });
+});

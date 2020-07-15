@@ -18,32 +18,27 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-var Class           = require( 'easejs' ).Class,
-    DialogDecorator = require( './DialogDecorator' );
-
+var Class = require('easejs').Class,
+  DialogDecorator = require('./DialogDecorator');
 
 /**
  * Provides logical defaults for a notification dialog
  * The purpose of the dialog is to communitcate a
  * message to the user
  */
-module.exports = Class( 'NotificationDialog' )
-    .extend( DialogDecorator,
-{
-    /**
-     * Initializes dialog defaults
-     *
-     * @return {undefined}
-     */
-    'protected init': function()
-    {
-        // set defaults
-        this.getDialog()
-            .setTypeId( 'liza-notification-dialog' )
-            .addClass( 'notification-dialog' )
-            .setModal()
-            .hideTitlebar()
-            .setResizable( false );
-    }
-} );
-
+module.exports = Class('NotificationDialog').extend(DialogDecorator, {
+  /**
+   * Initializes dialog defaults
+   *
+   * @return {undefined}
+   */
+  'protected init': function () {
+    // set defaults
+    this.getDialog()
+      .setTypeId('liza-notification-dialog')
+      .addClass('notification-dialog')
+      .setModal()
+      .hideTitlebar()
+      .setResizable(false);
+  },
+});

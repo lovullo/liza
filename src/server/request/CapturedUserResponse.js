@@ -19,37 +19,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Trait             = require( 'easejs' ).Trait;
-const UserResponse      = require( './UserResponse' );
-const IProtUserResponse = require( './IProtUserResponse' );
+const Trait = require('easejs').Trait;
+const UserResponse = require('./UserResponse');
+const IProtUserResponse = require('./IProtUserResponse');
 
 /** XXX: IProtUserResponse is temporary until an easejs release
     addresses a bug with recognizing named traits extending
     classes as parameterized **/
 
-module.exports = Trait( 'CapturedUserResponse' )
-    .implement( IProtUserResponse )
-    .extend(
-{
+module.exports = Trait('CapturedUserResponse')
+  .implement(IProtUserResponse)
+  .extend({
     'private _callback': null,
 
+    __mixin: function (callback) {
+      if (typeof callback !== 'function') {
+        throw TypeError('Callback expected; given ' + callback);
+      }
 
-    __mixin: function( callback )
-    {
-        if ( typeof callback !== 'function' )
-        {
-            throw TypeError( "Callback expected; given " + callback );
-        }
-
-        this._callback = callback;
+      this._callback = callback;
     },
 
-
     /** TODO: Make public once IProtUserResponse is removed **/
-    'virtual abstract override public endRequest': function(
-        code, error, data
-    )
-    {
-        this._callback( code, error, data );
-    }
-} );
+    'virtual abstract override public endRequest': function (
+      code,
+      error,
+      data
+    ) {
+      this._callback(code, error, data);
+    },
+  });

@@ -19,156 +19,114 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var root   = require( '../../' ),
-    Sut    = root.validate.Failure,
-    expect = require( 'chai' ).expect;
+var root = require('../../'),
+  Sut = root.validate.Failure,
+  expect = require('chai').expect;
 
-var DummyField = require( 'easejs' ).Class
-    .implement( root.field.Field )
-    .extend(
-{
-    getName: function() {},
-    getIndex: function() {},
-} );
+var DummyField = require('easejs')
+  .Class.implement(root.field.Field)
+  .extend({
+    getName: function () {},
+    getIndex: function () {},
+  });
 
+describe('Failure', function () {
+  it('throws error when not given Field for failure', function () {
+    expect(function () {
+      Sut({});
+    }).to.throw(TypeError);
+  });
 
-describe( 'Failure', function()
-{
-    it( 'throws error when not given Field for failure', function()
-    {
-        expect( function()
-        {
-            Sut( {} );
-        } ).to.throw( TypeError );
-    } );
+  it('throws error when not given a Field for causes', function () {
+    expect(function () {
+      // not an array
+      Sut(DummyField(), '', {});
+    }).to.throw(TypeError);
 
+    expect(function () {
+      // one not a Field
+      Sut(DummyField(), '', [DummyField(), {}]);
+    }).to.throw(TypeError);
+  });
 
-    it( 'throws error when not given a Field for causes', function()
-    {
-        expect( function()
-        {
-            // not an array
-            Sut( DummyField(), '', {} );
-        } ).to.throw( TypeError );
+  it('does not throw error for empty clause list', function () {
+    expect(function () {
+      Sut(DummyField(), '', []);
+    }).to.not.throw(TypeError);
+  });
 
-        expect( function()
-        {
-            // one not a Field
-            Sut( DummyField(), '', [ DummyField(), {} ] );
-        } ).to.throw( TypeError );
-    } );
+  describe('#getField', function () {
+    it('returns original field', function () {
+      var field = DummyField();
 
+      expect(Sut(field).getField()).to.equal(field);
+    });
+  });
 
-    it( 'does not throw error for empty clause list', function()
-    {
-        expect( function()
-        {
-            Sut( DummyField(), '', [] );
-        } ).to.not.throw( TypeError );
-    } );
+  describe('#getReason', function () {
+    it('returns original failure reason', function () {
+      var reason = 'solar flares';
 
+      expect(Sut(DummyField(), reason).getReason()).to.equal(reason);
+    });
 
-    describe( '#getField', function()
-    {
-        it( 'returns original field', function()
-        {
-            var field = DummyField();
+    it('returns empty string by default', function () {
+      expect(Sut(DummyField()).getReason()).to.equal('');
+    });
+  });
 
-            expect( Sut( field ).getField() )
-                .to.equal( field );
-        } );
-    } );
+  describe('#getCauses', function () {
+    it('returns original cause fields', function () {
+      var causes = [DummyField(), DummyField()];
 
+      expect(Sut(DummyField(), '', causes).getCauses()).to.equal(causes);
+    });
 
-    describe( '#getReason', function()
-    {
-        it( 'returns original failure reason', function()
-        {
-            var reason = 'solar flares';
+    // in other words: field caused itself to fail
+    it('returns field by default', function () {
+      var field = DummyField();
 
-            expect( Sut( DummyField(), reason ).getReason() )
-                .to.equal( reason );
-        } );
+      expect(Sut(field).getCauses()).to.deep.equal([field]);
+    });
+  });
 
+  describe('when converted to a string', function () {
+    it('produces failure reason', function () {
+      var reason = 'bogons';
 
-        it( 'returns empty string by default', function()
-        {
-            expect( Sut( DummyField() ).getReason() )
-                .to.equal( '' );
-        } );
-    } );
+      expect('' + Sut(DummyField(), reason)).to.equal(reason);
+    });
+  });
 
+  describe('#merge', function () {
+    it('rejects non-Failure merges', function () {
+      expect(function () {
+        Sut(DummyField()).merge({});
+      }).to.throw(TypeError);
+    });
 
-    describe( '#getCauses', function()
-    {
-        it( 'returns original cause fields', function()
-        {
-            var causes = [ DummyField(), DummyField() ];
+    it('merges causes', function () {
+      var cause1 = DummyField(),
+        cause2 = DummyField(),
+        cause3 = DummyField();
 
-            expect( Sut( DummyField(), '', causes ).getCauses() )
-                .to.equal( causes );
-        } );
+      var result = Sut(DummyField(), '', [cause1]).merge(
+        Sut(DummyField(), '', [cause2, cause3])
+      );
 
+      expect(result.getCauses()).to.deep.equal([cause1, cause2, cause3]);
+    });
 
-        // in other words: field caused itself to fail
-        it( 'returns field by default', function()
-        {
-            var field = DummyField();
+    it('merges reasons', function () {
+      var msg1 = 'message 1',
+        msg2 = 'message 2';
 
-            expect( Sut( field ).getCauses() )
-                .to.deep.equal( [ field ] );
-        } );
-    } );
+      var result = Sut(DummyField(), msg1)
+        .merge(Sut(DummyField(), msg2))
+        .getReason();
 
-
-    describe( 'when converted to a string', function()
-    {
-        it( 'produces failure reason', function()
-        {
-            var reason = 'bogons';
-
-            expect( ''+Sut( DummyField(), reason ) )
-                .to.equal( reason );
-        } );
-    } );
-
-
-    describe( '#merge', function()
-    {
-        it( 'rejects non-Failure merges', function()
-        {
-            expect( function()
-            {
-                Sut( DummyField() ).merge( {} );
-            } ).to.throw( TypeError );
-        } );
-
-
-        it( 'merges causes', function()
-        {
-            var cause1 = DummyField(),
-                cause2 = DummyField(),
-                cause3 = DummyField();
-
-            var result = Sut( DummyField(), '', [ cause1 ] )
-                .merge( Sut( DummyField(), '', [ cause2, cause3 ] ) );
-
-            expect( result.getCauses() )
-                .to.deep.equal( [ cause1, cause2, cause3 ] );
-        } );
-
-
-        it( 'merges reasons', function()
-        {
-            var msg1 = 'message 1',
-                msg2 = 'message 2';
-
-            var result = Sut( DummyField(), msg1 )
-                .merge( Sut( DummyField(), msg2 ) )
-                .getReason();
-
-            expect( result ).to.contain( msg1 );
-            expect( result ).to.contain( msg2 );
-        } );
-    } );
-} );
+      expect(result).to.contain(msg1);
+      expect(result).to.contain(msg2);
+    });
+  });
+});

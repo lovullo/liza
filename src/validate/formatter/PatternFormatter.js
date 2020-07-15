@@ -19,19 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-var Class              = require( 'easejs' ).Class,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Class = require('easejs').Class,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Data validation and formatting based on patterns and their
  * replacements
  */
-module.exports = Class( 'VFormat' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Class('VFormat')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Pattern definition
      * @type {Array.<Array>}
@@ -43,7 +40,6 @@ module.exports = Class( 'VFormat' )
      * @type {Array}
      */
     'private _retdfn': [],
-
 
     /**
      * Initialize with a pattern definition and return format definition
@@ -59,12 +55,10 @@ module.exports = Class( 'VFormat' )
      * @param {Array.<Array>} dfn    pattern definition
      * @param {Array=}        retdfn return format definition
      */
-    __construct: function( dfn, retdfn )
-    {
-        this._dfn    = dfn;
-        this._retdfn = retdfn;
+    __construct: function (dfn, retdfn) {
+      this._dfn = dfn;
+      this._retdfn = retdfn;
     },
-
 
     /**
      * Format the given data or fail if no match is found
@@ -77,41 +71,33 @@ module.exports = Class( 'VFormat' )
      *
      * @return {string} formatted string, if a match is found
      */
-    'public parse': function( data )
-    {
-        var dfn = this._dfn;
+    'public parse': function (data) {
+      var dfn = this._dfn;
 
-        // cast all data to a string
-        data = ''+( data );
+      // cast all data to a string
+      data = '' + data;
 
-        var match;
-        for ( var i = 0, len = this._dfn.length; i < len; i += 2 )
-        {
-            if ( match = dfn[ i ].test( data ) )
-            {
-                var replace = dfn[ i + 1 ];
+      var match;
+      for (var i = 0, len = this._dfn.length; i < len; i += 2) {
+        if ((match = dfn[i].test(data))) {
+          var replace = dfn[i + 1];
 
-                // minor optimization that may help on very large sets in
-                // poorly performing browsers; do not perform replacement if it
-                // it would result in an identical string
-                try
-                {
-                    return ( ( replace === '$&' )
-                        ? data
-                        : data.replace( dfn[ i ], dfn[ i + 1 ] )
-                    );
-                }
-                // throwing an exception within the replacement function is
-                // equivalent to saying "no match" and allows for more
-                // complicated logic that would otherwise overcomplicate a
-                // regex; fall through to continue to the next matcher
-                catch ( e ) {}
-            }
+          // minor optimization that may help on very large sets in
+          // poorly performing browsers; do not perform replacement if it
+          // it would result in an identical string
+          try {
+            return replace === '$&' ? data : data.replace(dfn[i], dfn[i + 1]);
+          } catch (e) {
+            // throwing an exception within the replacement function is
+            // equivalent to saying "no match" and allows for more
+            // complicated logic that would otherwise overcomplicate a
+            // regex; fall through to continue to the next matcher
+          }
         }
+      }
 
-        throw Error( 'No match for data: ' + data );
+      throw Error('No match for data: ' + data);
     },
-
 
     /**
      * Retrieve data that may require formatting for display
@@ -127,14 +113,11 @@ module.exports = Class( 'VFormat' )
      *
      * @return {string} data formatted for display
      */
-    'public retrieve': function( data )
-    {
-        if ( !( this._retdfn ) )
-        {
-            return data;
-        }
+    'public retrieve': function (data) {
+      if (!this._retdfn) {
+        return data;
+      }
 
-        return ( ''+data ).replace( this._retdfn[ 0 ], this._retdfn[ 1 ] );
-    }
-} );
-
+      return ('' + data).replace(this._retdfn[0], this._retdfn[1]);
+    },
+  });

@@ -26,46 +26,44 @@
  * @end needsLove
  */
 
-import { PositiveInteger } from "../../numeric";
+import {PositiveInteger} from '../../numeric';
 
 /**
  * Styles a group for display in the UI
  */
-export declare class GroupUi
-{
-    /**
-     * Retrieve the current index count
-     *
-     * This should be one more than the current 0-based index (like an array
-     * length). Subtypes may override this if they do not wish to use the
-     * built-in index tracking.
-     */
-    getCurrentIndexCount(): PositiveInteger;
+export declare class GroupUi {
+  /**
+   * Retrieve the current index count
+   *
+   * This should be one more than the current 0-based index (like an array
+   * length). Subtypes may override this if they do not wish to use the
+   * built-in index tracking.
+   */
+  getCurrentIndexCount(): PositiveInteger;
 
-    getGroupId(): string;
+  getGroupId(): string;
 
-    isA( ref: any ): boolean;
+  isA(ref: any): boolean;
 
+  /**
+   * Sets element value given a name and index
+   *
+   * This has the performance benefit of searching *only* within the group
+   * rather than scanning the entire DOM (or a much larger subset)
+   *
+   * @param name         - element name
+   * @param index        - index to set
+   * @param value        - value to set
+   * @param change_event - whether to trigger change event
+   */
+  setValueByName(
+    name: string,
+    index: number,
+    value: string,
+    change_event: boolean
+  ): this;
 
-    /**
-     * Sets element value given a name and index
-     *
-     * This has the performance benefit of searching *only* within the group
-     * rather than scanning the entire DOM (or a much larger subset)
-     *
-     * @param name         - element name
-     * @param index        - index to set
-     * @param value        - value to set
-     * @param change_event - whether to trigger change event
-     */
-    setValueByName(
-        name:         string,
-        index:        number,
-        value:        string,
-        change_event: boolean
-    ):this
+  hasChildren(): boolean;
 
-    hasChildren(): boolean;
-
-    setChildren(): void;
+  setChildren(): void;
 }

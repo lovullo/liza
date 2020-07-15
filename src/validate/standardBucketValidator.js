@@ -21,9 +21,8 @@
  * @todo This is a relic; make modern.
  */
 
-var formatter = require( './formatter' ),
-    Base      = formatter.EchoFormatter;
-
+var formatter = require('./formatter'),
+  Base = formatter.EchoFormatter;
 
 /**
  * Partially applied function to return a bucket validator with the standard set
@@ -31,77 +30,77 @@ var formatter = require( './formatter' ),
  *
  * Accepts only a map of each field to its type.
  */
-module.exports = function( type_map )
-{
-    return require( 'liza/validate/BucketDataValidator' )(
-        type_map,
+module.exports = function (type_map) {
+  return require('liza/validate/BucketDataValidator')(
+    type_map,
 
-        // standard validators
-        {
-            address:    formatter.AddressFormatter,
-            ccExpDate:  formatter.CcExpDateFormatter,
-            ccNumber:   formatter.CcNumberFormatter,
-            city:       formatter.CityFormatter,
-            currency:   formatter.CurrencyFormatter(),
-            'float':    formatter.FloatFormatter,
-            date:       formatter.FullDateFormatter,
-            dollars:    formatter.DollarFormatter(),
-            manualDate: formatter.FullDateFormatter,
-            csr:        formatter.DbaFormatter,
-            dba:        formatter.DbaFormatter,
-            email:      formatter.EmailFormatter,
-            name:       formatter.NameFormatter,
-            nonPoBoxAddress: formatter.NonPoBoxAddressFormatter,
-            initial:    formatter.InitialFormatter,
-            number:     Base.use( formatter.Number )(),
-            personalId: formatter.PersonalIdFormatter,
-            phone:      formatter.PhoneFormatter,
-            quoteId:    formatter.QuoteIdFormatter,
-            shortDate:  formatter.ShortDateFormatter,
-            url:        formatter.UrlFormatter,
-            year:       formatter.YearFormatter,
-            zip:        formatter.ZipFormatter,
-            cvv2:       formatter.Cvv2Formatter,
-            unorderedList: Base.use( formatter.UnorderedList )(),
+    // standard validators
+    {
+      address: formatter.AddressFormatter,
+      ccExpDate: formatter.CcExpDateFormatter,
+      ccNumber: formatter.CcNumberFormatter,
+      city: formatter.CityFormatter,
+      currency: formatter.CurrencyFormatter(),
+      float: formatter.FloatFormatter,
+      date: formatter.FullDateFormatter,
+      dollars: formatter.DollarFormatter(),
+      manualDate: formatter.FullDateFormatter,
+      csr: formatter.DbaFormatter,
+      dba: formatter.DbaFormatter,
+      email: formatter.EmailFormatter,
+      name: formatter.NameFormatter,
+      nonPoBoxAddress: formatter.NonPoBoxAddressFormatter,
+      initial: formatter.InitialFormatter,
+      number: Base.use(formatter.Number)(),
+      personalId: formatter.PersonalIdFormatter,
+      phone: formatter.PhoneFormatter,
+      quoteId: formatter.QuoteIdFormatter,
+      shortDate: formatter.ShortDateFormatter,
+      url: formatter.UrlFormatter,
+      year: formatter.YearFormatter,
+      zip: formatter.ZipFormatter,
+      cvv2: formatter.Cvv2Formatter,
+      unorderedList: Base.use(formatter.UnorderedList)(),
 
-            // generic type (see lv:external in program UI compiler output);
-            // ignore entirely
-            'undefined': null,
+      // generic type (see lv:external in program UI compiler output);
+      // ignore entirely
+      undefined: null,
 
-            multitext:  Base.use( formatter.MultiDimension( '; ' ) )(),
-            multilimit: formatter.insurance.StandardLimitFormatter
-                .use( formatter.MultiDimension( '; ' ) )(),
+      multitext: Base.use(formatter.MultiDimension('; '))(),
+      multilimit: formatter.insurance.StandardLimitFormatter.use(
+        formatter.MultiDimension('; ')
+      )(),
 
-            // no validators for these (yet)
-            select:  formatter.VoidFormatter,
-            noyes:   formatter.VoidFormatter,
-            radio:   formatter.VoidFormatter,
-            legacyradio:   formatter.VoidFormatter,
-            text:    formatter.VoidFormatter,
-            explain: formatter.VoidFormatter,
-            dateTime:   formatter.VoidFormatter,
-            waitable:   formatter.VoidFormatter,
-            checkbox:   formatter.VoidFormatter,
+      // no validators for these (yet)
+      select: formatter.VoidFormatter,
+      noyes: formatter.VoidFormatter,
+      radio: formatter.VoidFormatter,
+      legacyradio: formatter.VoidFormatter,
+      text: formatter.VoidFormatter,
+      explain: formatter.VoidFormatter,
+      dateTime: formatter.VoidFormatter,
+      waitable: formatter.VoidFormatter,
+      checkbox: formatter.VoidFormatter,
 
-            /* TODO:*/
-            state:      formatter.VoidFormatter,
-            'status':   formatter.VoidFormatter,
-            percent:    formatter.VoidFormatter,
-            'char':     formatter.VoidFormatter,
-            limit:      formatter.insurance.StandardLimitFormatter(),
-            deductible: formatter.VoidFormatter,
-            textarea:   formatter.VoidFormatter,
+      /* TODO:*/
+      state: formatter.VoidFormatter,
+      status: formatter.VoidFormatter,
+      percent: formatter.VoidFormatter,
+      char: formatter.VoidFormatter,
+      limit: formatter.insurance.StandardLimitFormatter(),
+      deductible: formatter.VoidFormatter,
+      textarea: formatter.VoidFormatter,
 
-            // TODO: Refactor AcceptReject into a more generic
-            // formatted that accepts a map of values, and use that
-            // for both this, includeExclude, and anything else that
-            // requires exceptions to values
-            acceptReject: Base.use( formatter.AcceptReject )(),
-            includeExclude: formatter.VoidFormatter,
+      // TODO: Refactor AcceptReject into a more generic
+      // formatted that accepts a map of values, and use that
+      // for both this, includeExclude, and anything else that
+      // requires exceptions to values
+      acceptReject: Base.use(formatter.AcceptReject)(),
+      includeExclude: formatter.VoidFormatter,
 
-            limitReject: formatter.insurance.StandardLimitFormatter
-                .use( formatter.AcceptReject )()
-        }
-    );
+      limitReject: formatter.insurance.StandardLimitFormatter.use(
+        formatter.AcceptReject
+      )(),
+    }
+  );
 };
-

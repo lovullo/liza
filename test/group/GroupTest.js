@@ -20,20 +20,18 @@
  *
  */
 
-"use strict";
+'use strict';
 
-const Sut    = require( '../../' ).group.Group;
-const expect = require( 'chai' ).expect;
+const Sut = require('../../').group.Group;
+const expect = require('chai').expect;
 
-describe( 'Group', () =>
-{
-    it( '#setInternal sets internal flag', () =>
-    {
-        const sut = Sut();
-        expect( sut.isInternal() ).to.be.false;
-        sut.setInternal( true );
-        expect( sut.isInternal() ).to.be.true;
-        sut.setInternal( false );
-        expect( sut.isInternal() ).to.be.false;
-    } );
-} );
+describe('Group', () => {
+  it('#setInternal sets internal flag', () => {
+    const sut = Sut();
+    expect(sut.isInternal()).to.be.false;
+    sut.setInternal(true);
+    expect(sut.isInternal()).to.be.true;
+    sut.setInternal(false);
+    expect(sut.isInternal()).to.be.false;
+  });
+});

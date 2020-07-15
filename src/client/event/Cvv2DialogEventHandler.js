@@ -21,17 +21,15 @@
  * TODO: This can be generalized.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventHandler = require( './EventHandler' );
-
+var Class = require('easejs').Class,
+  EventHandler = require('./EventHandler');
 
 /**
  * Shows Cvv2 Dialog
  */
-module.exports = Class( 'Cvv2DialogEventHandler' )
-    .implement( EventHandler )
-    .extend(
-{
+module.exports = Class('Cvv2DialogEventHandler')
+  .implement(EventHandler)
+  .extend({
     /**
      * jQuery instance
      *
@@ -39,17 +37,14 @@ module.exports = Class( 'Cvv2DialogEventHandler' )
      */
     'private _jquery': null,
 
-
     /**
      * Initializes with client that will delegate the event
      *
      * @param {jQuery} jquery jquery instance
      */
-    __construct: function( jquery )
-    {
-        this._jquery = jquery;
+    __construct: function (jquery) {
+      this._jquery = jquery;
     },
-
 
     /**
      * Handles kick-back
@@ -60,18 +55,16 @@ module.exports = Class( 'Cvv2DialogEventHandler' )
      *
      * @return {StatusEventHandler} self
      */
-    'public handle': function( type, c, data )
-    {
-        var $dialog = this._jquery( '#' + data.ref ).dialog( {
-              title: "CVV/CSV Verification Information",
-              width: "500px",
-              resizable: false,
-              buttons: {
-                  'Close': function()
-                  {
-                      $dialog.dialog( 'close' );
-                  }
-              }
-        } );
-    }
-} );
+    'public handle': function (type, c, data) {
+      var $dialog = this._jquery('#' + data.ref).dialog({
+        title: 'CVV/CSV Verification Information',
+        width: '500px',
+        resizable: false,
+        buttons: {
+          Close: function () {
+            $dialog.dialog('close');
+          },
+        },
+      });
+    },
+  });

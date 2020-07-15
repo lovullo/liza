@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class              = require( 'easejs' ).Class,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Class = require('easejs').Class,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Echos its input
@@ -29,10 +28,9 @@ var Class              = require( 'easejs' ).Class,
  * This formatter does nothing; it is intended to be used as a base
  * for mixing in other formatters, or for a formatting noop.
  */
-module.exports = Class( 'EchoFormatter' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Class('EchoFormatter')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Echo given data
      *
@@ -40,12 +38,10 @@ module.exports = Class( 'EchoFormatter' )
      *
      * @return {string} DATA
      */
-    'virtual public parse': function( data )
-    {
-        return data;
+    'virtual public parse': function (data) {
+      return data;
     },
 
-
     /**
      * Echo given data
      *
@@ -53,8 +49,7 @@ module.exports = Class( 'EchoFormatter' )
      *
      * @return {string} DATA
      */
-    'virtual public retrieve': function( data )
-    {
-        return data;
-    }
-} );
+    'virtual public retrieve': function (data) {
+      return data;
+    },
+  });

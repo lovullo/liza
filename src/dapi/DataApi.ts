@@ -19,8 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { Interface } = require( 'easejs' );
-
+const {Interface} = require('easejs');
 
 /**
  * Result of DataAPI call
@@ -31,7 +30,6 @@ const { Interface } = require( 'easejs' );
  */
 export type DataApiResult = DataApiResultItem[];
 
-
 /**
  * Individual item of DataAPI result
  *
@@ -39,7 +37,6 @@ export type DataApiResult = DataApiResultItem[];
  * string or number, but more complex structures may be used server-side.
  */
 export type DataApiResultItem = Record<string, any>;
-
 
 /**
  * Inputs to the DataAPI
@@ -49,25 +46,21 @@ export type DataApiResultItem = Record<string, any>;
  */
 export type DataApiInput = Record<string, string>;
 
-
 /** Name of DataAPI */
 export type DataApiName = NominalType<string, 'DataApiName'>;
-
 
 /**
  * Generic interface for data transmission
  *
  * This is to replace the below easejs interface; see TODO.
  */
-export interface DataApi
-{
-    request(
-        data:     DataApiInput,
-        callback: NodeCallback<DataApiResult>,
-        id:       string,
-    ): this;
+export interface DataApi {
+  request(
+    data: DataApiInput,
+    callback: NodeCallback<DataApiResult>,
+    id: string
+  ): this;
 }
-
 
 /**
  * Provies a generic interface for data transmission. The only assumption that a
@@ -78,25 +71,24 @@ export interface DataApi
  * TODO: Remove in favor of TypeScript interface (requires also converting
  * subtypes)
  */
-module.exports = Interface( 'DataApi',
-{
-    /**
-     * Perform an asynchronous request and invoke the callback with the reply
-     *
-     * If an implementation is synchronous, the callback must still be invoked.
-     *
-     * The data format is implementation-defined. The data parameter is
-     * documented as binary as it is the most permissive, but any data may be
-     * transferred that is supported by the protocol.
-     *
-     * The first parameter of the callback shall contain an Error in the event
-     * of a failure; otherwise, it shall be null.
-     *
-     * @param {?Object<string,string>|string} data     params or post data
-     * @param {function(?Error,*):string}     callback continuation upon reply
-     * @param {string}                        id       unique dapi identifier
-     *
-     * @return {DataApi} self
-     */
-    'public request': [ 'data', 'callback', 'id' ]
-} );
+module.exports = Interface('DataApi', {
+  /**
+   * Perform an asynchronous request and invoke the callback with the reply
+   *
+   * If an implementation is synchronous, the callback must still be invoked.
+   *
+   * The data format is implementation-defined. The data parameter is
+   * documented as binary as it is the most permissive, but any data may be
+   * transferred that is supported by the protocol.
+   *
+   * The first parameter of the callback shall contain an Error in the event
+   * of a failure; otherwise, it shall be null.
+   *
+   * @param {?Object<string,string>|string} data     params or post data
+   * @param {function(?Error,*):string}     callback continuation upon reply
+   * @param {string}                        id       unique dapi identifier
+   *
+   * @return {DataApi} self
+   */
+  'public request': ['data', 'callback', 'id'],
+});

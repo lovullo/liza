@@ -23,15 +23,15 @@
  * A collection of groups
  */
 export interface Collection {
-    /**
-     * Trigger visitation of the collection
-     */
-    visit(): void;
+  /**
+   * Trigger visitation of the collection
+   */
+  visit(): void;
 
-    /**
-     * Lock/unlock a collection
-     *
-     * @param lock
-     */
-    lock( lock: boolean ): void
+  /**
+   * Lock/unlock a collection
+   *
+   * @param lock
+   */
+  lock(lock: boolean): void;
 }

@@ -19,12 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * @todo Can be used for type hinting, but we need an actual API!
  */
-module.exports = Interface( 'Styler',
-{
-} );
+module.exports = Interface('Styler', {});

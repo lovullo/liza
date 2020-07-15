@@ -19,21 +19,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
 /**
  * TODO: this is only required temporarily until GNU ease.js 0.2.9,
  * which hasn't yet been released because I'm still waiting for
  * the copyright disclaimer from my (new, after purchase) employer!
  */
-module.exports = Interface( 'ITableDialog',
-{
-    /**
-     * Generate tr HTML for row of data
-     *
-     * @param {TableDialogData} data table data to render
-     * @return {string} generated HTML
-     */
-    'public createRow': [ 'row' ]
-} );
-
+module.exports = Interface('ITableDialog', {
+  /**
+   * Generate tr HTML for row of data
+   *
+   * @param {TableDialogData} data table data to render
+   * @return {string} generated HTML
+   */
+  'public createRow': ['row'],
+});

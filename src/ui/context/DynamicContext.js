@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class   = require( 'easejs' ).Class,
-    Context = require( './Context' );
-
+var Class = require('easejs').Class,
+  Context = require('./Context');
 
 /**
  * Mutable Context
@@ -29,36 +28,29 @@ var Class   = require( 'easejs' ).Class,
  * This exists primarily to ease refactoring of old parts of the framework;
  * it should not be preferred going forward.
  */
-module.exports = Class( 'DynamicContext' )
-    .implement( Context )
-    .extend(
-{
+module.exports = Class('DynamicContext')
+  .implement(Context)
+  .extend({
     /**
      * Current context
      * @type {Context}
      */
     'private _context': null,
 
-
-    __construct: function( initial )
-    {
-        this.assign( initial );
+    __construct: function (initial) {
+      this.assign(initial);
     },
 
+    'public assign': function (context) {
+      if (!Class.isA(Context, context)) {
+        throw TypeError('Invalid context');
+      }
 
-    'public assign': function( context )
-    {
-        if ( !( Class.isA( Context, context ) ) )
-        {
-            throw TypeError( "Invalid context" );
-        }
-
-        this._context = context;
-        return this;
+      this._context = context;
+      return this;
     },
-
 
     'public proxy getFieldByName': '_context',
 
-    'public proxy split': '_context'
-} );
+    'public proxy split': '_context',
+  });

@@ -19,18 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { UserSession } from "./UserSession";
-
+import {UserSession} from './UserSession';
 
 /**
  * Representation of request from user
  */
-export declare class UserRequest
-{
-    /**
-     * Retrieve the current session
-     *
-     * @return current session
-     */
-    getSession(): UserSession;
+export declare class UserRequest {
+  /**
+   * Retrieve the current session
+   *
+   * @return current session
+   */
+  getSession(): UserSession;
 }

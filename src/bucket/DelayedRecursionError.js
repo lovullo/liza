@@ -19,8 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { Class } = require( 'easejs' );
+const {Class} = require('easejs');
 
-
-module.exports = Class( 'DelayedRecursionError' )
-    .extend( Error, {} );
+module.exports = Class('DelayedRecursionError').extend(Error, {});

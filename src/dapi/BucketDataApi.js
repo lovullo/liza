@@ -19,18 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class   = require( 'easejs' ).Class,
-    DataApi = require( './DataApi' ),
-    Bucket  = require( '../bucket/Bucket' );
-
+var Class = require('easejs').Class,
+  DataApi = require('./DataApi'),
+  Bucket = require('../bucket/Bucket');
 
 /**
  * Retrieve data from the bucket
  */
-module.exports = Class( 'BucketDataApi' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Class('BucketDataApi')
+  .implement(DataApi)
+  .extend({
     /**
      * Bucket to use as data source
      * @type {Bucket}
@@ -39,24 +37,20 @@ module.exports = Class( 'BucketDataApi' )
 
     'private _params': {},
 
-
     /**
      * Initialize data API
      *
      * @param {string}              url      service URL
      * @param {RestDataApiStrategy} strategy request strategy
      */
-    __construct: function( bucket, params )
-    {
-        if ( !( Class.isA( Bucket, bucket ) ) )
-        {
-            throw Error( "Invalid bucket provided" );
-        }
+    __construct: function (bucket, params) {
+      if (!Class.isA(Bucket, bucket)) {
+        throw Error('Invalid bucket provided');
+      }
 
-        this._bucket = bucket;
-        this._params = params;
+      this._bucket = bucket;
+      this._params = params;
     },
-
 
     /**
      * Request data from the bucket
@@ -66,25 +60,22 @@ module.exports = Class( 'BucketDataApi' )
      *
      * @return {BucketDataApi} self
      */
-    'public request': function( data, callback, id )
-    {
-        var _self = this.__inst,
-            rows  = [];
+    'public request': function (data, callback, id) {
+      var _self = this.__inst,
+        rows = [];
 
-        for ( var i in this._params )
-        {
-            var field = this._params[ i ],
-                fdata = this._bucket.getDataByName( field );
+      for (var i in this._params) {
+        var field = this._params[i],
+          fdata = this._bucket.getDataByName(field);
 
-            for ( var index in fdata )
-            {
-                rows[ index ] = rows[ index ] || {};
-                rows[ index ][ field ] = fdata[ index ];
-            }
+        for (var index in fdata) {
+          rows[index] = rows[index] || {};
+          rows[index][field] = fdata[index];
         }
+      }
 
-        callback( null, rows );
+      callback(null, rows);
 
-        return this;
-    }
-} );
+      return this;
+    },
+  });

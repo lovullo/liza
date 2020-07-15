@@ -19,47 +19,44 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 export declare module bucket_filter {
+  export type filter = {
+    /**
+     * Filters bucket data based on the provided types
+     *
+     * If a type is not provided, the data is considered to be unwanted and is
+     * removed entirely. Otherwise, the filter is applied to every element in the
+     * array.
+     *
+     * The data is modified in place.
+     *
+     * @param data         - data to filter
+     * @param key_types    - filter types
+     * @param ignore_types - types to ignore
+     * @param permit_null  - Allow nulls in results
+     *
+     * @return Object modified data
+     */
+    filter(
+      data: Record<string, any>,
+      key_types: Record<string, any>,
+      ignore_types: Record<string, boolean>,
+      permit_null: boolean
+    ): Record<string, any>;
 
-    export type filter = {
-        /**
-         * Filters bucket data based on the provided types
-         *
-         * If a type is not provided, the data is considered to be unwanted and is
-         * removed entirely. Otherwise, the filter is applied to every element in the
-         * array.
-         *
-         * The data is modified in place.
-         *
-         * @param data         - data to filter
-         * @param key_types    - filter types
-         * @param ignore_types - types to ignore
-         * @param permit_null  - Allow nulls in results
-         *
-         * @return Object modified data
-         */
-        filter(
-            data:         Record<string, any>,
-            key_types:    Record<string, any>,
-            ignore_types: Record<string, boolean>,
-            permit_null:  boolean,
-        ): Record<string, any>
-
-
-        /**
-         * Filter bucket data based on values
-         *
-         * @param values      - The values to filter
-         * @param filter      - The filter to apply
-         * @param permit_null - Allow nulls in results
-         *
-         * @return the filtered values
-         */
-        filterValues(
-            values:      string[],
-            filter:      string,
-            permit_null: boolean,
-        ): string[];
-    };
+    /**
+     * Filter bucket data based on values
+     *
+     * @param values      - The values to filter
+     * @param filter      - The filter to apply
+     * @param permit_null - Allow nulls in results
+     *
+     * @return the filtered values
+     */
+    filterValues(
+      values: string[],
+      filter: string,
+      permit_null: boolean
+    ): string[];
+  };
 }

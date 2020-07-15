@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Client } from '../Client';
-import { ClientQuote } from './ClientQuote';
-import { QuoteTransport } from '../transport/QuoteTransport';
-import { Program } from '../../program/Program';
-
+import {Client} from '../Client';
+import {ClientQuote} from './ClientQuote';
+import {QuoteTransport} from '../transport/QuoteTransport';
+import {Program} from '../../program/Program';
 
 /**
  * A function to hook quote types
  */
-declare type QuoteHook = ( quote: ClientQuote ) => void
-
+declare type QuoteHook = (quote: ClientQuote) => void;
 
 /**
  * Create a function to hook the quote before data is staged
@@ -38,12 +36,9 @@ declare type QuoteHook = ( quote: ClientQuote ) => void
  *
  * @return a function to hook the quote before data is staged
  */
-export let createQuotePreStagingHook = ( client: Client ): QuoteHook =>
-( quote ) =>
-{
-    quote.on( 'preDataUpdate', ( diff ) => client.validateChange( diff ) );
-}
-
+export let createQuotePreStagingHook = (client: Client): QuoteHook => quote => {
+  quote.on('preDataUpdate', diff => client.validateChange(diff));
+};
 
 /**
  * Create a function to hook the quote when data is staged
@@ -54,40 +49,32 @@ export let createQuotePreStagingHook = ( client: Client ): QuoteHook =>
  * @return a function to hook the quote when data is staged
  */
 export let createQuoteStagingHook = (
-    client: Client,
-    program:   Program,
-    transport: QuoteTransport
-): QuoteHook =>
-( quote ) =>
-{
-    if ( !program.autosave || quote.isLocked())
-    {
-        return;
+  client: Client,
+  program: Program,
+  transport: QuoteTransport
+): QuoteHook => quote => {
+  if (!program.autosave || quote.isLocked()) {
+    return;
+  }
+
+  quote.on('dataUpdate', diff => {
+    if (!diff || client.isSaving() || client.isNavigating()) {
+      return;
     }
 
-    quote.on( 'dataUpdate', diff =>
-    {
-        if ( !diff || client.isSaving() || client.isNavigating() )
-        {
-            return;
-        }
+    const valid_diffs = Object.keys(diff).reduce(
+      (total: number, key: string): number => {
+        const val = diff[key];
 
-        const valid_diffs = Object
-            .keys( diff )
-            .reduce( ( total: number, key: string ): number =>
-            {
-                const val = diff[ key ];
+        return Array.isArray(val) && val.length > 0 ? total + 1 : total;
+      },
+      0
+    );
 
-                return ( Array.isArray( val ) && val.length > 0 )
-                            ? total + 1
-                            : total;
-            }, 0 );
+    if (valid_diffs === 0) {
+      return;
+    }
 
-        if ( valid_diffs === 0 )
-        {
-            return;
-        }
-
-        quote.autosave( transport );
-    } );
+    quote.autosave(transport);
+  });
 };

@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait = require( 'easejs' ).Trait,
-    Class = require( 'easejs' ).Class,
-    Store = require( './Store' );
-
+var Trait = require('easejs').Trait,
+  Class = require('easejs').Class,
+  Store = require('./Store');
 
 /**
  * Store of stores with cascading clear
@@ -60,10 +59,9 @@ var Trait = require( 'easejs' ).Trait,
  * system-wide, allowing for transparent hot code swapping (assuming
  * that the caller will re-store).
  */
-module.exports = Trait( 'Cascading' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Trait('Cascading')
+  .implement(Store)
+  .extend({
     /**
      * Add item to store under `key` with value `value`
      *
@@ -75,44 +73,33 @@ module.exports = Trait( 'Cascading' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual abstract override public add': function( key, value )
-    {
-        if ( !Class.isA( Store, value ) )
-        {
-            return Promise.reject(
-                TypeError( "Can only add Store to Cascading stores" )
-            );
-        }
+    'virtual abstract override public add': function (key, value) {
+      if (!Class.isA(Store, value)) {
+        return Promise.reject(
+          TypeError('Can only add Store to Cascading stores')
+        );
+      }
 
-        return this.__super( key, value );
+      return this.__super(key, value);
     },
-
 
     /**
      * Clear all stores in the store
      *
      * @return {Promise} promise to clear all caches
      */
-    'virtual abstract override public clear': function()
-    {
-        return this.reduce(
-            function( accum, store )
-            {
-                accum.push( store.clear() );
-                return accum;
-            },
-            []
-        )
-            .then( function( promises )
-            {
-                return Promise.all( promises );
-            } )
-            .then( function( result )
-            {
-                return result.every( function( value )
-                {
-                    return value === true;
-                } );
-            } );
+    'virtual abstract override public clear': function () {
+      return this.reduce(function (accum, store) {
+        accum.push(store.clear());
+        return accum;
+      }, [])
+        .then(function (promises) {
+          return Promise.all(promises);
+        })
+        .then(function (result) {
+          return result.every(function (value) {
+            return value === true;
+          });
+        });
     },
-} );
+  });

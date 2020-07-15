@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class      = require( 'easejs' ).Class,
-    DomContext = require( './DomContext' );
-
+var Class = require('easejs').Class,
+  DomContext = require('./DomContext');
 
 /**
  * Intended to serve as the topmost context in a context tree
@@ -32,32 +31,23 @@ var Class      = require( 'easejs' ).Class,
  *
  * The root context cannot be detached from the DOM.
  */
-module.exports = Class( 'RootDomContext' )
-    .extend( DomContext,
-{
-    'override protected verifyParentContext': function( context )
-    {
-        // we have no parent... :(
-        // (this class has Mommy/Daddy issues)
-        return true;
-    },
+module.exports = Class('RootDomContext').extend(DomContext, {
+  'override protected verifyParentContext': function (context) {
+    // we have no parent... :(
+    // (this class has Mommy/Daddy issues)
+    return true;
+  },
 
+  'override public isAttached': function () {
+    // of course we are.
+    return true;
+  },
 
-    'override public isAttached': function()
-    {
-        // of course we are.
-        return true;
-    },
+  'override public attach': function (to) {
+    throw Error('Cannot attach DOM root');
+  },
 
-
-    'override public attach': function( to )
-    {
-        throw Error( "Cannot attach DOM root" );
-    },
-
-
-    'override public detach': function( to )
-    {
-        throw Error( "Cannot detach DOM root" );
-    }
-} );
+  'override public detach': function (to) {
+    throw Error('Cannot detach DOM root');
+  },
+});

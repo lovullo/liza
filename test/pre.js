@@ -20,4 +20,4 @@
  */
 
 // polyfill for ancient environments
-require( 'es6-promise' ).polyfill();
+require('es6-promise').polyfill();

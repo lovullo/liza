@@ -21,10 +21,10 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-var Class        = require( 'easejs' ).Class,
-    Quote        = require( './Quote' ),
-    Program      = require( '../program/Program' ).Program,
-    EventEmitter = require( '../events' ).EventEmitter;
+var Class = require('easejs').Class,
+  Quote = require('./Quote'),
+  Program = require('../program/Program').Program,
+  EventEmitter = require('../events').EventEmitter;
 
 /**
  * Creates a new quote
@@ -32,16 +32,14 @@ var Class        = require( 'easejs' ).Class,
  * TODO: This also has a bit of server-side logic; extend/decorate the class
  * for use server-side and remove all the server-only logic
  */
-module.exports = Class( 'BaseQuote' )
-    .implement( Quote )
-    .extend( EventEmitter,
-{
+module.exports = Class('BaseQuote')
+  .implement(Quote)
+  .extend(EventEmitter, {
     /**
      * Raised when current step id changes
      * @type {string}
      */
     'const EVENT_STEP_CHANGE': 'stepChange',
-
 
     /**
      * Quote id
@@ -139,18 +137,15 @@ module.exports = Class( 'BaseQuote' )
      */
     'private _explicitLockStep': 0,
 
-
     /**
      * Initializes quote with the given id and bucket
      *
      * @return {undefined}
      */
-    'public __construct': function( id, bucket )
-    {
-        this._id          = id;
-        this._bucket      = bucket;
+    'public __construct': function (id, bucket) {
+      this._id = id;
+      this._bucket = bucket;
     },
-
 
     /**
      * Returns the quote id
@@ -161,22 +156,18 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {number} quote id
      */
-    'public getId': function()
-    {
-        return this._id;
+    'public getId': function () {
+      return this._id;
     },
-
 
     /**
      * Returns the bucket used to store the quote form data
      *
      * @return {QuoteDataBucket}
      */
-    'public getBucket': function()
-    {
-        return this._bucket;
+    'public getBucket': function () {
+      return this._bucket;
     },
-
 
     /**
      * Sets the program id to associate with the quote
@@ -185,41 +176,32 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setProgram': function( program )
-    {
-        if ( !Class.isA( Program, program ) )
-        {
-            throw Error( 'Program expected; given ' + program );
-        }
+    'public setProgram': function (program) {
+      if (!Class.isA(Program, program)) {
+        throw Error('Program expected; given ' + program);
+      }
 
-        this._program = program;
-        return this;
+      this._program = program;
+      return this;
     },
-
 
     /**
      * Returns the program id associated with the quote
      *
      * @return {string} program id
      */
-    'public getProgramId': function()
-    {
-        return ( this._program !== null )
-            ? this._program.getId()
-            : '';
+    'public getProgramId': function () {
+      return this._program !== null ? this._program.getId() : '';
     },
-
 
     /**
      * Retrieve Program associated with quote
      *
      * @return {Program} quote program
      */
-    'public getProgram': function()
-    {
-        return this._program;
+    'public getProgram': function () {
+      return this._program;
     },
-
 
     /**
      * Sets the quote start date
@@ -228,23 +210,19 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setStartDate': function( time )
-    {
-        this._startDate = +( time );
-        return this;
+    'public setStartDate': function (time) {
+      this._startDate = +time;
+      return this;
     },
-
 
     /**
      * Returns the quote start date
      *
      * @return {number} quote start date
      */
-    'public getStartDate': function()
-    {
-        return this._startDate;
+    'public getStartDate': function () {
+      return this._startDate;
     },
-
 
     /**
      * Sets the quote's initial rated date
@@ -253,10 +231,9 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setInitialRatedDate': function( time )
-    {
-        this._initialRatedDate = +( time );
-        return this;
+    'public setInitialRatedDate': function (time) {
+      this._initialRatedDate = +time;
+      return this;
     },
 
     /**
@@ -264,11 +241,9 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {number} quote's initial rated date
      */
-    'public getInitialRatedDate': function()
-    {
-        return this._initialRatedDate;
+    'public getInitialRatedDate': function () {
+      return this._initialRatedDate;
     },
-
 
     /**
      * Set the date that the premium was calculated as a Unix timestamp
@@ -277,57 +252,51 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setLastPremiumDate': function( timestamp )
-    {
-        this._lastPremDate = ( timestamp || 0 );
-        return this;
+    'public setLastPremiumDate': function (timestamp) {
+      this._lastPremDate = timestamp || 0;
+      return this;
     },
-
 
     /**
      * Retrieve the last time the premium was calculated
      *
      * @return {number} last calculated time or 0
      */
-    'public getLastPremiumDate': function()
-    {
-        return ( this._lastPremDate || 0 );
+    'public getLastPremiumDate': function () {
+      return this._lastPremDate || 0;
     },
-
 
     /**
      * Returns the quote's expiration date
      *
      * @return {number} quote's initial rated date
      */
-    'public getExpirationDate': function()
-    {
-        var post_rate = ( this._initialRatedDate > 0 );
+    'public getExpirationDate': function () {
+      var post_rate = this._initialRatedDate > 0;
 
-        // Don't attempt to calculate expiration date if expiration is not defined
-        if ( !this._program
-            || !this._program.lockTimeout
-            || ( !post_rate && !this._program.lockTimeout.preRateExpiration )
-            || ( post_rate && !this._program.lockTimeout.postRateExpiration )
-            || ( +this._program.lockTimeout.preRateExpiration === 0
-                 && +this._program.lockTimeout.postRateExpiration === 0 )
-            )
-        {
-            return Infinity;
-        }
+      // Don't attempt to calculate expiration date if expiration is not defined
+      if (
+        !this._program ||
+        !this._program.lockTimeout ||
+        (!post_rate && !this._program.lockTimeout.preRateExpiration) ||
+        (post_rate && !this._program.lockTimeout.postRateExpiration) ||
+        (+this._program.lockTimeout.preRateExpiration === 0 &&
+          +this._program.lockTimeout.postRateExpiration === 0)
+      ) {
+        return Infinity;
+      }
 
-        var reference_date    = ( post_rate ) ? this._initialRatedDate : this._startDate;
-        var expiration_period = ( post_rate )
-            ? this._program.lockTimeout.postRateExpiration
-            : this._program.lockTimeout.preRateExpiration;
+      var reference_date = post_rate ? this._initialRatedDate : this._startDate;
+      var expiration_period = post_rate
+        ? this._program.lockTimeout.postRateExpiration
+        : this._program.lockTimeout.preRateExpiration;
 
-        // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
-        var expiration_date = new Date( reference_date * 1000 );
-        expiration_date.setDate( expiration_date.getDate() + +( expiration_period ) );
+      // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
+      var expiration_date = new Date(reference_date * 1000);
+      expiration_date.setDate(expiration_date.getDate() + +expiration_period);
 
-        return expiration_date.getTime();
+      return expiration_date.getTime();
     },
-
 
     /**
      * Returns whether the quote has expired or not
@@ -337,33 +306,32 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {boolean} flag indicating if the quote has expired
      */
-    'public hasExpired': function( current_date )
-    {
-        var timeout = ( this._program && this._program.lockTimeout )
-            ? this._program.lockTimeout
-            : { preRateGracePeriod: 0, postRateGracePeriod: 0 };
+    'public hasExpired': function (current_date) {
+      var timeout =
+        this._program && this._program.lockTimeout
+          ? this._program.lockTimeout
+          : {preRateGracePeriod: 0, postRateGracePeriod: 0};
 
-        var grace_period = ( this._initialRatedDate > 0 )
-            ? ( timeout.postRateGracePeriod || 0 )
-            : ( timeout.preRateGracePeriod || 0 );
+      var grace_period =
+        this._initialRatedDate > 0
+          ? timeout.postRateGracePeriod || 0
+          : timeout.preRateGracePeriod || 0;
 
-        var expiration_timestamp = this.getExpirationDate();
+      var expiration_timestamp = this.getExpirationDate();
 
-        // If the timestamp is infinite, the quote will never expire
-        // NOTE: The Date constructor does not support `Infinity` as the timestamp
-        if ( expiration_timestamp === Infinity )
-        {
-            return false;
-        }
+      // If the timestamp is infinite, the quote will never expire
+      // NOTE: The Date constructor does not support `Infinity` as the timestamp
+      if (expiration_timestamp === Infinity) {
+        return false;
+      }
 
-        // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
-        var expiration_date = new Date( expiration_timestamp );
-        expiration_date.setDate( expiration_date.getDate() + +( grace_period ));
+      // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
+      var expiration_date = new Date(expiration_timestamp);
+      expiration_date.setDate(expiration_date.getDate() + +grace_period);
 
-        // Multiply current_date to get ms
-        return ( current_date * 1000 ) > expiration_date.getTime();
+      // Multiply current_date to get ms
+      return current_date * 1000 > expiration_date.getTime();
     },
-
 
     /**
      * Sets id of agent that owns the quote
@@ -372,23 +340,19 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setAgentId': function( id )
-    {
-        this._agentId = +( id );
-        return this;
+    'public setAgentId': function (id) {
+      this._agentId = +id;
+      return this;
     },
-
 
     /**
      * Returns the id of the agent that owns the quote
      *
      * @return {number} agent id
      */
-    'public getAgentId': function()
-    {
-        return this._agentId;
+    'public getAgentId': function () {
+      return this._agentId;
     },
-
 
     /**
      * Sets id of agent entity that owns the quote
@@ -397,23 +361,19 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setAgentEntityId': function( id )
-    {
-        this._agentEntityId = +id;
-        return this;
+    'public setAgentEntityId': function (id) {
+      this._agentEntityId = +id;
+      return this;
     },
-
 
     /**
      * Returns the id of the agent entity that owns the quote
      *
      * @return {number} agent entity id
      */
-    'public getAgentEntityId': function()
-    {
-        return this._agentEntityId;
+    'public getAgentEntityId': function () {
+      return this._agentEntityId;
     },
-
 
     /**
      * Sets name of agent that owns the quote
@@ -422,23 +382,19 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setAgentName': function( name )
-    {
-        this._agentName = ''+( name );
-        return this;
+    'public setAgentName': function (name) {
+      this._agentName = '' + name;
+      return this;
     },
-
 
     /**
      * Returns the name of the agent that owns the quote
      *
      * @return {string} agent name
      */
-    'public getAgentName': function()
-    {
-        return this._agentName;
+    'public getAgentName': function () {
+      return this._agentName;
     },
-
 
     /**
      * Sets quote imported status
@@ -450,25 +406,21 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setImported': function( value )
-    {
-        this._imported    = !!value;
-        this._needsImport = false;
+    'public setImported': function (value) {
+      this._imported = !!value;
+      this._needsImport = false;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Returns whether the quote has been imported
      *
      * @return {boolean} true if imported, otherwise false
      */
-    'public isImported': function()
-    {
-        return this._imported;
+    'public isImported': function () {
+      return this._imported;
     },
-
 
     /**
      * Sets quote bound status
@@ -479,35 +431,29 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setBound': function( value )
-    {
-        this._bound = !!value;
+    'public setBound': function (value) {
+      this._bound = !!value;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Returns whether the quote has been bound
      *
      * @return {boolean} true if bound, otherwise false
      */
-    'public isBound': function()
-    {
-        return this._bound;
+    'public isBound': function () {
+      return this._bound;
     },
-
 
     /**
      * Returns the id of the current step
      *
      * @return {number} id of current step
      */
-    'public getCurrentStepId': function()
-    {
-        return this._currentStepId;
+    'public getCurrentStepId': function () {
+      return this._currentStepId;
     },
-
 
     /**
      * Sets the top visited step id
@@ -517,28 +463,23 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setTopVisitedStepId': function( step_id )
-    {
-        step_id = +step_id;
+    'public setTopVisitedStepId': function (step_id) {
+      step_id = +step_id;
 
-        this._topVisitedStepId = ( step_id < this._currentStepId )
-            ? this._currentStepId
-            : step_id;
+      this._topVisitedStepId =
+        step_id < this._currentStepId ? this._currentStepId : step_id;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Returns the id of the highest step the quote has reached
      *
      * @return {number} top visited step id
      */
-    'public getTopVisitedStepId': function()
-    {
-        return this._topVisitedStepId;
+    'public getTopVisitedStepId': function () {
+      return this._topVisitedStepId;
     },
-
 
     /**
      * Sets the current step id
@@ -547,36 +488,29 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setCurrentStepId': function( step_id )
-    {
-        step_id = +step_id;
+    'public setCurrentStepId': function (step_id) {
+      step_id = +step_id;
 
-        this._currentStepId = step_id;
+      this._currentStepId = step_id;
 
-        // if this step is higher than the highest step this quote has reached,
-        // then update it
-        if ( step_id > this._topVisitedStepId )
-        {
-            this._topVisitedStepId = step_id;
-        }
+      // if this step is higher than the highest step this quote has reached,
+      // then update it
+      if (step_id > this._topVisitedStepId) {
+        this._topVisitedStepId = step_id;
+      }
 
-        this.emit( this.__self.$('EVENT_STEP_CHANGE'), this._currentStepId );
-        return this;
+      this.emit(this.__self.$('EVENT_STEP_CHANGE'), this._currentStepId);
+      return this;
     },
 
-
-    'public getTopSavedStepId': function()
-    {
-        return this._topSavedStepId;
+    'public getTopSavedStepId': function () {
+      return this._topSavedStepId;
     },
 
-
-    'public setTopSavedStepId': function( id )
-    {
-        this._topSavedStepId = +id;
-        return this;
+    'public setTopSavedStepId': function (id) {
+      this._topSavedStepId = +id;
+      return this;
     },
-
 
     /**
      * Returns whether the step has been previously visited
@@ -585,16 +519,13 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {boolean} true if visited, otherwise false
      */
-    'public hasVisitedStep': function( step_id )
-    {
-        if ( step_id <= 0 )
-        {
-            return false;
-        }
+    'public hasVisitedStep': function (step_id) {
+      if (step_id <= 0) {
+        return false;
+      }
 
-        return ( step_id <= this.getTopVisitedStepId() ) ? true : false;
+      return step_id <= this.getTopVisitedStepId() ? true : false;
     },
-
 
     /**
      * Sets quote data
@@ -605,12 +536,10 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setData': function( data )
-    {
-        this._bucket.setValues( data );
-        return this;
+    'public setData': function (data) {
+      this._bucket.setValues(data);
+      return this;
     },
-
 
     /**
      * Returns whether the quote should be locked from modifications
@@ -627,17 +556,15 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {boolean} true if locked, otherwise false
      */
-    'public isLocked': function()
-    {
-        var exlock = ( this._explicitLock !== '' ),
-            slock  = ( this._explicitLockStep !== 0 ),
-            ilock  = ( ( this._imported && !slock ) || this._bound );
+    'public isLocked': function () {
+      var exlock = this._explicitLock !== '',
+        slock = this._explicitLockStep !== 0,
+        ilock = (this._imported && !slock) || this._bound;
 
-        // we are locked if we (a) have the import/bind lock or (b) have an
-        // exclusive lock without a step constraint
-        return ilock || ( exlock && !slock );
+      // we are locked if we (a) have the import/bind lock or (b) have an
+      // exclusive lock without a step constraint
+      return ilock || (exlock && !slock);
     },
-
 
     /**
      * Returns quote data
@@ -646,11 +573,9 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Array} quote data
      */
-    'public getDataByName': function( name )
-    {
-        return this._bucket.getDataByName( name );
+    'public getDataByName': function (name) {
+      return this._bucket.getDataByName(name);
     },
-
 
     /**
      * Calls visitor callback with the data bucket
@@ -662,12 +587,10 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public visitData': function( callback )
-    {
-        callback.call( this, this._bucket );
-        return this;
+    'public visitData': function (callback) {
+      callback.call(this, this._bucket);
+      return this;
     },
-
 
     /**
      * Sets a quote-wide error
@@ -678,23 +601,19 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setError': function( error )
-    {
-        this._error = ''+( error );
-        return this;
+    'public setError': function (error) {
+      this._error = '' + error;
+      return this;
     },
-
 
     /**
      * Retrieve quote-wide error
      *
      * @return {string} quote-wide error, or empty string
      */
-    'public getError': function()
-    {
-        return this._error;
+    'public getError': function () {
+      return this._error;
     },
-
 
     /**
      * Determine whether or not a quote-wide error exists
@@ -703,11 +622,9 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {boolean} true if error exists, otherwise false
      */
-    'public hasError': function()
-    {
-        return ( this._error !== '' );
+    'public hasError': function () {
+      return this._error !== '';
     },
-
 
     /**
      * Sets an explicit lock, providing a reason for doing so
@@ -717,43 +634,37 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {Quote} self
      */
-    'public setExplicitLock': function( reason, step )
-    {
-        step = +step || 0;
+    'public setExplicitLock': function (reason, step) {
+      step = +step || 0;
 
-        this._explicitLock     = ''+( reason );
-        this._explicitLockStep = step;
+      this._explicitLock = '' + reason;
+      this._explicitLockStep = step;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Clears an explicit lock
      *
      * @return {Quote} self
      */
-    'public clearExplicitLock': function()
-    {
-        this._explicitLock     = '';
-        this._explicitLockStep = 0;
+    'public clearExplicitLock': function () {
+      this._explicitLock = '';
+      this._explicitLockStep = 0;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Retrieves the reason for an explicit lock
      *
      * @return {string} lock reason
      */
-    'public getExplicitLockReason': function()
-    {
-        return ( this.isBound() )
-            ? 'This quote has been bound and cannot be modified.'
-            : this._explicitLock;
+    'public getExplicitLockReason': function () {
+      return this.isBound()
+        ? 'This quote has been bound and cannot be modified.'
+        : this._explicitLock;
     },
-
 
     /**
      * Returns the maximum step to which the explicit lock applies
@@ -762,13 +673,9 @@ module.exports = Class( 'BaseQuote' )
      *
      * @return {number} locked max step or 0 if not applicable
      */
-    'public getExplicitLockStep': function()
-    {
-        return ( this.isBound() )
-            ? 0
-            : this._explicitLockStep;
+    'public getExplicitLockStep': function () {
+      return this.isBound() ? 0 : this._explicitLockStep;
     },
-
 
     /**
      * Determine whether quote needs to be imported
@@ -777,17 +684,12 @@ module.exports = Class( 'BaseQuote' )
      *
      * @param {boolean=} set flag value
      */
-    'public needsImport': function( set )
-    {
-        if ( set !== undefined )
-        {
-            this._importDirty = !!set;
-            return this;
-        }
+    'public needsImport': function (set) {
+      if (set !== undefined) {
+        this._importDirty = !!set;
+        return this;
+      }
 
-        return ( this.isBound() )
-            ? false
-            : this._importDirty;
-    }
-} );
-
+      return this.isBound() ? false : this._importDirty;
+    },
+  });

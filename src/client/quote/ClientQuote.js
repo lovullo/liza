@@ -19,19 +19,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    Quote        = require( '../../quote/Quote' ),
-    EventEmitter = require( '../../events' ).EventEmitter;
-
+var Class = require('easejs').Class,
+  Quote = require('../../quote/Quote'),
+  EventEmitter = require('../../events').EventEmitter;
 
 /**
  * Client interface to the Quote with additional functionality useful to the
  * client, such as staging changes and initiating saving
  */
-module.exports = Class( 'ClientQuote' )
-    .implement( Quote )
-    .extend( EventEmitter,
-{
+module.exports = Class('ClientQuote')
+  .implement(Quote)
+  .extend(EventEmitter, {
     /**
      * Emitted when data is committed
      * @type {string}
@@ -69,7 +67,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'const EVENT_CLASSIFY': 'classify',
 
-
     /**
      * Quote to operate on
      * @type {Quote}
@@ -103,7 +100,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'private _autosave_id': 0,
 
-
     /**
      * Initializes component with the given quote
      *
@@ -112,78 +108,61 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {undefined}
      */
-    'public __construct': function( quote, data, staging_callback )
-    {
-        var _self = this;
+    'public __construct': function (quote, data, staging_callback) {
+      var _self = this;
 
-        this._quote = this.initQuote( quote, data );
+      this._quote = this.initQuote(quote, data);
 
-        // create the staging bucket
-        quote.visitData( function( bucket )
-        {
-            _self._staging = staging_callback(
-                bucket
-            );
+      // create the staging bucket
+      quote.visitData(function (bucket) {
+        _self._staging = staging_callback(bucket);
 
-            _self.hookBuckets( _self._staging, bucket );
-        } );
-
+        _self.hookBuckets(_self._staging, bucket);
+      });
     },
 
+    'virtual protected initQuote': function (quote, data) {
+      var _self = this;
 
-    'virtual protected initQuote': function( quote, data )
-    {
-        var _self = this;
-
-        return quote
-            .setData( data.data || {} )
-            .setCurrentStepId( data.currentStepId || 0 )
-            .setTopVisitedStepId( data.topVisitedStepId || 0 )
-            .setAgentId( data.agentId || 0 )
-            .setAgentName( data.agentName || "" )
-            .setAgentEntityId( data.agentEntityId || "" )
-            .setStartDate( data.startDate || 0 )
-            .setInitialRatedDate( data.initialRatedDate || 0 )
-            .setLastPremiumDate( data.lastPremDate || 0 )
-            .setImported( data.imported || false )
-            .setBound( data.bound || false )
-            .needsImport( data.needsImport || false )
-            .setExplicitLock(
-                ( data.explicitLock || '' ),
-                ( data.explicitLockStepId || 0 )
-            )
-            .on( 'stepChange', function( step_id )
-            {
-                _self.emit( _self.__self.$('EVENT_STEP_CHANGE'), step_id );
-            } );
+      return quote
+        .setData(data.data || {})
+        .setCurrentStepId(data.currentStepId || 0)
+        .setTopVisitedStepId(data.topVisitedStepId || 0)
+        .setAgentId(data.agentId || 0)
+        .setAgentName(data.agentName || '')
+        .setAgentEntityId(data.agentEntityId || '')
+        .setStartDate(data.startDate || 0)
+        .setInitialRatedDate(data.initialRatedDate || 0)
+        .setLastPremiumDate(data.lastPremDate || 0)
+        .setImported(data.imported || false)
+        .setBound(data.bound || false)
+        .needsImport(data.needsImport || false)
+        .setExplicitLock(data.explicitLock || '', data.explicitLockStepId || 0)
+        .on('stepChange', function (step_id) {
+          _self.emit(_self.__self.$('EVENT_STEP_CHANGE'), step_id);
+        });
     },
 
+    'virtual protected hookBuckets': function (staging, bucket) {
+      var _self = this;
 
-    'virtual protected hookBuckets': function( staging, bucket )
-    {
-        var _self = this;
+      // forward update events
+      bucket.on('update', function (data) {
+        _self.emit(_self.__self.$('EVENT_DATA_COMMIT'), data);
+      });
 
-        // forward update events
-        bucket.on( 'update', function( data )
-        {
-            _self.emit( _self.__self.$('EVENT_DATA_COMMIT'), data );
-        } );
+      // forward staging update events
+      staging.on('preStagingUpdate', function (data) {
+        _self.emit(_self.__self.$('EVENT_PRE_DATA_UPDATE'), data);
+      });
 
-        // forward staging update events
-        staging.on( 'preStagingUpdate', function( data )
-        {
-            _self.emit( _self.__self.$('EVENT_PRE_DATA_UPDATE'), data );
-        } );
+      staging.on('stagingUpdate', function (data) {
+        _self.emit(_self.__self.$('EVENT_DATA_UPDATE'), data);
 
-        staging.on( 'stagingUpdate', function( data )
-        {
-            _self.emit( _self.__self.$('EVENT_DATA_UPDATE'), data );
-
-            // perform classification
-            _self._classify( staging, data );
-        } );
+        // perform classification
+        _self._classify(staging, data);
+      });
     },
-
 
     /**
      * Set the classifier to be used for data classification
@@ -195,26 +174,21 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public setClassifier': function( known_fields, classifier )
-    {
-        if ( !( typeof classifier === 'function' ) )
-        {
-            throw TypeError( 'Classifier must be a function' );
-        }
+    'public setClassifier': function (known_fields, classifier) {
+      if (!(typeof classifier === 'function')) {
+        throw TypeError('Classifier must be a function');
+      }
 
-        this._classifier = classifier;
-        this._classKnown = known_fields;
+      this._classifier = classifier;
+      this._classKnown = known_fields;
 
-        return this;
+      return this;
     },
 
-
-    'public forceClassify': function()
-    {
-        this._classify( this._staging, null );
-        return this;
+    'public forceClassify': function () {
+      this._classify(this._staging, null);
+      return this;
     },
-
 
     /**
      * Emit data classifications
@@ -223,40 +197,33 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {undefined}
      */
-    'private _classify': function( staging, data )
-    {
-        if ( !( this._classifier ) )
-        {
-            return;
+    'private _classify': function (staging, data) {
+      if (!this._classifier) {
+        return;
+      }
+
+      // ignore fields that do not affect the classifier (if the given data is
+      // null, that signifies that we should perform the classification
+      // regardless)
+      if (data) {
+        var found = false;
+        for (var name in data) {
+          if (this._classKnown[name]) {
+            found = true;
+            break;
+          }
         }
 
-        // ignore fields that do not affect the classifier (if the given data is
-        // null, that signifies that we should perform the classification
-        // regardless)
-        if ( data )
-        {
-            var found = false;
-            for ( var name in data )
-            {
-                if ( this._classKnown[ name ] )
-                {
-                    found = true;
-                    break;
-                }
-            }
-
-            if ( !( found ) )
-            {
-                return;
-            }
+        if (!found) {
+          return;
         }
+      }
 
-        this.emit(
-            this.__self.$('EVENT_CLASSIFY'),
-            this._lastClassify = this._classifier( staging.getData() )
-        );
+      this.emit(
+        this.__self.$('EVENT_CLASSIFY'),
+        (this._lastClassify = this._classifier(staging.getData()))
+      );
     },
-
 
     /**
      * Hooks classify event and immediately triggers the continuation with the
@@ -271,20 +238,17 @@ module.exports = Class( 'ClientQuote' )
      *
      * @param {function(Object)} c continuation
      */
-    'public onClassifyAndNow': function( c )
-    {
-        this.on( this.__self.$('EVENT_CLASSIFY'), c );
+    'public onClassifyAndNow': function (c) {
+      this.on(this.__self.$('EVENT_CLASSIFY'), c);
 
-        // we may have been called too early, in which case we have nothing to
-        // provide
-        if ( this._lastClassify !== null )
-        {
-            c( this._lastClassify );
-        }
+      // we may have been called too early, in which case we have nothing to
+      // provide
+      if (this._lastClassify !== null) {
+        c(this._lastClassify);
+      }
 
-        return this;
+      return this;
     },
-
 
     /**
      * Return the quote id
@@ -292,7 +256,6 @@ module.exports = Class( 'ClientQuote' )
      * @return  {number}  quote id
      */
     'public proxy getId': '_quote',
-
 
     /**
      * Stages the given data
@@ -303,21 +266,17 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public setData': function( data )
-    {
-        this._staging.setValues( data );
-        return this;
+    'public setData': function (data) {
+      this._staging.setValues(data);
+      return this;
     },
 
+    'public setDataByName': function (name, values) {
+      var data = {};
+      data[name] = values;
 
-    'public setDataByName': function( name, values )
-    {
-        var data = {};
-        data[ name ] = values;
-
-        this.setData( data );
+      this.setData(data);
     },
-
 
     /**
      * Stages the given data for a certain index
@@ -330,22 +289,19 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public setDataByIndex': function( index, data )
-    {
-        var diff = {};
+    'public setDataByIndex': function (index, data) {
+      var diff = {};
 
-        // generate diff object
-        for ( var name in data )
-        {
-            var item = [];
-            item[ index ] = data[ name ];
+      // generate diff object
+      for (var name in data) {
+        var item = [];
+        item[index] = data[name];
 
-            diff[ name ] = item;
-        }
+        diff[name] = item;
+      }
 
-        return this.setData( diff );
+      return this.setData(diff);
     },
-
 
     /**
      * Overwrites data, preventing merges
@@ -354,12 +310,10 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public overwriteData': function( data )
-    {
-        this._staging.overwriteValues( data );
-        return this;
+    'public overwriteData': function (data) {
+      this._staging.overwriteValues(data);
+      return this;
     },
-
 
     /**
      * Set quote data without considering it to be a modification
@@ -375,12 +329,10 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public refreshData': function( data )
-    {
-        this._staging.setCommittedValues( data, false );
-        return this;
+    'public refreshData': function (data) {
+      this._staging.setCommittedValues(data, false);
+      return this;
     },
-
 
     /**
      * Returns raw data from the quote
@@ -388,7 +340,6 @@ module.exports = Class( 'ClientQuote' )
      * @return {Object} raw bucket data
      */
     'public proxy getData': '_staging',
-
 
     /**
      * Returns data from the quote
@@ -399,7 +350,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy getDataByName': '_staging',
 
-
     /**
      * Invoke callback for each value associated with the quote
      *
@@ -407,12 +357,10 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public eachValue': function( callback )
-    {
-        this._staging.each( callback );
-        return this;
+    'public eachValue': function (callback) {
+      this._staging.each(callback);
+      return this;
     },
-
 
     /**
      * Invoke callback for each value associated with the quote whose name
@@ -423,19 +371,15 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public eachValueMatch': function( regex, callback )
-    {
-        this.eachValue( function( data, name )
-        {
-            if ( regex.test( name ) )
-            {
-                callback( data, name );
-            }
-        } );
+    'public eachValueMatch': function (regex, callback) {
+      this.eachValue(function (data, name) {
+        if (regex.test(name)) {
+          callback(data, name);
+        }
+      });
 
-        return this;
+      return this;
     },
-
 
     /**
      * Commits changes to quote and attempts to save
@@ -445,36 +389,32 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public save': function( transport, callback )
-    {
-        var _self     = this,
-            old_store = {};
+    'public save': function (transport, callback) {
+      var _self = this,
+        old_store = {};
 
-        this._doSave( transport, function( data )
-        {
-            // re-populate the previously staged values on error; otherwise,
-            // they would not be saved the next time around!
-            if ( data.hasError )
-            {
-                _self._staging.setValues( old_store.old, true, false  );
-            }
+      this._doSave(transport, function (data) {
+        // re-populate the previously staged values on error; otherwise,
+        // they would not be saved the next time around!
+        if (data.hasError) {
+          _self._staging.setValues(old_store.old, true, false);
+        }
 
-            callback.apply( null, arguments );
-        } );
+        callback.apply(null, arguments);
+      });
 
-        // XXX: we need to commit after a _successful_ save, otherwise the
-        // client will never post again!  But we don't want to commit
-        // everything that is staged, because that will possibly include
-        // data the user is filling out on the next step.  So, we need to
-        // store the diff separately to be committed.
+      // XXX: we need to commit after a _successful_ save, otherwise the
+      // client will never post again!  But we don't want to commit
+      // everything that is staged, because that will possibly include
+      // data the user is filling out on the next step.  So, we need to
+      // store the diff separately to be committed.
 
-        // commit staged quote data to the data bucket (important: do this
-        // *after* save); will make the staged values available as old_store.old
-        this._staging.commit( old_store );
+      // commit staged quote data to the data bucket (important: do this
+      // *after* save); will make the staged values available as old_store.old
+      this._staging.commit(old_store);
 
-        return this;
+      return this;
     },
-
 
     /**
      * Commits changes to quote and attempts to save
@@ -484,27 +424,22 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {ClientQuote} self
      */
-    'public autosave': function( transport, callback )
-    {
-        var _self = this,
-            id    = ++this._autosave_id;
+    'public autosave': function (transport, callback) {
+      var _self = this,
+        id = ++this._autosave_id;
 
-        this._doSave( transport, function( data )
-        {
-            if ( !data.hasError && ( _self._autosave_id === id ) )
-            {
-                _self._staging.commit();
-            }
+      this._doSave(transport, function (data) {
+        if (!data.hasError && _self._autosave_id === id) {
+          _self._staging.commit();
+        }
 
-            if ( typeof callback === 'function' )
-            {
-                callback.apply( null, arguments );
-            }
-        } );
+        if (typeof callback === 'function') {
+          callback.apply(null, arguments);
+        }
+      });
 
-        return this;
+      return this;
     },
-
 
     /**
      * Save staging bucket
@@ -512,66 +447,51 @@ module.exports = Class( 'ClientQuote' )
      * TODO: This is now used as a heartbeat and should be removed in the
      * future.
      */
-    'public saveStaging': function( transport, callback )
-    {
-        this._doSave( transport, callback );
-        return this;
+    'public saveStaging': function (transport, callback) {
+      this._doSave(transport, callback);
+      return this;
     },
 
+    'private _doSave': function (transport, callback) {
+      // if no transport was given, then don't save to the server
+      if (transport === undefined) {
+        return this;
+      }
 
-    'private _doSave': function( transport, callback )
-    {
-        // if no transport was given, then don't save to the server
-        if ( transport === undefined )
-        {
-            return this;
+      var _self = this;
+
+      // send quote data to server
+      transport.send(this, function (err, data) {
+        // if bucket data is returned, then apply it
+        if (data && data.content && data.content.length && !data.hasError) {
+          // the server has likely already applied these changes, so do
+          // not allow them to be discarded
+          _self._staging.setCommittedValues(data.content, true, false);
         }
 
-        var _self = this;
+        if (err) {
+          data = data || {};
+          data.hasError = true;
+          data.content = err.message || err;
+        }
 
-        // send quote data to server
-        transport.send( this, function( err, data )
-        {
-            // if bucket data is returned, then apply it
-            if ( data && data.content && data.content.length && !data.hasError )
-            {
-                // the server has likely already applied these changes, so do
-                // not allow them to be discarded
-                _self._staging.setCommittedValues( data.content, true, false );
-            }
-
-            if ( err )
-            {
-                data = data || {};
-                data.hasError = true;
-                data.content = err.message || err;
-            }
-
-            if ( typeof callback === 'function' )
-            {
-                callback( data );
-            }
-        } );
+        if (typeof callback === 'function') {
+          callback(data);
+        }
+      });
     },
 
-
-    'public isDirty': function()
-    {
-        return this._staging.isDirty();
+    'public isDirty': function () {
+      return this._staging.isDirty();
     },
 
-
-    'public clientSideUnlock': function()
-    {
-        this._forceUnlock = true;
+    'public clientSideUnlock': function () {
+      this._forceUnlock = true;
     },
 
-
-    'public clientSideRelock': function()
-    {
-        this._forceUnlock = false;
+    'public clientSideRelock': function () {
+      this._forceUnlock = false;
     },
-
 
     /**
      * Visits staging data
@@ -580,11 +500,9 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return void
      */
-    'public visitData': function( visitor )
-    {
-        visitor( this._staging );
+    'public visitData': function (visitor) {
+      visitor(this._staging);
     },
-
 
     /**
      * Returns the program id associated with the quote
@@ -593,14 +511,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy getProgramId': '_quote',
 
-
     /**
      * Sets the program id associated with the quote
      *
      * @return {string} program id
      */
     'public proxy setProgram': '_quote',
-
 
     /**
      * Returns the quote start date
@@ -609,14 +525,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy getStartDate': '_quote',
 
-
     /**
      * Returns the quote's initial rated date
      *
      * @return {number} quote's initial rated date
      */
     'public proxy getInitialRatedDate': '_quote',
-
 
     /**
      * Sets the quote's initial rated date
@@ -627,7 +541,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy setInitialRatedDate': '_quote',
 
-
     /**
      * Set the date that the premium was calculated as a Unix timestamp
      *
@@ -637,14 +550,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy setLastPremiumDate': '_quote',
 
-
     /**
      * Retrieve the last time the premium was calculated
      *
      * @return {number} last calculated time or 0
      */
     'public proxy getLastPremiumDate': '_quote',
-
 
     /**
      * Returns the quote's expiration date
@@ -653,14 +564,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy getExpirationDate': '_quote',
 
-
     /**
      * Returns the id of the agent that owns the quote
      *
      * @return {number} agent id
      */
     'public proxy getAgentId': '_quote',
-
 
     /**
      * Returns the name of the agent that owns the quote
@@ -669,14 +578,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy getAgentName': '_quote',
 
-
     /**
      * Returns the entity id of the agent that owns the quote
      *
      * @return {string} agent entity id
      */
     'public proxy getAgentEntityId': '_quote',
-
 
     /**
      * Returns whether the quote has been imported
@@ -685,7 +592,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy isImported': '_quote',
 
-
     /**
      * Returns whether the quote has been bound
      *
@@ -693,14 +599,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy isBound': '_quote',
 
-
     /**
      * Returns the id of the current step
      *
      * @return {number} id of current step
      */
     'public proxy getCurrentStepId': '_quote',
-
 
     /**
      * Sets the current step id
@@ -711,14 +615,12 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy setCurrentStepId': '_quote',
 
-
     /**
      * Returns the id of the highest step the quote has reached
      *
      * @return {number} top visited step id
      */
     'public proxy getTopVisitedStepId': '_quote',
-
 
     /**
      * Sets the top visited step id
@@ -730,22 +632,18 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy setTopVisitedStepId': '_quote',
 
-
     /**
      * Returns whether the quote is locked from modifications
      *
      * @return {boolean} true if locked, otherwise false
      */
-    'public isLocked': function()
-    {
-        if ( this._forceUnlock )
-        {
-            return false;
-        }
+    'public isLocked': function () {
+      if (this._forceUnlock) {
+        return false;
+      }
 
-        return this._quote.isLocked();
+      return this._quote.isLocked();
     },
-
 
     /**
      * Returns whether the given step has been visited
@@ -756,7 +654,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy hasVisitedStep': '_quote',
 
-
     /**
      * Sets a quote's imported status
      *
@@ -765,7 +662,6 @@ module.exports = Class( 'ClientQuote' )
      * @return {ClientQuote} self
      */
     'public proxy setImported': '_quote',
-
 
     /**
      * Sets an explicit lock, providing a reason for doing so
@@ -776,7 +672,6 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy setExplicitLock': '_quote',
 
-
     /**
      * Clears an explicit lock
      *
@@ -784,17 +679,13 @@ module.exports = Class( 'ClientQuote' )
      */
     'public proxy clearExplicitLock': '_quote',
 
-
     /**
      * Retrieves the reason for an explicit lock
      *
      * @return {string} lock reason
      */
-    'public getExplicitLockReason': function()
-    {
-        return ( this._forceUnlock )
-            ? ''
-            : this._quote.getExplicitLockReason();
+    'public getExplicitLockReason': function () {
+      return this._forceUnlock ? '' : this._quote.getExplicitLockReason();
     },
 
     /**
@@ -802,22 +693,15 @@ module.exports = Class( 'ClientQuote' )
      *
      * @return {number} lock step, otherwise 0
      */
-    'public getExplicitLockStep': function()
-    {
-        return ( this._forceUnlock )
-            ? 0
-            : this._quote.getExplicitLockStep();
+    'public getExplicitLockStep': function () {
+      return this._forceUnlock ? 0 : this._quote.getExplicitLockStep();
     },
 
+    'public needsImport': function (set) {
+      if (set !== undefined) {
+        return this._quote.needsImport(set);
+      }
 
-    'public needsImport': function( set )
-    {
-        if ( set !== undefined )
-        {
-            return this._quote.needsImport( set );
-        }
-
-        return !this.isLocked() && this._quote.needsImport();
-    }
-} );
-
+      return !this.isLocked() && this._quote.needsImport();
+    },
+  });

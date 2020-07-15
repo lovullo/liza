@@ -23,35 +23,33 @@
  * Action Types
  */
 export type ClientActionType =
-    'gostep' |
-    'invalidate' |
-    'quotePrompt' |
-    'warning' |
-    'setProgram' |
-    'lock' |
-    'unlock' |
-    'indvRate' |
-    'delay' |
-    'rate' |
-    'kickBack' |
-    'status' |
-    'show' |
-    'hide' |
-    'set' |
-    'action$cvv2Dialog';
+  | 'gostep'
+  | 'invalidate'
+  | 'quotePrompt'
+  | 'warning'
+  | 'setProgram'
+  | 'lock'
+  | 'unlock'
+  | 'indvRate'
+  | 'delay'
+  | 'rate'
+  | 'kickBack'
+  | 'status'
+  | 'show'
+  | 'hide'
+  | 'set'
+  | 'action$cvv2Dialog';
 
 /**
  * Action to be performed by the client
  */
-export interface ClientAction
-{
-    /** Action to be performed */
-    action: ClientActionType;
+export interface ClientAction {
+  /** Action to be performed */
+  action: ClientActionType;
 
-    /** Action arguments */
-    [P: string]: any;
+  /** Action arguments */
+  [P: string]: any;
 }
-
 
 /** Set of actions */
 export type ClientActions = ClientAction[];

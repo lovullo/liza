@@ -19,47 +19,41 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var liza = require('../../../'),
+  Sut = liza.validate.formatter.EchoFormatter,
+  testValidate = require('./common').testValidate,
+  expect = require('chai').expect;
 
-var liza         = require( '../../../' ),
-    Sut          = liza.validate.formatter.EchoFormatter,
-    testValidate = require( './common' ).testValidate,
-    expect       = require( 'chai' ).expect;
+describe('EchoListFormatter', function () {
+  testValidate(Sut(), {
+    '': [''],
+    foo: ['foo'],
+    '   123   ': ['   123   '],
+  });
 
+  describe('as a supertype', function () {
+    it('permits overriding #parse', function () {
+      var expected = 'parsed';
 
-describe( 'EchoListFormatter', function()
-{
-    testValidate( Sut(), {
-        "":          [ "" ],
-        "foo":       [ "foo" ],
-        "   123   ": [ "   123   " ],
-    } );
+      expect(
+        Sut.extend({
+          'override parse': function (_) {
+            return expected;
+          },
+        })().parse('foo')
+      ).to.equal(expected);
+    });
 
+    it('permits overriding #retrieve', function () {
+      var expected = 'retrieved';
 
-    describe( 'as a supertype', function()
-    {
-        it( 'permits overriding #parse', function()
-        {
-            var expected = 'parsed';
-
-            expect(
-                Sut.extend(
-                {
-                    'override parse': function( _ ) { return expected; }
-                } )().parse( 'foo' )
-            ).to.equal( expected );
-        } );
-
-
-        it( 'permits overriding #retrieve', function()
-        {
-            var expected = 'retrieved';
-
-            expect(
-                Sut.extend(
-                {
-                    'override retrieve': function( _ ) { return expected; }
-                } )().retrieve( 'foo' )
-            ).to.equal( expected );
-        } );
-    } );
-} );
+      expect(
+        Sut.extend({
+          'override retrieve': function (_) {
+            return expected;
+          },
+        })().retrieve('foo')
+      ).to.equal(expected);
+    });
+  });
+});

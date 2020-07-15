@@ -19,25 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ClientActions } from "../../client/action/ClientAction";
-import { ServerSideQuote } from "../quote/ServerSideQuote";
-import { UserSession } from "../request/UserSession";
-
-
+import {ClientActions} from '../../client/action/ClientAction';
+import {ServerSideQuote} from '../quote/ServerSideQuote';
+import {UserSession} from '../request/UserSession';
 
 /** Result of rating */
-export interface RateResult
-{
-    /** Whether all suppliers were not able to provide rates */
-    _unavailable_all: '0' | '1';
+export interface RateResult {
+  /** Whether all suppliers were not able to provide rates */
+  _unavailable_all: '0' | '1';
 
-    /** The ids for each supplier */
-    __result_ids: string[];
+  /** The ids for each supplier */
+  __result_ids: string[];
 
-    /** Result data */
-    [P: string]: any;
+  /** Result data */
+  [P: string]: any;
 }
-
 
 /**
  * Result of rating with an individual supplier
@@ -45,44 +41,40 @@ export interface RateResult
  * This gets combined into a single RateResult prefixed with each supplier
  * id and an underscore.
  */
-export interface SupplierRateResult
-{
-    /** Rating worksheet data */
-    __worksheet?: WorksheetData,
+export interface SupplierRateResult {
+  /** Rating worksheet data */
+  __worksheet?: WorksheetData;
 
-    /** Classification system results */
-    __classes?: ClassificationData,
+  /** Classification system results */
+  __classes?: ClassificationData;
 
-    /** Basic profiling data */
-    __perf: PerformanceData,
+  /** Basic profiling data */
+  __perf: PerformanceData;
 
-    /** Ineligible message, if any */
-    ineligible: string,
+  /** Ineligible message, if any */
+  ineligible: string;
 
-    /** Submit message, if any */
-    submit: string,
+  /** Submit message, if any */
+  submit: string;
 
-    /** Final premium */
-    premium: number,
+  /** Final premium */
+  premium: number;
 
-    /** Rating data */
-    [P: string]: any;
+  /** Rating data */
+  [P: string]: any;
 }
-
 
 /** Basic profiling data */
-export interface PerformanceData
-{
-    /** Timestamp of beginning of rating */
-    start: UnixTimestampMillis;
+export interface PerformanceData {
+  /** Timestamp of beginning of rating */
+  start: UnixTimestampMillis;
 
-    /** Timestamp of end of rating */
-    end: UnixTimestampMillis;
+  /** Timestamp of end of rating */
+  end: UnixTimestampMillis;
 
-    /** Total rating time */
-    total: Milliseconds;
+  /** Total rating time */
+  total: Milliseconds;
 }
-
 
 /**
  * Worksheet data from rater
@@ -93,32 +85,29 @@ export interface PerformanceData
  */
 export type WorksheetData = Record<string, any>;
 
-
 /** Classification results */
 export type ClassificationData = Record<string, boolean>;
-
 
 /**
  * Represents a rater that will generate a quote from a given set of values
  */
-export interface Rater
-{
-    /**
-     * Asynchronously performs rating
-     *
-     * @param quote   - quote to perform rating on
-     * @param session - user session
-     * @param indv    - individual supplier to rate (otherwise empty)
-     * @param success - continuation when rating is successful
-     * @param failure - continuation when rating fails
-     *
-     * @return self
-     */
-    rate(
-        quote:    ServerSideQuote,
-        session:  UserSession,
-        indv:     string,
-        success: ( rate_data: RateResult, actions: ClientActions ) => void,
-        failure: ( message: string ) => void,
-    ): this;
+export interface Rater {
+  /**
+   * Asynchronously performs rating
+   *
+   * @param quote   - quote to perform rating on
+   * @param session - user session
+   * @param indv    - individual supplier to rate (otherwise empty)
+   * @param success - continuation when rating is successful
+   * @param failure - continuation when rating fails
+   *
+   * @return self
+   */
+  rate(
+    quote: ServerSideQuote,
+    session: UserSession,
+    indv: string,
+    success: (rate_data: RateResult, actions: ClientActions) => void,
+    failure: (message: string) => void
+  ): this;
 }

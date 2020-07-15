@@ -19,379 +19,351 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { FieldContextStore as Sut } from "../../../src/ui/context/FieldContextStore";
-import { ContextContent } from "../../../src/ui/context/FieldContext";
-import { PositiveInteger } from "../../../src/numeric";
+import {FieldContextStore as Sut} from '../../../src/ui/context/FieldContextStore';
+import {ContextContent} from '../../../src/ui/context/FieldContext';
+import {PositiveInteger} from '../../../src/numeric';
 
-import { expect } from 'chai';
+import {expect} from 'chai';
 
-
-describe( "FieldContextStore", () =>
-{
-    [
-        {
-            element_id: 'qcontainer_checkbox_foo',
-            sibling_id: 'qlabel_checkbox_foo',
-            index: 10,
-            expected_content:
-                '<dd id="qcontainer_checkbox_foo" data-index="10">' +
-                    '<input type="checkbox" id="q_checkbox_foo_n_10" data-index="10">' +
-                    '<input type="checkbox" id="q_checkbox_foo_y_10" data-index="10">' +
-                '</dd>',
-            expected_sibling:
-                '<dt id="qlabel_checkbox_foo" data-index="10">Foo</dt>'
-        },
-        {
-            element_id: 'qcontainer_foo_bar_long_name',
-            sibling_id: 'qlabel_foo_bar_long_name',
-            index: 324,
-            expected_content:
-                '<dd id="qcontainer_foo_bar_long_name" data-index="324">' +
-                    '<input type="text" id="foo_bar_324" data-index="324">' +
-                '</dd>',
-             expected_sibling:
-                '<dt id="qlabel_foo_bar_long_name" data-index="324">Bar</dt>'
-        },
-    ].forEach( ( { element_id, sibling_id, index, expected_content, expected_sibling } ) =>
+describe('FieldContextStore', () => {
+  [
     {
-        it( "creates a clone of the content and sets the element index for " + element_id, () =>
-        {
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + element_id );
-            const sibling = group_content.querySelector( "#" + sibling_id );
-
-            const sut = new Sut(
-                'foo',
-                <ContextContent>content,
-                <ContextContent>sibling,
-            );
-
-            const content_modified = <ContextContent>sut.getContentClone( <PositiveInteger>index );
-            const sibling_modified = <ContextContent>sut.getSiblingContentClone( <PositiveInteger>index );
-
-            expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content );
-            expect( ( sibling_modified?.outerHTML as string ) ).to.equal( expected_sibling );
-
-            const content_original = <ContextContent>sut.content;
-            const sibling_original = <ContextContent>sut.siblingContent;
-
-            expect( ( content_original?.outerHTML as string ) ).to.equal( ( content?.outerHTML as string ) );
-            expect( ( sibling_original?.outerHTML as string ) ).to.equal( ( sibling?.outerHTML as string ) );
-        } );
-    } );
-
-
-    it( "displays internal fields on cloned content if user is internal", () =>
+      element_id: 'qcontainer_checkbox_foo',
+      sibling_id: 'qlabel_checkbox_foo',
+      index: 10,
+      expected_content:
+        '<dd id="qcontainer_checkbox_foo" data-index="10">' +
+        '<input type="checkbox" id="q_checkbox_foo_n_10" data-index="10">' +
+        '<input type="checkbox" id="q_checkbox_foo_y_10" data-index="10">' +
+        '</dd>',
+      expected_sibling: '<dt id="qlabel_checkbox_foo" data-index="10">Foo</dt>',
+    },
     {
-        const index = 45;
-        const element_id = 'qcontainer_internal_field';
-        const sibling_id = 'qlabel_internal_field';
-        const expected_content_clone = '<dd id="qcontainer_internal_field" class="i" data-index="45">' +
-                '<input type="text" class="i" id="foo_bar_45" data-index="45">' +
-            '</dd>';
-        const expected_sibling_clone = '<dt id="qlabel_internal_field" class="i" data-index="45">Test Ind</dt>';
+      element_id: 'qcontainer_foo_bar_long_name',
+      sibling_id: 'qlabel_foo_bar_long_name',
+      index: 324,
+      expected_content:
+        '<dd id="qcontainer_foo_bar_long_name" data-index="324">' +
+        '<input type="text" id="foo_bar_324" data-index="324">' +
+        '</dd>',
+      expected_sibling:
+        '<dt id="qlabel_foo_bar_long_name" data-index="324">Bar</dt>',
+    },
+  ].forEach(
+    ({element_id, sibling_id, index, expected_content, expected_sibling}) => {
+      it(
+        'creates a clone of the content and sets the element index for ' +
+          element_id,
+        () => {
+          const group_content = getGroupContent();
+          const content = group_content.querySelector('#' + element_id);
+          const sibling = group_content.querySelector('#' + sibling_id);
 
-        const expected_content = '<dd id="qcontainer_internal_field" class="i">' +
-                '<input type="text" class="i" id="foo_bar_0">' +
-            '</dd>';
-        const expected_sibling = '<dt id="qlabel_internal_field" class="i">Test Ind</dt>';
-
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-        const sibling = group_content.querySelector( "#" + sibling_id );
-
-        const sut = new Sut(
+          const sut = new Sut(
             'foo',
             <ContextContent>content,
-            <ContextContent>sibling,
-            true,
-        );
+            <ContextContent>sibling
+          );
 
-        const content_modified = <ContextContent>sut.getContentClone( <PositiveInteger>index );
-        const sibling_modified = <ContextContent>sut.getSiblingContentClone( <PositiveInteger>index );
+          const content_modified = <ContextContent>(
+            sut.getContentClone(<PositiveInteger>index)
+          );
+          const sibling_modified = <ContextContent>(
+            sut.getSiblingContentClone(<PositiveInteger>index)
+          );
 
-        expect( ( content_modified?.outerHTML as string ) ).to.equal( expected_content_clone );
-        expect( ( sibling_modified?.outerHTML as string ) ).to.equal( expected_sibling_clone );
+          expect(content_modified?.outerHTML as string).to.equal(
+            expected_content
+          );
+          expect(sibling_modified?.outerHTML as string).to.equal(
+            expected_sibling
+          );
 
-        const content_original = <ContextContent>sut.content;
-        const sibling_original = <ContextContent>sut.siblingContent;
+          const content_original = <ContextContent>sut.content;
+          const sibling_original = <ContextContent>sut.siblingContent;
 
-        expect( ( content_original?.outerHTML as string ) ).to.equal( expected_content );
-        expect( ( sibling_original?.outerHTML as string ) ).to.equal( expected_sibling );
-    } );
+          expect(content_original?.outerHTML as string).to.equal(
+            content?.outerHTML as string
+          );
+          expect(sibling_original?.outerHTML as string).to.equal(
+            sibling?.outerHTML as string
+          );
+        }
+      );
+    }
+  );
 
+  it('displays internal fields on cloned content if user is internal', () => {
+    const index = 45;
+    const element_id = 'qcontainer_internal_field';
+    const sibling_id = 'qlabel_internal_field';
+    const expected_content_clone =
+      '<dd id="qcontainer_internal_field" class="i" data-index="45">' +
+      '<input type="text" class="i" id="foo_bar_45" data-index="45">' +
+      '</dd>';
+    const expected_sibling_clone =
+      '<dt id="qlabel_internal_field" class="i" data-index="45">Test Ind</dt>';
 
-    it( "determines the position of the content", () =>
+    const expected_content =
+      '<dd id="qcontainer_internal_field" class="i">' +
+      '<input type="text" class="i" id="foo_bar_0">' +
+      '</dd>';
+    const expected_sibling =
+      '<dt id="qlabel_internal_field" class="i">Test Ind</dt>';
+
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
+    const sibling = group_content.querySelector('#' + sibling_id);
+
+    const sut = new Sut(
+      'foo',
+      <ContextContent>content,
+      <ContextContent>sibling,
+      true
+    );
+
+    const content_modified = <ContextContent>(
+      sut.getContentClone(<PositiveInteger>index)
+    );
+    const sibling_modified = <ContextContent>(
+      sut.getSiblingContentClone(<PositiveInteger>index)
+    );
+
+    expect(content_modified?.outerHTML as string).to.equal(
+      expected_content_clone
+    );
+    expect(sibling_modified?.outerHTML as string).to.equal(
+      expected_sibling_clone
+    );
+
+    const content_original = <ContextContent>sut.content;
+    const sibling_original = <ContextContent>sut.siblingContent;
+
+    expect(content_original?.outerHTML as string).to.equal(expected_content);
+    expect(sibling_original?.outerHTML as string).to.equal(expected_sibling);
+  });
+
+  it('determines the position of the content', () => {
+    const element_id = 'qcontainer_checkbox_foo';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
+
+    const expected_position = 1;
+
+    const sut = new Sut('foo', <ContextContent>content, null);
+
+    const given = sut.position;
+
+    expect(given).to.equal(expected_position);
+  });
+
+  it('detaches the content and sibling from the parent', () => {
+    const element_id = 'qcontainer_foo_bar_long_name';
+    const sibling_id = 'qlabel_foo_bar_long_name';
+
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
+    const sibling = group_content.querySelector('#' + sibling_id);
+
+    const sut = new Sut(
+      'foo',
+      <ContextContent>content,
+      <ContextContent>sibling
+    );
+
+    sut.detach();
+
+    expect(content?.parentElement).to.equal(null);
+    expect(sibling?.parentElement).to.equal(null);
+  });
+
+  it('determines the position of the sibling when not null', () => {
+    const element_id = 'qlabel_foo_bar_long_name';
+    const sibling_id = 'qcontainer_foo_bar_long_name';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
+    const sibling = group_content.querySelector('#' + sibling_id);
+
+    const expected_position = 5;
+
+    const sut = new Sut(
+      'foo',
+      <ContextContent>content,
+      <ContextContent>sibling
+    );
+
+    const given = sut.position;
+
+    expect(given).to.equal(expected_position);
+  });
+
+  [
     {
-        const element_id = 'qcontainer_checkbox_foo';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-
-        const expected_position = 1;
-
-        const sut = new Sut(
-            'foo',
-            <ContextContent>content,
-            null
-        );
-
-        const given = sut.position;
-
-        expect( given ).to.equal( expected_position );
-    } );
-
-
-    it( "detaches the content and sibling from the parent", () =>
+      label: 'isSubField is true when parent is a widget',
+      element_id: 'q_subfield_single_0',
+      content_id: 'qcontainer_subfield_single',
+      expected: true,
+    },
     {
-        const element_id = 'qcontainer_foo_bar_long_name';
-        const sibling_id = 'qlabel_foo_bar_long_name';
-
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-        const sibling = group_content.querySelector( "#" + sibling_id );
-
-        const sut = new Sut(
-            'foo',
-            <ContextContent>content,
-            <ContextContent>sibling,
-        );
-
-        sut.detach();
-
-        expect( content?.parentElement ).to.equal( null );
-        expect( sibling?.parentElement ).to.equal( null );
-    } );
-
-
-    it( "determines the position of the sibling when not null", () =>
+      label: 'isSubField is true when parent is a widget',
+      element_id: 'q_baz_subfield_0',
+      content_id: 'qcontainer_subfield',
+      expected: true,
+    },
     {
-        const element_id = 'qlabel_foo_bar_long_name';
-        const sibling_id = 'qcontainer_foo_bar_long_name';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-        const sibling = group_content.querySelector( "#" + sibling_id );
+      label: 'isSubField is false when parent is not a widget',
+      element_id: 'q_foo_bar_0',
+      content_id: 'qcontainer_foo_bar',
+      expected: false,
+    },
+  ].forEach(({label, element_id, content_id, expected}) => {
+    it(label, () => {
+      const group_content = getGroupContent();
+      const content = group_content.querySelector('#' + content_id);
 
-        const expected_position = 5;
+      const sut = new Sut(element_id, <ContextContent>content, null);
 
-        const sut = new Sut(
-            'foo',
-            <ContextContent>content,
-            <ContextContent>sibling,
-        );
+      const given = sut.isSubField();
+      expect(given).to.equal(expected);
+    });
+  });
 
-        const given = sut.position;
+  it('returns the subfield parent field name', () => {
+    const expected_parent = 'bi_risk_type';
 
-        expect( given ).to.equal( expected_position );
-    } );
+    const element_id = 'q_baz_subfield_0';
+    const content_id = 'qcontainer_subfield';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + content_id);
 
+    const sut = new Sut(element_id, <ContextContent>content, null);
 
-    [
-        {
-            label: 'isSubField is true when parent is a widget',
-            element_id: 'q_subfield_single_0',
-            content_id: 'qcontainer_subfield_single',
-            expected: true,
-        },
-        {
-            label: 'isSubField is true when parent is a widget',
-            element_id: 'q_baz_subfield_0',
-            content_id: 'qcontainer_subfield',
-            expected: true,
-        },
-        {
-            label: 'isSubField is false when parent is not a widget',
-            element_id: 'q_foo_bar_0',
-            content_id: 'qcontainer_foo_bar',
-            expected: false,
-        },
-    ].forEach( ( { label, element_id, content_id, expected } ) => {
-        it( label, () => {
+    sut.isSubField();
 
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + content_id );
+    const given = sut.subFieldParentName;
 
-            const sut = new Sut(
-                element_id,
-                <ContextContent>content,
-                null,
-            );
+    expect(given).to.equal(expected_parent);
+  });
 
-            const given = sut.isSubField();
-            expect( given ).to.equal( expected );
-        } )
-    } );
+  it('sets and returns the field value by index', () => {
+    const element_id = 'qlabel_foo_bar_long_name';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
 
+    const value = 'foo';
+    const index = <PositiveInteger>1;
 
-    it( "returns the subfield parent field name", () =>
-    {
-        const expected_parent = 'bi_risk_type';
+    const sut = new Sut(element_id, <ContextContent>content, null);
 
-        const element_id = 'q_baz_subfield_0';
-        const content_id = 'qcontainer_subfield';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + content_id );
+    sut.setValueByIndex(index, value);
 
-        const sut = new Sut(
-            element_id,
-            <ContextContent>content,
-            null,
-        );
+    const first_result = sut.getValueByIndex(index);
 
-        sut.isSubField();
+    // call it again, and it should be an empty string
+    const second_result = sut.getValueByIndex(index);
 
-        const given = sut.subFieldParentName;
+    expect(first_result).to.equal(value);
+    expect(second_result).to.equal('');
+  });
 
-        expect( given ).to.equal( expected_parent );
-    } );
+  it('returns empty string when field value not set', () => {
+    const element_id = 'qlabel_foo_bar_long_name';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
 
+    const index = <PositiveInteger>1;
 
-    it( "sets and returns the field value by index", () =>
-    {
-        const element_id = 'qlabel_foo_bar_long_name';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
+    const sut = new Sut(element_id, <ContextContent>content, null);
 
-        const value = "foo";
-        const index = <PositiveInteger>1;
+    const given = sut.getValueByIndex(index);
 
-        const sut = new Sut(
-            element_id,
-            <ContextContent>content,
-            null,
-        );
+    expect(given).to.equal('');
+  });
 
-        sut.setValueByIndex( index, value );
+  it('sets and returns the field options by index', () => {
+    const element_id = 'qlabel_foo_bar_long_name';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
 
-        const first_result = sut.getValueByIndex( index );
+    const options = [
+      {value: 'foo', label: 'Foo goes here', label_id: 'foo_label'},
+      {value: 'bar', label: 'Bar goes here', label_id: 'bar_label'},
+    ];
+    const index = <PositiveInteger>1;
 
-        // call it again, and it should be an empty string
-        const second_result = sut.getValueByIndex( index );
+    const sut = new Sut(element_id, <ContextContent>content, null);
 
-        expect( first_result ).to.equal( value );
-        expect( second_result ).to.equal( '' );
-    } );
+    sut.setOptionsByIndex(index, options);
 
+    const first_result = sut.getOptionsByIndex(index);
 
-    it( "returns empty string when field value not set", () =>
-    {
-        const element_id = 'qlabel_foo_bar_long_name';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
+    // call it again, and it should be an empty array
+    const second_result = sut.getOptionsByIndex(index);
 
-        const index = <PositiveInteger>1;
+    expect(first_result).to.equal(options);
+    expect(second_result).to.deep.equal([]);
+  });
 
-        const sut = new Sut(
-            element_id,
-            <ContextContent>content,
-            null,
-        );
+  it('returns empty array when field options not set', () => {
+    const element_id = 'qlabel_foo_bar_long_name';
+    const group_content = getGroupContent();
+    const content = group_content.querySelector('#' + element_id);
 
-        const given = sut.getValueByIndex( index );
+    const index = <PositiveInteger>1;
 
-        expect( given ).to.equal( "" );
-    } );
+    const sut = new Sut(element_id, <ContextContent>content, null);
 
+    const given = sut.getOptionsByIndex(index);
 
-    it( "sets and returns the field options by index", () =>
-    {
-        const element_id = 'qlabel_foo_bar_long_name';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
+    expect(given).to.deep.equal([]);
+  });
+});
 
-        const options = [
-            { value: 'foo', label: 'Foo goes here', label_id: 'foo_label' },
-            { value: 'bar', label: 'Bar goes here', label_id: 'bar_label' },
-        ]
-        const index = <PositiveInteger>1;
+function getGroupContent() {
+  // Mock group content
+  var group = document.createElement('dl');
 
-        const sut = new Sut(
-            element_id,
-            <ContextContent>content,
-            null,
-        );
+  group.innerHTML =
+    '<dt id="qlabel_checkbox_foo">Foo</dt>' +
+    '<dd id="qcontainer_checkbox_foo">' +
+    '<input type="checkbox" id="q_checkbox_foo_n_0">' +
+    '<input type="checkbox" id="q_checkbox_foo_y_0">' +
+    '</dd>' +
+    '<dd id="qcontainer_checkbox_no_label">' +
+    '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
+    '</dd>' +
+    '<dd id="qcontainer_subfield" class="foo widget">' +
+    '<select id="q_bi_risk_type_0" data-field-name="bi_risk_type" class="foo widget">' +
+    '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+    '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+    '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+    '</select>' +
+    '</dd>' +
+    '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
+    '<dd id="qcontainer_foo_bar_long_name">' +
+    '<input type="text" id="foo_bar_0" >' +
+    '</dd>' +
+    '<dt id="qlabel_internal_field" class="hidden i">Test Ind</dt>' +
+    '<dd id="qcontainer_internal_field" class="hidden i">' +
+    '<input type="text" class="hidden i" id="foo_bar_0" >' +
+    '</dd>' +
+    '<dd id="qcontainer_subfield_single" class="foo widget">' +
+    '<select id="q_subfield_single_type_0" class="foo widget">' +
+    '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
+    '</select>' +
+    '</dd>' +
+    '<dt id="qlabel_baz">Baz</dt>' +
+    '<dd id="qcontainer_baz">' +
+    '<input type="text" id="foo_baz_0">' +
+    '</dd>' +
+    '<dt id="qlabel_foo_bar">Baz</dt>' +
+    '<dd id="qcontainer_foo_bar">' +
+    '<input type="text" id="q_foo_bar_0">' +
+    '</dd>' +
+    '<dd id="qcontainer_select_element">' +
+    '<select id="q_select_element_0">' +
+    '<option value="bar" default="true">Existing option bar</option>';
+  '</select>' + '</dd>';
 
-        sut.setOptionsByIndex( index, options );
-
-        const first_result = sut.getOptionsByIndex( index );
-
-        // call it again, and it should be an empty array
-        const second_result = sut.getOptionsByIndex( index );
-
-        expect( first_result ).to.equal( options );
-        expect( second_result ).to.deep.equal( [] );
-    } );
-
-
-    it( "returns empty array when field options not set", () =>
-    {
-        const element_id = 'qlabel_foo_bar_long_name';
-        const group_content = getGroupContent();
-        const content = group_content.querySelector( "#" + element_id );
-
-        const index = <PositiveInteger>1;
-
-        const sut = new Sut(
-            element_id,
-            <ContextContent>content,
-            null,
-        );
-
-        const given = sut.getOptionsByIndex( index );
-
-        expect( given ).to.deep.equal( [] );
-    } );
-} );
-
-
-
-
-function getGroupContent()
-{
-    // Mock group content
-    var group = document.createElement( "dl" );
-
-    group.innerHTML =
-        '<dt id="qlabel_checkbox_foo">Foo</dt>' +
-        '<dd id="qcontainer_checkbox_foo">' +
-            '<input type="checkbox" id="q_checkbox_foo_n_0">' +
-            '<input type="checkbox" id="q_checkbox_foo_y_0">' +
-        '</dd>' +
-        '<dd id="qcontainer_checkbox_no_label">' +
-            '<input type="checkbox" id="q_checkbox_no_label_n_0">' +
-        '</dd>' +
-        '<dd id="qcontainer_subfield" class="foo widget">' +
-            '<select id="q_bi_risk_type_0" data-field-name="bi_risk_type" class="foo widget">' +
-                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
-                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
-                '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
-            '</select>' +
-        '</dd>' +
-        '<dt id="qlabel_foo_bar_long_name">Bar</dt>' +
-        '<dd id="qcontainer_foo_bar_long_name">' +
-            '<input type="text" id="foo_bar_0" >' +
-        '</dd>' +
-        '<dt id="qlabel_internal_field" class="hidden i">Test Ind</dt>' +
-        '<dd id="qcontainer_internal_field" class="hidden i">' +
-            '<input type="text" class="hidden i" id="foo_bar_0" >' +
-        '</dd>' +
-        '<dd id="qcontainer_subfield_single" class="foo widget">' +
-            '<select id="q_subfield_single_type_0" class="foo widget">' +
-                '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
-            '</select>' +
-        '</dd>' +
-        '<dt id="qlabel_baz">Baz</dt>' +
-        '<dd id="qcontainer_baz">' +
-            '<input type="text" id="foo_baz_0">' +
-        '</dd>' +
-        '<dt id="qlabel_foo_bar">Baz</dt>' +
-        '<dd id="qcontainer_foo_bar">' +
-            '<input type="text" id="q_foo_bar_0">' +
-        '</dd>' +
-        '<dd id="qcontainer_select_element">' +
-            '<select id="q_select_element_0">' +
-                '<option value="bar" default="true">Existing option bar</option>'
-            '</select>' +
-        '</dd>';
-
-    return group;
+  return group;
 }

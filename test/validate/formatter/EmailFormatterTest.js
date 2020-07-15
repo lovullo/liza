@@ -20,55 +20,57 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var liza   = require( '../../../' ),
-    Sut    = liza.validate.formatter.EmailFormatter,
-    assert = require( 'assert' );
+var liza = require('../../../'),
+  Sut = liza.validate.formatter.EmailFormatter,
+  assert = require('assert');
 
+describe('validate.formatter.StringFormat', function () {
+  // test email addresses from
+  // https://blogs.msdn.microsoft.com/testing123/2009/02/06/email-address-test-cases/
+  [
+    'email@domain.com',
+    'firstname.lastname@domain.com',
+    'email@subdomain.domain.com',
+    'firstname+lastname@domain.com',
+    '1234567890@domain.com',
+    'email@domain-one.com',
+    '_______@domain.com',
+    'email@domain.name',
+    'email@domain.co.jp',
+    'firstname-lastname@domain.com',
+  ].forEach(email_address =>
+    assert.equal(Sut.parse(email_address), email_address)
+  );
 
-describe( 'validate.formatter.StringFormat', function()
-{
-    // test email addresses from
-    // https://blogs.msdn.microsoft.com/testing123/2009/02/06/email-address-test-cases/
-    [
-        "email@domain.com",
-        "firstname.lastname@domain.com",
-        "email@subdomain.domain.com",
-        "firstname+lastname@domain.com",
-        "1234567890@domain.com",
-        "email@domain-one.com",
-        "_______@domain.com",
-        "email@domain.name",
-        "email@domain.co.jp",
-        "firstname-lastname@domain.com",
-    ].forEach( email_address => assert.equal( Sut.parse( email_address ), email_address ) );
-
-    [
-        "",
-        "plainaddress",
-        "#@%^%#$@#$@#.com",
-        "@domain.com",
-        "Joe Smith <email@domain.com>",
-        "email.domain.com",
-        "email@domain@domain.com",
-        ".email@domain.com",
-        "email.@domain.com",
-        "email..email@domain.com",
-        "あいうえお@domain.com",
-        "email@domain.com (Joe Smith)",
-        "email@domain",
-        "email@-domain.com",
-        "email@domain..com",
-        "em,ail@domain.com",
-        'em"ail@domain.com',
-        "em(ail@domain.com",
-        "em)ail@domain.com",
-        "em:ail@domain.com",
-        "em;ail@domain.com",
-        "em<ail@domain.com",
-        "em>ail@domain.com",
-        "em[ail@domain.com",
-        "em]ail@domain.com",
-        "em ail@domain.com",
-        "em\\ail@domain.com",
-    ].forEach( email_address => assert.throws( () => Sut.parse( email_address ), Error ) );
-} );
+  [
+    '',
+    'plainaddress',
+    '#@%^%#$@#$@#.com',
+    '@domain.com',
+    'Joe Smith <email@domain.com>',
+    'email.domain.com',
+    'email@domain@domain.com',
+    '.email@domain.com',
+    'email.@domain.com',
+    'email..email@domain.com',
+    'あいうえお@domain.com',
+    'email@domain.com (Joe Smith)',
+    'email@domain',
+    'email@-domain.com',
+    'email@domain..com',
+    'em,ail@domain.com',
+    'em"ail@domain.com',
+    'em(ail@domain.com',
+    'em)ail@domain.com',
+    'em:ail@domain.com',
+    'em;ail@domain.com',
+    'em<ail@domain.com',
+    'em>ail@domain.com',
+    'em[ail@domain.com',
+    'em]ail@domain.com',
+    'em ail@domain.com',
+    'em\\ail@domain.com',
+  ].forEach(email_address =>
+    assert.throws(() => Sut.parse(email_address), Error)
+  );
+});

@@ -21,261 +21,240 @@
  * @todo This needs tests for the rest of StagingBucket
  */
 
-"use strict";
+'use strict';
 
-const { Class } = require( 'easejs' );
-const root      = require( '../../' );
-const expect    = require( 'chai' ).expect;
-const sinon     = require( 'sinon' );
+const {Class} = require('easejs');
+const root = require('../../');
+const expect = require('chai').expect;
+const sinon = require('sinon');
 
 const {
-    Bucket,
-    StagingBucket: Sut,
+  Bucket,
+  StagingBucket: Sut,
 
-    // TODO: decouple test from this
-    QuoteDataBucket,
+  // TODO: decouple test from this
+  QuoteDataBucket,
 } = root.bucket;
 
+describe('StagingBucket', () => {
+  it('pre-update event allows updating data before set', () => {
+    const sut = Sut(createStubBucket());
 
-describe( 'StagingBucket', () =>
-{
-    it( 'pre-update event allows updating data before set', () =>
+    const data = {
+      foo: ['bar', 'baz'],
+    };
+
+    sut.on('preStagingUpdate', data => {
+      data.foo[1] = 'quux';
+    });
+
+    // triggers setValues
+    sut.setValues(data);
+
+    expect(sut.getDataByName('foo')).to.deep.equal(['bar', 'quux']);
+  });
+
+  [
     {
-        const sut = Sut( createStubBucket() );
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', 'baz']},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {},
+      },
+    },
 
-        const data = {
-            foo: [ 'bar', 'baz' ],
-        };
-
-        sut.on( 'preStagingUpdate', data =>
-        {
-            data.foo[ 1 ] = 'quux';
-        } );
-
-        // triggers setValues
-        sut.setValues( data );
-
-        expect( sut.getDataByName( 'foo' ) )
-            .to.deep.equal( [ 'bar', 'quux' ] );
-    } );
-
-
-    [
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', 'baz' ] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: {},
-            },
-        },
-
-        // actual changes
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'change', 'baz' ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'change', 'baz' ] },
-                diff: { foo: [ 'change' ] },
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', 'change' ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar', 'change' ] },
-                diff: { foo: [ , 'change' ] },
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ undefined, 'change' ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar', 'change' ] },
-                diff: { foo: [ , 'change' ] },
-            },
-        },
-
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ undefined, 'baz' ] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: {},
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', undefined ] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: {},
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', null ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar' ] },
-                diff: { foo: [ , null ] },
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', 'baz', null ] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: {},
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [ 'bar', 'baz', 'quux' ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar', 'baz', 'quux' ] },
-                diff: { foo: [ , , 'quux' ]},
-            },
-        },
-        {
-            initial:     { foo: [ 'bar', 'baz' ] },
-            update:      { foo: [] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: {},
-            },
-        },
-
-        // null not at end of set means unchanged
-        {
-            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
-            update:      { foo: [ null, null, 'quux' ] },
-            is_change:   false,
-            expected:    {
-                data: { foo: [ 'bar', 'baz', 'quux' ] },
-                diff: {},
-            },
-        },
-        // but the last one is
-        {
-            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
-            update:      { foo: [ null, 'baz', null ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: { foo: [ , , null ] },
-            },
-        },
-        // given a string of nulls, only the last one is terminating; the
-        // rest are interpreted as undefined (because JSON serializes
-        // undefined values to `null' -_-)
-        {
-            initial:     { foo: [ 'bar', 'baz', 'quux' ] },
-            update:      { foo: [ null, null, null ] },
-            is_change:   true,
-            expected:    {
-                data: { foo: [ 'bar', 'baz' ] },
-                diff: { foo: [ , , null ] },
-            },
-        },
-    ].forEach( ( { initial, update, is_change, expected }, i ) =>
+    // actual changes
     {
-        it( `pre-commit, properly processes diff and change (${i})`, () =>
-        {
-            const sut    = Sut( createStubBucket() );
-            let   called = false;
-
-            sut.setValues( initial );
-
-            expect( sut.getDiff() ).to.deep.equal( initial );
-
-            sut.on( 'preStagingUpdate', () => called = true );
-            sut.setValues( update );
-
-            expect( called ).to.equal( is_change );
-
-            if ( expected )
-            {
-                expect( sut.getData() ).to.deep.equal( expected.data );
-            }
-        } );
-
-
-        it( `post-commit, properly processes diff and change (${i})`, () =>
-        {
-            const sut    = Sut( createStubBucket() );
-            let   called = false;
-
-            sut.setValues( initial );
-            sut.commit();
-
-            sut.on( 'preStagingUpdate', () => called = true );
-            sut.setValues( update );
-
-            expect( called ).to.equal( is_change );
-
-            if ( expected )
-            {
-                expect( sut.getData() ).to.deep.equal( expected.data );
-                expect( sut.getDiff() ).to.deep.equal( expected.diff );
-            }
-        } );
-    } );
-
-
-    describe( "#setCommittedValues", () =>
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['change', 'baz']},
+      is_change: true,
+      expected: {
+        data: {foo: ['change', 'baz']},
+        diff: {foo: ['change']},
+      },
+    },
     {
-        it( "bypasses staging bucket without no bypass flag", () =>
-        {
-            const b     = createStubBucket();
-            const bmock = sinon.mock( b );
-            const data  = { foo: [ "bar" ] };
-            const sut   = Sut( b );
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', 'change']},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar', 'change']},
+        diff: {foo: [, 'change']},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: [undefined, 'change']},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar', 'change']},
+        diff: {foo: [, 'change']},
+      },
+    },
 
-            bmock.expects( 'setValues' )
-                .once()
-                .withExactArgs( data );
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: [undefined, 'baz']},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', undefined]},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', null]},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar']},
+        diff: {foo: [, null]},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', 'baz', null]},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: ['bar', 'baz', 'quux']},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar', 'baz', 'quux']},
+        diff: {foo: [, , 'quux']},
+      },
+    },
+    {
+      initial: {foo: ['bar', 'baz']},
+      update: {foo: []},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {},
+      },
+    },
 
-            sut.setCommittedValues( data );
+    // null not at end of set means unchanged
+    {
+      initial: {foo: ['bar', 'baz', 'quux']},
+      update: {foo: [null, null, 'quux']},
+      is_change: false,
+      expected: {
+        data: {foo: ['bar', 'baz', 'quux']},
+        diff: {},
+      },
+    },
+    // but the last one is
+    {
+      initial: {foo: ['bar', 'baz', 'quux']},
+      update: {foo: [null, 'baz', null]},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {foo: [, , null]},
+      },
+    },
+    // given a string of nulls, only the last one is terminating; the
+    // rest are interpreted as undefined (because JSON serializes
+    // undefined values to `null' -_-)
+    {
+      initial: {foo: ['bar', 'baz', 'quux']},
+      update: {foo: [null, null, null]},
+      is_change: true,
+      expected: {
+        data: {foo: ['bar', 'baz']},
+        diff: {foo: [, , null]},
+      },
+    },
+  ].forEach(({initial, update, is_change, expected}, i) => {
+    it(`pre-commit, properly processes diff and change (${i})`, () => {
+      const sut = Sut(createStubBucket());
+      let called = false;
 
-            // no diff if bypassed
-            expect( sut.getDiff() ).to.deep.equal( {} );
+      sut.setValues(initial);
 
-            bmock.verify();
-        } );
+      expect(sut.getDiff()).to.deep.equal(initial);
 
+      sut.on('preStagingUpdate', () => (called = true));
+      sut.setValues(update);
 
-        it( "does not bypasses staging bucket with no bypass flag", () =>
-        {
-            const b     = createStubBucket();
-            const bmock = sinon.mock( b );
-            const data  = { foo: [ "bar" ] };
-            const sut   = Sut( b );
+      expect(called).to.equal(is_change);
 
-            bmock.expects( 'setValues' ).never();
+      if (expected) {
+        expect(sut.getData()).to.deep.equal(expected.data);
+      }
+    });
 
-            sut.forbidBypass();
-            sut.setCommittedValues( data );
+    it(`post-commit, properly processes diff and change (${i})`, () => {
+      const sut = Sut(createStubBucket());
+      let called = false;
 
-            // should have been staged
-            expect( sut.getDiff() ).to.deep.equal( data );
+      sut.setValues(initial);
+      sut.commit();
 
-            bmock.verify();
-        } );
-    } );
-} );
+      sut.on('preStagingUpdate', () => (called = true));
+      sut.setValues(update);
 
+      expect(called).to.equal(is_change);
 
-function createStubBucket( bucket_obj )
-{
-    return QuoteDataBucket();
+      if (expected) {
+        expect(sut.getData()).to.deep.equal(expected.data);
+        expect(sut.getDiff()).to.deep.equal(expected.diff);
+      }
+    });
+  });
+
+  describe('#setCommittedValues', () => {
+    it('bypasses staging bucket without no bypass flag', () => {
+      const b = createStubBucket();
+      const bmock = sinon.mock(b);
+      const data = {foo: ['bar']};
+      const sut = Sut(b);
+
+      bmock.expects('setValues').once().withExactArgs(data);
+
+      sut.setCommittedValues(data);
+
+      // no diff if bypassed
+      expect(sut.getDiff()).to.deep.equal({});
+
+      bmock.verify();
+    });
+
+    it('does not bypasses staging bucket with no bypass flag', () => {
+      const b = createStubBucket();
+      const bmock = sinon.mock(b);
+      const data = {foo: ['bar']};
+      const sut = Sut(b);
+
+      bmock.expects('setValues').never();
+
+      sut.forbidBypass();
+      sut.setCommittedValues(data);
+
+      // should have been staged
+      expect(sut.getDiff()).to.deep.equal(data);
+
+      bmock.verify();
+    });
+  });
+});
+
+function createStubBucket(bucket_obj) {
+  return QuoteDataBucket();
 }

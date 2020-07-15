@@ -19,35 +19,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class            = require( 'easejs' ).Class,
-    RateEventHandler = require( './RateEventHandler' );
-
+var Class = require('easejs').Class,
+  RateEventHandler = require('./RateEventHandler');
 
 /**
  * Performs rate requests
  */
-module.exports = Class( 'IndvRateEventHandler' )
-    .extend( RateEventHandler,
-{
-    'override protected postRate': function( err, data, client, quote )
-    {
-        if ( err )
-        {
-            var inelig = {};
-            inelig[ action.id + '_ineligible' ] = 'Error calculating premium.';
+module.exports = Class('IndvRateEventHandler').extend(RateEventHandler, {
+  'override protected postRate': function (err, data, client, quote) {
+    if (err) {
+      var inelig = {};
+      inelig[action.id + '_ineligible'] = 'Error calculating premium.';
 
-            // uh oh. notify the user that there was a problem.
-            quote.setData( inelig ).save();
-        }
-
-        // we must force a screen update (TODO: make this unnecessary)
-        client.getUi().getCurrentStep().emptyBucket();
-    },
-
-
-    'override protected queueProgressDialog': function( after_ms )
-    {
-        // no dialog.
-        return function() {};
+      // uh oh. notify the user that there was a problem.
+      quote.setData(inelig).save();
     }
-} );
+
+    // we must force a screen update (TODO: make this unnecessary)
+    client.getUi().getCurrentStep().emptyBucket();
+  },
+
+  'override protected queueProgressDialog': function (after_ms) {
+    // no dialog.
+    return function () {};
+  },
+});

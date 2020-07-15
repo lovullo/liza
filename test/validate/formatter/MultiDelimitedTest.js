@@ -19,53 +19,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var Class = require('easejs').Class,
+  liza = require('../../../'),
+  formatter = liza.validate.formatter,
+  Sut = formatter.MultiDelimited,
+  EchoFormatter = formatter.EchoFormatter,
+  ValidatorFormatter = liza.validate.ValidatorFormatter,
+  common = require('./common'),
+  expect = require('chai').expect;
 
-var Class              = require( 'easejs' ).Class,
-    liza               = require( '../../../' ),
-    formatter          = liza.validate.formatter,
-    Sut                = formatter.MultiDelimited,
-    EchoFormatter      = formatter.EchoFormatter,
-    ValidatorFormatter = liza.validate.ValidatorFormatter,
-    common             = require( './common' ),
-    expect             = require( 'chai' ).expect;
+var DummyFormatter = Class.implement(ValidatorFormatter).extend({
+  'virtual parse': function (data) {
+    return '+' + data;
+  },
 
-var DummyFormatter = Class.implement( ValidatorFormatter )
-    .extend(
-{
-    'virtual parse': function( data )
-    {
-        return '+' + data;
-    },
+  'virtual retrieve': function (data) {
+    return '-' + data;
+  },
+});
 
-    'virtual retrieve': function( data )
-    {
-        return '-' + data;
-    },
-} );
+describe('validate.formatter.MultiDelimited', function () {
+  var sut = DummyFormatter.use(Sut(',', '|'))();
 
+  common.testValidate(sut, {
+    '': ['+', '-+'],
+    abc: ['+abc', '-+abc'],
+    'abc,123': ['+abc|+123', '-+abc,-+123'],
+    '  1122 ': ['+  1122 ', '-+  1122 '],
+    '  1122 ,34': ['+  1122 |+34', '-+  1122 ,-+34'],
+  });
 
-describe( 'validate.formatter.MultiDelimited', function()
-{
-    var sut = DummyFormatter.use( Sut( ',', '|' ) )();
+  // sane default behavior
+  it('defaults retrieve delimeter to parse delimiter', function () {
+    var sut = DummyFormatter.use(Sut('!'))();
 
-    common.testValidate( sut, {
-        "":           [ "+",             "-+"             ],
-        "abc":        [ "+abc",          "-+abc"          ],
-        "abc,123":    [ "+abc|+123",     "-+abc,-+123"    ],
-        "  1122 ":    [ "+  1122 ",      "-+  1122 "      ],
-        "  1122 ,34": [ "+  1122 |+34",  "-+  1122 ,-+34" ],
-    } );
+    expect(sut.parse('abc!123')).to.equal('+abc!+123');
 
-
-    // sane default behavior
-    it( 'defaults retrieve delimeter to parse delimiter', function()
-    {
-        var sut = DummyFormatter.use( Sut( '!' ) )();
-
-        expect( sut.parse( "abc!123" ) )
-            .to.equal( "+abc!+123" );
-
-        expect( sut.retrieve( "abc!123" ) )
-            .to.equal( "-abc!-123" );
-    } );
-} );
+    expect(sut.retrieve('abc!123')).to.equal('-abc!-123');
+  });
+});

@@ -19,15 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class     = require( 'easejs' ).Class,
-    Quote     = require( '../../quote/Quote' ),
-    BaseQuote = require( '../../quote/BaseQuote' );
+var Class = require('easejs').Class,
+  Quote = require('../../quote/Quote'),
+  BaseQuote = require('../../quote/BaseQuote');
 
-
-module.exports = Class( 'ServerSideQuote' )
-    .implement( Quote )
-    .extend( BaseQuote,
-{
+module.exports = Class('ServerSideQuote')
+  .implement(Quote)
+  .extend(BaseQuote, {
     /**
      * Program version
      * @type {string}
@@ -64,32 +62,23 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'private _retry_attempts': 0,
 
-
-    'public setProgramVersion': function( version )
-    {
-        this._pver = ''+( version );
-        return this;
+    'public setProgramVersion': function (version) {
+      this._pver = '' + version;
+      return this;
     },
 
-
-    'public getProgramVersion': function()
-    {
-        return this._pver;
+    'public getProgramVersion': function () {
+      return this._pver;
     },
 
-
-    'public setCreditScoreRef': function( ref )
-    {
-        this._creditScoreRef = +ref;
-        return this;
+    'public setCreditScoreRef': function (ref) {
+      this._creditScoreRef = +ref;
+      return this;
     },
 
-
-    'public getCreditScoreRef': function()
-    {
-        return this._creditScoreRef;
+    'public getCreditScoreRef': function () {
+      return this._creditScoreRef;
     },
-
 
     /**
      * Set the timestamp of the first time quote was rated
@@ -98,50 +87,41 @@ module.exports = Class( 'ServerSideQuote' )
      *
      * @return {Quote} self
      */
-    'public setRatedDate': function( timestamp )
-    {
-        // do not overwrite date if it exists
-        if ( this._rated_date === 0 )
-        {
-            this._rated_date = ( +timestamp || 0 );
-        }
+    'public setRatedDate': function (timestamp) {
+      // do not overwrite date if it exists
+      if (this._rated_date === 0) {
+        this._rated_date = +timestamp || 0;
+      }
 
-        return this;
+      return this;
     },
-
 
     /**
      * If the quote has been rated
      *
      * @return {boolean} has been rated
      */
-    'public getRatedDate': function()
-    {
-        return this._rated_date;
+    'public getRatedDate': function () {
+      return this._rated_date;
     },
-
 
     /**
      * Metadata bucket
      *
      * @return {Bucket}
      */
-    'public getMetabucket': function()
-    {
-        return this._metabucket;
+    'public getMetabucket': function () {
+      return this._metabucket;
     },
-
 
     /**
      * Set metadata bucket
      *
      * @return {ServerSideQuote} self
      */
-    'public setMetabucket': function( metabucket )
-    {
-        this._metabucket = metabucket;
+    'public setMetabucket': function (metabucket) {
+      this._metabucket = metabucket;
     },
-
 
     /**
      * Set metabucket data
@@ -150,99 +130,82 @@ module.exports = Class( 'ServerSideQuote' )
      *
      * @return {ServerSideQuote} self
      */
-    'public setMetadata': function( data )
-    {
-        if ( !this._metabucket )
-        {
-            throw Error( "No metabucket available for #setMetadata" );
-        }
+    'public setMetadata': function (data) {
+      if (!this._metabucket) {
+        throw Error('No metabucket available for #setMetadata');
+      }
 
-        this._metabucket.setValues( data );
-        return this;
+      this._metabucket.setValues(data);
+      return this;
     },
-
 
     /**
      * Set rating bucket
      *
      * @param {Bucket} bucket the rate bucket to set
      */
-    'public setRateBucket': function( bucket )
-    {
-        this._rate_bucket = bucket;
+    'public setRateBucket': function (bucket) {
+      this._rate_bucket = bucket;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Get rating bucket
      *
      * @return {Bucket}
      */
-    'public getRateBucket': function()
-    {
-        return this._rate_bucket;
+    'public getRateBucket': function () {
+      return this._rate_bucket;
     },
-
 
     /**
      * Set rating data
      *
      * @param {Object.<string,Array>} data rating data
      */
-    'public setRatingData': function( data )
-    {
-        if ( !this._rate_bucket )
-        {
-            throw Error( "No rating bucket available for #setRatingData" );
-        }
+    'public setRatingData': function (data) {
+      if (!this._rate_bucket) {
+        throw Error('No rating bucket available for #setRatingData');
+      }
 
-        this._rate_bucket.setValues( data );
+      this._rate_bucket.setValues(data);
 
-        return this;
+      return this;
     },
-
 
     /**
      * Get rating data
      *
      * @return {Object.<string,Array>} rating data
      */
-    'public getRatingData': function()
-    {
-        if ( !this._rate_bucket )
-        {
-            throw Error( "No rating bucket available for #setRatingData" );
-        }
+    'public getRatingData': function () {
+      if (!this._rate_bucket) {
+        throw Error('No rating bucket available for #setRatingData');
+      }
 
-        return this._rate_bucket.getData();
+      return this._rate_bucket.getData();
     },
-
 
     /**
      * Set the number of retries attempted
      *
      * @return {ServerSideQuote} self
      */
-    'public setRetryAttempts': function( attempts )
-    {
-        this._retry_attempts = attempts;
+    'public setRetryAttempts': function (attempts) {
+      this._retry_attempts = attempts;
 
-        return this;
+      return this;
     },
-
 
     /**
      * Get the number of retries attempted
      *
      * @return {number} the number of attempts that have been made
      */
-    'public getRetryAttempts': function()
-    {
-        return this._retry_attempts;
+    'public getRetryAttempts': function () {
+      return this._retry_attempts;
     },
-
 
     /**
      * Retrieve the number of raters that are pending
@@ -251,39 +214,32 @@ module.exports = Class( 'ServerSideQuote' )
      *
      * @return {number} the number of retries pending
      */
-    'public getRetryCount': function( data )
-    {
-        let retry_field_count = 0;
+    'public getRetryCount': function (data) {
+      let retry_field_count = 0;
 
-        // if no data is specified then use internal rate data
-        data = data || this._rate_bucket.getData();
+      // if no data is specified then use internal rate data
+      data = data || this._rate_bucket.getData();
 
-        const retry_pattern    = /^(.+)__retry$/;
-        const retry_true_count = Object.keys( data )
-            .filter( field =>
-            {
-                const value = Array.isArray( data[ field ] )
+      const retry_pattern = /^(.+)__retry$/;
+      const retry_true_count = Object.keys(data).filter(field => {
+        const value = Array.isArray(data[field])
+          ? // In case the data are in a nested array
+            // e.g. data[ field ] === [ [ 0 ] ]
+            Array.prototype.concat.apply([], data[field])
+          : data[field];
 
-                    // In case the data are in a nested array
-                    // e.g. data[ field ] === [ [ 0 ] ]
-                    ? Array.prototype.concat.apply( [], data[ field ] )
-                    : data[ field ];
+        const is_retry = field.match(retry_pattern);
 
-                const is_retry = field.match( retry_pattern );
+        if (is_retry) {
+          retry_field_count++;
+        }
 
-                if ( is_retry )
-                {
-                    retry_field_count++;
-                }
+        return is_retry && !!value[0];
+      }).length;
 
-                return is_retry && !!value[ 0 ];
-            } )
-            .length;
-
-        return {
-            field_count: retry_field_count,
-            true_count:  retry_true_count
-        };
+      return {
+        field_count: retry_field_count,
+        true_count: retry_true_count,
+      };
     },
-} );
-
+  });

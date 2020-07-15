@@ -21,12 +21,7 @@
 
 'use strict';
 
-const {
-    AutoObjectStore,
-    DelimitedKey,
-    MemoryStore,
-} = require( '../' ).store;
-
+const {AutoObjectStore, DelimitedKey, MemoryStore} = require('../').store;
 
 /**
  * A store that recursively instantiates itself
@@ -36,9 +31,6 @@ const {
  * retrieved by delimiting the key with `.` (e.g. `foo.bar.baz`); see
  * trait `DelimitedKey` for more information and examples.
  */
-exports.ConfStore = function ConfStore()
-{
-    return MemoryStore
-        .use( AutoObjectStore( ConfStore ) )
-        .use( DelimitedKey( '.' ) )();
+exports.ConfStore = function ConfStore() {
+  return MemoryStore.use(AutoObjectStore(ConfStore)).use(DelimitedKey('.'))();
 };

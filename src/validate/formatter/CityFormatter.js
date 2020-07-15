@@ -19,11 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-module.exports = require( './PatternFormatter' )(
-    [
-        /^[a-zA-Z][a-zA-Z '.-]+$/,
-        '$&'
-    ]
-);
-
+module.exports = require('./PatternFormatter')([
+  /^[a-zA-Z][a-zA-Z '.-]+$/,
+  '$&',
+]);

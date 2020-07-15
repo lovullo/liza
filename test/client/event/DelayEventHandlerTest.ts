@@ -21,173 +21,164 @@
 
 'use strict';
 
-import { expect } from 'chai';
-import { DelayEventHandler as Sut } from '../../../src/client/event/DelayEventHandler';
-import { ClientActionType, ClientAction } from '../../../src/client/action/ClientAction';
+import {expect} from 'chai';
+import {DelayEventHandler as Sut} from '../../../src/client/event/DelayEventHandler';
+import {
+  ClientActionType,
+  ClientAction,
+} from '../../../src/client/action/ClientAction';
 
-describe( 'DelayEventHandler', () =>
-{
-    it( "handles delay event with the expected delay", done =>
-    {
-        let handle_event_called = false;
-        let set_timeout_called  = false;
-        let actual_action       = '';
-        let actual_data: any    = null;
-        let actual_delay        = 0;
+describe('DelayEventHandler', () => {
+  it('handles delay event with the expected delay', done => {
+    let handle_event_called = false;
+    let set_timeout_called = false;
+    let actual_action = '';
+    let actual_data: any = null;
+    let actual_delay = 0;
 
-        const expected_delay  = 25000;
-        const expected_action = 'foobar';
-        const expected_data   = { indv: 'retry' };
+    const expected_delay = 25000;
+    const expected_action = 'foobar';
+    const expected_data = {indv: 'retry'};
 
-        const client = {
-            handleEvent: ( event_type: ClientActionType, data: any ) => {
-                actual_action = event_type;
-                actual_data   = data;
+    const client = {
+      handleEvent: (event_type: ClientActionType, data: any) => {
+        actual_action = event_type;
+        actual_data = data;
 
-                handle_event_called = true;
-            },
-        };
+        handle_event_called = true;
+      },
+    };
 
-        const action: ClientAction = {
-            'action': 'delay',
-            'seconds': 25,
-            'then': {
-                'action': expected_action,
-            }
-        };
+    const action: ClientAction = {
+      action: 'delay',
+      seconds: 25,
+      then: {
+        action: expected_action,
+      },
+    };
 
-        const sut = new Sut( client );
+    const sut = new Sut(client);
 
-        const old_setTimeout = global.setTimeout;
+    const old_setTimeout = global.setTimeout;
 
-        global.setTimeout = (
-            callback: (...args: any[]) => void,
-            delay: number
-        ) =>
-        {
-            set_timeout_called = true;
-            actual_delay       = delay;
+    global.setTimeout = (callback: (...args: any[]) => void, delay: number) => {
+      set_timeout_called = true;
+      actual_delay = delay;
 
-            callback();
+      callback();
 
-            return new NodeJS.Timeout();
-        }
+      return new NodeJS.Timeout();
+    };
 
-        try {
-            sut.handle(
-                "delay",
-                () =>
-                {
-                    expect( actual_action ).to.equal( expected_action );
-                    expect( actual_data ).to.equal( expected_data );
-                    done();
-                },
-                action
-            )
-        }
-        catch( e ) {}
-        finally
-        {
-            global.setTimeout = old_setTimeout;
-        }
+    try {
+      sut.handle(
+        'delay',
+        () => {
+          expect(actual_action).to.equal(expected_action);
+          expect(actual_data).to.equal(expected_data);
+          done();
+        },
+        action
+      );
+    } catch (e) {
+    } finally {
+      global.setTimeout = old_setTimeout;
+    }
 
-        expect( set_timeout_called ).to.equal( true );
-        expect( handle_event_called ).to.equal( true );
-        expect( actual_delay ).to.equal( expected_delay );
-        done();
-    } ),
+    expect(set_timeout_called).to.equal(true);
+    expect(handle_event_called).to.equal(true);
+    expect(actual_delay).to.equal(expected_delay);
+    done();
+  }),
+    it('Delay defaults to zero on non-numeric seconds', done => {
+      let set_timeout_called = false;
+      let actual_delay = -1;
 
+      const expected_delay = 0;
 
-    it( "Delay defaults to zero on non-numeric seconds", done =>
-    {
-        let set_timeout_called = false;
-        let actual_delay       = -1;
+      const client = {
+        handleEvent: (_: ClientActionType, __: any) => {},
+      };
 
-        const expected_delay = 0;
+      const action: ClientAction = {
+        action: 'delay',
+        seconds: 'string-foo',
+        then: {
+          action: 'foo',
+        },
+      };
 
-        const client = {
-            handleEvent: ( _: ClientActionType, __: any ) => {},
-        };
+      const sut = new Sut(client);
 
-        const action: ClientAction = {
-            'action': 'delay',
-            'seconds': 'string-foo',
-            'then': {
-                'action': 'foo',
-            }
-        };
+      const old_setTimeout = global.setTimeout;
 
-        const sut = new Sut( client );
+      global.setTimeout = (
+        callback: (...args: any[]) => void,
+        delay: number
+      ) => {
+        set_timeout_called = true;
+        actual_delay = delay;
 
-        const old_setTimeout = global.setTimeout;
+        callback();
 
-        global.setTimeout = (
-            callback: (...args: any[]) => void,
-            delay: number
-        ) =>
-        {
-            set_timeout_called = true;
-            actual_delay       = delay;
+        return new NodeJS.Timeout();
+      };
 
-            callback();
+      try {
+        sut.handle('delay', () => {}, action);
+      } catch (e) {
+      } finally {
+        global.setTimeout = old_setTimeout;
+      }
 
-            return new NodeJS.Timeout();
-        }
+      expect(set_timeout_called).to.equal(true);
+      expect(actual_delay).to.equal(expected_delay);
+      done();
+    }),
+    it('Calls callback function and returns itself', done => {
+      let callback_called = false;
+      let returned = null;
 
-        try { sut.handle( "delay", () => {}, action ) }
-        catch( e ) {}
-        finally { global.setTimeout = old_setTimeout; }
+      const client = {
+        handleEvent: (_: ClientActionType, __: any, cb: any) => {
+          cb();
+        },
+      };
 
-        expect( set_timeout_called ).to.equal( true );
-        expect( actual_delay ).to.equal( expected_delay );
-        done();
-    } ),
+      const action: ClientAction = {
+        action: 'delay',
+        seconds: 0,
+        then: {
+          action: 'foo',
+        },
+      };
 
+      const sut = new Sut(client);
 
-    it( "Calls callback function and returns itself", done =>
-    {
-        let callback_called = false;
-        let returned        = null;
+      const old_setTimeout = global.setTimeout;
 
-        const client = {
-            handleEvent: ( _: ClientActionType, __: any, cb: any ) => { cb() },
-        };
+      global.setTimeout = (callback: (...args: any[]) => void, _: number) => {
+        callback();
 
-        const action: ClientAction = {
-            'action': 'delay',
-            'seconds': 0,
-            'then': {
-                'action': 'foo',
-            }
-        };
+        return <NodeJS.Timeout>{};
+      };
 
-        const sut = new Sut( client );
+      try {
+        returned = sut.handle(
+          'delay',
+          () => {
+            callback_called = true;
+          },
+          action
+        );
+      } catch (e) {
+        console.log(e);
+      } finally {
+        global.setTimeout = old_setTimeout;
+      }
 
-        const old_setTimeout = global.setTimeout;
-
-        global.setTimeout = (
-            callback: ( ...args: any[] ) => void,
-            _: number
-        ) =>
-        {
-            callback();
-
-            return <NodeJS.Timeout>{};
-        }
-
-        try
-        {
-            returned = sut.handle(
-                "delay",
-                () => { callback_called = true },
-                action
-            );
-        }
-        catch( e ) { console.log( e )}
-        finally { global.setTimeout = old_setTimeout; }
-
-        expect( callback_called ).to.equal( true );
-        expect( returned ).to.deep.equal( sut );
-        done();
-    } );
-} )
+      expect(callback_called).to.equal(true);
+      expect(returned).to.deep.equal(sut);
+      done();
+    });
+});

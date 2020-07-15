@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class               = require( 'easejs' ).Class,
-    XhttpQuoteTransport = require( './XhttpQuoteTransport' );
+var Class = require('easejs').Class,
+  XhttpQuoteTransport = require('./XhttpQuoteTransport');
 
-
-module.exports = Class( 'XhttpQuoteStagingTransport' )
-    .extend( XhttpQuoteTransport,
-{
-    'override protected getBucketDataJson': function( bucket )
-    {
-        // return the staged changes
-        return JSON.stringify( bucket.getDiff() );
-    }
-} );
-
+module.exports = Class('XhttpQuoteStagingTransport').extend(
+  XhttpQuoteTransport,
+  {
+    'override protected getBucketDataJson': function (bucket) {
+      // return the staged changes
+      return JSON.stringify(bucket.getDiff());
+    },
+  }
+);

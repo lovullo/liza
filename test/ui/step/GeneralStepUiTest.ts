@@ -19,411 +19,374 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Collection } from "../../../src/ui/step/Collection";
-import { GeneralStepUi as Sut } from "../../../src/ui/step/GeneralStepUi";
-import { GroupUi } from "../../../src/ui/group/GroupUi";
-import { WindowFeatureFlag } from "../../../src/system/flags/WindowFeatureFlag";
+import {Collection} from '../../../src/ui/step/Collection';
+import {GeneralStepUi as Sut} from '../../../src/ui/step/GeneralStepUi';
+import {GroupUi} from '../../../src/ui/group/GroupUi';
+import {WindowFeatureFlag} from '../../../src/system/flags/WindowFeatureFlag';
 
-var expect  = require( 'chai' ).expect,
-    sinon   = require( 'sinon' );
+var expect = require('chai').expect,
+  sinon = require('sinon');
 
-describe( 'ui.GeneralStepUi', function()
-{
-    describe( 'on answer data change', function()
-    {
-        it( 'will attempt pre-style with formatter', function( done )
-        {
-            var orig_data = {
-                    foo: [ "orig" ],
-                },
-                fmt_data  = {
-                    foo: [ "formatted" ],
-                };
+describe('ui.GeneralStepUi', function () {
+  describe('on answer data change', function () {
+    it('will attempt pre-style with formatter', function (done) {
+      var orig_data = {
+          foo: ['orig'],
+        },
+        fmt_data = {
+          foo: ['formatted'],
+        };
 
-            var formatter = createFormatter(),
-                mock_fmt  = sinon.mock( formatter );
+      var formatter = createFormatter(),
+        mock_fmt = sinon.mock(formatter);
 
-            mock_fmt.expects( 'format' )
-                .once()
-                .withExactArgs( orig_data )
-                .returns( fmt_data );
+      mock_fmt
+        .expects('format')
+        .once()
+        .withExactArgs(orig_data)
+        .returns(fmt_data);
 
-            createSut( formatter, createElementStyler( function( name: any, value: any )
-            {
-                // by the time the answer data makes its way to the
-                // element styler, it should have already been
-                // formatted
-                expect( name ).to.equal( 'foo' );
-                expect( value ).to.equal( fmt_data.foo[ 0 ] );
+      createSut(
+        formatter,
+        createElementStyler(function (name: any, value: any) {
+          // by the time the answer data makes its way to the
+          // element styler, it should have already been
+          // formatted
+          expect(name).to.equal('foo');
+          expect(value).to.equal(fmt_data.foo[0]);
 
-                mock_fmt.verify();
-                done();
-            } ) ).answerDataUpdate( orig_data );
-        } );
+          mock_fmt.verify();
+          done();
+        })
+      ).answerDataUpdate(orig_data);
+    });
 
+    [
+      {
+        label: 'group will style answer when feature flag is on',
+        field_refs: ['foo_d1022e47903'],
+        data: {foo: ['bar']},
+        expected_names: ['foo_d1022e47903'],
+        expected_indexes: [0],
+        expected_values: ['bar'],
+        expected_calls: 1,
+      },
+      {
+        label: 'group will style multiple answers when feature flag is on',
+        field_refs: ['foo_d1022e47903', 'foo_d222222222'],
+        data: {foo: ['bar']},
+        expected_names: ['foo_d1022e47903', 'foo_d222222222'],
+        expected_indexes: [0, 0],
+        expected_values: ['bar', 'bar'],
+        expected_calls: 2,
+      },
+    ].forEach(
+      ({
+        label,
+        field_refs,
+        data,
+        expected_names,
+        expected_indexes,
+        expected_values,
+        expected_calls,
+      }) => {
+        it(label, function (done) {
+          const formatter = createFormatter(data);
+          const feature_flag = createFeatureFlag(true);
+          const group = createGroupUi();
 
-        [
-            {
-                label: 'group will style answer when feature flag is on',
-                field_refs: [ 'foo_d1022e47903' ],
-                data: { foo: [ 'bar' ] },
-                expected_names: [ 'foo_d1022e47903' ],
-                expected_indexes: [ 0 ],
-                expected_values: [ 'bar' ],
-                expected_calls: 1
+          let group_set_value_calls = 0;
+          let given_values: string[] = [];
+          let given_names: string[] = [];
+          let given_indexes: number[] = [];
+          let answer_field_ref_calls = 0;
+          let async_flag = false;
+
+          const styler = createElementStyler(function () {});
+          styler.styleAnswer = (_: any) => {
+            done(
+              new Error(
+                'ElementStyler should not be called with feature flag on'
+              )
+            );
+          };
+
+          group.setValueByName = (name, index, value, _) => {
+            group_set_value_calls++;
+            given_values.push(value);
+            given_names.push(name);
+            given_indexes.push(index);
+
+            if (async_flag && group_set_value_calls === expected_calls) {
+              // value is set w/answer ref
+              expect(given_names).to.deep.equal(expected_names);
+              expect(given_indexes).to.deep.equal(expected_indexes);
+              expect(given_values).to.deep.equal(expected_values);
+              expect(answer_field_ref_calls).to.equal(1);
+              done();
+            }
+
+            return group;
+          };
+
+          const sut = createSut(formatter, styler, {}, group, feature_flag);
+          sut.getAnswerFieldRefs = _ => {
+            answer_field_ref_calls++;
+            return field_refs;
+          };
+
+          let get_group_call_count = 0;
+          sut.getElementGroup = name => {
+            expect(name).to.equal(field_refs[get_group_call_count]);
+            get_group_call_count++;
+            return group;
+          };
+
+          sut.answerDataUpdate(data);
+          async_flag = true;
+        });
+      }
+    );
+  });
+
+  describe('#scrollTo', function () {
+    [
+      {
+        field: '',
+        index: 0,
+        cause: 'foocause',
+      },
+      {
+        field: undefined,
+        index: 0,
+        cause: 'foocause2',
+      },
+      {
+        field: '',
+        index: 0,
+        cause: '',
+      },
+      {
+        field: '',
+        index: 0,
+        cause: undefined,
+      },
+      {
+        field: 'foo',
+        index: -1,
+        cause: undefined,
+      },
+      {
+        field: 'foo',
+        index: undefined,
+        cause: undefined,
+      },
+      {
+        field: 'foo',
+        index: undefined,
+        cause: 'index cause',
+      },
+    ].forEach(function (args, i) {
+      it('emits error given invalid field (' + i + ')', function (done) {
+        var step = {
+          getValidCause: function () {
+            return args.cause;
+          },
+        };
+
+        var sut = createSut({}, {}, step);
+
+        // should only throw a single error
+        sut.once('error', function (error) {
+          expect(error).to.be.instanceof(Error);
+          expect(error.message).to.have.string('Could not scroll');
+
+          if (args.cause) {
+            expect(error.message).to.have.string('cause: ');
+            expect(error.message).to.have.string(args.cause);
+          } else {
+            expect(error.message).to.not.have.string('cause:');
+          }
+
+          done();
+        });
+
+        sut.scrollTo(
+          <string>args.field,
+          <number>args.index,
+          false,
+          <string>args.cause
+        );
+      });
+    });
+
+    it('emits error when element is not found', function (done) {
+      var field = 'foo',
+        index = 5;
+
+      var styler = {
+        getProperIndex: function () {},
+
+        getWidgetByName: function () {
+          // no element
+          return [];
+        },
+      };
+
+      var sut = createSut({}, styler, {});
+
+      sut.once('error', function (error) {
+        expect(error).to.be.instanceof(Error);
+        expect(error.message).to.have.string('Could not scroll');
+        expect(error.message).to.have.string('could not locate');
+
+        expect(error.message).to.have.string(field + '[' + index + ']');
+
+        done();
+      });
+
+      sut.scrollTo(field, index, false, '');
+    });
+
+    it('emits error when element is not visible', function (done) {
+      var field = 'foo',
+        index = 5;
+
+      var styler = {
+        getProperIndex: function () {},
+
+        getWidgetByName: function () {
+          var element = {
+            is: (selector: string) => {
+              expect(selector).to.equal(':visible');
+              return false;
             },
-            {
-                label: 'group will style multiple answers when feature flag is on',
-                field_refs: [ 'foo_d1022e47903', 'foo_d222222222' ],
-                data: { foo: [ 'bar' ] },
-                expected_names: [ 'foo_d1022e47903', 'foo_d222222222' ],
-                expected_indexes: [ 0, 0 ],
-                expected_values: [ 'bar', 'bar' ],
-                expected_calls: 2
-            },
-        ].forEach( ( {
-            label,
-            field_refs,
-            data,
-            expected_names,
-            expected_indexes,
-            expected_values,
-            expected_calls }
-        ) => {
-            it( label, function( done )
-            {
-                const formatter = createFormatter( data );
-                const feature_flag = createFeatureFlag( true );
-                const group = createGroupUi();
+          };
 
-                let group_set_value_calls   = 0;
-                let given_values: string[]  = [];
-                let given_names: string[]   = [];
-                let given_indexes: number[] = [];
-                let answer_field_ref_calls  = 0;
-                let async_flag              = false;
+          return element;
+        },
+      };
 
-                const styler = createElementStyler( function(){} );
-                styler.styleAnswer = ( _: any ) => {
-                    done( new Error( 'ElementStyler should not be called with feature flag on' ) );
-                };
+      var sut = createSut({}, styler, {});
 
-                group.setValueByName = ( name, index, value, _ ) =>
-                {
-                    group_set_value_calls++;
-                    given_values.push( value );
-                    given_names.push( name );
-                    given_indexes.push( index );
+      sut.once('error', function (error) {
+        expect(error).to.be.instanceof(Error);
+        expect(error.message).to.have.string('Could not scroll');
+        expect(error.message).to.have.string('not visible');
 
-                    if ( async_flag && group_set_value_calls === expected_calls )
-                    {
-                        // value is set w/answer ref
-                        expect( given_names ).to.deep.equal( expected_names );
-                        expect( given_indexes ).to.deep.equal( expected_indexes );
-                        expect( given_values ).to.deep.equal( expected_values );
-                        expect( answer_field_ref_calls ).to.equal( 1 );
-                        done();
-                    }
+        expect(error.message).to.have.string(field + '[' + index + ']');
 
-                    return group;
-                }
+        done();
+      });
 
-                const sut = createSut( formatter, styler, {}, group, feature_flag );
-                sut.getAnswerFieldRefs = ( _ ) =>
-                {
-                    answer_field_ref_calls++;
-                    return field_refs;
-                };
+      sut.scrollTo(field, index, false, '');
+    });
 
-                let get_group_call_count = 0;
-                sut.getElementGroup = ( name ) =>
-                {
-                    expect( name ).to.equal( field_refs[ get_group_call_count ] );
-                    get_group_call_count++;
-                    return group;
-                };
+    it('scrolls to the failed element', function (done) {
+      var field = 'foo',
+        index = 5,
+        showm = true,
+        message = 'whatacluster',
+        element = {
+          0: {
+            attributes: [],
+          },
+          is: (selector: any) => {
+            expect(selector).to.equal(':visible');
+            return true;
+          },
+        };
 
-                sut.answerDataUpdate( data );
-                async_flag = true;
-            } );
-        } );
-    } );
+      var styler = {
+        getProperIndex: () => {},
+        getWidgetByName: () => element,
+        focus: (_: any, __: any, ___: any) => {},
+      };
 
+      var content = {
+        parent: function () {
+          return {
+            scrollTo: scroll_mock,
+          };
+        },
+      };
 
-    describe( '#scrollTo', function()
-    {
-        [
-            {
-                field:  '',
-                index:  0,
-                cause: 'foocause',
-            },
-            {
-                field:  undefined,
-                index:  0,
-                cause: 'foocause2',
-            },
-            {
-                field:  '',
-                index:  0,
-                cause: '',
-            },
-            {
-                field:  '',
-                index:  0,
-                cause:  undefined,
-            },
-            {
-                field:  'foo',
-                index:  -1,
-                cause:  undefined,
-            },
-            {
-                field:  'foo',
-                index:  undefined,
-                cause:  undefined,
-            },
-            {
-                field:  'foo',
-                index:  undefined,
-                cause:  'index cause',
-            },
-        ].forEach( function( args, i )
-        {
-            it( 'emits error given invalid field (' + i + ')', function( done )
-            {
-                var step = {
-                    getValidCause: function()
-                    {
-                        return args.cause;
-                    }
-                };
+      function scroll_mock(given_element: any, duration: any, options: any) {
+        expect(given_element).to.equal(element);
+        expect(duration).to.equal(100);
+        expect(options.offset.top).to.equal(-150);
 
-                var sut  = createSut( {}, {}, step );
+        styler.focus = function (given_element, given_showm, given_msg) {
+          expect(given_element).to.equal(element);
+          expect(given_showm).to.equal(showm);
+          expect(given_msg).to.equal(message);
 
-                // should only throw a single error
-                sut.once( 'error', function( error )
-                {
-                    expect( error ).to.be.instanceof( Error );
-                    expect( error.message ).to.have.string( 'Could not scroll' );
+          done();
+        };
 
-                    if ( args.cause )
-                    {
-                        expect( error.message ).to.have.string( 'cause: ' );
-                        expect( error.message ).to.have.string( args.cause );
-                    }
-                    else
-                    {
-                        expect( error.message ).to.not.have.string( 'cause:' );
-                    }
+        options.onAfter();
+      }
 
-                    done();
-                } );
+      var sut = createSut({}, styler, {});
 
-                sut.scrollTo( <string>args.field, <number>args.index, false, <string>args.cause );
-            } );
-        } );
+      // XXX: SUT needs refactoring!
+      sut.$content = content;
 
+      var result = sut.scrollTo(field, index, true, message);
+      expect(result).to.equal(sut);
+    });
+  });
 
-        it( 'emits error when element is not found', function( done )
-        {
-            var field = 'foo',
-                index = 5;
+  describe('#initChildGroups', () => {
+    it('inits all child groups', () => {
+      const group = createGroupUi();
 
-            var styler = {
-                getProperIndex: function()
-                {
-                },
+      let children_set = 0;
 
-                getWidgetByName: function()
-                {
-                    // no element
-                    return [];
-                },
-            };
+      group.setChildren = () => (children_set += 1);
 
-            var sut = createSut( {}, styler, {} );
+      const sut = createSut({}, {}, {});
 
-            sut.once( 'error', function( error )
-            {
-                expect( error ).to.be.instanceof( Error );
-                expect( error.message ).to.have.string( 'Could not scroll' );
-                expect( error.message ).to.have.string( 'could not locate' );
+      sut.groups = [group, group];
 
-                expect( error.message ).to.have.string(
-                    field + '[' + index + ']'
-                );
+      sut.initChildGroups();
 
-                done();
-            } );
+      expect(children_set).to.equal(2);
+    });
+  });
 
-            sut.scrollTo( field, index, false, '' );
-        } );
+  describe('#lock', () => {
+    it('locks all collections', () => {
+      let set_lock_calls = 0;
+      const collection_0 = createCollection();
+      const collection_1 = createCollection();
 
+      var step = {
+        getExclusiveFieldNames: () => {
+          return [];
+        },
+      };
 
-        it( 'emits error when element is not visible', function( done )
-        {
-            var field = 'foo',
-                index = 5;
+      const sut = createSut({}, {}, step);
 
-            var styler = {
-                getProperIndex: function()
-                {
-                },
+      sut.collections = [collection_0, collection_1];
 
-                getWidgetByName: function()
-                {
-                    var element = {
-                        is: ( selector: string ) =>
-                        {
-                            expect( selector ).to.equal( ':visible' );
-                            return false;
-                        }
-                    };
+      collection_0.lock = (lock: any) => {
+        set_lock_calls++;
+        expect(lock).to.equal(true);
+      };
 
-                    return element;
-                },
-            };
+      collection_1.lock = (lock: any) => {
+        set_lock_calls++;
+        expect(lock).to.equal(true);
+      };
 
-            var sut = createSut( {}, styler, {} );
+      sut.lock(true);
 
-            sut.once( 'error', function( error )
-            {
-                expect( error ).to.be.instanceof( Error );
-                expect( error.message ).to.have.string( 'Could not scroll' );
-                expect( error.message ).to.have.string( 'not visible' );
-
-                expect( error.message ).to.have.string(
-                    field + '[' + index + ']'
-                );
-
-                done();
-            } );
-
-            sut.scrollTo( field, index, false, '' );
-        } );
-
-
-        it( 'scrolls to the failed element', function( done )
-        {
-            var field        = 'foo',
-                index        = 5,
-                showm        = true,
-                message      = 'whatacluster',
-                element      = {
-                    0: {
-                        attributes: [],
-                    },
-                    is: ( selector: any ) =>
-                    {
-                        expect( selector ).to.equal( ':visible' );
-                        return true;
-                    }
-                };
-
-            var styler = {
-                getProperIndex:  () => {},
-                getWidgetByName: () => element,
-                focus:           ( _: any, __: any, ___: any ) => {},
-            };
-
-            var content = {
-                parent: function()
-                {
-                    return {
-                        scrollTo: scroll_mock
-                    };
-                },
-            };
-
-            function scroll_mock( given_element: any, duration: any, options: any )
-            {
-                expect( given_element ).to.equal( element );
-                expect( duration ).to.equal( 100 );
-                expect( options.offset.top ).to.equal( -150 );
-
-                styler.focus = function( given_element, given_showm, given_msg )
-                {
-                    expect( given_element ).to.equal( element );
-                    expect( given_showm ).to.equal( showm );
-                    expect( given_msg ).to.equal( message );
-
-                    done();
-                };
-
-                options.onAfter();
-            };
-
-            var sut = createSut( {}, styler, {} );
-
-            // XXX: SUT needs refactoring!
-            sut.$content = content;
-
-            var result = sut.scrollTo( field, index, true, message );
-            expect( result ).to.equal( sut );
-        } );
-    } );
-
-    describe( "#initChildGroups", () =>
-    {
-        it( "inits all child groups", () =>
-        {
-            const group = createGroupUi();
-
-            let children_set = 0;
-
-            group.setChildren = () => children_set += 1;
-
-            const sut = createSut( {}, {}, {} );
-
-            sut.groups = [ group, group ];
-
-            sut.initChildGroups();
-
-            expect( children_set ).to.equal( 2 );
-        } );
-    } );
-
-
-    describe( "#lock", () =>
-    {
-        it( "locks all collections", () =>
-        {
-            let set_lock_calls = 0;
-            const collection_0 = createCollection();
-            const collection_1 = createCollection();
-
-            var step = {
-                getExclusiveFieldNames: () =>
-                {
-                    return [];
-                }
-            };
-
-            const sut = createSut( {}, {}, step );
-
-            sut.collections = [ collection_0, collection_1 ];
-
-            collection_0.lock = ( lock: any ) =>
-            {
-                set_lock_calls++;
-                expect( lock ).to.equal( true );
-            };
-
-            collection_1.lock = ( lock: any ) =>
-            {
-                set_lock_calls++;
-                expect( lock ).to.equal( true );
-            };
-
-            sut.lock( true );
-
-            expect( set_lock_calls ).to.equal( 2 );
-        } );
-    } );
-} );
-
-
+      expect(set_lock_calls).to.equal(2);
+    });
+  });
+});
 
 /**
  * Create new SUT with formatter FORMATTER and generated element
@@ -438,44 +401,42 @@ describe( 'ui.GeneralStepUi', function()
  * @return {Sut}
  */
 function createSut(
-    formatter:     any,
-    styler:        any,
-    step?:         any,
-    _group?:       any,
-    feature_flag?: any,
-): Sut
-{
-    const sut = new Sut(
-        step || {},
-        styler,
-        formatter,
-        feature_flag || createFeatureFlag(),
-        undefined
-    );
+  formatter: any,
+  styler: any,
+  step?: any,
+  _group?: any,
+  feature_flag?: any
+): Sut {
+  const sut = new Sut(
+    step || {},
+    styler,
+    formatter,
+    feature_flag || createFeatureFlag(),
+    undefined
+  );
 
-    sut.getAnswerContext   = ( _ ) => { return {} };
-    sut.getAnswerFieldRefs = ( _ ) => { return [] };
-    sut.getElementGroup    = ( _ ) => <GroupUi>{};
+  sut.getAnswerContext = _ => {
+    return {};
+  };
+  sut.getAnswerFieldRefs = _ => {
+    return [];
+  };
+  sut.getElementGroup = _ => <GroupUi>{};
 
-    return sut;
+  return sut;
 }
-
-
 
 /**
  * Create mock Collection
  *
  * @return {Object} Collection
  */
-function createCollection()
-{
-    return <Collection>{
-        visit: ( ) => {},
-        lock: ( _: any ) => {},
-    };
+function createCollection() {
+  return <Collection>{
+    visit: () => {},
+    lock: (_: any) => {},
+  };
 }
-
-
 
 /**
  * Create mock FeatureFlag
@@ -484,28 +445,26 @@ function createCollection()
  *
  * @return {Object} FeatureFlag
  */
-function createFeatureFlag( flag_ind = false )
-{
-    return <WindowFeatureFlag>{
-        isEnabled: ( _: any ) => { return !!flag_ind; }
-    };
+function createFeatureFlag(flag_ind = false) {
+  return <WindowFeatureFlag>{
+    isEnabled: (_: any) => {
+      return !!flag_ind;
+    },
+  };
 }
-
 
 /**
  * Create mock GroupUi
  *
  * @return {Object} GroupUi
  */
-function createGroupUi(): GroupUi
-{
-    return <GroupUi>{
-        setValueByName: ( _: any, __: any, ___: any, ____: any ) => {},
-        hasChildren: () => true,
-        setChildren: () => sinon.stub()
-    };
+function createGroupUi(): GroupUi {
+  return <GroupUi>{
+    setValueByName: (_: any, __: any, ___: any, ____: any) => {},
+    hasChildren: () => true,
+    setChildren: () => sinon.stub(),
+  };
 }
-
 
 /**
  * Create mock ElementStyler
@@ -516,36 +475,30 @@ function createGroupUi(): GroupUi
  *
  * @return {Object} ElementStyler mock
  */
-function createElementStyler( style_callback: any )
-{
-    return {
-        getAnswerElementByName: function()
-        {
-            // jQuery element
-            const $element = {
-                0: {
-                    attributes: [],
-                },
-                length: 1,
-                text:   () => {},
-            };
-
-            return $element;
+function createElementStyler(style_callback: any) {
+  return {
+    getAnswerElementByName: function () {
+      // jQuery element
+      const $element = {
+        0: {
+          attributes: [],
         },
+        length: 1,
+        text: () => {},
+      };
 
-        getProperIndex: function()
-        {
-        },
+      return $element;
+    },
 
-        getWidgetByName: function()
-        {
-            return [];
-        },
+    getProperIndex: function () {},
 
-        styleAnswer: style_callback,
-    };
+    getWidgetByName: function () {
+      return [];
+    },
+
+    styleAnswer: style_callback,
+  };
 }
-
 
 /**
  * Create mock validator/formatter
@@ -555,13 +508,10 @@ function createElementStyler( style_callback: any )
  *
  * @param {Object}
  */
-function createFormatter( return_data?: any ): any
-{
-    return {
-        format: function( _: any )
-        {
-            return return_data;
-        },
-    }
+function createFormatter(return_data?: any): any {
+  return {
+    format: function (_: any) {
+      return return_data;
+    },
+  };
 }
-

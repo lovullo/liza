@@ -32,12 +32,11 @@
  */
 
 /**
-  * Any number ≥ 0
-  *
-  * This is useful for array indexing.
-  */
+ * Any number ≥ 0
+ *
+ * This is useful for array indexing.
+ */
 export type PositiveInteger = NominalType<number, 'PositiveInteger'>;
 
-
 /** Whether the given number is suitable as a PositiveInteger */
-export const isPositiveInteger = ( n: number ): n is PositiveInteger => n >= 0;
+export const isPositiveInteger = (n: number): n is PositiveInteger => n >= 0;

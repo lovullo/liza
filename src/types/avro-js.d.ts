@@ -18,72 +18,63 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { Duplex } from 'stream';
+import {Duplex} from 'stream';
 
-declare module "avro-js";
+declare module 'avro-js';
 
-declare function parse( schema: string ): AvroSchema;
+declare function parse(schema: string): AvroSchema;
 
-export declare interface AvroSchema
-{
-    /**
-     * Write data to a buffer
-     *
-     * @param data - the data to write
-     *
-     * @return the buffer if successful
-    */
-    toBuffer( data: Record<string, any> ): Buffer | null;
+export declare interface AvroSchema {
+  /**
+   * Write data to a buffer
+   *
+   * @param data - the data to write
+   *
+   * @return the buffer if successful
+   */
+  toBuffer(data: Record<string, any>): Buffer | null;
 
+  /**
+   * Check if data is valid against schema
+   *
+   * @param data - the data to validate
+   * @param opts - options specified as key/values
+   *
+   * @return the buffer if it is valid
+   */
+  isValid(data: Record<string, any>, opts?: Record<string, any>): Buffer | null;
 
-    /**
-     * Check if data is valid against schema
-     *
-     * @param data - the data to validate
-     * @param opts - options specified as key/values
-     *
-     * @return the buffer if it is valid
-     */
-    isValid(
-        data: Record<string, any>,
-        opts?: Record<string, any>
-    ): Buffer | null;
+  /**
+   * Write to a buffer
+   *
+   * @param data   - the data to write
+   * @param buffer - the buffer that will be written to
+   */
+  encode(data: Record<string, any>, buffer: Buffer): void;
 
+  /**
+   * Output to a json string
+   *
+   * @param data - the data to format
+   *
+   * @return the formatted data
+   */
+  toString(data: Record<string, any>): string;
 
-    /**
-     * Write to a buffer
-     *
-     * @param data   - the data to write
-     * @param buffer - the buffer that will be written to
-     */
-    encode( data: Record<string, any>, buffer: Buffer ): void;
-
-
-    /**
-     * Output to a json string
-     *
-     * @param data - the data to format
-     *
-     * @return the formatted data
-     */
-    toString( data: Record<string, any> ): string;
-
-
-    /**
-     * Deserialize from a buffer
-     *
-     * @param buffer - the buffer to read from
-     *
-     * @return the resulting data
-     */
-    fromBuffer( buffer: Buffer ): any;
+  /**
+   * Deserialize from a buffer
+   *
+   * @param buffer - the buffer to read from
+   *
+   * @return the resulting data
+   */
+  fromBuffer(buffer: Buffer): any;
 }
 
-declare class BlockEncoder extends Duplex
-{
-    constructor( schema: AvroSchema );
+declare class BlockEncoder extends Duplex {
+  constructor(schema: AvroSchema);
 }
 
 export declare const streams: {
-    BlockEncoder: typeof BlockEncoder,
+  BlockEncoder: typeof BlockEncoder;
 };

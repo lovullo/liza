@@ -19,32 +19,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class           = require( 'easejs' ).Class,
-    DialogDecorator = require( './DialogDecorator' );
-
+var Class = require('easejs').Class,
+  DialogDecorator = require('./DialogDecorator');
 
 /**
  * Provides logical defaults for an error dialog
  */
-module.exports = Class( 'ErrorDialog' )
-    .extend( DialogDecorator,
-{
-    /**
-     * Initializes dialog defaults
-     *
-     * @return {undefined}
-     */
-    'protected init': function()
-    {
-        var _self = this;
+module.exports = Class('ErrorDialog').extend(DialogDecorator, {
+  /**
+   * Initializes dialog defaults
+   *
+   * @return {undefined}
+   */
+  'protected init': function () {
+    var _self = this;
 
-        // set defaults
-        this.getDialog()
-            .setTypeId( 'liza-error-dialog' )
-            .addClass( 'error' )
-            .setResizable( false )
-            .setModal()
-            .setTitle( 'An error has occurred' );
-    }
-} );
-
+    // set defaults
+    this.getDialog()
+      .setTypeId('liza-error-dialog')
+      .addClass('error')
+      .setResizable(false)
+      .setModal()
+      .setTitle('An error has occurred');
+  },
+});

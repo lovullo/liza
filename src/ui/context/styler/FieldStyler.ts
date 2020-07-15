@@ -19,17 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ContextContent } from "../FieldContext";
+import {ContextContent} from '../FieldContext';
 
 /**
  * Interface for a styler
  */
-export interface FieldStyler
-{
-    /**
-     * Set element value
-     *
-     * @param value
-     */
-    setValue( content: ContextContent, value: string ): void;
+export interface FieldStyler {
+  /**
+   * Set element value
+   *
+   * @param value
+   */
+  setValue(content: ContextContent, value: string): void;
 }

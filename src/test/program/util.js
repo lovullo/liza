@@ -21,20 +21,15 @@
 
 'use strict';
 
-
 // N.B.: if the step titles change, these keys will change; we consider this
 // to be acceptable because, if steps change, the tests will also likely
 // change, and this is the only unique identifier we have (perhaps another
 // can be added in the future that won't change)
-exports.stepNameIdMap = Sut => Sut().steps.reduce(
-    ( result, { title }, step_id ) =>
-    {
-        result[ title.replace( ' ', '_' ) ] = step_id;
-        return result;
-    },
-    {}
-);
-
+exports.stepNameIdMap = Sut =>
+  Sut().steps.reduce((result, {title}, step_id) => {
+    result[title.replace(' ', '_')] = step_id;
+    return result;
+  }, {});
 
 /**
  * Run tests against Program assertions
@@ -86,48 +81,45 @@ exports.stepNameIdMap = Sut => Sut().steps.reduce(
  *
  * @return {undefined}
  */
-exports.testAssertions = ( expect, Sut, descf ) =>
-{
-    const StubSut = exports.stubProgram( Sut );
+exports.testAssertions = (expect, Sut, descf) => {
+  const StubSut = exports.stubProgram(Sut);
 
-    // test descriptors
-    const descs = descf( {
-        steps: this.stepNameIdMap( StubSut )
-    } );
+  // test descriptors
+  const descs = descf({
+    steps: this.stepNameIdMap(StubSut),
+  });
 
-    if ( !Array.isArray( descs ) )
-    {
-        throw TypeError( "Expected array of test descriptors" );
+  if (!Array.isArray(descs)) {
+    throw TypeError('Expected array of test descriptors');
+  }
+
+  descs.forEach(
+    ({
+      expected,
+      label,
+      event: event_id,
+      data: given_data,
+      step_id,
+      cmatch = {},
+    }) => {
+      it(label, () => {
+        const sut = StubSut();
+
+        const result = exports.handleEvent(sut, event_id, {
+          step_id: step_id,
+          bucket: exports.stubBucket(sut, given_data),
+          cmatch: exports.stubCmatch(cmatch),
+        });
+
+        for (let name in expected) {
+          expect(
+            result[name].map(c => '' + c.getField().getIndex())
+          ).to.deep.equal(expected[name]);
+        }
+      });
     }
-
-    descs.forEach( ( {
-        expected,
-        label,
-        event: event_id,
-        data: given_data,
-        step_id,
-        cmatch = {}
-    } ) =>
-    {
-        it( label, () =>
-        {
-            const sut = StubSut();
-
-            const result = exports.handleEvent( sut, event_id, {
-                step_id: step_id,
-                bucket:  exports.stubBucket( sut, given_data ),
-                cmatch:  exports.stubCmatch( cmatch ),
-            } );
-
-            for ( let name in expected )
-            {
-                expect( result[ name ].map( c => ''+c.getField().getIndex() ) )
-                    .to.deep.equal( expected[ name ] );
-            }
-        } );
-    } );
-}
-
+  );
+};
 
 /**
  * Produce a minimal bucket-like object suitable for Program assertions
@@ -140,31 +132,27 @@ exports.testAssertions = ( expect, Sut, descf ) =>
  *
  * @return {Object} bucket-like object
  */
-exports.stubBucket = ( sut, given_data ) =>
-{
-    const { defaults } = sut;
+exports.stubBucket = (sut, given_data) => {
+  const {defaults} = sut;
 
-    // provide default bucket data so tests don't blow up
-    const base_data = Object.keys( defaults )
-        .map( key => [ defaults[ key ] ] );
+  // provide default bucket data so tests don't blow up
+  const base_data = Object.keys(defaults).map(key => [defaults[key]]);
 
-    // the given_data will need to be converted into property descriptors
-    const data = Object.create(
-        base_data,
-        Object.keys( given_data ).reduce( ( bdata, name ) => {
-            bdata[ name ] = { value: given_data[ name ] };
-            return bdata;
-        }, {} )
-    );
+  // the given_data will need to be converted into property descriptors
+  const data = Object.create(
+    base_data,
+    Object.keys(given_data).reduce((bdata, name) => {
+      bdata[name] = {value: given_data[name]};
+      return bdata;
+    }, {})
+  );
 
-    return {
-        getDataByName( name )
-        {
-            return data[ name ] || [];
-        },
-    };
+  return {
+    getDataByName(name) {
+      return data[name] || [];
+    },
+  };
 };
-
 
 /**
  * Trigger proper program event and return assertion results
@@ -180,27 +168,23 @@ exports.stubBucket = ( sut, given_data ) =>
  * @return {?Object} assertion results or null if no failures
  */
 exports.handleEvent = (
-    sut,
-    event_id,
-    { step_id, bucket = {}, cmatch = {}, trigger = () => {} }
-) =>
-{
-    if ( typeof step_id !== 'number' )
-    {
-        throw TypeError( `Invalid step_id '${step_id}'`)
-    }
+  sut,
+  event_id,
+  {step_id, bucket = {}, cmatch = {}, trigger = () => {}}
+) => {
+  if (typeof step_id !== 'number') {
+    throw TypeError(`Invalid step_id '${step_id}'`);
+  }
 
-    switch ( event_id )
-    {
-        case 'submit':
-            return sut.submit( step_id, bucket, cmatch, trigger );
-            break;
+  switch (event_id) {
+    case 'submit':
+      return sut.submit(step_id, bucket, cmatch, trigger);
+      break;
 
-        default:
-            throw Error( `Unknown event: ${event_id}` );
-    }
-}
-
+    default:
+      throw Error(`Unknown event: ${event_id}`);
+  }
+};
 
 /**
  * Produce a stub cmatch object suitable for Program assertions
@@ -215,34 +199,29 @@ exports.handleEvent = (
  *
  * @return {Object} stub cmatch
  */
-exports.stubCmatch = ( cmatch_dfn ) =>
-{
-    const __classes = Object.keys( cmatch_dfn )
-        .reduce( ( classes, name ) =>
-        {
-            classes[ name ] = {
-                is:      cmatch_dfn[ name ].some( matched => matched ),
-                indexes: cmatch_dfn[ name ].map( matched => +matched ),
-            };
+exports.stubCmatch = cmatch_dfn => {
+  const __classes = Object.keys(cmatch_dfn).reduce((classes, name) => {
+    classes[name] = {
+      is: cmatch_dfn[name].some(matched => matched),
+      indexes: cmatch_dfn[name].map(matched => +matched),
+    };
 
-            return classes;
-        }, {} );
+    return classes;
+  }, {});
 
-    const cmatch = Object.keys( cmatch_dfn )
-        .reduce( ( classes, name ) =>
-        {
-            classes[ name ] = {
-                any:     cmatch_dfn[ name ].some( i => +i === 1 ),
-                all:     cmatch_dfn[ name ].every( i => +i === 1 ),
-                indexes: cmatch_dfn[ name ],
-            };
+  const cmatch = Object.keys(cmatch_dfn).reduce((classes, name) => {
+    classes[name] = {
+      any: cmatch_dfn[name].some(i => +i === 1),
+      all: cmatch_dfn[name].every(i => +i === 1),
+      indexes: cmatch_dfn[name],
+    };
 
-            return classes;
-        }, {} );
+    return classes;
+  }, {});
 
-    cmatch.__classes = __classes;
+  cmatch.__classes = __classes;
 
-    return cmatch;
+  return cmatch;
 };
 
 /**
@@ -253,21 +232,17 @@ exports.stubCmatch = ( cmatch_dfn ) =>
  *
  * @return {Class} stub class for creating mock Program object(s)
  */
-exports.stubProgram = ( ProgramSut, mockInitQuote ) =>
-{
-    // TODO: Make ProgramSut optional
-    if ( !ProgramSut )
-    {
-        throw new Error( "Class for Program stub must be specified." );
-    }
+exports.stubProgram = (ProgramSut, mockInitQuote) => {
+  // TODO: Make ProgramSut optional
+  if (!ProgramSut) {
+    throw new Error('Class for Program stub must be specified.');
+  }
 
-    mockInitQuote = mockInitQuote ||
-                    ProgramSut.initQuote ||
-                    ( ( bucket, store_only ) => {} );
+  mockInitQuote =
+    mockInitQuote || ProgramSut.initQuote || ((bucket, store_only) => {});
 
-    return ProgramSut.extend(
-    {
-        classifier: __dirname + '/DummyClassifier',
-        initQuote: mockInitQuote
-    } );
+  return ProgramSut.extend({
+    classifier: __dirname + '/DummyClassifier',
+    initQuote: mockInitQuote,
+  });
 };

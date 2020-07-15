@@ -19,18 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait              = require( 'easejs' ).Trait,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Trait = require('easejs').Trait,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Formats delimited items as an HTML unordered list, storing as a
  * delimited string.
  */
-module.exports = Trait( 'UnorderedList' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Trait('UnorderedList')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Format the given data as a delimited string
      *
@@ -41,17 +39,15 @@ module.exports = Trait( 'UnorderedList' )
      *
      * @return {string} formatted string
      */
-    'virtual abstract override public parse': function( data )
-    {
-        // strip HTMl elements before processing (closing li tag
-        // is translated into a semicolon)
-        return this.getParts(
-            this.__super( data )
-                .replace( /<\/li>/g, ';' )
-                .replace( /\s*<.*?>\s*/g, '' )
-        ).join( '; ' );
+    'virtual abstract override public parse': function (data) {
+      // strip HTMl elements before processing (closing li tag
+      // is translated into a semicolon)
+      return this.getParts(
+        this.__super(data)
+          .replace(/<\/li>/g, ';')
+          .replace(/\s*<.*?>\s*/g, '')
+      ).join('; ');
     },
-
 
     /**
      * Retrieve data that may require formatting for display
@@ -67,46 +63,36 @@ module.exports = Trait( 'UnorderedList' )
      *
      * @return {string} data formatted for display
      */
-    'virtual abstract override public retrieve': function( data )
-    {
-        var parts = this.getParts( this.__super( data ) ),
-            items = '';
+    'virtual abstract override public retrieve': function (data) {
+      var parts = this.getParts(this.__super(data)),
+        items = '';
 
-        for ( var i = 0; i < parts.length; i++ )
-        {
-            var part = parts[ i ];
+      for (var i = 0; i < parts.length; i++) {
+        var part = parts[i];
 
-            items += ( part === '' )
-                ? ''
-                : '<li>' + part + '</li>';
-        }
+        items += part === '' ? '' : '<li>' + part + '</li>';
+      }
 
-        return ( items  === '' )
-            ? ''
-            : "<ul>" + items + "</ul>";
+      return items === '' ? '' : '<ul>' + items + '</ul>';
     },
 
-
     /**
-    * Get trimmed, non-empty parts of semicolon-delimited string
-    *
-    * @param {string} input semicolon-delimited string
-    *
-    * @return {Array} non-empty trimmed parts
-    */
-    'virtual protected getParts': function( data )
-    {
-        var parts = data.split( /(?:\s*;+\s*)+/ ),
-            ret   = [];
+     * Get trimmed, non-empty parts of semicolon-delimited string
+     *
+     * @param {string} input semicolon-delimited string
+     *
+     * @return {Array} non-empty trimmed parts
+     */
+    'virtual protected getParts': function (data) {
+      var parts = data.split(/(?:\s*;+\s*)+/),
+        ret = [];
 
-        for ( var i = 0; i < parts.length; i++ )
-        {
-            if ( parts[ i ] !== '' )
-            {
-                ret.push( parts[ i ] );
-            }
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i] !== '') {
+          ret.push(parts[i]);
         }
+      }
 
-        return ret;
-    }
-} );
+      return ret;
+    },
+  });

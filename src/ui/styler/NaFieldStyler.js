@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class       = require( 'easejs' ).Class,
-    FieldStyler = require( './FieldStyler' );
-
+var Class = require('easejs').Class,
+  FieldStyler = require('./FieldStyler');
 
 /**
  * Style fields that are not applicable (and so do not need to collect data
@@ -29,133 +28,114 @@ var Class       = require( 'easejs' ).Class,
  *
  * @todo Detaching should be done by DomField
  */
-module.exports = Class( 'NaFieldStyler' )
-    .extend( FieldStyler,
-{
-    /**
-     * Retrieve unique identifier
-     *
-     * @return {string} unique identifier
-     */
-    'public getId': function()
-    {
-        return 'na';
-    },
+module.exports = Class('NaFieldStyler').extend(FieldStyler, {
+  /**
+   * Retrieve unique identifier
+   *
+   * @return {string} unique identifier
+   */
+  'public getId': function () {
+    return 'na';
+  },
 
+  /**
+   * Determines whether the field has been styled
+   *
+   * Having this predicate on the styler rather than the field ensures
+   * that, even if the two somehow get out of sync (or styles are applied
+   * elsewhere), application/revocation will function sanely.
+   *
+   * @param {DomField}            field   field to style
+   * @param {HTMLElement}         element DOM element to style
+   *
+   * @return {boolean} whether FIELD has been styled by this styler
+   */
+  'public isApplied': function (field, element) {
+    return /\bhidden\b/.test(element.className);
+  },
 
-    /**
-     * Determines whether the field has been styled
-     *
-     * Having this predicate on the styler rather than the field ensures
-     * that, even if the two somehow get out of sync (or styles are applied
-     * elsewhere), application/revocation will function sanely.
-     *
-     * @param {DomField}            field   field to style
-     * @param {HTMLElement}         element DOM element to style
-     *
-     * @return {boolean} whether FIELD has been styled by this styler
-     */
-    'public isApplied': function( field, element )
-    {
-        return /\bhidden\b/.test( element.className );
-    },
+  /**
+   * Apply style to field
+   *
+   * @param {DomField}            field   field to style
+   * @param {HTMLElement}         element DOM element to style
+   * @param {Array.<HTMLElement>} row     DOM elements of containing row
+   *
+   * @return {FieldStyler} self
+   */
+  'public applyStyle': function (field, element, row) {
+    if (this.isSubField(field)) {
+      this.hideField(element, []);
+      field.getParent().removeChild(element);
 
-
-    /**
-     * Apply style to field
-     *
-     * @param {DomField}            field   field to style
-     * @param {HTMLElement}         element DOM element to style
-     * @param {Array.<HTMLElement>} row     DOM elements of containing row
-     *
-     * @return {FieldStyler} self
-     */
-    'public applyStyle': function( field, element, row )
-    {
-
-        if ( this.isSubField( field ) )
-        {
-            this.hideField( element, [] );
-            field.getParent().removeChild( element );
-
-            // this is a child of another field; don't consider it a
-            // containing row, since we don't want our operations affecting
-            // it
-            return;
-        }
-
-        this.hideField( element, row );
-    },
-
-
-    /**
-     * Remove style from field
-     *
-     * @param {DomField}            field   field to unstyle
-     * @param {HTMLElement}         element DOM element to unstyle
-     * @param {Array.<HTMLElement>} row     DOM elements of containing row
-     *
-     * @return {FieldStyler} self
-     */
-    'public revokeStyle': function( field, element, row )
-    {
-        if ( this.isSubField( field ) )
-        {
-            this.showField( element, [] );
-            field.getParent().appendChild( element );
-
-            return;
-        }
-
-        this.showField( element, row );
-    },
-
-
-    /**
-     * Determine whether element ELEMENT represents a sub-field
-     *
-     * A sub-field is a field within a field; the distinction is important
-     * because we probably don't want operations on a sub-field affecting
-     * its parent.
-     *
-     * @todo: move somewhere else (Field perhaps?)
-     *
-     * @param {HTMLElement} element DOM element associated with field
-     *
-     * @return {boolean} whether ELEMENT represents a sub-field
-     */
-    'protected isSubField': function( field )
-    {
-        var parent = field.getParent();
-
-        // ES3-compatible (don't use classList)
-        return !!( parent && /\bwidget\b/.test( parent.className ) );
-    },
-
-
-    'virtual protected hideField': function( element, row )
-    {
-        this.addClass( element, 'hidden' );
-
-        // This is a workaround from the old days where jQuery would add
-        // styles to hide elements, which we wanted to override; this can be
-        // removed once jQuery is eradicated from the framework.
-        //
-        // setAttribute is intentional!  IE<9 doesn't support element.style
-        // as an lvalue.
-        element.setAttribute( 'style', '' );
-
-        for ( var i in row )
-        {
-            this.addClass( row[ i ], 'hidden' );
-            row[ i ].setAttribute( 'style', '' );
-        }
-    },
-
-
-    'virtual protected showField': function( element, row )
-    {
-        this.removeClass( element, 'hidden' );
-        this.removeClass( row, 'hidden' );
+      // this is a child of another field; don't consider it a
+      // containing row, since we don't want our operations affecting
+      // it
+      return;
     }
-} );
+
+    this.hideField(element, row);
+  },
+
+  /**
+   * Remove style from field
+   *
+   * @param {DomField}            field   field to unstyle
+   * @param {HTMLElement}         element DOM element to unstyle
+   * @param {Array.<HTMLElement>} row     DOM elements of containing row
+   *
+   * @return {FieldStyler} self
+   */
+  'public revokeStyle': function (field, element, row) {
+    if (this.isSubField(field)) {
+      this.showField(element, []);
+      field.getParent().appendChild(element);
+
+      return;
+    }
+
+    this.showField(element, row);
+  },
+
+  /**
+   * Determine whether element ELEMENT represents a sub-field
+   *
+   * A sub-field is a field within a field; the distinction is important
+   * because we probably don't want operations on a sub-field affecting
+   * its parent.
+   *
+   * @todo: move somewhere else (Field perhaps?)
+   *
+   * @param {HTMLElement} element DOM element associated with field
+   *
+   * @return {boolean} whether ELEMENT represents a sub-field
+   */
+  'protected isSubField': function (field) {
+    var parent = field.getParent();
+
+    // ES3-compatible (don't use classList)
+    return !!(parent && /\bwidget\b/.test(parent.className));
+  },
+
+  'virtual protected hideField': function (element, row) {
+    this.addClass(element, 'hidden');
+
+    // This is a workaround from the old days where jQuery would add
+    // styles to hide elements, which we wanted to override; this can be
+    // removed once jQuery is eradicated from the framework.
+    //
+    // setAttribute is intentional!  IE<9 doesn't support element.style
+    // as an lvalue.
+    element.setAttribute('style', '');
+
+    for (var i in row) {
+      this.addClass(row[i], 'hidden');
+      row[i].setAttribute('style', '');
+    }
+  },
+
+  'virtual protected showField': function (element, row) {
+    this.removeClass(element, 'hidden');
+    this.removeClass(row, 'hidden');
+  },
+});

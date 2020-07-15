@@ -19,10 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-
-module.exports = Interface( 'BucketDiffContext',
-{
-} );
-
+module.exports = Interface('BucketDiffContext', {});

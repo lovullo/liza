@@ -21,64 +21,56 @@
 
 'use strict';
 
-const { expect } = require( 'chai' );
-const {
-    SpoofedNodeHttpImpl: Sut,
-    NodeHttpImpl,
-} = require( '../../../' ).dapi.http;
+const {expect} = require('chai');
+const {SpoofedNodeHttpImpl: Sut, NodeHttpImpl} = require('../../../').dapi.http;
 
+describe('SpoofNodeHttpImpl', () => {
+  it('adds session headers', done => {
+    const user_agent = 'Agent Foo';
+    const forward_for = '::1';
+    const sessname = 'FOOSESSID';
+    const sessid = '12345';
 
-describe( 'SpoofNodeHttpImpl', () =>
-{
-    it( "adds session headers", done =>
-    {
-        const user_agent  = 'Agent Foo';
-        const forward_for = '::1';
-        const sessname    = 'FOOSESSID';
-        const sessid      = '12345';
+    const protos = {
+      http: {
+        request(given) {
+          expect(given.headers['User-Agent']).to.equal(user_agent);
+          expect(given.headers['X-Forwarded-For']).to.equal(forward_for);
 
-        const protos = {
-            http: {
-                request( given )
-                {
-                    expect( given.headers[ 'User-Agent' ] )
-                        .to.equal( user_agent );
-                    expect( given.headers[ 'X-Forwarded-For' ] )
-                        .to.equal( forward_for );
+          expect(given.headers.Cookie).to.contain(sessname + '=' + sessid);
 
-                    expect( given.headers.Cookie )
-                        .to.contain( sessname + '=' + sessid );
-
-                    done();
-                },
-            },
-        };
-
-        const url = {
-            parse: () => ( {
-                protocol: 'http',
-            } )
-        };
-
-        const session = getStubSession( {
-            agent:       user_agent,
-            forward_for: forward_for,
-            sessname:    sessname,
-            sessid:      sessid,
-        } );
-
-        const given = NodeHttpImpl.use( Sut( session ) )( protos, url )
-              .requestData( '', '', {}, ()=>{} );
-    } );
-} );
-
-
-function getStubSession( { agent, forward_for, sessname, sessid } )
-{
-    return {
-        getUserAgent:     () => agent,
-        getRemoteAddr:    () => forward_for,
-        getSessionIdName: () => sessname,
-        getSessionId:     () => sessid,
+          done();
+        },
+      },
     };
+
+    const url = {
+      parse: () => ({
+        protocol: 'http',
+      }),
+    };
+
+    const session = getStubSession({
+      agent: user_agent,
+      forward_for: forward_for,
+      sessname: sessname,
+      sessid: sessid,
+    });
+
+    const given = NodeHttpImpl.use(Sut(session))(protos, url).requestData(
+      '',
+      '',
+      {},
+      () => {}
+    );
+  });
+});
+
+function getStubSession({agent, forward_for, sessname, sessid}) {
+  return {
+    getUserAgent: () => agent,
+    getRemoteAddr: () => forward_for,
+    getSessionIdName: () => sessname,
+    getSessionId: () => sessid,
+  };
 }

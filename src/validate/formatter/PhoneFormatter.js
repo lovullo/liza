@@ -19,34 +19,32 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * Validates format of phone numbers
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        new RegExp(
-            '^' +
-                // ignore leading 1 (US/Canada country code)
-                '(?:1[ .-]*)?' +
+module.exports = require('./PatternFormatter')(
+  [
+    new RegExp(
+      '^' +
+        // ignore leading 1 (US/Canada country code)
+        '(?:1[ .-]*)?' +
+        // area code with optional parenthesis
+        '\\(?([0-9]{3})\\)?' +
+        '[ .-]*' +
+        // remainder of phone number, with or without delimiters
+        '([0-9]{3})' +
+        '[ .-]*' +
+        '([0-9]{4})' +
+        '$'
+    ),
 
-                // area code with optional parenthesis
-                '\\(?([0-9]{3})\\)?' +
-                '[ .-]*' +
+    '$1$2$3',
+  ],
 
-                // remainder of phone number, with or without delimiters
-                '([0-9]{3})' +
-                '[ .-]*' +
-                '([0-9]{4})' +
-            '$'
-        ),
-
-        '$1$2$3'
-    ],
-
-    [ /^([0-9]{3})?([0-9]{3})([0-9]{4})$/, function( _, p1, p2, p3 )
-    {
-        return ( ( ( p1 ) ? ( p1 + '-' ) : '' ) + p2 + '-' + p3 );
-    } ]
+  [
+    /^([0-9]{3})?([0-9]{3})([0-9]{4})$/,
+    function (_, p1, p2, p3) {
+      return (p1 ? p1 + '-' : '') + p2 + '-' + p3;
+    },
+  ]
 );
-

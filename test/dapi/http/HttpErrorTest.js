@@ -19,29 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { expect } = require( 'chai' );
-const Sut = require( '../../../' ).dapi.http.HttpError;
+const {expect} = require('chai');
+const Sut = require('../../../').dapi.http.HttpError;
 
-'use strict';
+('use strict');
 
+describe('HttpError', () => {
+  it('provides HTTP status code', () => {
+    const code = 418;
 
-describe( "HttpError", () =>
-{
-    it( "provides HTTP status code", () =>
-    {
-        const code = 418;
+    expect(Sut('message', code).statuscode).to.equal(code);
+  });
 
-        expect( Sut( 'message', code ).statuscode )
-            .to.equal( code );
-    } );
+  // just make sure overriding ctor calls parent
+  it('sets message', () => {
+    const message = 'foobar';
 
-
-    // just make sure overriding ctor calls parent
-    it( "sets message", () =>
-    {
-        const message = 'foobar';
-
-        expect( Sut( message ).message )
-            .to.equal( message );
-    } );
-} );
+    expect(Sut(message).message).to.equal(message);
+  });
+});

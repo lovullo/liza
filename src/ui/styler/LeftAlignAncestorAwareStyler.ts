@@ -19,43 +19,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AncestorAwareStyler, getNthAncestor } from "./AncestorAwareStyler";
-import { PositiveInteger } from "../../numeric";
-
+import {AncestorAwareStyler, getNthAncestor} from './AncestorAwareStyler';
+import {PositiveInteger} from '../../numeric';
 
 /**
  * Styles an HTML element's left position based on an ancestor
  */
-export class LeftAlignAncestorAwareStyler implements AncestorAwareStyler
-{
+export class LeftAlignAncestorAwareStyler implements AncestorAwareStyler {
+  /**
+   * Align the element with an ancestor by adjusting its left positon
+   *
+   * @param element - target element
+   * @param n       - number of generations back
+   */
+  public style(element: HTMLElement, generation: PositiveInteger): void {
+    const ancestor = getNthAncestor(element, generation);
+
+    if (!ancestor) {
+      return;
+    }
+
     /**
-     * Align the element with an ancestor by adjusting its left positon
+     * Reset style.left when it is out of sync with DOMRect.left
      *
-     * @param element - target element
-     * @param n       - number of generations back
+     * If this styler is applied while the element is hidden, it will use
+     * a DOMRect.left of 0 which applies an inaccurate style.left to the
+     * element. As a result, the next time the styler is applied, it will
+     * continue as if the origin of the target element has been relocated to
+     * the previously set style.left.
      */
-    public style( element: HTMLElement, generation: PositiveInteger ): void
-    {
-        const ancestor = getNthAncestor( element, generation );
+    element.style.left = '0px';
 
-        if ( !ancestor )
-        {
-            return;
-        }
-
-        /**
-         * Reset style.left when it is out of sync with DOMRect.left
-         *
-         * If this styler is applied while the element is hidden, it will use
-         * a DOMRect.left of 0 which applies an inaccurate style.left to the
-         * element. As a result, the next time the styler is applied, it will
-         * continue as if the origin of the target element has been relocated to
-         * the previously set style.left.
-         */
-        element.style.left = '0px';
-
-        const ancestor_rect = ancestor.getBoundingClientRect();
-        const element__rect = element.getBoundingClientRect();
-        element.style.left = ( ancestor_rect.left - element__rect.left ) + 'px';
-    };
+    const ancestor_rect = ancestor.getBoundingClientRect();
+    const element__rect = element.getBoundingClientRect();
+    element.style.left = ancestor_rect.left - element__rect.left + 'px';
+  }
 }

@@ -22,6 +22,6 @@
  * creating Error subtypes.
  */
 
-const { Class } = require( 'easejs' );
+const {Class} = require('easejs');
 
-export const AmqpError = Class( 'AmqpError' ).extend( Error, {} );
+export const AmqpError = Class('AmqpError').extend(Error, {});

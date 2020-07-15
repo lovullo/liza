@@ -21,10 +21,9 @@
  * Publish Amqp message to a queue
  */
 
-import { DeltaResult } from '../bucket/delta';
-import { DocumentMeta } from '../document/Document';
-import { Options } from 'amqplib';
-
+import {DeltaResult} from '../bucket/delta';
+import {DocumentMeta} from '../document/Document';
+import {Options} from 'amqplib';
 
 /**
  * Create an amqp configuration from the environment
@@ -33,79 +32,74 @@ import { Options } from 'amqplib';
  *
  * @return the amqp configuration
  */
-export function createAmqpConfig( env: NodeJS.ProcessEnv ): AmqpConfig
-{
-    return <AmqpConfig>{
-        protocol:   'amqp',
-        hostname:   env.AMQP_HOST,
-        port:       +( env.AMQP_PORT || 0 ),
-        username:   env.AMQP_USER,
-        password:   env.AMQP_PASS,
-        locale:     'en_US',
-        frameMax:   +( env.AMQP_FRAMEMAX || 0 ),
-        heartbeat:  +( env.AMQP_HEARTBEAT || 0 ),
-        vhost:      env.AMQP_VHOST,
-        exchange:   env.AMQP_EXCHANGE,
-        retries:    env.AMQP_RETRIES || 30,
-        retry_wait: env.AMQP_RETRY_WAIT || 1000,
-    };
+export function createAmqpConfig(env: NodeJS.ProcessEnv): AmqpConfig {
+  return <AmqpConfig>{
+    protocol: 'amqp',
+    hostname: env.AMQP_HOST,
+    port: +(env.AMQP_PORT || 0),
+    username: env.AMQP_USER,
+    password: env.AMQP_PASS,
+    locale: 'en_US',
+    frameMax: +(env.AMQP_FRAMEMAX || 0),
+    heartbeat: +(env.AMQP_HEARTBEAT || 0),
+    vhost: env.AMQP_VHOST,
+    exchange: env.AMQP_EXCHANGE,
+    retries: env.AMQP_RETRIES || 30,
+    retry_wait: env.AMQP_RETRY_WAIT || 1000,
+  };
 }
 
+export interface AmqpConfig extends Options.Connect {
+  /** The protocol to connect with (should always be 'amqp') */
+  protocol: string;
 
-export interface AmqpConfig extends Options.Connect
-{
-    /** The protocol to connect with (should always be 'amqp') */
-    protocol: string;
+  /** The hostname to connect to */
+  hostname: string;
 
-    /** The hostname to connect to */
-    hostname: string;
+  /** The port to connect to */
+  port: number;
 
-    /** The port to connect to */
-    port: number;
+  /** A username if one if required */
+  username?: string;
 
-    /** A username if one if required */
-    username?: string;
+  /** A password if one if required */
+  password?: string;
 
-    /** A password if one if required */
-    password?: string;
+  /** Locale (should always be 'en_US') */
+  locale: string;
 
-    /** Locale (should always be 'en_US') */
-    locale: string;
+  /** The size in bytes of the maximum frame allowed */
+  frameMax: number;
 
-    /** The size in bytes of the maximum frame allowed */
-    frameMax: number;
+  /** How often to check for a live connection */
+  heartbeat: number;
 
-    /** How often to check for a live connection */
-    heartbeat: number;
+  /** The virtual host we are on (e.g. live, demo, test) */
+  vhost?: string;
 
-    /** The virtual host we are on (e.g. live, demo, test) */
-    vhost?: string;
+  /** The name of a queue or exchange to publish to */
+  exchange: string;
 
-    /** The name of a queue or exchange to publish to */
-    exchange: string;
+  /** The number of times to retry connecting */
+  retries: number;
 
-    /** The number of times to retry connecting */
-    retries: number;
-
-    /** The time to wait in between retries */
-    retry_wait: number;
+  /** The time to wait in between retries */
+  retry_wait: number;
 }
 
-
-export interface AmqpPublisher
-{
-    /**
-     * Publish quote message to exchange post-rating
-     *
-     * @param meta     - document meta data
-     * @param delta    - delta
-     * @param bucket   - bucket
-     * @param ratedata - rate data bucket
-    */
-    publish(
-        meta:      DocumentMeta,
-        delta:     DeltaResult<any>,
-        bucket:    Record<string, any>,
-        ratedata?: Record<string, any>,
-    ): Promise<void>
+export interface AmqpPublisher {
+  /**
+   * Publish quote message to exchange post-rating
+   *
+   * @param meta     - document meta data
+   * @param delta    - delta
+   * @param bucket   - bucket
+   * @param ratedata - rate data bucket
+   */
+  publish(
+    meta: DocumentMeta,
+    delta: DeltaResult<any>,
+    bucket: Record<string, any>,
+    ratedata?: Record<string, any>
+  ): Promise<void>;
 }

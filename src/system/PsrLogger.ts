@@ -22,96 +22,86 @@
  */
 
 export enum LogLevel {
-    DEBUG,
-    INFO,
-    NOTICE,
-    WARNING,
-    ERROR,
-    CRITICAL,
-    ALERT,
-    EMERGENCY,
-};
+  DEBUG,
+  INFO,
+  NOTICE,
+  WARNING,
+  ERROR,
+  CRITICAL,
+  ALERT,
+  EMERGENCY,
+}
 
+export interface PsrLogger {
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  debug(msg: string | object, context?: object): void;
 
-export interface PsrLogger
-{
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    debug( msg: string | object, context?: object ): void
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  info(msg: string | object, context?: object): void;
 
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  notice(msg: string | object, context?: object): void;
 
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    info( msg: string | object, context?: object ): void
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  warning(msg: string | object, context?: object): void;
 
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  error(msg: string | object, context?: object): void;
 
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    notice( msg: string | object, context?: object ): void
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  critical(msg: string | object, context?: object): void;
 
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  alert(msg: string | object, context?: object): void;
 
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    warning( msg: string | object, context?: object ): void
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  emergency(msg: string | object, context?: object): void;
 
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    error( msg: string | object, context?: object ): void
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    critical( msg: string | object, context?: object ): void
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    alert( msg: string | object, context?: object ): void
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    emergency( msg: string | object, context?: object ): void
-
-
-    /**
-     * Log a message
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    log( level: LogLevel, msg: string | object, context?: object ): void
+  /**
+   * Log a message
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  log(level: LogLevel, msg: string | object, context?: object): void;
 }
