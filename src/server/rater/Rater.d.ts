@@ -31,6 +31,9 @@ export interface RateResult
     /** Whether all suppliers were not able to provide rates */
     _unavailable_all: '0' | '1';
 
+    /** The ids for each supplier */
+    __result_ids: string[];
+
     /** Result data */
     [P: string]: any;
 }

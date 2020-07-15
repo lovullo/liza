@@ -253,24 +253,37 @@ module.exports = Class( 'ServerSideQuote' )
      */
     'public getRetryCount': function( data )
     {
+        let retry_field_count = 0;
+
         // if no data is specified then use internal rate data
         data = data || this._rate_bucket.getData();
 
-        const retry_pattern = /^(.+)__retry$/;
-
-        return Object.keys( data )
+        const retry_pattern    = /^(.+)__retry$/;
+        const retry_true_count = Object.keys( data )
             .filter( field =>
             {
-                var value = Array.isArray( data[ field ] )
+                const value = Array.isArray( data[ field ] )
 
                     // In case the data are in a nested array
                     // e.g. data[ field ] === [ [ 0 ] ]
                     ? Array.prototype.concat.apply( [], data[ field ] )
                     : data[ field ];
 
-                return field.match( retry_pattern ) && !!value[ 0 ];
+                const is_retry = field.match( retry_pattern );
+
+                if ( is_retry )
+                {
+                    retry_field_count++;
+                }
+
+                return is_retry && !!value[ 0 ];
             } )
             .length;
+
+        return {
+            field_count: retry_field_count,
+            true_count:  retry_true_count
+        };
     },
 } );
 

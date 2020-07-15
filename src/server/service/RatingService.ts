@@ -407,19 +407,13 @@ export class RatingService
      */
     private _clearRetries( data: RateResult ): RateResult
     {
-        let   cleared       = <RateResult>{};
-        const retry_pattern = /^(.+)__retry$/;
+        let cleared = <RateResult>{};
 
-        for ( let field in data )
+        for ( let field in data.__result_ids )
         {
-            if ( !field.match( retry_pattern ) )
-            {
-                continue;
-            }
-
             // Reset the field to zero
-            data   [ field ] = [ 0 ];
-            cleared[ field ] = [ 0 ];
+            data   [ data.__result_ids[ field ] + '___retry' ] = [ 0 ];
+            cleared[ data.__result_ids[ field ] + '___retry' ] = [ 0 ];
         }
 
         data[ '__rate_pending' ]    = [ 0 ];
@@ -542,14 +536,17 @@ export class RatingService
     ): void
     {
         // Gather determinant factors
-        const pending_count  = quote.getRetryCount( data );
-        const retry_attempts = quote.getRetryAttempts();
-        const step           = quote.getCurrentStepId();
-        const is_rate_step   = ( ( program.rateSteps || [] )[ step ] === true );
+        const retries         = quote.getRetryCount( data );
+        const pending_count   = retries.true_count;
+        const retry_total     = retries.field_count;
+        const retry_attempts  = quote.getRetryAttempts();
+        const step            = quote.getCurrentStepId();
+        const is_rate_step    = ( ( program.rateSteps || [] )[ step ] === true );
+        const missing_retries = ( data.__result_ids.length - retry_total );
 
         // Make determinations
         const max_attempts  = ( retry_attempts >= this.RETRY_MAX_ATTEMPTS );
-        const has_pending   = ( pending_count > 0 );
+        const has_pending   = ( ( missing_retries + pending_count ) > 0 );
 
         // Clear retry attempts when we have no more pending rates
         quote.setRetryAttempts( ( has_pending ) ? ( retry_attempts + 1 ) : 0 );

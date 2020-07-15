@@ -27,6 +27,12 @@ import { QuoteDataBucket } from "../../bucket/QuoteDataBucket";
 import { RateResult } from "../rater/Rater";
 
 
+declare type RetryResult = {
+    field_count: number,
+    true_count:  number,
+}
+
+
 export declare class ServerSideQuote extends BaseQuote
 {
     /**
@@ -116,9 +122,9 @@ export declare class ServerSideQuote extends BaseQuote
      *
      * @param data (optional) Rate data
      *
-     * @return the number of retries pending
+     * @return the number of retries pending and total retry fields
      */
-    getRetryCount( data?: Record<string, any> ): number;
+    getRetryCount( data?: Record<string, any> ): RetryResult;
 
     /**
      * Sets the quote's initial rated date

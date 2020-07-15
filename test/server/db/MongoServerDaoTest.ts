@@ -269,7 +269,7 @@ function createStubQuote( metadata: Record<string, any> )
         classify:                 () => <ClassificationResult>{},
     };
 
-    const quote = <ServerSideQuote>{
+    const quote = <ServerSideQuote><unknown>{
         getBucket: () => <QuoteDataBucket>( {
             getData: () => { return {}; },
         } ),
@@ -304,7 +304,6 @@ function createStubQuote( metadata: Record<string, any> )
         getRetryAttempts:      () => 1,
         retryAttempted:        () => quote,
         setMetadata:           () => quote,
-        getRetryCount:         () => 0,
         setInitialRatedDate:   () => quote,
         getExpirationDate:     () => 123,
     };
