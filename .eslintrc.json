@@ -1,0 +1,11 @@
+{
+  "extends": "./node_modules/gts/.eslintrc.json",
+  "rules": {
+    "no-irregular-whitespace": [
+      "error", { "skipComments": true }
+    ],
+    "@typescript-eslint/consistent-type-assertions": [
+      "error", { "assertionStyle": "angle-bracket" }
+    ]
+  }
+}
