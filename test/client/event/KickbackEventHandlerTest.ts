@@ -21,183 +21,156 @@
 
 'use strict';
 
-import { expect } from 'chai';
-import { KickbackEventHandler as Sut } from '../../../src/client/event/KickbackEventHandler';
-import { ClientQuote } from "../../../src/client/quote/ClientQuote";
-import { Client } from "../../../src/client/Client";
-import { Nav } from "../../../src/client/nav/Nav";
-import { Ui } from "../../../src/ui/Ui";
-import { ClientAction } from "../../../src/client/action/ClientAction";
+import {expect} from 'chai';
+import {KickbackEventHandler as Sut} from '../../../src/client/event/KickbackEventHandler';
+import {ClientQuote} from '../../../src/client/quote/ClientQuote';
+import {Client} from '../../../src/client/Client';
+import {Nav} from '../../../src/client/nav/Nav';
+import {Ui} from '../../../src/ui/Ui';
+import {ClientAction} from '../../../src/client/action/ClientAction';
 
-
-describe( 'Handle kickback event', () =>
-{
-    [
-        {
-            label: 'kickback when top and current step is greater than kickback step',
-            kb_step: 3,
-            current_step: 5,
-            top_visited_step: 5,
-            expected_nav_called: true
-        },
-        {
-            label: 'does not kickback when current step is less than the kickback step',
-            kb_step: 3,
-            current_step: 2,
-            top_visited_step: 5,
-            expected_nav_called: false,
-        },
-        {
-            label: 'does not kickback when top visited step is less than kickback step',
-            kb_step: 5,
-            current_step: 4,
-            top_visited_step: 4,
-            expected_nav_called: false
-        },
-        {
-            label: 'does not kickback when current step matches the kickback step',
-            kb_step: 5,
-            current_step: 5,
-            top_visited_step: 6,
-            expected_nav_called: false,
-        },
-    ].forEach( ( {
-        label,
-        kb_step,
-        current_step,
-        top_visited_step,
-        expected_nav_called} ) => {
-    it( label, done =>
+describe('Handle kickback event', () => {
+  [
     {
-            const {
-                nav,
-                client,
-            } = createStubs( top_visited_step, current_step );
+      label: 'kickback when top and current step is greater than kickback step',
+      kb_step: 3,
+      current_step: 5,
+      top_visited_step: 5,
+      expected_nav_called: true,
+    },
+    {
+      label:
+        'does not kickback when current step is less than the kickback step',
+      kb_step: 3,
+      current_step: 2,
+      top_visited_step: 5,
+      expected_nav_called: false,
+    },
+    {
+      label:
+        'does not kickback when top visited step is less than kickback step',
+      kb_step: 5,
+      current_step: 4,
+      top_visited_step: 4,
+      expected_nav_called: false,
+    },
+    {
+      label: 'does not kickback when current step matches the kickback step',
+      kb_step: 5,
+      current_step: 5,
+      top_visited_step: 6,
+      expected_nav_called: false,
+    },
+  ].forEach(
+    ({label, kb_step, current_step, top_visited_step, expected_nav_called}) => {
+      it(label, done => {
+        const {nav, client} = createStubs(top_visited_step, current_step);
 
-            let navigate_to_step_called = false;
-            nav.navigateToStep = ( _step_id: any, _force: any ) =>
-            {
-                navigate_to_step_called = true;
-            };
+        let navigate_to_step_called = false;
+        nav.navigateToStep = (_step_id: any, _force: any) => {
+          navigate_to_step_called = true;
+        };
 
-            const sut = new Sut( client );
-            sut.handle(
-                'kickBack',
-                function() {},
-                {
-                    action : 'kickBack',
-                    stepId : kb_step
-                }
-            );
+        const sut = new Sut(client);
+        sut.handle('kickBack', function () {}, {
+          action: 'kickBack',
+          stepId: kb_step,
+        });
 
-            expect( navigate_to_step_called ).to.equal( expected_nav_called );
-            done();
-        } );
-    } );
+        expect(navigate_to_step_called).to.equal(expected_nav_called);
+        done();
+      });
+    }
+  );
 
+  [
+    {
+      label: 'navigates with force when set in event data',
+      data: {
+        action: 'backBack',
+        stepId: 1,
+        force: true,
+      },
+      expected_with_force: true,
+    },
+    {
+      label: 'does not navigate with force when not requested',
+      data: {
+        action: 'backBack',
+        stepId: 1,
+        force: false,
+      },
+      expected_with_force: false,
+    },
+    {
+      label: 'does not navigate with force when omitted from event data',
+      data: {
+        action: 'backBack',
+        stepId: 1,
+      },
+      expected_with_force: false,
+    },
+  ].forEach(({label, data, expected_with_force}) => {
+    it(label, done => {
+      const {nav, client} = createStubs(5, 5);
 
-    [
-        {
-            label: 'navigates with force when set in event data',
-            data: {
-                action: 'backBack',
-                stepId: 1,
-                force: true
-            },
-            expected_with_force: true
-        },
-        {
-            label: 'does not navigate with force when not requested',
-            data: {
-                action: 'backBack',
-                stepId: 1,
-                force: false
-            },
-            expected_with_force: false
-        },
-        {
-            label: 'does not navigate with force when omitted from event data',
-            data: {
-                action: 'backBack',
-                stepId: 1
-            },
-            expected_with_force: false
-        },
-    ].forEach( ( { label, data, expected_with_force } ) => {
-        it( label, done =>
-        {
-            const {
-                nav,
-                client,
-            } = createStubs( 5, 5 );
+      let navigate_to_step_called = false;
+      let navigate_with_force = false;
 
-            let navigate_to_step_called = false;
-            let navigate_with_force = false;
+      nav.navigateToStep = (_step_id: any, force: any) => {
+        navigate_to_step_called = true;
+        navigate_with_force = force;
+      };
 
-            nav.navigateToStep = ( _step_id: any, force: any ) =>
-            {
-                navigate_to_step_called = true;
-                navigate_with_force = force;
-            };
+      const sut = new Sut(client);
+      sut.handle('kickBack', function () {}, <ClientAction>data);
 
-            const sut = new Sut( client );
-            sut.handle( 'kickBack', function() {}, <ClientAction>data );
+      expect(navigate_to_step_called).to.be.true;
+      expect(navigate_with_force).to.equal(expected_with_force);
+      done();
+    });
+  });
+});
 
-            expect( navigate_to_step_called ).to.be.true;
-            expect( navigate_with_force ).to.equal( expected_with_force );
-            done();
-        } );
-    } );
-} );
-
-
-function createStubClientQuote( top_visited_step: any, current_step: any )
-{
-    return <ClientQuote><unknown>{
-        getTopVisitedStepId: () => top_visited_step,
-        setTopVisitedStepId: () => {},
-        getCurrentStepId: () => current_step,
-    };
+function createStubClientQuote(top_visited_step: any, current_step: any) {
+  return <ClientQuote>(<unknown>{
+    getTopVisitedStepId: () => top_visited_step,
+    setTopVisitedStepId: () => {},
+    getCurrentStepId: () => current_step,
+  });
 }
 
-
-function createStubNavigation()
-{
-    return <Nav><unknown>{
-        navigateToStep: ( _step_id: any ) => {},
-        setTopVisitedStepId: ( _step_id: any ) => {},
-    };
+function createStubNavigation() {
+  return <Nav>(<unknown>{
+    navigateToStep: (_step_id: any) => {},
+    setTopVisitedStepId: (_step_id: any) => {},
+  });
 }
 
-function createStubUi()
-{
-    return <Ui><unknown>{
-        redrawNav: () => {},
-    };
+function createStubUi() {
+  return <Ui>(<unknown>{
+    redrawNav: () => {},
+  });
 }
 
-
-function createStubClient( quote: ClientQuote, nav: Nav, ui: Ui )
-{
-    return <Client><unknown>{
-        getQuote: () => quote,
-        nav: nav,
-        getUi: () => ui
-    };
+function createStubClient(quote: ClientQuote, nav: Nav, ui: Ui) {
+  return <Client>(<unknown>{
+    getQuote: () => quote,
+    nav: nav,
+    getUi: () => ui,
+  });
 }
 
+function createStubs(top_visited_step: any, current_step: any) {
+  const quote = createStubClientQuote(top_visited_step, current_step);
+  const nav = createStubNavigation();
+  const ui = createStubUi();
+  const client = createStubClient(quote, nav, ui);
 
-function createStubs( top_visited_step: any, current_step: any )
-{
-    const quote  = createStubClientQuote( top_visited_step, current_step );
-    const nav    = createStubNavigation();
-    const ui     = createStubUi();
-    const client = createStubClient( quote, nav, ui );
-
-    return {
-        client: client,
-        quote:  quote,
-        nav:    nav,
-        ui:     ui,
-    };
+  return {
+    client: client,
+    quote: quote,
+    nav: nav,
+    ui: ui,
+  };
 }

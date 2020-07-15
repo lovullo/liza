@@ -26,28 +26,25 @@
  *       might not work for you!
  */
 
-import { StepUi } from "./step/StepUi";
-import { CmatchData } from "../client/Cmatch";
+import {StepUi} from './step/StepUi';
+import {CmatchData} from '../client/Cmatch';
 
 /**
  * Represents the Ui
  */
-export declare class Ui
-{
-    /**
-     * Returns the step the user is currently on
-     */
-    getCurrentStep(): StepUi | null;
+export declare class Ui {
+  /**
+   * Returns the step the user is currently on
+   */
+  getCurrentStep(): StepUi | null;
 
+  /**
+   * Set the Classification match data
+   */
+  setCmatch(cmatch: CmatchData): void;
 
-    /**
-     * Set the Classification match data
-     */
-    setCmatch( cmatch: CmatchData ): void;
-
-
-    /**
-     * Redraw (style) the navigation bar
-     */
-    redrawNav(): this;
+  /**
+   * Redraw (style) the navigation bar
+   */
+  redrawNav(): this;
 }

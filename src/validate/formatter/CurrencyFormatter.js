@@ -31,6 +31,6 @@
  * @mixes module:validate/formatter.Number
  * @mixes module:validate/formatter.StringFormat
  */
-module.exports = require( './EchoFormatter' )
-    .use( require( './Number' )( 2 ) )
-    .use( require( './StringFormat' )( '$%s' ) );
+module.exports = require('./EchoFormatter')
+  .use(require('./Number')(2))
+  .use(require('./StringFormat')('$%s'));

@@ -19,14 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-import { ClientQuote } from '../quote/ClientQuote';
+import {ClientQuote} from '../quote/ClientQuote';
 
-
-export interface QuoteTransport
-{
-    send( quote: ClientQuote, callback: any ): void
+export interface QuoteTransport {
+  send(quote: ClientQuote, callback: any): void;
 }
 
 /**
@@ -37,8 +35,6 @@ export interface QuoteTransport
  * to in some way to be transfered from one point to another. The
  * implementation is left to the transporter.
  */
-module.exports = Interface( 'QuoteTransport',
-{
-    'public send': [ 'quote' ]
-} );
-
+module.exports = Interface('QuoteTransport', {
+  'public send': ['quote'],
+});

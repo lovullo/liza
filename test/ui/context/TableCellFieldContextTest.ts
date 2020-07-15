@@ -19,109 +19,100 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { TableCellFieldContext as Sut } from "../../../src/ui/context/TableCellFieldContext";
-import { ContextContent } from "../../../src/ui/context/FieldContext";
-import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
+import {TableCellFieldContext as Sut} from '../../../src/ui/context/TableCellFieldContext';
+import {ContextContent} from '../../../src/ui/context/FieldContext';
+import {FieldStyler} from '../../../src/ui/context/styler/FieldStyler';
 
-import { expect } from "chai";
+import {expect} from 'chai';
 
 before(function () {
-    this.jsdom = require('jsdom-global')()
-})
+  this.jsdom = require('jsdom-global')();
+});
 
 after(function () {
-    this.jsdom()
-})
+  this.jsdom();
+});
 
-describe( "TableCellFieldContext", () =>
-{
-    it ( 'show sets visible to true', () =>
-    {
-        const group = getGroupContent();
+describe('TableCellFieldContext', () => {
+  it('show sets visible to true', () => {
+    const group = getGroupContent();
 
-        const content = group.querySelector( "#q_table_row_0" );
-        const sut = new Sut(
-            document,
-            getStylerStub(),
-            'q_field_0',
-            <ContextContent>content
-        );
+    const content = group.querySelector('#q_table_row_0');
+    const sut = new Sut(
+      document,
+      getStylerStub(),
+      'q_field_0',
+      <ContextContent>content
+    );
 
-        const to = document.createElement("tr");
-        sut.show( to, null );
+    const to = document.createElement('tr');
+    sut.show(to, null);
 
-        expect( sut.isVisible() ).to.be.true;
-    } );
+    expect(sut.isVisible()).to.be.true;
+  });
 
+  it('shows field and attaches to DOM when show is called for cloned content', () => {
+    // Mock that the content has no parent, so is not attached
+    const content = document.createElement('td');
 
-    it( 'shows field and attaches to DOM when show is called for cloned content', () => {
+    const sut = new Sut(
+      document,
+      getStylerStub(),
+      'foo_bar',
+      <ContextContent>content
+    );
 
-        // Mock that the content has no parent, so is not attached
-        const content = document.createElement( "td" );
+    expect(sut.isAttached()).to.be.false;
 
-        const sut = new Sut(
-            document,
-            getStylerStub(),
-            'foo_bar',
-            <ContextContent>content
-        );
+    const to = document.createElement('tr');
+    sut.show(to, null);
 
-        expect( sut.isAttached() ).to.be.false;
+    expect(sut.isAttached()).to.be.true;
+    expect(sut.isVisible()).to.be.true;
+  });
 
-        const to = document.createElement("tr");
-        sut.show( to, null );
+  it('hide sets visible to false', () => {
+    const group = getGroupContent();
 
-        expect( sut.isAttached() ).to.be.true;
-        expect( sut.isVisible() ).to.be.true;
-    } );
+    const content = group.querySelector('#q_table_row_0');
+    const sut = new Sut(
+      document,
+      getStylerStub(),
+      'q_foo_row_0',
+      <ContextContent>content
+    );
 
+    sut.hide();
 
-    it ( 'hide sets visible to false', () =>
-    {
-        const group = getGroupContent();
+    expect(sut.isVisible()).to.be.false;
+  });
+});
 
-        const content = group.querySelector( "#q_table_row_0" );
-        const sut = new Sut(
-            document,
-            getStylerStub(),
-            'q_foo_row_0',
-            <ContextContent>content
-        );
-
-        sut.hide();
-
-        expect( sut.isVisible() ).to.be.false;
-    } );
-} );
-
-
-function getStylerStub()
-{
-    return <FieldStyler>{
-        'setValue': ( _: any, __: any ) => {},
-    };
+function getStylerStub() {
+  return <FieldStyler>{
+    setValue: (_: any, __: any) => {},
+  };
 }
 
-function getGroupContent()
-{
-    // Mock group content
-    var group = document.createElement( "div" );
+function getGroupContent() {
+  // Mock group content
+  var group = document.createElement('div');
 
-    group.innerHTML =
-        '<table>' +
-            '<tr id="q_table_row_0">' +
-                '<td>' +
-                    '<input type="text" id="q_foo_row_0">' +
-                '</td>' +
-                '<td>' +
-                    '<div>' +
-                        '<label>' +
-                            '<input type="checkbox" data-field-name="table_row"> No' +
-                        '</label>' +
-                    '</div>' +
-                '</td>' +
-            '</tr>' +
-        '</table>';
+  group.innerHTML =
+    '<table>' +
+    '<tr id="q_table_row_0">' +
+    '<td>' +
+    '<input type="text" id="q_foo_row_0">' +
+    '</td>' +
+    '<td>' +
+    '<div>' +
+    '<label>' +
+    '<input type="checkbox" data-field-name="table_row"> No' +
+    '</label>' +
+    '</div>' +
+    '</td>' +
+    '</tr>' +
+    '</table>';
 
-    return group;
+  return group;
 }

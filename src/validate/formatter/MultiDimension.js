@@ -19,23 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait              = require( 'easejs' ).Trait,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Trait = require('easejs').Trait,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Applies supertype for each item in a vector
  */
-module.exports = Trait( 'MultiDimension' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Trait('MultiDimension')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Delimiter to combine values
      * @type {string}
      */
     'private _delim': '',
-
 
     /**
      * Initialize delimiter for parsing and retrieval
@@ -45,11 +42,9 @@ module.exports = Trait( 'MultiDimension' )
      *
      * @param {string} delim delimiter
      */
-    __mixin: function( delim )
-    {
-        this._delim = ''+delim;
+    __mixin: function (delim) {
+      this._delim = '' + delim;
     },
-
 
     /**
      * Parse each item into a vector
@@ -58,19 +53,16 @@ module.exports = Trait( 'MultiDimension' )
      *
      * @return {Array} vector of data formatted for storage
      */
-    'virtual abstract override public parse': function( data )
-    {
-        var split = data.split( this._delim );
+    'virtual abstract override public parse': function (data) {
+      var split = data.split(this._delim);
 
-        // maintain ES3 compatibility (no map)
-        for ( var i = 0; i < split.length; i++ )
-        {
-            split[ i ] = this.__super( split[ i ] );
-        }
+      // maintain ES3 compatibility (no map)
+      for (var i = 0; i < split.length; i++) {
+        split[i] = this.__super(split[i]);
+      }
 
-        return split;
+      return split;
     },
-
 
     /**
      * Join formatted vector elements into a delimited string
@@ -87,30 +79,22 @@ module.exports = Trait( 'MultiDimension' )
      *
      * @return {string} delimited string
      */
-    'virtual abstract override public retrieve': function( data )
-    {
-        // pretend non-arrays are single-element vectors
-        if ( Object.prototype.toString.call( data ) !== '[object Array]' )
-        {
-            return this.__super( data );
-        }
+    'virtual abstract override public retrieve': function (data) {
+      // pretend non-arrays are single-element vectors
+      if (Object.prototype.toString.call(data) !== '[object Array]') {
+        return this.__super(data);
+      }
 
-        var parsed = [],
-            same   = true;
+      var parsed = [],
+        same = true;
 
-        // must maintain ES3 support; no forEach
-        for ( var i = 0; i < data.length; i++ )
-        {
-            parsed[ i ] = this.__super( data[ i ] );
+      // must maintain ES3 support; no forEach
+      for (var i = 0; i < data.length; i++) {
+        parsed[i] = this.__super(data[i]);
 
-            same = same && (
-                ( i === 0 )
-                || ( parsed[ i - 1 ] === parsed[ i ] )
-            );
-        }
+        same = same && (i === 0 || parsed[i - 1] === parsed[i]);
+      }
 
-        return ( same )
-             ? parsed[ 0 ]
-             : parsed.join( this._delim );
-    }
-} );
+      return same ? parsed[0] : parsed.join(this._delim);
+    },
+  });

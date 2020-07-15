@@ -21,128 +21,105 @@
  * @todo This is a deprecated system; remove.
  */
 
-var Class         = require( 'easejs' ).Class,
-    HttpDataProxy = require( './HttpDataProxy' );
+var Class = require('easejs').Class,
+  HttpDataProxy = require('./HttpDataProxy');
 
+module.exports = Class('JqueryHttpDataProxy').extend(HttpDataProxy, {
+  /**
+   * jQuery object to use
+   * @type {jQuery}
+   */
+  'private _jquery': null,
 
-module.exports = Class( 'JqueryHttpDataProxy' )
-    .extend( HttpDataProxy,
-{
-    /**
-     * jQuery object to use
-     * @type {jQuery}
-     */
-    'private _jquery': null,
+  /**
+   * Pool of outstanding requests
+   * @type {Array.<XMLHttpRequest>}
+   */
+  'private _requestPool': [],
 
-    /**
-     * Pool of outstanding requests
-     * @type {Array.<XMLHttpRequest>}
-     */
-    'private _requestPool': [],
-
-
-    /**
-     * Initializes data proxy with the given jQuery object
-     *
-     * The jQuery object is injected to both decouple the two and to make it
-     * stubbable for tests
-     *
-     * @param {jQuery} jquery jQuery object
-     *
-     * @return {undefined}
-     */
-    'public __construct': function( jquery )
-    {
-        if ( !( jquery ) )
-        {
-            throw Error( 'No jQuery instance provided' );
-        }
-
-        this._jquery = jquery;
-    },
-
-
-    'private _doXhr': function( url, callback, type, data )
-    {
-        callback = callback || function() {};
-
-        var _self    = this,
-            pool_pos = -1,
-            done     = false,
-            xhr      = this._jquery.ajax( {
-                type:     type,
-                data:     data,
-                url:      url,
-                dataType: 'json',
-
-                success: function( data )
-                {
-                    _self._removeFromPool( pool_pos );
-                    callback( data || {}, null );
-
-                    done = true;
-                },
-
-                error: function( xhr, text_status )
-                {
-                    _self._removeFromPool( pool_pos );
-                    callback( null, text_status );
-
-                    done = true;
-                }
-            } );
-
-        // add request to the pool, only for async requests
-        if ( !done )
-        {
-            pool_pos = ( this._requestPool.push( xhr ) - 1 );
-        }
-    },
-
-
-    'virtual protected getData': function( url, callback )
-    {
-        this._doXhr( url, callback, 'GET' );
-    },
-
-
-    'virtual protected postData': function( url, data, callback )
-    {
-        this._doXhr( url, callback, 'POST', data );
-    },
-
-
-    'private _removeFromPool': function( pos )
-    {
-        // if the position is -1, then the pool wasn't yet created
-        if ( pos === -1 )
-        {
-            return;
-        }
-
-        delete this._requestPool[ pos ];
-    },
-
-
-    'abortAll': function()
-    {
-        var i = this._requestPool.length;
-
-        while ( i-- )
-        {
-            var xhr = this._requestPool[ i ];
-
-            // will be undefined if it finished
-            if ( xhr === undefined )
-            {
-                continue;
-            }
-
-            xhr.abort();
-        }
-
-        // remove 'em all from memory and start with a fresh array
-        this.requestPool = [];
+  /**
+   * Initializes data proxy with the given jQuery object
+   *
+   * The jQuery object is injected to both decouple the two and to make it
+   * stubbable for tests
+   *
+   * @param {jQuery} jquery jQuery object
+   *
+   * @return {undefined}
+   */
+  'public __construct': function (jquery) {
+    if (!jquery) {
+      throw Error('No jQuery instance provided');
     }
-});
 
+    this._jquery = jquery;
+  },
+
+  'private _doXhr': function (url, callback, type, data) {
+    callback = callback || function () {};
+
+    var _self = this,
+      pool_pos = -1,
+      done = false,
+      xhr = this._jquery.ajax({
+        type: type,
+        data: data,
+        url: url,
+        dataType: 'json',
+
+        success: function (data) {
+          _self._removeFromPool(pool_pos);
+          callback(data || {}, null);
+
+          done = true;
+        },
+
+        error: function (xhr, text_status) {
+          _self._removeFromPool(pool_pos);
+          callback(null, text_status);
+
+          done = true;
+        },
+      });
+
+    // add request to the pool, only for async requests
+    if (!done) {
+      pool_pos = this._requestPool.push(xhr) - 1;
+    }
+  },
+
+  'virtual protected getData': function (url, callback) {
+    this._doXhr(url, callback, 'GET');
+  },
+
+  'virtual protected postData': function (url, data, callback) {
+    this._doXhr(url, callback, 'POST', data);
+  },
+
+  'private _removeFromPool': function (pos) {
+    // if the position is -1, then the pool wasn't yet created
+    if (pos === -1) {
+      return;
+    }
+
+    delete this._requestPool[pos];
+  },
+
+  abortAll: function () {
+    var i = this._requestPool.length;
+
+    while (i--) {
+      var xhr = this._requestPool[i];
+
+      // will be undefined if it finished
+      if (xhr === undefined) {
+        continue;
+      }
+
+      xhr.abort();
+    }
+
+    // remove 'em all from memory and start with a fresh array
+    this.requestPool = [];
+  },
+});

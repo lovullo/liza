@@ -22,159 +22,145 @@
  * sufficiently general for other database abstractions.
  */
 
-import { ClassificationData, WorksheetData } from "../rater/Rater";
-import { PositiveInteger } from "../../numeric";
-import { QuoteId } from "../../document/Document";
-import { ServerSideQuote } from "../quote/ServerSideQuote";
+import {ClassificationData, WorksheetData} from '../rater/Rater';
+import {PositiveInteger} from '../../numeric';
+import {QuoteId} from '../../document/Document';
+import {ServerSideQuote} from '../quote/ServerSideQuote';
 
 /** Success or failure callback */
-export type Callback = ( quote: ServerSideQuote ) => void;
-
+export type Callback = (quote: ServerSideQuote) => void;
 
 /**
  * Database abstraction
  */
-export interface ServerDao
-{
-    /**
-     * Saves a quote to the database
-     *
-     * A full save will include all metadata.
-     *
-     * @param quote     - the quote to save
-     * @param success   - function to call on success
-     * @param failure   - function to call if save fails
-     * @param save_data - quote data to save (optional)
-     * @param push_data - quote data to push (optional)
-     */
-    saveQuote(
-        quote:      ServerSideQuote,
-        success?:   Callback,
-        failure?:   Callback,
-        save_data?: Record<string, any>,
-        push_data?: Record<string, any>,
-    ): this;
+export interface ServerDao {
+  /**
+   * Saves a quote to the database
+   *
+   * A full save will include all metadata.
+   *
+   * @param quote     - the quote to save
+   * @param success   - function to call on success
+   * @param failure   - function to call if save fails
+   * @param save_data - quote data to save (optional)
+   * @param push_data - quote data to push (optional)
+   */
+  saveQuote(
+    quote: ServerSideQuote,
+    success?: Callback,
+    failure?: Callback,
+    save_data?: Record<string, any>,
+    push_data?: Record<string, any>
+  ): this;
 
+  /**
+   * Merges quote data with the existing (rather than overwriting)
+   *
+   * @param quote   - quote to save
+   * @param data    - quote data
+   * @param success - successful callback
+   * @param failure - failure callback
+   */
+  mergeData(
+    quote: ServerSideQuote,
+    data: any,
+    success?: Callback,
+    failure?: Callback
+  ): this;
 
-    /**
-     * Merges quote data with the existing (rather than overwriting)
-     *
-     * @param quote   - quote to save
-     * @param data    - quote data
-     * @param success - successful callback
-     * @param failure - failure callback
-     */
-    mergeData(
-        quote:    ServerSideQuote,
-        data:     any,
-        success?: Callback,
-        failure?: Callback,
-    ): this
+  /**
+   * Merges bucket data with the existing bucket (rather than overwriting the
+   * entire bucket)
+   *
+   * @param quote   - quote to save
+   * @param data    - bucket data
+   * @param success - successful callback
+   * @param failure - failure callback
+   */
+  mergeBucket(
+    quote: ServerSideQuote,
+    data: Record<string, any>,
+    success?: Callback,
+    failure?: Callback
+  ): this;
 
+  /**
+   * Saves the quote state to the database
+   *
+   * The quote state includes the current step, the top visited step and the
+   * explicit lock message.
+   *
+   * @param quote   - the quote to save
+   * @param success - function to call on success
+   * @param failure - function to call if save fails
+   */
+  saveQuoteState(
+    quote: ServerSideQuote,
+    success?: Callback,
+    failure?: Callback
+  ): this;
 
-    /**
-     * Merges bucket data with the existing bucket (rather than overwriting the
-     * entire bucket)
-     *
-     * @param quote   - quote to save
-     * @param data    - bucket data
-     * @param success - successful callback
-     * @param failure - failure callback
-     */
-    mergeBucket(
-        quote:    ServerSideQuote,
-        data:     Record<string, any>,
-        success?: Callback,
-        failure?: Callback,
-    ): this;
+  /**
+   * Ensure the quote has been rated before
+   *
+   * @param quote - the quote to validate
+   *
+   * @returns a promise with the quote
+   */
+  ensurePriorRate(quote: ServerSideQuote): Promise<ServerSideQuote>;
 
+  /**
+   * Save document metadata (meta field on document)
+   *
+   * Only the provided indexes will be modified (that is---data will be
+   * merged with what is already in the database).
+   *
+   * @param quote    - destination quote
+   * @param new_meta - bucket-formatted data to write
+   * @param success  - callback on success
+   * @param failure  - callback on error
+   */
+  saveQuoteMeta(
+    quote: ServerSideQuote,
+    new_meta: Record<string, any>,
+    success?: Callback,
+    failure?: Callback
+  ): void;
 
-    /**
-     * Saves the quote state to the database
-     *
-     * The quote state includes the current step, the top visited step and the
-     * explicit lock message.
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteState(
-        quote:    ServerSideQuote,
-        success?: Callback,
-        failure?: Callback,
-    ): this;
+  /**
+   * Saves the quote lock state to the database
+   *
+   * @param quote   - the quote to save
+   * @param success - function to call on success
+   * @param failure - function to call if save fails
+   */
+  saveQuoteLockState(
+    quote: ServerSideQuote,
+    success?: Callback,
+    failure?: Callback
+  ): this;
 
+  /**
+   * Set worksheet data
+   *
+   * @param qid      - The quote id
+   * @param data     - worksheet data
+   * @param failure  - a function to call on error
+   */
+  setWorksheets(qid: QuoteId, data: any, failure?: NodeCallback<void>): void;
 
-    /**
-     * Ensure the quote has been rated before
-     *
-     * @param quote - the quote to validate
-     *
-     * @returns a promise with the quote
-     */
-    ensurePriorRate( quote: ServerSideQuote ): Promise<ServerSideQuote>
-
-
-    /**
-     * Save document metadata (meta field on document)
-     *
-     * Only the provided indexes will be modified (that is---data will be
-     * merged with what is already in the database).
-     *
-     * @param quote    - destination quote
-     * @param new_meta - bucket-formatted data to write
-     * @param success  - callback on success
-     * @param failure  - callback on error
-     */
-    saveQuoteMeta(
-        quote:    ServerSideQuote,
-        new_meta: Record<string,any>,
-        success?: Callback,
-        failure?: Callback,
-    ): void
-
-
-    /**
-     * Saves the quote lock state to the database
-     *
-     * @param quote   - the quote to save
-     * @param success - function to call on success
-     * @param failure - function to call if save fails
-     */
-    saveQuoteLockState(
-        quote:    ServerSideQuote,
-        success?: Callback,
-        failure?: Callback,
-    ): this
-
-
-    /**
-     * Set worksheet data
-     *
-     * @param qid      - The quote id
-     * @param data     - worksheet data
-     * @param failure  - a function to call on error
-     */
-    setWorksheets(
-        qid:      QuoteId,
-        data:     any,
-        failure?: NodeCallback<void>,
-    ): void
-
-
-    /**
-     * Retrieve worksheet data
-     *
-     * @param qid      - the quote id
-     * @param supplier - the supplier to retrieve the worksheet for
-     * @param index    - the worksheet index
-     *
-     * @return Promise with worksheet data
-     */
-    getWorksheet(
-        qid:      QuoteId,
-        supplier: string,
-        index:    PositiveInteger,
-    ): Promise<WorksheetData>;
+  /**
+   * Retrieve worksheet data
+   *
+   * @param qid      - the quote id
+   * @param supplier - the supplier to retrieve the worksheet for
+   * @param index    - the worksheet index
+   *
+   * @return Promise with worksheet data
+   */
+  getWorksheet(
+    qid: QuoteId,
+    supplier: string,
+    index: PositiveInteger
+  ): Promise<WorksheetData>;
 }

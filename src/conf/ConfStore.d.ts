@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Store } from "../store/Store";
+import {Store} from '../store/Store';
 
 /**
  * A store that recursively instantiates itself

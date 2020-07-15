@@ -21,83 +21,78 @@
 
 'use strict';
 
-import { expect } from 'chai';
-import { DelegateEventHandler as Sut } from '../../../src/client/event/DelegateEventHandler';
-import { EventHandler, EventHandlers } from '../../../src/client/event/EventHandler';
-import { UnknownEventError } from '../../../src/client/event/UnknownEventError';
+import {expect} from 'chai';
+import {DelegateEventHandler as Sut} from '../../../src/client/event/DelegateEventHandler';
+import {
+  EventHandler,
+  EventHandlers,
+} from '../../../src/client/event/EventHandler';
+import {UnknownEventError} from '../../../src/client/event/UnknownEventError';
 
-describe( 'DelegateEventHandler', () =>
-{
-    it( "Calls a handler", done =>
-    {
-        let handle_called = false;
+describe('DelegateEventHandler', () => {
+  it('Calls a handler', done => {
+    let handle_called = false;
 
-        const handlers = <EventHandlers>{
-            'rate': <EventHandler>{
-                handle: ( _: any, __: any, ___: any ) => {
-                    handle_called = true;
-                }
-            },
-        };
+    const handlers = <EventHandlers>{
+      rate: <EventHandler>{
+        handle: (_: any, __: any, ___: any) => {
+          handle_called = true;
+        },
+      },
+    };
 
-        const sut = new Sut( handlers );
+    const sut = new Sut(handlers);
 
-        sut.handle( 'rate', () => {}, {} )
+    sut.handle('rate', () => {}, {});
 
-        expect( handle_called ).to.equal( true );
-        done();
-    } );
+    expect(handle_called).to.equal(true);
+    done();
+  });
 
+  it('Throws exception if no handler is found for an event type', done => {
+    let handle_called = false;
 
-    it( "Throws exception if no handler is found for an event type", done =>
-    {
-        let handle_called = false;
+    const handlers = <EventHandlers>{
+      rate: <EventHandler>{
+        handle: (_: any, __: any, ___: any) => {
+          handle_called = true;
+        },
+      },
+    };
 
-        const handlers = <EventHandlers>{
-            'rate': <EventHandler>{
-                handle: ( _: any, __: any, ___: any ) => {
-                    handle_called = true;
-                }
-            },
-        };
+    const sut = new Sut(handlers);
 
-        const sut = new Sut( handlers );
+    expect(() => {
+      sut.handle('delay', () => {}, {});
+    }).to.throw(UnknownEventError);
 
-        expect( () => { sut.handle( 'delay', () => {}, {} ) } ).to.throw(
-            UnknownEventError
-        );
+    expect(handle_called).to.equal(false);
+    done();
+  });
 
-        expect( handle_called ).to.equal( false );
-        done();
-    } );
+  it('Returns true if it has a handler for an event type', done => {
+    const handlers = <EventHandlers>{
+      rate: <EventHandler>{
+        handle: (_: any, __: any, ___: any) => {},
+      },
+    };
 
+    const sut = new Sut(handlers);
 
-    it( "Returns true if it has a handler for an event type", done =>
-    {
-        const handlers = <EventHandlers>{
-            'rate': <EventHandler>{
-                handle: ( _: any, __: any, ___: any ) => {}
-            },
-        };
+    expect(sut.hasHandler('rate')).to.equal(true);
+    done();
+  });
 
-        const sut = new Sut( handlers );
+  it("Returns false if it doesn't have a handler for an event type", done => {
+    const handlers = <EventHandlers>{
+      rate: <EventHandler>{
+        handle: (_: any, __: any, ___: any) => {},
+      },
+    };
 
-        expect( sut.hasHandler( 'rate' ) ).to.equal( true );
-        done();
-    } );
+    const sut = new Sut(handlers);
 
-
-    it( "Returns false if it doesn't have a handler for an event type", done =>
-    {
-        const handlers = <EventHandlers>{
-            'rate': <EventHandler>{
-                handle: ( _: any, __: any, ___: any ) => {}
-            },
-        };
-
-        const sut = new Sut( handlers );
-
-        expect( sut.hasHandler( 'delay' ) ).to.equal( false );
-        done();
-    } );
-} )
+    expect(sut.hasHandler('delay')).to.equal(false);
+    done();
+  });
+});

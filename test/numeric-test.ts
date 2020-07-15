@@ -19,41 +19,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { expect } from 'chai';
-import { PositiveInteger, isPositiveInteger } from "../src/numeric";
+import {expect} from 'chai';
+import {PositiveInteger, isPositiveInteger} from '../src/numeric';
 
+describe('isPositiveInteger', () => {
+  [0, 5].forEach(value =>
+    it(`accepts positive integers (${value})`, () => {
+      expect(isPositiveInteger(value)).to.be.true;
+    })
+  );
 
-describe( 'isPositiveInteger', () =>
-{
-    [
-        0,
-        5,
-    ].forEach( value => it( `accepts positive integers (${value})`, () =>
-    {
-        expect( isPositiveInteger( value ) ).to.be.true;
-    } ) );
+  [-1, -5].forEach(value =>
+    it(`rejects negative integers (${value})`, () => {
+      expect(isPositiveInteger(value)).to.be.false;
+    })
+  );
 
+  it('asserts type PositiveInteger', () => {
+    const n = 5;
 
-    [
-        -1,
-        -5,
-    ].forEach( value => it( `rejects negative integers (${value})`, () =>
-    {
-        expect( isPositiveInteger( value ) ).to.be.false;
-    } ) );
+    if (isPositiveInteger(n)) {
+      // TS should recognize as PositiveInteger within this block
+      checkPositiveInteger(n);
+    }
+  });
+});
 
-
-    it( "asserts type PositiveInteger", () =>
-    {
-        const n = 5;
-
-        if ( isPositiveInteger( n ) )
-        {
-            // TS should recognize as PositiveInteger within this block
-            checkPositiveInteger( n );
-        }
-    } );
-} );
-
-
-const checkPositiveInteger = ( _n: PositiveInteger ): void => {};
+const checkPositiveInteger = (_n: PositiveInteger): void => {};

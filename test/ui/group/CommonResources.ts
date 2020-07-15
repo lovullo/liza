@@ -19,147 +19,136 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const sinon = require( 'sinon' );
+const sinon = require('sinon');
 
-export const createContainer = () =>
-{
-    const container = {
-        querySelectorAll: sinon.stub(),
-        querySelector: sinon.stub()
-    };
+export const createContainer = () => {
+  const container = {
+    querySelectorAll: sinon.stub(),
+    querySelector: sinon.stub(),
+  };
 
-    const dlist = {
-        parentNode: { removeChild: () => {} }
-    };
+  const dlist = {
+    parentNode: {removeChild: () => {}},
+  };
 
-    container.querySelector
-        .withArgs( 'dl' )
-        .returns( dlist );
+  container.querySelector.withArgs('dl').returns(dlist);
 
-    return container;
+  return container;
 };
 
-export const createContent = () =>
-{
-    return {
-        querySelector: sinon.stub(),
-        querySelectorAll: sinon.stub(),
-        getAttribute: sinon.stub().returns( 'foo' ),
-        classList: createClassList(),
-        addEventListener: sinon.stub()
-    };
-}
+export const createContent = () => {
+  return {
+    querySelector: sinon.stub(),
+    querySelectorAll: sinon.stub(),
+    getAttribute: sinon.stub().returns('foo'),
+    classList: createClassList(),
+    addEventListener: sinon.stub(),
+  };
+};
 
-export const createBoxContent = () =>
-{
-    const content = createContent();
+export const createBoxContent = () => {
+  const content = createContent();
 
-    content.querySelector = () => createContent();
+  content.querySelector = () => createContent();
 
-    return content;
-}
+  return content;
+};
 
-export const createContext = () =>
-{
-    return {
-        createFieldCache:   () => {},
-        detachFields:       () => {},
-        detachStoreContent: () => {},
-        hide:               () => {},
-        init:               () => {},
-        setOptions:         () => {},
-        setValueByName:     () => {},
-        show:               () => {}
-    };
-}
+export const createContext = () => {
+  return {
+    createFieldCache: () => {},
+    detachFields: () => {},
+    detachStoreContent: () => {},
+    hide: () => {},
+    init: () => {},
+    setOptions: () => {},
+    setValueByName: () => {},
+    show: () => {},
+  };
+};
 
-export const createField = () => { return {}; };
+export const createField = () => {
+  return {};
+};
 
 export const createGroup = (
-    field_name: any,
-    fields: any[] = [],
-    cmatch_fields: any[] = [],
-    is_internal: boolean = true
-) =>
-{
-    return {
-        getIndexFieldName: sinon.stub().returns( field_name ),
-        getUserFieldNames: sinon.stub().returns( fields ),
-        getExclusiveFieldNames: sinon.stub().returns( fields ),
-        getExclusiveCmatchFieldNames: sinon.stub().returns( cmatch_fields ),
-        isInternal: sinon.stub().returns( is_internal ),
-    };
+  field_name: any,
+  fields: any[] = [],
+  cmatch_fields: any[] = [],
+  is_internal: boolean = true
+) => {
+  return {
+    getIndexFieldName: sinon.stub().returns(field_name),
+    getUserFieldNames: sinon.stub().returns(fields),
+    getExclusiveFieldNames: sinon.stub().returns(fields),
+    getExclusiveCmatchFieldNames: sinon.stub().returns(cmatch_fields),
+    isInternal: sinon.stub().returns(is_internal),
+  };
 };
 
-export const createJqueryContent = () =>
-{
-    return {
-        hide: sinon.stub(),
-        find: sinon.stub().returns( { live: sinon.stub() } ),
-        0: getDomElement(),
-        attr: sinon.stub()
-    }
-}
-
-export const getDomElement = () =>
-{
-    return {
-        getAttribute: sinon.stub().returns( 'foo' ),
-        querySelector: () => {
-            return { classList: createClassList() }
-        },
-        classList: createClassList()
-    }
+export const createJqueryContent = () => {
+  return {
+    hide: sinon.stub(),
+    find: sinon.stub().returns({live: sinon.stub()}),
+    0: getDomElement(),
+    attr: sinon.stub(),
+  };
 };
 
-export const createFeatureFlag = () =>
-{
-    return {
-        isEnabled: ( _: any ) => { return false; }
-    };
-}
-
-export const createClassList = () =>
-{
-    return {
-        contains: sinon.stub().returns( false ),
-        add: sinon.stub(),
-        remove: sinon.stub()
-    }
+export const getDomElement = () => {
+  return {
+    getAttribute: sinon.stub().returns('foo'),
+    querySelector: () => {
+      return {classList: createClassList()};
+    },
+    classList: createClassList(),
+  };
 };
 
-export const createQuote = () =>
-{
-    return {
-        on: sinon.stub(),
-        onClassifyAndNow: sinon.stub(),
-        visitData: sinon.stub(),
-        setData: sinon.stub(),
-        getDataByName: sinon.stub()
-    };
-}
-
-export const createStateManager = () =>
-{
-    return {
-        is: sinon.stub(),
-        observes: sinon.stub(),
-        processDataAttributes: sinon.stub()
-    }
+export const createFeatureFlag = () => {
+  return {
+    isEnabled: (_: any) => {
+      return false;
+    },
+  };
 };
 
-export const createRContext = () =>
-{
-    return {
-        getFieldByName: () =>
-        {
-            return {
-                revokeStyle: () => {},
-                applyStyle:  () => {},
-            }
-        }
-    };
-}
+export const createClassList = () => {
+  return {
+    contains: sinon.stub().returns(false),
+    add: sinon.stub(),
+    remove: sinon.stub(),
+  };
+};
+
+export const createQuote = () => {
+  return {
+    on: sinon.stub(),
+    onClassifyAndNow: sinon.stub(),
+    visitData: sinon.stub(),
+    setData: sinon.stub(),
+    getDataByName: sinon.stub(),
+  };
+};
+
+export const createStateManager = () => {
+  return {
+    is: sinon.stub(),
+    observes: sinon.stub(),
+    processDataAttributes: sinon.stub(),
+  };
+};
+
+export const createRContext = () => {
+  return {
+    getFieldByName: () => {
+      return {
+        revokeStyle: () => {},
+        applyStyle: () => {},
+      };
+    },
+  };
+};
 
 /**
  * Create new SUT
@@ -169,28 +158,27 @@ export const createRContext = () =>
  *
  * @return system under test
  */
-export const createSut = ( Sut: any, input: any = {} ) =>
-{
-    const $content      = input.$content ?? createJqueryContent();
-    const field         = input.field ?? createField();
-    const group         = input.group ?? createGroup( field );
-    const content       = input.content ?? createContent();
-    const jquery        = sinon.stub().withArgs( content ).returns( $content );
-    const context       = input.context ?? createContext();
-    const rcontext      = input.rcontext ?? createRContext();
-    const feature_flag  = input.feature_flag ?? createFeatureFlag();
-    const styler        = input.styler ?? null;
-    const state_manager = input.state_manager ?? createStateManager();
+export const createSut = (Sut: any, input: any = {}) => {
+  const $content = input.$content ?? createJqueryContent();
+  const field = input.field ?? createField();
+  const group = input.group ?? createGroup(field);
+  const content = input.content ?? createContent();
+  const jquery = sinon.stub().withArgs(content).returns($content);
+  const context = input.context ?? createContext();
+  const rcontext = input.rcontext ?? createRContext();
+  const feature_flag = input.feature_flag ?? createFeatureFlag();
+  const styler = input.styler ?? null;
+  const state_manager = input.state_manager ?? createStateManager();
 
-    return Sut(
-        group,
-        content,
-        styler,
-        jquery,
-        context,
-        rcontext,
-        null,
-        feature_flag,
-        state_manager
-    );
-}
+  return Sut(
+    group,
+    content,
+    styler,
+    jquery,
+    context,
+    rcontext,
+    null,
+    feature_flag,
+    state_manager
+  );
+};

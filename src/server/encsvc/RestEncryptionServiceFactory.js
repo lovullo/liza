@@ -19,28 +19,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-
-    Service  = require( './EncryptionService' ),
-    Transfer = require( './HttpEncryptionServiceTransfer' );
-
+var Class = require('easejs').Class,
+  Service = require('./EncryptionService'),
+  Transfer = require('./HttpEncryptionServiceTransfer');
 
 /**
  * Factory for creating a client to a RESTful encryption service
  */
-module.exports = Class( 'RestEncryptionServiceFactory',
-{
-    /**
-     * Creates a new encryption service
-     *
-     * @param {string} host service host
-     * @param {number} port service port
-     *
-     * @return {EncryptionService}
-     */
-    'public create': function( host, port )
-    {
-        return Service( Transfer( host, port ) );
-    },
-} );
-
+module.exports = Class('RestEncryptionServiceFactory', {
+  /**
+   * Creates a new encryption service
+   *
+   * @param {string} host service host
+   * @param {number} port service port
+   *
+   * @return {EncryptionService}
+   */
+  'public create': function (host, port) {
+    return Service(Transfer(host, port));
+  },
+});

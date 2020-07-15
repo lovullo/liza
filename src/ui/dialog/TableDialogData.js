@@ -19,8 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Provides data to TableDialog for styling
@@ -29,21 +28,18 @@ var Interface = require( 'easejs' ).Interface;
  * interface that allows any arbitrary table. It could probably be implemented
  * atop of the new DataApi in Liza.
  */
-module.exports = Interface( 'TableDialogData',
-{
-    /**
-     * Retrieve table column titles
-     *
-     * @return {Array.<string>} array of column titles
-     */
-    'public getColumnTitles': [ 'callback' ],
+module.exports = Interface('TableDialogData', {
+  /**
+   * Retrieve table column titles
+   *
+   * @return {Array.<string>} array of column titles
+   */
+  'public getColumnTitles': ['callback'],
 
-
-    /**
-     * Retrieve a list of rows
-     *
-     * @return {Array.<Array>} array of row data
-     */
-    'public getRows': [ 'callback' ]
-} );
-
+  /**
+   * Retrieve a list of rows
+   *
+   * @return {Array.<Array>} array of row data
+   */
+  'public getRows': ['callback'],
+});

@@ -19,67 +19,63 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { StagingBucket } from "../bucket/StagingBucket";
-import { PositiveInteger } from "../numeric";
-import { CmatchData} from "../client/Cmatch";
-import { DataApiResult } from "../dapi/DataApi";
+import {StagingBucket} from '../bucket/StagingBucket';
+import {PositiveInteger} from '../numeric';
+import {CmatchData} from '../client/Cmatch';
+import {DataApiResult} from '../dapi/DataApi';
 
 export type DataApiDefinitions = any;
-export type ClassificationResult = { [ index: string ]: any };
+export type ClassificationResult = {[index: string]: any};
 export type ClassificationRetain = Record<string, any>;
 export type QuestionTypes = Record<string, any>;
 export type AnswerRefs = Record<string, string>;
 
-export declare abstract class Program
-{
-    readonly ineligibleLockCount: number;
+export declare abstract class Program {
+  readonly ineligibleLockCount: number;
 
-    cretain: ClassificationRetain;
+  cretain: ClassificationRetain;
 
-    apis: DataApiDefinitions;
+  apis: DataApiDefinitions;
 
-    internal: Record<string, boolean>;
+  internal: Record<string, boolean>;
 
-    autosave: boolean;
+  autosave: boolean;
 
+  meta: {
+    arefs: AnswerRefs;
+    fields: Record<string, any>;
+    groups: Record<string, {min: PositiveInteger; max: PositiveInteger}>;
+    qdata: Record<string, Record<string, string>>;
+    qtypes: QuestionTypes;
+  };
 
-    meta: {
-        arefs:  AnswerRefs,
-        fields: Record<string, any>,
-        groups: Record<string, { min: PositiveInteger, max: PositiveInteger }>,
-        qdata:  Record<string, Record<string, string>>,
-        qtypes: QuestionTypes
-    };
+  mapis: Record<string, string[]>;
 
-    mapis: Record<string, string[]>;
+  rateSteps: boolean[];
 
-    rateSteps: boolean[];
+  getId(): string;
 
-    getId(): string;
+  /**
+   * Data API
+   */
+  dapi(
+    step_id: PositiveInteger,
+    name: string,
+    bucket: StagingBucket,
+    diff: Record<string, any>,
+    cmatch: CmatchData,
+    callback: (() => void) | null
+  ): DataApiResult;
 
-    /**
-     * Data API
-     */
-    dapi(
-        step_id: PositiveInteger,
-        name: string,
-        bucket: StagingBucket,
-        diff: Record<string, any>,
-        cmatch: CmatchData,
-        callback: ( () => void ) | null
-    ): DataApiResult;
+  initQuote(bucket: StagingBucket, store_only: boolean): void;
 
-    initQuote( bucket: StagingBucket, store_only: boolean ): void;
+  /**
+   * Get known classifier fields
+   */
+  getClassifierKnownFields(): ClassificationResult;
 
-
-    /**
-     * Get known classifier fields
-     */
-    getClassifierKnownFields(): ClassificationResult;
-
-
-    /**
-     * Classify the given bucket data
-     */
-    classify( data: Record<string, any> ): ClassificationResult;
+  /**
+   * Classify the given bucket data
+   */
+  classify(data: Record<string, any>): ClassificationResult;
 }

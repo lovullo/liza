@@ -19,134 +19,76 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var liza = require('../../../'),
+  Sut = liza.validate.formatter.UnorderedList,
+  EchoFormatter = liza.validate.formatter.EchoFormatter,
+  common = require('./common');
 
-var liza          = require( '../../../' ),
-    Sut           = liza.validate.formatter.UnorderedList,
-    EchoFormatter = liza.validate.formatter.EchoFormatter,
-    common        = require( './common' );
+describe('UnorderedList', function () {
+  common.testValidate(EchoFormatter.use(Sut)(), {
+    '': ['', ''],
+    'no semi': ['no semi', '<ul><li>no semi</li></ul>'],
 
+    'semi; colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi;colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi;   colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi   ;   colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi   ;colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi;;;colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    'semi ; ;; colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    ';semi;colon': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    ';semi': ['semi', '<ul><li>semi</li></ul>'],
+    '  ;   semi': ['semi', '<ul><li>semi</li></ul>'],
+    'semi;colon;': ['semi; colon', '<ul><li>semi</li><li>colon</li></ul>'],
+    ';semi;': ['semi', '<ul><li>semi</li></ul>'],
+    'semi;': ['semi', '<ul><li>semi</li></ul>'],
+    'semi  ;  ': ['semi', '<ul><li>semi</li></ul>'],
+    ';': ['', ''],
+    '  ;  ': ['', ''],
 
-describe( 'UnorderedList', function()
-{
-    common.testValidate( EchoFormatter.use( Sut )(), {
-        "":        [ "",        "" ],
-        "no semi": [ "no semi", "<ul><li>no semi</li></ul>" ],
+    // single
+    '<ul><li>no semi</li></ul>': ['no semi', '<ul><li>no semi</li></ul>'],
+    // multi
+    '<ul><li>semi</li><li>colon</li></ul>': [
+      'semi; colon',
+      '<ul><li>semi</li><li>colon</li></ul>',
+    ],
+    // ensure that all li elements are replaced globally
+    '<ul><li>foo</li><li>bar</li><li>baz</li></ul>': [
+      'foo; bar; baz',
+      '<ul><li>foo</li><li>bar</li><li>baz</li></ul>',
+    ],
+    // extra whitespace
+    '  <ul><li>semi  </li>  <li>colon  </li></ul>  ': [
+      'semi; colon',
+      '<ul><li>semi</li><li>colon</li></ul>',
+    ],
+    // malformed
+    '  <li>semi  </li>  <li>colon  </li></ul>  ': [
+      'semi; colon',
+      '<ul><li>semi</li><li>colon</li></ul>',
+    ],
+    // malformed
+    '  <li>no semi  </li>  <li>': ['no semi', '<ul><li>no semi</li></ul>'],
+    // empty node
+    '<ul><li>no semi</li><li></li></ul>': [
+      'no semi',
+      '<ul><li>no semi</li></ul>',
+    ],
 
-        "semi; colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi;colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi;   colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi   ;   colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi   ;colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi;;;colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        "semi ; ;; colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        ";semi;colon": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        ";semi": [
-            "semi",
-            "<ul><li>semi</li></ul>"
-        ],
-        "  ;   semi": [
-            "semi",
-            "<ul><li>semi</li></ul>"
-        ],
-        "semi;colon;": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        ";semi;": [
-            "semi",
-            "<ul><li>semi</li></ul>"
-        ],
-        "semi;": [
-            "semi",
-            "<ul><li>semi</li></ul>"
-        ],
-        "semi  ;  ": [
-            "semi",
-            "<ul><li>semi</li></ul>"
-        ],
-        ";": [
-            "",
-            ""
-        ],
-        "  ;  ": [
-            "",
-            ""
-        ],
+    // implementation consequence; no way to escape a semicolon
+    '<ul><li>semi;colon</li></ul>': [
+      'semi; colon',
+      '<ul><li>semi</li><li>colon</li></ul>',
+    ],
+  });
 
-        // single
-        "<ul><li>no semi</li></ul>": [
-            "no semi",
-            "<ul><li>no semi</li></ul>"
-        ],
-        // multi
-        "<ul><li>semi</li><li>colon</li></ul>": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        // ensure that all li elements are replaced globally
-        "<ul><li>foo</li><li>bar</li><li>baz</li></ul>": [
-            "foo; bar; baz",
-            "<ul><li>foo</li><li>bar</li><li>baz</li></ul>"
-        ],
-        // extra whitespace
-        "  <ul><li>semi  </li>  <li>colon  </li></ul>  ": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        // malformed
-        "  <li>semi  </li>  <li>colon  </li></ul>  ": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-        // malformed
-        "  <li>no semi  </li>  <li>": [
-            "no semi",
-            "<ul><li>no semi</li></ul>"
-        ],
-        // empty node
-        "<ul><li>no semi</li><li></li></ul>": [
-            "no semi",
-            "<ul><li>no semi</li></ul>"
-        ],
-
-        // implementation consequence; no way to escape a semicolon
-        "<ul><li>semi;colon</li></ul>": [
-            "semi; colon",
-            "<ul><li>semi</li><li>colon</li></ul>"
-        ],
-    } );
-
-
-    common.testMixin(
-        EchoFormatter,
-        Sut,
-        'foo;',
-        'bar',
-        'foo; bar',
-        '<ul><li>foo</li><li>bar</li></ul>'
-    );
-} );
+  common.testMixin(
+    EchoFormatter,
+    Sut,
+    'foo;',
+    'bar',
+    'foo; bar',
+    '<ul><li>foo</li><li>bar</li></ul>'
+  );
+});

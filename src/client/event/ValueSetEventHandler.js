@@ -19,25 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const Class             = require( 'easejs' ).Class;
-const EventHandler      = require( './EventHandler' );
-
+const Class = require('easejs').Class;
+const EventHandler = require('./EventHandler');
 
 /**
  * Set field values
  */
-module.exports = Class( 'ValueSetEventHandler' )
-    .implement( EventHandler )
-    .extend(
-{
+module.exports = Class('ValueSetEventHandler')
+  .implement(EventHandler)
+  .extend({
     /**
      * Client
      * @type {Client}
      */
     'private _client': null,
-
 
     /**
      * Initialize with client
@@ -48,11 +45,9 @@ module.exports = Class( 'ValueSetEventHandler' )
      *
      * @param {Client} client
      */
-    constructor( client )
-    {
-        this._client = client;
+    constructor(client) {
+      this._client = client;
     },
-
 
     /**
      * Set value of specified fields
@@ -68,19 +63,19 @@ module.exports = Class( 'ValueSetEventHandler' )
      * @return {EventHandler} self
      */
     'public handle'(
-        event_id, callback, { elementName: field_name, indexes, value }
-    )
-    {
-        const quote    = this._client.getQuote();
-        const maxi     = value.length - 1;
+      event_id,
+      callback,
+      {elementName: field_name, indexes, value}
+    ) {
+      const quote = this._client.getQuote();
+      const maxi = value.length - 1;
 
-        const set_data = indexes.reduce( ( result, desti ) =>
-        {
-            result[ desti ] = value[ Math.min( desti, maxi ) ];
-            return result;
-        }, [] );
+      const set_data = indexes.reduce((result, desti) => {
+        result[desti] = value[Math.min(desti, maxi)];
+        return result;
+      }, []);
 
-        quote.setData( { [field_name]: set_data } );
-        callback();
+      quote.setData({[field_name]: set_data});
+      callback();
     },
-} );
+  });

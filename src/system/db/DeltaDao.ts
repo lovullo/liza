@@ -27,63 +27,56 @@
  * compatibility with the existing data.
  */
 
-import { DocumentId } from "../../document/Document";
-import { DeltaDocument, DeltaType } from "../../bucket/delta";
-
+import {DocumentId} from '../../document/Document';
+import {DeltaDocument, DeltaType} from '../../bucket/delta';
 
 /** Manage deltas */
-export interface DeltaDao
-{
-    /**
-     * Get documents in need of processing
-     *
-     * @return documents in need of processing
-     */
-    getUnprocessedDocuments(): Promise<DeltaDocument[]>
+export interface DeltaDao {
+  /**
+   * Get documents in need of processing
+   *
+   * @return documents in need of processing
+   */
+  getUnprocessedDocuments(): Promise<DeltaDocument[]>;
 
+  /**
+   * Update the last published timestamp
+   *
+   * @param doc_id - Document to update
+   * @param type   - Delta type
+   * @param ts     - Timestamp to set
+   */
+  setPublishedTs(
+    doc_id: DocumentId,
+    type: DeltaType,
+    ts: UnixTimestamp
+  ): Promise<void>;
 
-    /**
-     * Update the last published timestamp
-     *
-     * @param doc_id - Document to update
-     * @param type   - Delta type
-     * @param ts     - Timestamp to set
-     */
-    setPublishedTs(
-        doc_id: DocumentId,
-        type:   DeltaType,
-        ts:     UnixTimestamp,
-    ): Promise<void>
+  /**
+   * Mark a given document as processed. First does a check to make sure that
+   * the document does not have a newer update timestamp than the provided one
+   *
+   * @param doc_id         - The document to mark
+   * @param last_update_ts - The last time this document was updated
+   */
+  markDocumentAsProcessed(
+    doc_id: DocumentId,
+    last_update_ts: UnixTimestamp
+  ): Promise<void>;
 
+  /**
+   * Flag the document as being in an error state
+   *
+   * @param doc_id - The document to flag
+   *
+   * @return any errors that occurred
+   */
+  setErrorFlag(doc_id: DocumentId): Promise<void>;
 
-    /**
-     * Mark a given document as processed. First does a check to make sure that
-     * the document does not have a newer update timestamp than the provided one
-     *
-     * @param doc_id         - The document to mark
-     * @param last_update_ts - The last time this document was updated
-     */
-    markDocumentAsProcessed(
-        doc_id:          DocumentId,
-        last_update_ts:  UnixTimestamp,
-    ): Promise<void>
-
-
-    /**
-     * Flag the document as being in an error state
-     *
-     * @param doc_id - The document to flag
-     *
-     * @return any errors that occurred
-     */
-    setErrorFlag( doc_id: DocumentId ): Promise<void>
-
-
-    /**
-     * Get a count of documents in an error state
-     *
-     * @return a count of the documents in an error state
-     */
-    getErrorCount(): Promise<number>
+  /**
+   * Get a count of documents in an error state
+   *
+   * @return a count of the documents in an error state
+   */
+  getErrorCount(): Promise<number>;
 }
-

@@ -21,94 +21,70 @@
 
 'use strict';
 
-const chai   = require( 'chai' );
+const chai = require('chai');
 const expect = chai.expect;
 
-chai.use( require( 'chai-as-promised' ) );
+chai.use(require('chai-as-promised'));
 
-const {
-    AutoObjectStore: Sut,
-    MemoryStore:     Store,
-} = require( '../../' ).store;
+const {AutoObjectStore: Sut, MemoryStore: Store} = require('../../').store;
 
+describe('AutoObjectStore', () => {
+  describe('given an object value', () => {
+    it('applies given ctor to objects', () => {
+      const obj = Store();
+      const dummy_ctor = () => obj;
+      const sut = Store.use(Sut(dummy_ctor))();
 
+      const foo = sut.add('foo', {}).then(_ => sut.get('foo'));
 
-describe( 'AutoObjectStore', () =>
-{
-    describe( "given an object value", () =>
-    {
-        it( "applies given ctor to objects", () =>
-        {
-            const obj        = Store();
-            const dummy_ctor = () => obj;
-            const sut        = Store.use( Sut( dummy_ctor ) )();
+      return expect(foo).to.eventually.deep.equal(obj);
+    });
 
-            const foo = sut
-                .add( 'foo', {} )
-                .then( _ => sut.get( 'foo' ) );
+    it('adds object values to new store', () => {
+      const obj = {bar: 'baz'};
+      const sut = Store.use(Sut(Store))();
 
-            return expect( foo )
-                .to.eventually.deep.equal( obj );
-        } );
+      const bar = sut
+        .add('foo', obj)
+        .then(_ => sut.get('foo'))
+        .then(substore => substore.get('bar'));
 
+      return expect(bar).to.eventually.equal(obj.bar);
+    });
 
-        it( "adds object values to new store", () =>
-        {
-            const obj = { bar: "baz" };
-            const sut = Store.use( Sut( Store ) )();
+    it('caches sub-store until key changes', () => {
+      const obj = {};
+      const sut = Store.use(Sut(Store))();
 
-            const bar = sut
-                .add( 'foo', obj )
-                .then( _ => sut.get( 'foo' ) )
-                .then( substore => substore.get( 'bar' ) );
+      return sut
+        .add('foo', {})
+        .then(_ => sut.get('foo'))
+        .then(store1 =>
+          expect(sut.get('foo'))
+            .to.eventually.equal(store1)
+            .then(_ => sut.add('foo', 'new'))
+            .then(_ => sut.get('foo'))
+            .then(store2 => expect(store2).to.not.equal(store1))
+        );
+    });
+  });
 
-            return expect( bar ).to.eventually.equal( obj.bar );
-        } );
+  it('leaves non-objects untouched', () => {
+    const expected = 'bar';
+    const sut = Store.use(Sut(() => null))();
 
+    const foo = sut.add('foo', expected).then(_ => sut.get('foo'));
 
-        it( "caches sub-store until key changes", () =>
-        {
-            const obj = {};
-            const sut = Store.use( Sut( Store ) )();
+    return expect(foo).to.eventually.equal(expected);
+  });
 
-            return sut
-                .add( 'foo', {} )
-                .then( _ => sut.get( 'foo' ) )
-                .then( store1 =>
-                    expect( sut.get( 'foo' ) ).to.eventually.equal( store1 )
-                        .then( _ => sut.add( 'foo', "new" ) )
-                        .then( _ => sut.get( 'foo' ) )
-                        .then( store2 =>
-                            expect( store2 ).to.not.equal( store1 )
-                        )
-                );
-          } );
-    } );
+  // includes class instances, since easejs generates prototypes
+  it('leaves prototype instances untouched', () => {
+    const expected = new (function () {})();
+    const sut = Store.use(Sut(() => null))();
 
+    const foo = sut.add('foo', expected).then(_ => sut.get('foo'));
 
-    it( "leaves non-objects untouched", () =>
-    {
-        const expected = "bar";
-        const sut = Store.use( Sut( () => null ) )();
-
-        const foo = sut
-            .add( 'foo', expected )
-            .then( _ => sut.get( 'foo' ) );
-
-        return expect( foo ).to.eventually.equal( expected );
-    } );
-
-
-    // includes class instances, since easejs generates prototypes
-    it( "leaves prototype instances untouched", () =>
-    {
-        const expected = ( new function() {} );
-        const sut = Store.use( Sut( () => null ) )();
-
-        const foo = sut
-            .add( 'foo', expected )
-            .then( _ => sut.get( 'foo' ) );
-
-        return expect( foo ).to.eventually.equal( expected );
-    } );
-} );
+    return expect(foo).to.eventually.equal(expected);
+  });
+});

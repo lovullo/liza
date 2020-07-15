@@ -19,24 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Represents a strategy used to request data from a RESTful service
  *
  * Such may be used to implement GET, POST, PUT, DELETE, etc.
  */
-module.exports = Interface( 'RestDataApiStrategy',
-{
-    /**
-     * Request data from the service
-     *
-     * @param {Object}           data     request params
-     * @param {function(Object)} callback server response callback
-     *
-     * @return {RestDataApi} self
-     */
-    'public requestData': [ 'url', 'data', 'callback' ]
-} );
-
+module.exports = Interface('RestDataApiStrategy', {
+  /**
+   * Request data from the service
+   *
+   * @param {Object}           data     request params
+   * @param {function(Object)} callback server response callback
+   *
+   * @return {RestDataApi} self
+   */
+  'public requestData': ['url', 'data', 'callback'],
+});

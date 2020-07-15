@@ -21,210 +21,193 @@
 
 'use strict';
 
-const root   = require( '../../..' );
-const Sut    = require( '../../..' ).server.quote.ServerSideQuote;
-const expect = require( 'chai' ).expect;
-const sinon  = require( 'sinon' );
+const root = require('../../..');
+const Sut = require('../../..').server.quote.ServerSideQuote;
+const expect = require('chai').expect;
+const sinon = require('sinon');
 
-const {
-    QuoteDataBucket,
-} = root.bucket;
+const {QuoteDataBucket} = root.bucket;
 
-describe( 'ServerSideQuote', () =>
-{
-    describe( 'accessors & mutators', () =>
-    {
-        [
-            {
-                property: 'startDate',
-                default:  0,
-                value:    946684800
-            },
-            {
-                property: 'initialRatedDate',
-                default:  0,
-                value:    946684800
-            },
-            {
-                property: 'agentId',
-                default:  0,
-                value:    12345678
-            },
-            {
-                property: 'agentEntityId',
-                default:  0,
-                value:    12345678
-            },
-            {
-                property: 'agentName',
-                default:  '',
-                value:    'name'
-            },
-            {
-                property: 'imported',
-                default:  false,
-                value:    true,
-                accessor: 'is'
-            },
-            {
-                property: 'bound',
-                default:  false,
-                value:    true,
-                accessor: 'is'
-            },
-            {
-                property: 'currentStepId',
-                default:  1,
-                value:    2
-            },
-            {
-                property: 'topVisitedStepId',
-                default:  1,
-                value:    2
-            },
-            {
-                property: 'topSavedStepId',
-                value:    1
-            },
-            {
-                property: 'error',
-                default:  '',
-                value:    'ERROR'
-            },
-            {
-                property: 'programVersion',
-                default:  '',
-                value:    '1.0.0'
-            },
-            {
-                property: 'creditScoreRef',
-                default:  0,
-                value:    800
-            },
-            {
-                property: 'lastPremiumDate',
-                default:  0,
-                value:    946684800
-            },
-            {
-                property: 'ratedDate',
-                default:  0,
-                value:    946684800
-            },
-            {
-                property: 'rateBucket',
-                default:  null,
-                value:    QuoteDataBucket()
-            },
+describe('ServerSideQuote', () => {
+  describe('accessors & mutators', () => {
+    [
+      {
+        property: 'startDate',
+        default: 0,
+        value: 946684800,
+      },
+      {
+        property: 'initialRatedDate',
+        default: 0,
+        value: 946684800,
+      },
+      {
+        property: 'agentId',
+        default: 0,
+        value: 12345678,
+      },
+      {
+        property: 'agentEntityId',
+        default: 0,
+        value: 12345678,
+      },
+      {
+        property: 'agentName',
+        default: '',
+        value: 'name',
+      },
+      {
+        property: 'imported',
+        default: false,
+        value: true,
+        accessor: 'is',
+      },
+      {
+        property: 'bound',
+        default: false,
+        value: true,
+        accessor: 'is',
+      },
+      {
+        property: 'currentStepId',
+        default: 1,
+        value: 2,
+      },
+      {
+        property: 'topVisitedStepId',
+        default: 1,
+        value: 2,
+      },
+      {
+        property: 'topSavedStepId',
+        value: 1,
+      },
+      {
+        property: 'error',
+        default: '',
+        value: 'ERROR',
+      },
+      {
+        property: 'programVersion',
+        default: '',
+        value: '1.0.0',
+      },
+      {
+        property: 'creditScoreRef',
+        default: 0,
+        value: 800,
+      },
+      {
+        property: 'lastPremiumDate',
+        default: 0,
+        value: 946684800,
+      },
+      {
+        property: 'ratedDate',
+        default: 0,
+        value: 946684800,
+      },
+      {
+        property: 'rateBucket',
+        default: null,
+        value: QuoteDataBucket(),
+      },
+    ].forEach(testCase => {
+      const quote = Sut(123, {});
+      const property = testCase.property;
+      const title_cased = property.charAt(0).toUpperCase() + property.slice(1);
+      const setter = (testCase.mutator || 'set') + title_cased;
+      const getter = (testCase.accessor || 'get') + title_cased;
 
-        ].forEach( testCase =>
-        {
-            const quote       = Sut( 123, {} );
-            const property    = testCase.property;
-            const title_cased = property.charAt( 0 ).toUpperCase() + property.slice( 1 );
-            const setter      = ( testCase.mutator || 'set' ) + title_cased;
-            const getter      = ( testCase.accessor || 'get' ) + title_cased;
+      it(property + ' can be mutated and accessed', () => {
+        expect(quote[getter].call(quote)).to.equal(testCase.default);
+        quote[setter].call(quote, testCase.value);
+        expect(quote[getter].call(quote)).to.equal(testCase.value);
+      });
+    });
+  });
 
-            it( property + ' can be mutated and accessed', () =>
-            {
-                expect( quote[getter].call( quote ) ).to.equal( testCase.default );
-                quote[setter].call( quote, testCase.value );
-                expect( quote[getter].call( quote ) ).to.equal( testCase.value );
-            } );
-        } );
-    } );
+  describe('rating data', () => {
+    it(`#setRatingData throws an error if no bucket is set`, () => {
+      const data = {foo: 'bar'};
+      const sut = Sut();
 
-    describe( 'rating data', () =>
-    {
-        it( `#setRatingData throws an error if no bucket is set`, () =>
-        {
-            const data = { foo: 'bar' };
-            const sut  = Sut();
+      expect(function () {
+        sut.setRatingData(data);
+      }).to.throw(Error);
+    });
 
-            expect( function() { sut.setRatingData( data ); } )
-                .to.throw( Error );
-        } );
+    it(`Bucket values setters/getters work correctly`, () => {
+      const data = {foo: 'bar'};
+      let bucket_data = null;
+      const sut = Sut();
+      var called = false;
 
-        it( `Bucket values setters/getters work correctly`, () =>
-        {
-            const data        = { foo: 'bar' };
-            let   bucket_data = null;
-            const sut         = Sut();
-            var   called      = false;
+      const bucket = {
+        setValues(gdata) {
+          expect(gdata).to.deep.equal(data);
 
-            const bucket = {
-                setValues( gdata )
-                {
-                    expect( gdata ).to.deep.equal( data );
+          bucket_data = gdata;
+          called = true;
+        },
 
-                    bucket_data = gdata;
-                    called      = true;
-                },
+        getData() {
+          return bucket_data;
+        },
+      };
 
-                getData()
-                {
-                    return bucket_data;
-                },
-            };
+      sut.setRateBucket(bucket);
+      sut.setRatingData(data);
 
-            sut.setRateBucket( bucket );
-            sut.setRatingData( data );
+      expect(called).to.equal(true);
+    });
+  });
 
-            expect( called ).to.equal( true );
-        } );
-    } );
+  [
+    [
+      'The retry counts are found',
+      {
+        'supplier-a__retry': [0],
+        'supplier-b__retry': [1],
+        'supplier-c__retry': [1],
+        'supplier-d__retry': [0],
+      },
+      {
+        field_count: 4,
+        true_count: 2,
+      },
+    ],
+    [
+      'Nested arrays are handled',
+      {
+        'supplier-a__retry': [0],
+        'supplier-b__retry': [0],
+        'supplier-c__retry': [0],
+        'supplier-d__retry': [[0]],
+      },
+      {
+        field_count: 4,
+        true_count: 0,
+      },
+    ],
+    [
+      'Only counts retries and not other data',
+      {
+        'supplier-a__retry': [0],
+        'supplier-b__retry': [0],
+        'supplier-c__reetry': [1],
+        'supplier-d__retry': [1],
+      },
+      {
+        field_count: 3,
+        true_count: 1,
+      },
+    ],
+  ].forEach(([label, data, expected_count]) => {
+    it(label, () => {
+      const sut = Sut();
 
-    ( [
-        [
-            "The retry counts are found",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 1 ],
-                'supplier-c__retry': [ 1 ],
-                'supplier-d__retry': [ 0 ],
-            },
-            {
-                field_count: 4,
-                true_count:  2,
-            },
-        ],
-        [
-            "Nested arrays are handled",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 0 ],
-                'supplier-c__retry': [ 0 ],
-                'supplier-d__retry': [ [ 0 ] ],
-            },
-            {
-                field_count: 4,
-                true_count:  0,
-            },
-        ],
-        [
-            "Only counts retries and not other data",
-            {
-                'supplier-a__retry': [ 0 ],
-                'supplier-b__retry': [ 0 ],
-                'supplier-c__reetry': [ 1 ],
-                'supplier-d__retry': [ 1 ],
-            },
-            {
-                field_count: 3,
-                true_count:  1,
-            },
-        ],
-    ] ).forEach( ([
-        label,
-        data,
-        expected_count,
-    ]) =>
-    {
-        it( label, () =>
-        {
-            const sut = Sut();
-
-            expect( sut.getRetryCount( data ) ).to.deep.equal( expected_count );
-        } );
-    } );
-} );
+      expect(sut.getRetryCount(data)).to.deep.equal(expected_count);
+    });
+  });
+});

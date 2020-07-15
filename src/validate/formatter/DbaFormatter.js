@@ -19,13 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * DBA names can contain more characters than names of people
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        /^[a-zA-Z0-9 '\.,\-\&\(\):\/]+$/, '$&'
-    ]
-);
-
+module.exports = require('./PatternFormatter')([
+  /^[a-zA-Z0-9 '\.,\-\&\(\):\/]+$/,
+  '$&',
+]);

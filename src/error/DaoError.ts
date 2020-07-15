@@ -22,6 +22,6 @@
  * creating Error subtypes.
  */
 
-const { Class } = require( 'easejs' );
+const {Class} = require('easejs');
 
-export const DaoError = Class( 'DaoError' ).extend( Error, {} );
+export const DaoError = Class('DaoError').extend(Error, {});

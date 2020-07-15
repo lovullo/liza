@@ -19,33 +19,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { WidthAncestorAwareStyler as Sut } from "../../../src/ui/styler/WidthAncestorAwareStyler";
-import { PositiveInteger } from "../../../src/numeric";
-import { expect } from 'chai';
-
+import {WidthAncestorAwareStyler as Sut} from '../../../src/ui/styler/WidthAncestorAwareStyler';
+import {PositiveInteger} from '../../../src/numeric';
+import {expect} from 'chai';
 
 before(function () {
-    this.jsdom = require( 'jsdom-global' )();
+  this.jsdom = require('jsdom-global')();
 
-    Object.defineProperty( HTMLElement.prototype, "offsetWidth", {
-        get: function(){ return 500; },
-    });
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    get: function () {
+      return 500;
+    },
+  });
 });
 
 after(function () {
-    this.jsdom();
+  this.jsdom();
 });
 
-describe( "ui.styler.WidthAncestorAwareStyler", () =>
-{
-    describe ( "style", () =>
-    {
-        it( "sets the width of the element based on its ancestors", () =>
-        {
-            const container = document.createElement( "div" );
+describe('ui.styler.WidthAncestorAwareStyler', () => {
+  describe('style', () => {
+    it('sets the width of the element based on its ancestors', () => {
+      const container = document.createElement('div');
 
-            container.innerHTML =
-                `<div id="ggparent">
+      container.innerHTML = `<div id="ggparent">
                     <div id="gparent">
                         <div id="parent">
                             <div class="foo">
@@ -55,40 +52,35 @@ describe( "ui.styler.WidthAncestorAwareStyler", () =>
                     </div>
                 </div>`;
 
-            const element  = <HTMLElement>container.querySelector( ".foo" );
+      const element = <HTMLElement>container.querySelector('.foo');
 
-            if ( element === null )
-            {
-                throw new Error( "Unable to find element" );
-            }
+      if (element === null) {
+        throw new Error('Unable to find element');
+      }
 
-            const sut = new Sut();
-            sut.style( element, <PositiveInteger> 3 );
+      const sut = new Sut();
+      sut.style(element, <PositiveInteger>3);
 
-            expect( element.style.width ).to.equal( "500px" );
-        } );
+      expect(element.style.width).to.equal('500px');
+    });
 
+    it('does not set width if element has no parent', () => {
+      const container = document.createElement('div');
 
-        it( "does not set width if element has no parent", () =>
-        {
-            const container = document.createElement( "div" );
-
-            container.innerHTML =
-                `<div class="foo">
+      container.innerHTML = `<div class="foo">
                     Foo bar
                 </div>`;
 
-            const element = <HTMLElement>container.querySelector( ".foo" );
+      const element = <HTMLElement>container.querySelector('.foo');
 
-            if ( element === null )
-            {
-                throw new Error( "Unable to find element" );
-            }
+      if (element === null) {
+        throw new Error('Unable to find element');
+      }
 
-            const sut = new Sut();
-            sut.style( element, <PositiveInteger> 2 );
+      const sut = new Sut();
+      sut.style(element, <PositiveInteger>2);
 
-            expect( element.style.width ).to.equal( "" );
-        } )
-    } );
-} );
+      expect(element.style.width).to.equal('');
+    });
+  });
+});

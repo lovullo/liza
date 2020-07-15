@@ -21,196 +21,180 @@
  * Amqp Connection
  */
 
-import { AmqpConnection as Sut } from "../../../src/system/amqp/AmqpConnection";
-import { AmqpConfig } from "../../../src/system/AmqpPublisher";
-import { EventEmitter } from "events";
-import * as amqplib from "amqplib";
+import {AmqpConnection as Sut} from '../../../src/system/amqp/AmqpConnection';
+import {AmqpConfig} from '../../../src/system/AmqpPublisher';
+import {EventEmitter} from 'events';
+import * as amqplib from 'amqplib';
 
-import { expect, use as chai_use } from 'chai';
-chai_use( require( 'chai-as-promised' ) );
+import {expect, use as chai_use} from 'chai';
+chai_use(require('chai-as-promised'));
 
-describe( 'AmqpConnection', () =>
-{
-    describe( '#connect', () =>
-    {
-        it( "fails when exchange cannot be asserted", () =>
-        {
-            const expected_err = new Error( "test failure" );
+describe('AmqpConnection', () => {
+  describe('#connect', () => {
+    it('fails when exchange cannot be asserted', () => {
+      const expected_err = new Error('test failure');
 
-            const mock_channel = <amqplib.Channel>(<unknown>{
-                on:             () => {},
-                assertExchange: () => Promise.reject( expected_err ),
-            } );
+      const mock_channel = <amqplib.Channel>(<unknown>{
+        on: () => {},
+        assertExchange: () => Promise.reject(expected_err),
+      });
 
-            const mock_connection = <amqplib.Connection>(<unknown>{
-                once() {},
+      const mock_connection = <amqplib.Connection>(<unknown>{
+        once() {},
 
-                createChannel() {
-                    return Promise.resolve( mock_channel );
-                },
-            } );
+        createChannel() {
+          return Promise.resolve(mock_channel);
+        },
+      });
 
-            const mock_amqp = <typeof amqplib>(<unknown>{
-                connect() {
-                    return Promise.resolve( mock_connection );
-                }
-            } );
+      const mock_amqp = <typeof amqplib>(<unknown>{
+        connect() {
+          return Promise.resolve(mock_connection);
+        },
+      });
 
-            const emitter = new EventEmitter();
-            const conf    = <AmqpConfig>{};
-            const sut     = new Sut( mock_amqp, conf, emitter );
+      const emitter = new EventEmitter();
+      const conf = <AmqpConfig>{};
+      const sut = new Sut(mock_amqp, conf, emitter);
 
-            return expect( sut.connect() )
-                .to.eventually.be.rejectedWith( expected_err );
-        } );
-    } );
+      return expect(sut.connect()).to.eventually.be.rejectedWith(expected_err);
+    });
+  });
 
+  describe('#reconnect', () => {
+    it('is called when there is an error with the connection', () => {
+      let reconnect_called = false;
 
-    describe( '#reconnect', () =>
-    {
-        it( "is called when there is an error with the connection", () =>
-        {
-            let reconnect_called = false;
+      const mock_channel = <amqplib.Channel>(<unknown>{
+        on: () => {},
+        assertExchange: () => Promise.resolve(),
+      });
 
-            const mock_channel = <amqplib.Channel>(<unknown>{
-                on:             () => {},
-                assertExchange: () => Promise.resolve(),
-            } );
+      const mock_connection = <amqplib.Connection>(
+        Object.create(new EventEmitter())
+      );
 
-            const mock_connection = <amqplib.Connection>Object.create(
-                new EventEmitter()
-            );
+      mock_connection.createChannel = (): any => {
+        return Promise.resolve(mock_channel);
+      };
 
-            mock_connection.createChannel = (): any => {
-                return Promise.resolve( mock_channel );
-            };
+      const mock_amqp = <typeof amqplib>(<unknown>{
+        connect() {
+          return Promise.resolve(mock_connection);
+        },
+      });
 
-            const mock_amqp = <typeof amqplib>(<unknown>{
-                connect() {
-                    return Promise.resolve( mock_connection );
-                }
-            } );
+      const emitter = new EventEmitter();
 
-            const emitter = new EventEmitter();
+      emitter.on('amqp-reconnect', () => {
+        reconnect_called = true;
+      });
 
-            emitter.on( 'amqp-reconnect', () => { reconnect_called = true } );
+      const conf = <AmqpConfig>{};
+      const sut = new Sut(mock_amqp, conf, emitter);
 
-            const conf    = <AmqpConfig>{};
-            const sut     = new Sut( mock_amqp, conf, emitter );
+      const result = sut.connect().then(() => mock_connection.emit('error'));
 
-            const result = sut.connect()
-                                .then( () => mock_connection.emit( 'error' ) )
+      return expect(result)
+        .to.eventually.deep.equal(true)
+        .then(_ => expect(reconnect_called).to.be.true);
+    });
 
-            return expect( result )
-                .to.eventually.deep.equal( true )
-                .then( _ => expect( reconnect_called ).to.be.true );
-        } );
+    it('is called when there is an error with the channel', () => {
+      let reconnect_called = false;
 
+      const mock_channel = <amqplib.Channel>Object.create(new EventEmitter());
 
-        it( "is called when there is an error with the channel", () =>
-        {
-            let reconnect_called = false;
+      mock_channel.assertExchange = (): any => {
+        return Promise.resolve();
+      };
 
-            const mock_channel = <amqplib.Channel>Object.create(
-                new EventEmitter()
-            )
+      const mock_connection = <amqplib.Connection>(
+        Object.create(new EventEmitter())
+      );
 
-            mock_channel.assertExchange = (): any => {
-                return Promise.resolve();
-            };
+      mock_connection.createChannel = (): any => {
+        return Promise.resolve(mock_channel);
+      };
 
-            const mock_connection = <amqplib.Connection>Object.create(
-                new EventEmitter()
-            );
+      const mock_amqp = <typeof amqplib>(<unknown>{
+        connect() {
+          return Promise.resolve(mock_connection);
+        },
+      });
 
-            mock_connection.createChannel = (): any => {
-                return Promise.resolve( mock_channel );
-            };
+      const emitter = new EventEmitter();
 
-            const mock_amqp = <typeof amqplib>(<unknown>{
-                connect() {
-                    return Promise.resolve( mock_connection );
-                }
-            } );
+      emitter.on('amqp-reconnect', () => {
+        reconnect_called = true;
+      });
 
-            const emitter = new EventEmitter();
+      const conf = <AmqpConfig>{};
+      const sut = new Sut(mock_amqp, conf, emitter);
 
-            emitter.on( 'amqp-reconnect', () => { reconnect_called = true } );
+      const result = sut.connect().then(() => mock_channel.emit('close'));
 
-            const conf    = <AmqpConfig>{};
-            const sut     = new Sut( mock_amqp, conf, emitter );
+      return expect(result)
+        .to.eventually.deep.equal(true)
+        .then(_ => expect(reconnect_called).to.be.true);
+    });
 
-            const result = sut.connect()
-                                .then( () => mock_channel.emit( 'close' ) )
+    it('throws an error if it is unable to reconnect', done => {
+      let connect_call_count = 0;
+      let retry_call_count = 0;
 
-            return expect( result )
-                .to.eventually.deep.equal( true )
-                .then( _ => expect( reconnect_called ).to.be.true );
-        } );
+      const mock_channel = <amqplib.Channel>(<unknown>{
+        on: () => {},
+        assertExchange: () => Promise.resolve(),
+      });
 
+      const conn = <amqplib.Connection>Object.create(new EventEmitter());
 
-        it( "throws an error if it is unable to reconnect", done =>
-        {
-            let connect_call_count = 0;
-            let retry_call_count   = 0;
+      conn.createChannel = (): any => {
+        return Promise.resolve(mock_channel);
+      };
 
-            const mock_channel = <amqplib.Channel>(<unknown>{
-                on:             () => {},
-                assertExchange: () => Promise.resolve(),
-            } );
+      const mock_amqp = <typeof amqplib>(<unknown>{
+        connect() {
+          if (connect_call_count++ === 0) {
+            return Promise.resolve(conn);
+          }
 
-            const conn = <amqplib.Connection>Object.create(
-                new EventEmitter()
-            );
+          return Promise.reject(new Error('Foo'));
+        },
+      });
 
-            conn.createChannel = (): any => {
-                return Promise.resolve( mock_channel );
-            };
+      const conf = <AmqpConfig>{
+        retry_wait: 0,
+        retries: 3,
+      };
 
-            const mock_amqp = <typeof amqplib>(<unknown>{
-                connect() {
-                    if ( connect_call_count++ === 0 )
-                    {
-                        return Promise.resolve( conn );
-                    }
+      const sut = new Sut(mock_amqp, conf, new EventEmitter());
 
-                    return Promise.reject( new Error( 'Foo' ) );
-                }
-            } );
+      const old_setTimeout = global.setTimeout;
 
-            const conf = <AmqpConfig>{
-                retry_wait: 0,
-                retries:    3,
-            };
+      global.setTimeout = (cb: (...args: any[]) => void, _: number) => {
+        retry_call_count++;
 
-            const sut = new Sut( mock_amqp, conf, new EventEmitter() );
+        try {
+          cb();
+        } catch (e) {
+          expect(e).to.deep.equal(
+            new Error('Coulds not re-establish AMQP connection.')
+          );
 
-            const old_setTimeout = global.setTimeout;
+          expect(retry_call_count).to.equal(3);
+          expect(connect_call_count).to.equal(4);
 
-            global.setTimeout = ( cb: (...args: any[]) => void, _: number ) =>
-            {
-                retry_call_count++;
+          global.setTimeout = old_setTimeout;
 
-                try { cb() }
-                catch( e )
-                {
-                    expect( e ).to.deep.equal(
-                        new Error( 'Coulds not re-establish AMQP connection.' )
-                    );
+          done();
+        }
 
-                    expect( retry_call_count ).to.equal( 3 );
-                    expect( connect_call_count ).to.equal( 4 );
+        return <NodeJS.Timeout>{};
+      };
 
-                    global.setTimeout = old_setTimeout;
-
-                    done();
-                }
-
-                return <NodeJS.Timeout>{};
-            }
-
-            sut.connect().then( _ => conn.emit( 'error', 'moo' ) );
-        } );
-    } );
-} );
-
+      sut.connect().then(_ => conn.emit('error', 'moo'));
+    });
+  });
+});

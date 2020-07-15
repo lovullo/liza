@@ -22,8 +22,7 @@
 // characters allowed in local-part, omitting dot (some of these are only
 // allowed within quotes, but we're not going to bother convuluting the regex
 // with that)
-var local_chars = '[a-zA-Z0-9!#$%&\'*+/=?^_1{|}~-]';
-
+var local_chars = "[a-zA-Z0-9!#$%&'*+/=?^_1{|}~-]";
 
 /**
  * Validates e-mail addresses
@@ -35,49 +34,43 @@ var local_chars = '[a-zA-Z0-9!#$%&\'*+/=?^_1{|}~-]';
  * permit them, since we make no attempt to support multibyte strings within
  * PHP (and PHP does not support them by default).
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        new RegExp(
-            // begin local-part
-            '^' +
-                // dots cannot be the first character (negative look-ahead does
-                // not consume any chars)
-                '(?!\\.)' +
+module.exports = require('./PatternFormatter')([
+  new RegExp(
+    // begin local-part
+    '^' +
+      // dots cannot be the first character (negative look-ahead does
+      // not consume any chars)
+      '(?!\\.)' +
+      // dots may appear, so long as they are not first or last in
+      // local-part, and mustn't appear more than once consecutively
+      // (this is not terribly efficient, but the local_chars portion
+      // will match 99% of the time, avoiding most penalties...and
+      // we'd be micro-optimizing, consider the use case of this
+      // validator)
+      '(?:' +
+      local_chars +
+      '|\\.(?!\\.)' +
+      ')+' +
+      // Dots may not appear at the end of local-part. The problem
+      // here is that JS does not support negative look-behinds (total
+      // bullshit), so we must use this ugly solution instead.
+      local_chars +
+      // begin domain portion
+      '@' +
+      // Must be a valid hostname and may contain comments in
+      // parenthesis. IPs are technically allowed in brackets, but
+      // we're not going to support that crap.
+      // begins with a letter or a number
+      '[a-zA-Z0-9]+' +
+      // then can have any other acceptable chars
+      '[a-zA-Z0-9-]*' +
+      // and optional subdomains
+      '(?:\\.[a-zA-Z0-9-]+)*' +
+      // TLD
+      '\\.[a-zA-Z]{2,}' +
+      '$'
+  ),
 
-                // dots may appear, so long as they are not first or last in
-                // local-part, and mustn't appear more than once consecutively
-                // (this is not terribly efficient, but the local_chars portion
-                // will match 99% of the time, avoiding most penalties...and
-                // we'd be micro-optimizing, consider the use case of this
-                // validator)
-                '(?:' +
-                    local_chars +
-                    '|\\.(?!\\.)' +
-                ')+' +
-
-                // Dots may not appear at the end of local-part. The problem
-                // here is that JS does not support negative look-behinds (total
-                // bullshit), so we must use this ugly solution instead.
-                local_chars +
-
-            // begin domain portion
-            '@' +
-                // Must be a valid hostname and may contain comments in
-                // parenthesis. IPs are technically allowed in brackets, but
-                // we're not going to support that crap.
-                // begins with a letter or a number
-                '[a-zA-Z0-9]+' +
-                // then can have any other acceptable chars
-                '[a-zA-Z0-9-]*' +
-                // and optional subdomains
-                '(?:\\.[a-zA-Z0-9-]+)*' +
-                // TLD
-                '\\.[a-zA-Z]{2,}' +
-            '$'
-        ),
-
-        // no special formatting will be done
-        '$&'
-    ]
-);
-
+  // no special formatting will be done
+  '$&',
+]);

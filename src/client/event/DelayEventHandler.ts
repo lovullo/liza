@@ -19,52 +19,41 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { EventHandler } from './EventHandler';
-import { ClientAction, ClientActionType } from '../action/ClientAction';
-
+import {EventHandler} from './EventHandler';
+import {ClientAction, ClientActionType} from '../action/ClientAction';
 
 /**
  * Handles delay events
  */
-export class DelayEventHandler implements EventHandler
-{
-    /**
-     * Initializes with client that will delegate the event
-     *
-     * @param _client - client object
-     */
-    constructor( private readonly _client: any ) {}
+export class DelayEventHandler implements EventHandler {
+  /**
+   * Initializes with client that will delegate the event
+   *
+   * @param _client - client object
+   */
+  constructor(private readonly _client: any) {}
 
+  /**
+   * Handles Delay Events
+   *
+   * @param _type - event id; ignored
+   * @param c     - to invoke on completion
+   * @param data  - additional event data
+   */
+  handle(_type: ClientActionType, c: () => void, data: ClientAction): this {
+    const delay_ms = !isNaN(+data.seconds) ? +data.seconds * 1e3 : 0;
 
-    /**
-     * Handles Delay Events
-     *
-     * @param _type - event id; ignored
-     * @param c     - to invoke on completion
-     * @param data  - additional event data
-     */
-    handle(
-        _type: ClientActionType,
-        c:     () => void,
-        data:  ClientAction
-    ): this
-    {
-        const delay_ms = ( !isNaN( +data.seconds ) ) ? +data.seconds * 1e3 : 0;
+    setTimeout(() => {
+      const then_action = data.then.action;
+      const then_data = data.then;
 
-        setTimeout( () =>
-            {
-                const then_action = data.then.action;
-                const then_data   = data.then;
+      // pass along any arbitrary properties assigned to the action
+      // except the action type itself
+      delete then_data.action;
 
-                // pass along any arbitrary properties assigned to the action
-                // except the action type itself
-                delete then_data.action;
+      this._client.handleEvent(then_action, then_data, c);
+    }, delay_ms);
 
-                this._client.handleEvent( then_action, then_data, c );
-            },
-            delay_ms
-        );
-
-        return this;
-    }
-};
+    return this;
+  }
+}

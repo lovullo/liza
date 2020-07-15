@@ -19,28 +19,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AncestorAwareStyler, getNthAncestor } from "./AncestorAwareStyler";
-import { PositiveInteger } from "../../../src/numeric";
-
+import {AncestorAwareStyler, getNthAncestor} from './AncestorAwareStyler';
+import {PositiveInteger} from '../../../src/numeric';
 
 /**
  * Styles an HTML element's width based on an ancestor
  */
-export class WidthAncestorAwareStyler implements AncestorAwareStyler
-{
-    /**
-     * Apply an ancestor's width to the element
-     *
-     * @param element - target element
-     * @param n       - number of generations back
-     */
-    public style( element: HTMLElement, generation: PositiveInteger ): void
-    {
-        const ancestor = getNthAncestor( element, generation );
+export class WidthAncestorAwareStyler implements AncestorAwareStyler {
+  /**
+   * Apply an ancestor's width to the element
+   *
+   * @param element - target element
+   * @param n       - number of generations back
+   */
+  public style(element: HTMLElement, generation: PositiveInteger): void {
+    const ancestor = getNthAncestor(element, generation);
 
-        if ( ancestor !== null )
-        {
-            element.style.width = ancestor.offsetWidth + 'px';
-        }
-    };
+    if (ancestor !== null) {
+      element.style.width = ancestor.offsetWidth + 'px';
+    }
+  }
 }

@@ -19,15 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DataApi, DataApiInput, DataApiResult } from "../../dapi/DataApi";
-import { TokenStore } from "../token/store/TokenStore";
-import { Token, TokenState, TokenNamespace } from "../token/Token";
-import { context } from "../../error/ContextError";
-
+import {DataApi, DataApiInput, DataApiResult} from '../../dapi/DataApi';
+import {TokenStore} from '../token/store/TokenStore';
+import {Token, TokenState, TokenNamespace} from '../token/Token';
+import {context} from '../../error/ContextError';
 
 /** Token store constructor/factory */
-type TokenStoreCtor = ( ns: TokenNamespace ) => TokenStore;
-
+type TokenStoreCtor = (ns: TokenNamespace) => TokenStore;
 
 /**
  * Wrap DataAPI request in a token
@@ -39,130 +37,123 @@ type TokenStoreCtor = ( ns: TokenNamespace ) => TokenStore;
  *
  * TODO: log inputs to token as data?
  */
-export class TokenedDataApi implements DataApi
-{
-    /**
-     * Wrap DataAPI
-     *
-     * The provided DataAPI will be wrapped such that requests will have
-     * tokens created, namespaced to the id of the request.  A token store
-     * will be created using the provided `_tstoreCtor` for each such id.
-     *
-     * @param _api        - DataAPI to decorate
-     * @param _tstoreCtor - `TokenStore` constructor by namespace
-     */
-    constructor(
-        private readonly _api:        DataApi,
-        private readonly _tstoreCtor: TokenStoreCtor
-    ) {}
+export class TokenedDataApi implements DataApi {
+  /**
+   * Wrap DataAPI
+   *
+   * The provided DataAPI will be wrapped such that requests will have
+   * tokens created, namespaced to the id of the request.  A token store
+   * will be created using the provided `_tstoreCtor` for each such id.
+   *
+   * @param _api        - DataAPI to decorate
+   * @param _tstoreCtor - `TokenStore` constructor by namespace
+   */
+  constructor(
+    private readonly _api: DataApi,
+    private readonly _tstoreCtor: TokenStoreCtor
+  ) {}
 
+  /**
+   * Perform request and generate corresponding token
+   *
+   * A token is created before each request using a store initialized to a
+   * namespace identified by `id`.  If a token associated with a request
+   * is still the most recently created token for that namespace by the
+   * time the request completes, then the request is fulfilled as
+   * normal.  But if another request has since been made in the same
+   * namespace, then the request is considered to be superceded, and is
+   * rejected in error.
+   *
+   * The token will be completed in either case so that there is a log of
+   * the transaction.
+   *
+   * @param data     - request data
+   * @param callback - success/failure callback
+   * @param id       - unique dapi identifier
+   *
+   * @return self
+   */
+  request(
+    data: DataApiInput,
+    callback: NodeCallback<DataApiResult>,
+    id: string
+  ): this {
+    const store = this._tstoreCtor(<TokenNamespace>id);
 
-    /**
-     * Perform request and generate corresponding token
-     *
-     * A token is created before each request using a store initialized to a
-     * namespace identified by `id`.  If a token associated with a request
-     * is still the most recently created token for that namespace by the
-     * time the request completes, then the request is fulfilled as
-     * normal.  But if another request has since been made in the same
-     * namespace, then the request is considered to be superceded, and is
-     * rejected in error.
-     *
-     * The token will be completed in either case so that there is a log of
-     * the transaction.
-     *
-     * @param data     - request data
-     * @param callback - success/failure callback
-     * @param id       - unique dapi identifier
-     *
-     * @return self
-     */
-    request(
-        data:     DataApiInput,
-        callback: NodeCallback<DataApiResult>,
-        id:       string
-    ): this
-    {
-        const store = this._tstoreCtor( <TokenNamespace>id );
-
-        // TODO: we should probably store raw data rather than converting it
-        // to JSON
-        store.createToken().then( token =>
-            this._dapiRequest( data, id ).then( resp_data =>
-                store.completeToken( token, JSON.stringify( resp_data ) )
-                    .then( newtok =>
-                           this._replyUnlessStale(
-                               store, newtok, resp_data, callback, id
-                           )
-                    )
-                )
+    // TODO: we should probably store raw data rather than converting it
+    // to JSON
+    store
+      .createToken()
+      .then(token =>
+        this._dapiRequest(data, id).then(resp_data =>
+          store
+            .completeToken(token, JSON.stringify(resp_data))
+            .then(newtok =>
+              this._replyUnlessStale(store, newtok, resp_data, callback, id)
             )
-            .catch( e => callback( e, null ) );
+        )
+      )
+      .catch(e => callback(e, null));
 
-        return this;
+    return this;
+  }
+
+  /**
+   * Wrap underlying DataAPI request in a Promise
+   *
+   * The `DataApi` interface still uses the oldschool Node
+   * callbacks.  This lifts it into a Promise.
+   *
+   * @param data - request data
+   * @param id   - DataAPI id
+   *
+   * @return request as a Promise
+   */
+  private _dapiRequest(data: DataApiInput, id: string): Promise<DataApiResult> {
+    return new Promise((resolve, reject) => {
+      this._api.request(
+        data,
+        (e, resp_data) => {
+          if (e || resp_data === null) {
+            return reject(e);
+          }
+
+          resolve(resp_data);
+        },
+        id
+      );
+    });
+  }
+
+  /**
+   * Invoke callback successfully with data unless the request is stale
+   *
+   * A request is stale/superceded if it is not the most recently created
+   * token for the namespace, implying that another request has since
+   * taken place.
+   *
+   * @param newtok    - completed token
+   * @param resp_data - response data from underlying DataAPI
+   * @param callback  - success/failure callback
+   * @param id        - DataApi id
+   */
+  private _replyUnlessStale(
+    store: TokenStore,
+    newtok: Token<TokenState.DONE>,
+    resp_data: DataApiResult,
+    callback: NodeCallback<DataApiResult>,
+    id: string
+  ): Promise<void> {
+    if (newtok.last_created) {
+      return store
+        .acceptToken(newtok, null)
+        .then(() => callback(null, resp_data));
     }
 
-
-    /**
-     * Wrap underlying DataAPI request in a Promise
-     *
-     * The `DataApi` interface still uses the oldschool Node
-     * callbacks.  This lifts it into a Promise.
-     *
-     * @param data - request data
-     * @param id   - DataAPI id
-     *
-     * @return request as a Promise
-     */
-    private _dapiRequest( data: DataApiInput, id: string ): Promise<DataApiResult>
-    {
-        return new Promise( ( resolve, reject ) =>
-        {
-            this._api.request( data, ( e, resp_data ) =>
-            {
-                if ( e || resp_data === null )
-                {
-                    return reject( e );
-                }
-
-                resolve( resp_data );
-            }, id );
-        } );
-    }
-
-
-    /**
-     * Invoke callback successfully with data unless the request is stale
-     *
-     * A request is stale/superceded if it is not the most recently created
-     * token for the namespace, implying that another request has since
-     * taken place.
-     *
-     * @param newtok    - completed token
-     * @param resp_data - response data from underlying DataAPI
-     * @param callback  - success/failure callback
-     * @param id        - DataApi id
-     */
-    private _replyUnlessStale(
-        store:     TokenStore,
-        newtok:    Token<TokenState.DONE>,
-        resp_data: DataApiResult,
-        callback:  NodeCallback<DataApiResult>,
-        id:        string
-    ): Promise<void>
-    {
-        if ( newtok.last_created )
-        {
-            return store.acceptToken( newtok, null )
-                .then( () => callback( null, resp_data ) );
-        }
-
-        return store.killToken( newtok, null ).then( () => callback(
-            context(
-                Error( "Request superceded" ),
-                { id: id },
-            ),
-            null
-        ) );
-    }
+    return store
+      .killToken(newtok, null)
+      .then(() =>
+        callback(context(Error('Request superceded'), {id: id}), null)
+      );
+  }
 }

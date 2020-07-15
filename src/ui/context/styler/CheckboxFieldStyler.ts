@@ -19,49 +19,43 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { PositiveInteger } from "../../../numeric";
-import { ContextContent } from "../FieldContext";
-import { FieldStyler } from "./FieldStyler";
-
+import {PositiveInteger} from '../../../numeric';
+import {ContextContent} from '../FieldContext';
+import {FieldStyler} from './FieldStyler';
 
 /**
  * Styles checkbox, radio, legacyradio and noyes DOM fields
  */
-export class CheckboxFieldStyler implements FieldStyler
-{
-    /**
-     * Initialize CheckboxFieldStyler
-     *
-     * @param name field name
-     * @param index field index
-     */
-    constructor(
-        protected readonly name: string,
-        protected readonly index: PositiveInteger
-    )
-    {}
+export class CheckboxFieldStyler implements FieldStyler {
+  /**
+   * Initialize CheckboxFieldStyler
+   *
+   * @param name field name
+   * @param index field index
+   */
+  constructor(
+    protected readonly name: string,
+    protected readonly index: PositiveInteger
+  ) {}
 
+  /**
+   * Set value of the checkbox, radio, legacyradio or noyes field
+   *
+   * @param content - field content
+   * @param value - value to set
+   */
+  setValue(content: ContextContent, value: string): void {
+    const elements: NodeList = content.querySelectorAll(
+      `[data-field-name="${this.name}"]`
+    );
 
-    /**
-     * Set value of the checkbox, radio, legacyradio or noyes field
-     *
-     * @param content - field content
-     * @param value - value to set
-     */
-    setValue( content: ContextContent, value: string ): void
-    {
-        const elements: NodeList = content.querySelectorAll( `[data-field-name="${this.name}"]` );
+    let i = elements.length;
+    while (i--) {
+      const question = <HTMLInputElement>elements[i];
 
-        let i = elements.length;
-        while ( i-- )
-        {
-            const question = <HTMLInputElement>elements[ i ];
-
-            if ( question )
-            {
-                question.checked = ( question.value === value );
-            }
-        }
+      if (question) {
+        question.checked = question.value === value;
+      }
     }
-
+  }
 }

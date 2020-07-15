@@ -21,171 +21,150 @@
 
 'use strict';
 
-const { expect } = require( 'chai' );
+const {expect} = require('chai');
 
 const {
-    DelayedStagingBucket: Sut,
-    DelayedRecursionError,
-} = require( '../../' ).bucket;
+  DelayedStagingBucket: Sut,
+  DelayedRecursionError,
+} = require('../../').bucket;
 
+describe('DelayedStagingBucket', () => {
+  it('sets values after stack clears', done => {
+    const name = 'foo';
+    const value = ['value'];
 
-describe( "DelayedStagingBucket", () =>
-{
-    it( "sets values after stack clears", done =>
-    {
-        const name  = 'foo';
-        const value = [ 'value' ];
+    // see end of this test
+    let ready = false;
 
-        // see end of this test
-        let ready = false;
+    const bucket = {
+      on() {},
+
+      setValues(given_data) {
+        // set at the end of the test to ensure that this is
+        // done asynchronously
+        expect(ready).to.be.true;
+
+        expect(given_data).to.deep.equal({[name]: value});
+
+        done();
+      },
+
+      getData: () => ({}),
+    };
+
+    // queue set (should not yet call bucket#setValues)
+    const sut = Sut(bucket).setValues({[name]: value});
+
+    // to write to the underlying bucket, we need to commit, but we
+    // have to do so after the async code runs (we should convert
+    // the SUT to a trait and avoid this madness)
+    setTimeout(() => sut.commit(), 0);
+
+    // we're ready for the set to happen (once the stack clears)
+    ready = true;
+  });
+
+  describe('#getDataByName', () => {
+    [
+      {
+        label: 'processes immediately retrieving modified key',
+        name: 'foo',
+        get_name: 'foo',
+        immediate: true,
+      },
+      {
+        label: 'does not processes immediately retrieving unmodified key',
+        name: 'foo',
+        get_name: 'bar',
+        immediate: false,
+      },
+    ].forEach(({label, name, get_name, immediate}) => {
+      it(label, () => {
+        const value = ['getDataByName value'];
+
+        let called_set = false;
 
         const bucket = {
-            on() {},
+          on() {},
 
-            setValues( given_data )
-            {
-                // set at the end of the test to ensure that this is
-                // done asynchronously
-                expect( ready ).to.be.true;
+          setValues(given_data) {
+            called_set = given_data[name] !== undefined;
+          },
 
-                expect( given_data ).to.deep.equal( { [name]: value } );
-
-                done();
-            },
-
-            getData: () => ( {} ),
+          getData: () => ({}),
         };
 
         // queue set (should not yet call bucket#setValues)
-        const sut = Sut( bucket ).setValues( { [name]: value } );
+        const sut = Sut(bucket).setValues({[name]: value});
 
-        // to write to the underlying bucket, we need to commit, but we
-        // have to do so after the async code runs (we should convert
-        // the SUT to a trait and avoid this madness)
-        setTimeout( () => sut.commit(), 0 );
+        // force processing of data by requesting same value (note that
+        // commit is necessary since the SUT extends StagingBucket)
+        sut.getDataByName(get_name);
+        sut.commit();
 
-        // we're ready for the set to happen (once the stack clears)
-        ready = true;
-    } );
+        expect(called_set).to.equal(immediate);
+      });
+    });
 
+    // Invoking processValues() writes to the underlying bucket which
+    // may cause hooks to be invoked, which in turn may cause the
+    // DelayedStagingBucket to be referenced, which would lead to
+    // infinite recursion.  This doesn't solve that problem, but it does
+    // provide a useful error in case it happens, and preempts the
+    // wasteful recursion which will exhaust the stack.
+    [
+      {
+        n: 1,
+        fail: false,
+      },
+      {
+        n: 3,
+        fail: false,
+      },
+      {
+        n: 5,
+        fail: true,
+      },
+      {
+        n: 7,
+        fail: true,
+      },
+    ].forEach(({n, fail}) => {
+      it(`throws error on deeply recursive processValues (n=${n})`, () => {
+        const name = 'recursive';
+        const value = ['getDataByName value'];
 
-    describe( "#getDataByName", () =>
-    {
-        [
-            {
-                label:     'processes immediately retrieving modified key',
-                name:      'foo',
-                get_name:  'foo',
-                immediate: true,
-            },
-            {
-                label:     'does not processes immediately retrieving unmodified key',
-                name:      'foo',
-                get_name:  'bar',
-                immediate: false,
-            },
-        ].forEach( ( { label, name, get_name, immediate } ) =>
-        {
-            it( label, () =>
-            {
-                const value = [ 'getDataByName value' ];
+        let called_set = false;
 
-                let called_set = false;
+        const bucket = {
+          on() {},
+          setValues(given_data) {},
+          getData: () => ({}),
+        };
 
-                const bucket = {
-                    on() {},
+        // queue set (should not yet call bucket#setValues)
+        const sut = Sut(bucket).setValues({[name]: value});
 
-                    setValues( given_data )
-                    {
-                        called_set = ( given_data[ name ] !== undefined );
-                    },
+        let calln = 0;
 
-                    getData: () => ( {} ),
-                };
+        // this hook will trigger the recursion (the set is required
+        // to start another timer; see #processValues)
+        sut.on('preStagingUpdate', () => {
+          // stop recursing at our goal
+          if (calln++ === n) {
+            return;
+          }
 
-                // queue set (should not yet call bucket#setValues)
-                const sut = Sut( bucket ).setValues( { [name]: value } );
+          sut.setValues({[name]: value}).getDataByName(name);
+        });
 
-                // force processing of data by requesting same value (note that
-                // commit is necessary since the SUT extends StagingBucket)
-                sut.getDataByName( get_name );
-                sut.commit();
-
-                expect( called_set ).to.equal( immediate );
-            } );
-        } );
-
-
-        // Invoking processValues() writes to the underlying bucket which
-        // may cause hooks to be invoked, which in turn may cause the
-        // DelayedStagingBucket to be referenced, which would lead to
-        // infinite recursion.  This doesn't solve that problem, but it does
-        // provide a useful error in case it happens, and preempts the
-        // wasteful recursion which will exhaust the stack.
-        [
-            {
-                n:    1,
-                fail: false,
-            },
-            {
-                n:    3,
-                fail: false,
-            },
-            {
-                n:    5,
-                fail: true,
-            },
-            {
-                n:    7,
-                fail: true,
-            },
-        ].forEach( ( { n, fail } ) =>
-        {
-            it( `throws error on deeply recursive processValues (n=${n})`, () =>
-            {
-                const name  = 'recursive';
-                const value = [ 'getDataByName value' ];
-
-                let called_set = false;
-
-                const bucket = {
-                    on() {},
-                    setValues( given_data ) {},
-                    getData: () => ( {} ),
-                };
-
-                // queue set (should not yet call bucket#setValues)
-                const sut = Sut( bucket ).setValues( { [name]: value } );
-
-                let calln = 0;
-
-                // this hook will trigger the recursion (the set is required
-                // to start another timer; see #processValues)
-                sut.on( 'preStagingUpdate', () =>
-                {
-                    // stop recursing at our goal
-                    if ( calln++ === n )
-                    {
-                        return;
-                    }
-
-                    sut.setValues( { [name]: value } )
-                        .getDataByName( name )
-                } );
-
-                // force processing of data by requesting same value
-                if ( fail )
-                {
-                    expect( () => sut.getDataByName( name ) )
-                        .to.throw( DelayedRecursionError );
-                }
-                else
-                {
-                    expect( () => sut.getDataByName( name ) )
-                        .to.not.throw( Error );
-                }
-            } );
-        } );
-    } );
-} );
-
+        // force processing of data by requesting same value
+        if (fail) {
+          expect(() => sut.getDataByName(name)).to.throw(DelayedRecursionError);
+        } else {
+          expect(() => sut.getDataByName(name)).to.not.throw(Error);
+        }
+      });
+    });
+  });
+});

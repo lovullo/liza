@@ -19,98 +19,87 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
-
+var Class = require('easejs').Class;
 
 /**
  * Logs messages only if they meet the requested priority (allowing for varying
  * levels of verbosity)
  */
-module.exports = Class( 'PriorityLog' )
-    .extend( require( './Log' ),
-{
-    'PRIORITY_ERROR':     0,
-    'PRIORITY_IMPORTANT': 1,
-    'PRIORITY_DB':        2,
-    'PRIORITY_INFO':      3,
-    'PRIORITY_SOCKET':    5,
+module.exports = Class('PriorityLog').extend(require('./Log'), {
+  PRIORITY_ERROR: 0,
+  PRIORITY_IMPORTANT: 1,
+  PRIORITY_DB: 2,
+  PRIORITY_INFO: 3,
+  PRIORITY_SOCKET: 5,
 
-    /**
-     * Highest priority to log
-     * @var Integer
-     */
-    'private _priority': 10,
+  /**
+   * Highest priority to log
+   * @var Integer
+   */
+  'private _priority': 10,
 
+  /**
+   * Initialize logger with filename and priorities to log
+   *
+   * @param String  filename file to log to
+   * @param Integer priority highest priority to log
+   *
+   * @return undefined
+   */
+  'override public __construct': function (filename, priority) {
+    this.priority = +priority || this.priority;
 
-    /**
-     * Initialize logger with filename and priorities to log
-     *
-     * @param String  filename file to log to
-     * @param Integer priority highest priority to log
-     *
-     * @return undefined
-     */
-    'override public __construct': function( filename, priority )
-    {
-        this.priority = +priority || this.priority;
+    // call the parent constructor
+    this.__super(filename);
+  },
 
-        // call the parent constructor
-        this.__super( filename );
-    },
+  /**
+   * Write to the log at the given priority
+   *
+   * If the priority is less than or equal to the set priority for this
+   * object, it will be logged. Otherwise, the message will be ignored.
+   *
+   * The first argument should be the priority. The remaining arguments should
+   * be provided in a sprintf()-style fashion
+   *
+   * @return void
+   */
+  'public log': function () {
+    var args = Array.prototype.slice.call(arguments),
+      priority = +args.shift();
 
+    // don't log if the provided priority is outside the scope that was
+    // requested
+    if (priority > this._priority) {
+      return this;
+    }
 
-    /**
-     * Write to the log at the given priority
-     *
-     * If the priority is less than or equal to the set priority for this
-     * object, it will be logged. Otherwise, the message will be ignored.
-     *
-     * The first argument should be the priority. The remaining arguments should
-     * be provided in a sprintf()-style fashion
-     *
-     * @return void
-     */
-    'public log': function()
-    {
-        var args     = Array.prototype.slice.call( arguments ),
-            priority = +args.shift();
+    // if this was an error, prefix it with the error char (easy grepping)
+    var status_char = ' ';
+    switch (priority) {
+      case this.PRIORITY_IMPORTANT:
+        status_char = '*';
+        break;
 
-        // don't log if the provided priority is outside the scope that was
-        // requested
-        if ( priority > this._priority )
-        {
-            return this;
-        }
+      case this.PRIORITY_ERROR:
+        status_char = '!';
+        break;
 
-        // if this was an error, prefix it with the error char (easy grepping)
-        var status_char = ' ';
-        switch ( priority )
-        {
-            case this.PRIORITY_IMPORTANT:
-                status_char = '*';
-                break;
+      case this.PRIORITY_DB:
+        status_char = '%';
+        break;
 
-            case this.PRIORITY_ERROR:
-                status_char = '!';
-                break;
+      case this.PRIORITY_SOCKET:
+        status_char = '>';
+        break;
+    }
 
-            case this.PRIORITY_DB:
-                status_char = '%';
-                break;
+    // timestamp
+    args[0] = status_char + '[' + new Date().toString() + '] ' + args[0];
 
-            case this.PRIORITY_SOCKET:
-                status_char = '>';
-                break;
-        }
+    // forward to write method
+    this.write.apply(this, args);
 
-        // timestamp
-        args[0] = status_char + '[' + ( new Date() ).toString() + '] ' +
-            args[0];
-
-        // forward to write method
-        this.write.apply( this, args );
-
-        return this;
-    },
-} );
-
+    return this;
+  },
+});

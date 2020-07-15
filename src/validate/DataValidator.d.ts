@@ -31,21 +31,20 @@ export type ValidationFailure = any;
  *
  * TODO: Remove reliance on ClientDependencyFactory
  */
-export declare class DataValidator
-{
-    /**
-     * Validate diff and update field monitor
-     *
-     * If an operation is pending completion, all further requests to this
-     * object will be queued to prevent unexpected/inconsistent system
-     * states and race conditions.
-     *
-     * The external validator `validatef` is a kluge while the system
-     * undergoes refactoring.
-     */
-    validate(
-        diff: DataDiff|undefined,
-        classes: any,
-        validatef?: ( diff: DataDiff, failures: ValidationFailure ) => void
-    ): Promise<any>;
+export declare class DataValidator {
+  /**
+   * Validate diff and update field monitor
+   *
+   * If an operation is pending completion, all further requests to this
+   * object will be queued to prevent unexpected/inconsistent system
+   * states and race conditions.
+   *
+   * The external validator `validatef` is a kluge while the system
+   * undergoes refactoring.
+   */
+  validate(
+    diff: DataDiff | undefined,
+    classes: any,
+    validatef?: (diff: DataDiff, failures: ValidationFailure) => void
+  ): Promise<any>;
 }

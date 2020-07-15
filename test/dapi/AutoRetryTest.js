@@ -19,275 +19,212 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var dapi    = require( '../../' ).dapi,
-    expect  = require( 'chai' ).expect,
-    Class   = require( 'easejs' ).Class,
-    DataApi = dapi.DataApi,
-    Sut     = dapi.AutoRetry;
+var dapi = require('../../').dapi,
+  expect = require('chai').expect,
+  Class = require('easejs').Class,
+  DataApi = dapi.DataApi,
+  Sut = dapi.AutoRetry;
 
-var _void = function() {},
-    _true = function() { return true; };
+var _void = function () {},
+  _true = function () {
+    return true;
+  };
 
+describe('dapi.AutoRetry trait', function () {
+  /**
+   * If there are no retries, then AutoRetry has no observable effects.
+   */
+  describe('when the request does not need retrying', function () {
+    it('makes only one request', function (done) {
+      var given = {};
 
-describe( 'dapi.AutoRetry trait', function()
-{
-    /**
-     * If there are no retries, then AutoRetry has no observable effects.
-     */
-    describe( 'when the request does not need retrying', function()
-    {
-        it( 'makes only one request', function( done )
-        {
-            var given = {};
+      // success (but note the number of retries presented)
+      var stub = _createStub(null, '').use(Sut(_void, 5))();
 
-            // success (but note the number of retries presented)
-            var stub = _createStub( null, '' )
-                .use( Sut( _void, 5 ) )
-                ();
-
-            stub.request( given, function()
-            {
-                expect( stub.given ).to.equal( given );
-                expect( stub.requests ).to.equal( 1 );
-                done();
-            } );
-
-        } );
-
-
-        /**
-         * We expect that any error will be proxied back to us; this is an
-         * important concept, since it allow separating the idea of a
-         * "retry" from that of a "failure": the latter represents a problem
-         * with the request, whereas the former indicates that a request
-         * should be performed once again.
-         */
-        it( 'returns the response data, including any error', function( done )
-        {
-            var chk     = { foo: 'bar' },
-                chk_err = Error( 'foo' );
-
-            var stub = _createStub( chk_err, chk )
-                .use( Sut( _void, 1 ) )
-                ();
-
-            stub.request( '', function( err, data )
-            {
-                expect( err ).to.equal( chk_err );
-                expect( data ).to.equal( chk );
-                done();
-            } );
-        } );
-    } );
-
+      stub.request(given, function () {
+        expect(stub.given).to.equal(given);
+        expect(stub.requests).to.equal(1);
+        done();
+      });
+    });
 
     /**
-     * This is when we care.
+     * We expect that any error will be proxied back to us; this is an
+     * important concept, since it allow separating the idea of a
+     * "retry" from that of a "failure": the latter represents a problem
+     * with the request, whereas the former indicates that a request
+     * should be performed once again.
      */
-    describe( 'when the retry predicate is true', function()
-    {
-        it( 'will re-perform request N-1 times until false', function( done )
-        {
-            var n = 5;
+    it('returns the response data, including any error', function (done) {
+      var chk = {foo: 'bar'},
+        chk_err = Error('foo');
 
-            var stub = _createStub( {}, {} )
-                .use( Sut( _true, n ) )
-                ();
+      var stub = _createStub(chk_err, chk).use(Sut(_void, 1))();
 
-            stub.request( {}, function( err, _ )
-            {
-                expect( stub.requests ).to.equal( n );
-                done();
-            } );
-        } );
+      stub.request('', function (err, data) {
+        expect(err).to.equal(chk_err);
+        expect(data).to.equal(chk);
+        done();
+      });
+    });
+  });
 
+  /**
+   * This is when we care.
+   */
+  describe('when the retry predicate is true', function () {
+    it('will re-perform request N-1 times until false', function (done) {
+      var n = 5;
 
-        it( 'will return most recent error and output data', function( done )
-        {
-            var e      = Error( 'foo' ),
-                output = {};
+      var stub = _createStub({}, {}).use(Sut(_true, n))();
 
-            // XXX: this does not test for most recent, because the return
-            // data are static for each request
-            var stub = _createStub( e, output )
-                .use( Sut( _true, 1 ) )
-                ();
+      stub.request({}, function (err, _) {
+        expect(stub.requests).to.equal(n);
+        done();
+      });
+    });
 
-            stub.request( {}, function( err, data )
-            {
-                expect( err ).to.equal( e );
-                expect( data ).to.equal( output );
-                done();
-            } );
-        } );
+    it('will return most recent error and output data', function (done) {
+      var e = Error('foo'),
+        output = {};
 
+      // XXX: this does not test for most recent, because the return
+      // data are static for each request
+      var stub = _createStub(e, output).use(Sut(_true, 1))();
 
-        describe( 'given a negative number of tries', function()
-        {
-            it( 'will continue until a successful request', function( done )
-            {
-                var n = 10,
-                    pred = function( _, __ )
-                    {
-                        return --n > 0;
-                    };
+      stub.request({}, function (err, data) {
+        expect(err).to.equal(e);
+        expect(data).to.equal(output);
+        done();
+      });
+    });
 
-                var stub = _createStub()
-                    .use( Sut( pred, -1 ) )
-                    ();
+    describe('given a negative number of tries', function () {
+      it('will continue until a successful request', function (done) {
+        var n = 10,
+          pred = function (_, __) {
+            return --n > 0;
+          };
 
-                stub.request( {}, function( _, __ )
-                {
-                    expect( n ).to.equal( 0 );
-                    done();
-                } );
-            } );
-        } );
-    } );
+        var stub = _createStub().use(Sut(pred, -1))();
 
+        stub.request({}, function (_, __) {
+          expect(n).to.equal(0);
+          done();
+        });
+      });
+    });
+  });
 
-    describe( 'when the number of tries is zero', function()
-    {
-        it( 'will perform zero requests with null results', function( done )
-        {
-            var stub = _createStub( {}, {} )
-                .use( Sut( _void, 0 ) )
-                ();
+  describe('when the number of tries is zero', function () {
+    it('will perform zero requests with null results', function (done) {
+      var stub = _createStub({}, {}).use(Sut(_void, 0))();
 
-            stub.request( {}, function( err, data )
-            {
-                expect( stub.requests ).to.equal( 0 );
-                expect( err ).to.equal( null );
-                expect( data ).to.equal( null );
-                done();
-            } );
-        } );
-    } );
+      stub.request({}, function (err, data) {
+        expect(stub.requests).to.equal(0);
+        expect(err).to.equal(null);
+        expect(data).to.equal(null);
+        done();
+      });
+    });
+  });
 
+  describe('when a delay function is provided', function () {
+    it('will wait for continuation before retry', function (done) {
+      var waited = false;
 
-    describe( 'when a delay function is provided', function()
-    {
-        it( 'will wait for continuation before retry', function( done )
-        {
-            var waited = false;
+      var wait = function (_, c) {
+        waited = true;
+        c();
+      };
 
-            var wait = function( _, c )
-            {
-                waited = true;
-                c();
-            };
+      var stub = _createStub({}, {}).use(Sut(_true, 2, wait))();
 
-            var stub = _createStub( {}, {} )
-                .use( Sut( _true, 2, wait ) )
-                ();
+      stub.request({}, function (_, __) {
+        expect(waited).to.equal(true);
+        done();
+      });
+    });
 
-            stub.request( {}, function( _, __ )
-            {
-                expect( waited ).to.equal( true );
-                done();
-            } );
-        } );
+    it('will not process if continuation is not called', function () {
+      var waited = false;
+      var wait = function (_, c) {
+        waited = true;
+        /* do not invoke */
+      };
 
+      var stub = _createStub({}, {}).use(Sut(_true, 2, wait))();
 
-        it( 'will not process if continuation is not called', function()
-        {
-            var waited = false;
-            var wait = function( _, c )
-            {
-                waited = true;
-                /* do not invoke */
-            };
+      // this works because we know that our stub is invoked
+      // synchronously
+      stub.request({}, function (_, __) {
+        throw Error('Should not have been called!');
+      });
 
-            var stub = _createStub( {}, {} )
-                .use( Sut( _true, 2, wait ) )
-                ();
+      expect(waited).to.equal(true);
+    });
 
-            // this works because we know that our stub is invoked
-            // synchronously
-            stub.request( {}, function( _, __ )
-            {
-                throw Error( "Should not have been called!" );
-            } );
+    it('will call delay function until predicate falsity', function () {
+      var n = 5;
+      var wait = function (tries_left, c) {
+        n--;
 
-            expect( waited ).to.equal( true );
-        } );
+        // the first argument is the number of tries left
+        expect(tries_left).to.equal(n);
+        c();
+      };
 
+      var pred = function () {
+        return n > 0;
+      };
 
-        it( 'will call delay function until predicate falsity', function()
-        {
-            var n = 5;
-            var wait = function( tries_left, c )
-            {
-                n--;
+      var stub = _createStub({}, {}).use(Sut(pred, n, wait))();
 
-                // the first argument is the number of tries left
-                expect( tries_left ).to.equal( n );
-                c();
-            };
+      // this works because we know that our stub is invoked
+      // synchronously
+      stub.request({}, _void);
 
-            var pred = function()
-            {
-                return n > 0;
-            };
+      // the first request counts as one, which brings us down to 4,
+      // but the wait function has not been called at this point; so,
+      // we expect that it will only be called four times
+      expect(n).to.equal(1);
+    });
 
-            var stub = _createStub( {}, {} )
-                .use( Sut( pred, n, wait ) )
-                ();
+    it('allows aborting via failure continuation', function (done) {
+      var err_expect = {},
+        out_expect = [];
 
-            // this works because we know that our stub is invoked
-            // synchronously
-            stub.request( {}, _void );
+      var wait = function (_, __, abort) {
+        abort();
+      };
 
-            // the first request counts as one, which brings us down to 4,
-            // but the wait function has not been called at this point; so,
-            // we expect that it will only be called four times
-            expect( n ).to.equal( 1 );
-        } );
+      // without aborting, this would never finish
+      var stub = _createStub(err_expect, out_expect).use(
+        Sut(_true, -1, wait)
+      )();
 
+      // this works because we know that our stub is invoked
+      // synchronously
+      stub.request({}, function (err, output) {
+        expect(err).to.equal(err_expect);
+        expect(output).to.equal(out_expect);
 
-        it( 'allows aborting via failure continuation', function( done )
-        {
-            var err_expect = {},
-                out_expect = [];
+        done();
+      });
+    });
+  });
+});
 
-            var wait = function( _, __, abort )
-            {
-                abort();
-            };
+function _createStub(err, resp) {
+  return Class.implement(DataApi).extend({
+    given: null,
+    requests: 0,
 
-            // without aborting, this would never finish
-            var stub = _createStub( err_expect, out_expect )
-                .use( Sut( _true, -1, wait ) )
-                ();
+    'virtual public request': function (data, callback, id) {
+      this.given = data;
+      this.requests++;
 
-            // this works because we know that our stub is invoked
-            // synchronously
-            stub.request( {}, function( err, output )
-            {
-                expect( err ).to.equal( err_expect );
-                expect( output ).to.equal( out_expect );
-
-                done();
-            } );
-        } );
-    } );
-} );
-
-
-
-function _createStub( err, resp )
-{
-    return Class.implement( DataApi ).extend(
-    {
-        given:    null,
-        requests: 0,
-
-        'virtual public request': function( data, callback, id )
-        {
-            this.given = data;
-            this.requests++;
-
-            callback( err, resp );
-        }
-    } );
+      callback(err, resp);
+    },
+  });
 }

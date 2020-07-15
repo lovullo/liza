@@ -19,14 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class,
-    Field = require( './Field' );
+var Class = require('easejs').Class,
+  Field = require('./Field');
 
-
-module.exports = Class( 'BucketField' )
-    .implement( Field )
-    .extend(
-{
+module.exports = Class('BucketField')
+  .implement(Field)
+  .extend({
     /**
      * Field name
      * @type {string}
@@ -39,22 +37,16 @@ module.exports = Class( 'BucketField' )
      */
     'private _index': 0,
 
-
-    __construct: function( name, index )
-    {
-        this._name  = ''+name;
-        this._index = +index;
+    __construct: function (name, index) {
+      this._name = '' + name;
+      this._index = +index;
     },
 
-
-    'public getName': function()
-    {
-        return this._name;
+    'public getName': function () {
+      return this._name;
     },
 
-
-    'public getIndex': function()
-    {
-        return this._index;
-    }
-} );
+    'public getIndex': function () {
+      return this._index;
+    },
+  });

@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait    = require( 'easejs' ).Trait,
-    Class    = require( 'easejs' ).Class,
-    Service  = require( './Service' );
-
+var Trait = require('easejs').Trait,
+  Class = require('easejs').Class,
+  Service = require('./Service');
 
 /**
  * Wrap service with token system
@@ -43,10 +42,9 @@ var Trait    = require( 'easejs' ).Trait,
  * another term to denote instantiation, since generators (in the coroutine
  * sense) have been implemented in ES6.
  */
-module.exports = Trait( 'TokenedService' )
-    .implement( Service )
-    .extend(
-{
+module.exports = Trait('TokenedService')
+  .implement(Service)
+  .extend({
     /**
      * Token namespace
      * @type {string}
@@ -71,7 +69,6 @@ module.exports = Trait( 'TokenedService' )
      */
     'private _captureGen': null,
 
-
     /**
      * Initialize tokened service
      *
@@ -93,26 +90,20 @@ module.exports = Trait( 'TokenedService' )
      * @param {function(UserRequest,function(number,?string,*)): * UserResponse}
      *        capture_gen user response capture constructor
      */
-    __mixin: function( namespace, dao, tokgen, capture_gen )
-    {
-        if ( typeof tokgen !== 'function' )
-        {
-            throw TypeError( 'Token generator must be a function' );
-        }
+    __mixin: function (namespace, dao, tokgen, capture_gen) {
+      if (typeof tokgen !== 'function') {
+        throw TypeError('Token generator must be a function');
+      }
 
-        if ( typeof capture_gen !== 'function' )
-        {
-            throw TypeError(
-                'Request capture generator must be a function'
-            );
-        }
+      if (typeof capture_gen !== 'function') {
+        throw TypeError('Request capture generator must be a function');
+      }
 
-        this._ns         = ''+namespace;
-        this._dao        = dao;
-        this._tokgen     = tokgen;
-        this._captureGen = capture_gen;
+      this._ns = '' + namespace;
+      this._dao = dao;
+      this._tokgen = tokgen;
+      this._captureGen = capture_gen;
     },
-
 
     /**
      * Intercept request to underlying service, assign a token, and continue
@@ -133,57 +124,59 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {Service} self
      */
-    'abstract override public request': function(
-        request, response, quote, cmdstr, callback
-    )
-    {
-        cmdstr = ''+( cmdstr || '' );
+    'abstract override public request': function (
+      request,
+      response,
+      quote,
+      cmdstr,
+      callback
+    ) {
+      cmdstr = '' + (cmdstr || '');
 
-        var _self = this;
+      var _self = this;
 
-        var cmd_parts = cmdstr.split( '/' );
+      var cmd_parts = cmdstr.split('/');
 
-        if ( cmd_parts.length > 2 )
-        {
-            throw Error( "Invalid number of command arguments" );
+      if (cmd_parts.length > 2) {
+        throw Error('Invalid number of command arguments');
+      }
+
+      var action = cmd_parts[0] || '',
+        tokid = cmd_parts[1] || null;
+
+      this._getQuoteToken(quote, tokid, function (err, token) {
+        if (tokid) {
+          if (token === null) {
+            _self.respTokenError(response, tokid);
+          }
+
+          switch (action) {
+            case 'status':
+              _self.respStatus(response, token);
+              return;
+
+            case 'accept':
+              _self._tryAccept(response, quote, token);
+              return;
+
+            case 'kill':
+              _self._tryKillToken(response, quote, token);
+              return;
+          }
         }
 
-        var action = cmd_parts[ 0 ] || '',
-            tokid  = cmd_parts[ 1 ] || null;
+        _self._handleDefaultRequest(
+          cmdstr,
+          token,
+          request,
+          response,
+          quote,
+          callback
+        );
+      });
 
-        this._getQuoteToken( quote, tokid, function( err, token )
-        {
-            if ( tokid )
-            {
-                if ( token === null )
-                {
-                    _self.respTokenError( response, tokid );
-                }
-
-                switch( action )
-                {
-                    case 'status':
-                        _self.respStatus( response, token );
-                        return;
-
-                    case 'accept':
-                        _self._tryAccept( response, quote, token );
-                        return;
-
-                    case 'kill':
-                        _self._tryKillToken( response, quote, token );
-                        return;
-                }
-            }
-
-            _self._handleDefaultRequest(
-                cmdstr, token, request, response, quote, callback
-            );
-        } );
-
-        return this;
+      return this;
     },
-
 
     /**
      * Handle request before passing to underlying service
@@ -204,23 +197,23 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'private _handleDefaultRequest': function(
-        cmd, token, request, response, quote, callback
-    )
-    {
-        if ( this.isActive( token ) )
-        {
-            this.respTryAgain( request, token );
-            return;
-        }
+    'private _handleDefaultRequest': function (
+      cmd,
+      token,
+      request,
+      response,
+      quote,
+      callback
+    ) {
+      if (this.isActive(token)) {
+        this.respTryAgain(request, token);
+        return;
+      }
 
-        // at this point, we have no active token; we can process the
-        // request as desired
-        this.serveWithNewToken(
-            cmd, request, response, quote, callback
-        );
+      // at this point, we have no active token; we can process the
+      // request as desired
+      this.serveWithNewToken(cmd, request, response, quote, callback);
     },
-
 
     /**
      * Retrieve token identified by TOKID for QUOTE
@@ -234,13 +227,12 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'private _getQuoteToken': function( quote, tokid, callback )
-    {
-        this._dao.getToken( quote.getId(), this._ns, tokid )
-            .then( token => callback( null, token ) )
-            .catch( err => callback( err, null ) );
+    'private _getQuoteToken': function (quote, tokid, callback) {
+      this._dao
+        .getToken(quote.getId(), this._ns, tokid)
+        .then(token => callback(null, token))
+        .catch(err => callback(err, null));
     },
-
 
     /**
      * Predicate determining whether token is being actively processed
@@ -251,17 +243,15 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {boolean} whether token is active
      */
-    'virtual protected isActive': function( token )
-    {
-        return (
-            token
-            && token.status
-            && token.status.type !== 'DONE'
-            && token.status.type !== 'ACCEPTED'
-            && token.status.type !== 'DEAD'
-        );
+    'virtual protected isActive': function (token) {
+      return (
+        token &&
+        token.status &&
+        token.status.type !== 'DONE' &&
+        token.status.type !== 'ACCEPTED' &&
+        token.status.type !== 'DEAD'
+      );
     },
-
 
     /**
      * Process request to kill TOKEN
@@ -274,25 +264,22 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'private _tryKillToken': function( request, quote, token )
-    {
-        if ( !this.isActive( token ) )
-        {
-            this.respCannotKill( request, token );
-            return;
-        }
+    'private _tryKillToken': function (request, quote, token) {
+      if (!this.isActive(token)) {
+        this.respCannotKill(request, token);
+        return;
+      }
 
-        // this is async
-        this.killToken( quote, token );
+      // this is async
+      this.killToken(quote, token);
 
-        request.accepted( {
-            message:       "Token will be killed",
-            token:         token.id,
-            prevStatus:    token.status.type,
-            prevTimestamp: token.status.timestamp,
-        } );
+      request.accepted({
+        message: 'Token will be killed',
+        token: token.id,
+        prevStatus: token.status.type,
+        prevTimestamp: token.status.timestamp,
+      });
     },
-
 
     /**
      * Process request to accept TOKEN
@@ -307,42 +294,35 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'private _tryAccept': function( request, quote, token )
-    {
-        var _self = this;
+    'private _tryAccept': function (request, quote, token) {
+      var _self = this;
 
-        if ( this.isActive( token ) )
-        {
-            this.respTryAgain( request, token );
-            return;
+      if (this.isActive(token)) {
+        this.respTryAgain(request, token);
+        return;
+      }
+
+      if (token.status.type === 'DEAD') {
+        this.respAcceptDead(request, token);
+        return;
+      }
+
+      if (token.status.type === 'ACCEPTED') {
+        this.respAcceptAccepted(request, token);
+        return;
+      }
+
+      // accept the token before replying to ensure that we are the only
+      // one that will return the data (XXX: this is not atomic)
+      this.acceptToken(quote, token, function (err) {
+        if (err) {
+          _self.respTryAgain(request, token);
+          return;
         }
 
-        if ( token.status.type === 'DEAD' )
-        {
-            this.respAcceptDead( request, token );
-            return;
-        }
-
-        if ( token.status.type === 'ACCEPTED' )
-        {
-            this.respAcceptAccepted( request, token );
-            return;
-        }
-
-        // accept the token before replying to ensure that we are the only
-        // one that will return the data (XXX: this is not atomic)
-        this.acceptToken( quote, token, function( err )
-        {
-            if ( err )
-            {
-                _self.respTryAgain( request, token );
-                return;
-            }
-
-            _self.respAccept( request, token );
-        } );
+        _self.respAccept(request, token);
+      });
     },
-
 
     /**
      * Respond with an error stating that the request may be re-attempted at
@@ -355,11 +335,9 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respTryAgain': function( response, token )
-    {
-        response.tryAgain( this.getStatus( token ) );
+    'virtual protected respTryAgain': function (response, token) {
+      response.tryAgain(this.getStatus(token));
     },
-
 
     /**
      * Respond with the status of TOKEN
@@ -369,11 +347,9 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respStatus': function( response, token )
-    {
-        response.ok( this.getStatus( token ) );
+    'virtual protected respStatus': function (response, token) {
+      response.ok(this.getStatus(token));
     },
-
 
     /**
      * Respond with an indication of a successful acceptance of TOKEN, along
@@ -384,14 +360,12 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respAccept': function( response, token )
-    {
-        var token_data  = this.getStatus( token );
-        token_data.tokenData = token.status.data;
+    'virtual protected respAccept': function (response, token) {
+      var token_data = this.getStatus(token);
+      token_data.tokenData = token.status.data;
 
-        response.ok( token_data );
+      response.ok(token_data);
     },
-
 
     /**
      * Respond indicating that TOKEN is dead and cannot be accepted
@@ -401,14 +375,12 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respAcceptDead': function( response, token )
-    {
-        var token_data = this.getStatus( token );
-        token_data.message = "Dead requests cannot be accepted";
+    'virtual protected respAcceptDead': function (response, token) {
+      var token_data = this.getStatus(token);
+      token_data.message = 'Dead requests cannot be accepted';
 
-        response.stateError( token_data, 'EDEAD' );
+      response.stateError(token_data, 'EDEAD');
     },
-
 
     /**
      * Respond indicating that TOKEN has already been accepted and cannot be
@@ -419,14 +391,12 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respAcceptAccepted': function( response, token )
-    {
-        var token_data = this.getStatus( token );
-        token_data.message = "Request has already been accepted";
+    'virtual protected respAcceptAccepted': function (response, token) {
+      var token_data = this.getStatus(token);
+      token_data.message = 'Request has already been accepted';
 
-        response.stateError( token_data, 'EACCEPTED' );
+      response.stateError(token_data, 'EACCEPTED');
     },
-
 
     /**
      * Respond indicating that TOKEN has completed and cannot be killed
@@ -436,14 +406,12 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respCannotKill': function( response, token )
-    {
-        var token_data = this.getStatus( token );
-        token_data.message = "Completed requests cannot be killed";
+    'virtual protected respCannotKill': function (response, token) {
+      var token_data = this.getStatus(token);
+      token_data.message = 'Completed requests cannot be killed';
 
-        response.stateError( token_data, 'EDONE' );
+      response.stateError(token_data, 'EDONE');
     },
-
 
     /**
      * Respond with an indication that the provided token is somehow bad and
@@ -454,14 +422,9 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected respTokenError': function( response, tokid )
-    {
-        response.notFound(
-            { message: "Bad token: " + tokid },
-            'EBADTOK'
-        );
+    'virtual protected respTokenError': function (response, tokid) {
+      response.notFound({message: 'Bad token: ' + tokid}, 'EBADTOK');
     },
-
 
     /**
      * Retrieve TOKEN data formatted for a response to a service request
@@ -474,24 +437,21 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}}
      */
-    'virtual protected getStatus': function( token )
-    {
-        if ( !token || !token.id || typeof token.id !== 'string' )
-        {
-            return {
-                token: '0BAD',
-                status: 'CORRUPT',
-                timestamp: '0',
-            };
-        }
-
+    'virtual protected getStatus': function (token) {
+      if (!token || !token.id || typeof token.id !== 'string') {
         return {
-            token:     token.id,
-            status:    token.status.type,
-            timestamp: token.status.timestamp,
+          token: '0BAD',
+          status: 'CORRUPT',
+          timestamp: '0',
         };
-    },
+      }
 
+      return {
+        token: token.id,
+        status: token.status.type,
+        timestamp: token.status.timestamp,
+      };
+    },
 
     /**
      * Fulfill a service request by issuing a new token and continuing
@@ -511,46 +471,50 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected serveWithNewToken': function(
-        cmd, request, response, quote, callback
-    )
-    {
-        var _self   = this;
-        var program = quote.getProgram();
+    'virtual protected serveWithNewToken': function (
+      cmd,
+      request,
+      response,
+      quote,
+      callback
+    ) {
+      var _self = this;
+      var program = quote.getProgram();
 
-        this.generateToken( program, quote, function( err, token )
-        {
-            // fulfill the request immediate with the new token; the user
-            // will wait and accept the data separately once it's done
-            response.accepted( {
-                tokenId: token.id,
-                status:  token.status,
-            } );
+      this.generateToken(program, quote, function (err, token) {
+        // fulfill the request immediate with the new token; the user
+        // will wait and accept the data separately once it's done
+        response.accepted({
+          tokenId: token.id,
+          status: token.status,
+        });
 
-            // the original request will be performed in the background with
-            // our own response object, allowing us to capture the result
-            var capture_resp = _self._captureGen(
-                request,
-                function( code, error, data )
-                {
-                    _self.completeToken( quote, token, data, function( e, _ )
-                    {
-                        // TODO: handle save error (this will at least cause
-                        // it to be logged)
-                        if ( e !== null )
-                        {
-                            throw e;
-                        }
-                    } );
-                }
-            );
+        // the original request will be performed in the background with
+        // our own response object, allowing us to capture the result
+        var capture_resp = _self._captureGen(request, function (
+          code,
+          error,
+          data
+        ) {
+          _self.completeToken(quote, token, data, function (e, _) {
+            // TODO: handle save error (this will at least cause
+            // it to be logged)
+            if (e !== null) {
+              throw e;
+            }
+          });
+        });
 
-            _self.request.super.call(
-                _self, request, capture_resp, quote, cmd, callback
-            );
-        } );
+        _self.request.super.call(
+          _self,
+          request,
+          capture_resp,
+          quote,
+          cmd,
+          callback
+        );
+      });
     },
-
 
     /**
      * Generate a new token for QUOTE with a default token status
@@ -562,16 +526,15 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {undefined}
      */
-    'virtual protected generateToken': function( program, quote, callback )
-    {
-        var tokid  = this._tokgen( program, quote ),
-            status = this.getDefaultTokenStatus();
+    'virtual protected generateToken': function (program, quote, callback) {
+      var tokid = this._tokgen(program, quote),
+        status = this.getDefaultTokenStatus();
 
-        this._dao.updateToken( quote.getId(), this._ns, tokid, status, null )
-            .then( () => callback( null, { id: tokid, status: status } ) )
-            .catch( err => callback( err, null ) );
+      this._dao
+        .updateToken(quote.getId(), this._ns, tokid, status, null)
+        .then(() => callback(null, {id: tokid, status: status}))
+        .catch(err => callback(err, null));
     },
-
 
     /**
      * Default status of newly created tokens
@@ -580,11 +543,9 @@ module.exports = Trait( 'TokenedService' )
      *
      * @return {string} default token status
      */
-    'virtual protected getDefaultTokenStatus': function()
-    {
-        return 'ACTIVE';
+    'virtual protected getDefaultTokenStatus': function () {
+      return 'ACTIVE';
     },
-
 
     /**
      * Mark TOKEN as dead
@@ -594,15 +555,14 @@ module.exports = Trait( 'TokenedService' )
      *
      * @param {function(?Error,Object)} callback continuation
      */
-    'virtual protected killToken': function( quote, token, callback )
-    {
-        callback = callback || function() {};
+    'virtual protected killToken': function (quote, token, callback) {
+      callback = callback || function () {};
 
-        this._dao.updateToken( quote.getId(), this._ns, token.id, 'DEAD', null )
-            .then( () => callback( null, { id: token, status: 'DEAD' } ) )
-            .catch( err => callback( err, null ) );
+      this._dao
+        .updateToken(quote.getId(), this._ns, token.id, 'DEAD', null)
+        .then(() => callback(null, {id: token, status: 'DEAD'}))
+        .catch(err => callback(err, null));
     },
-
 
     /**
      * Mark TOKEN as having been accepted
@@ -614,15 +574,14 @@ module.exports = Trait( 'TokenedService' )
      *
      * @param {function(?Error,Object)} callback continuation
      */
-    'virtual protected acceptToken': function( quote, token, callback )
-    {
-        callback = callback || function() {};
+    'virtual protected acceptToken': function (quote, token, callback) {
+      callback = callback || function () {};
 
-        this._dao.updateToken( quote.getId(), this._ns, token.id, 'ACCEPTED', null )
-            .then( () => callback( null, { id: token, status: 'ACCEPTED' } ) )
-            .catch( err => callback( err, null ) );
+      this._dao
+        .updateToken(quote.getId(), this._ns, token.id, 'ACCEPTED', null)
+        .then(() => callback(null, {id: token, status: 'ACCEPTED'}))
+        .catch(err => callback(err, null));
     },
-
 
     /**
      * Mark TOKEN as having been completed (ready to accept)
@@ -635,11 +594,10 @@ module.exports = Trait( 'TokenedService' )
      *
      * @param {function(?Error,Object)} callback continuation
      */
-    'virtual protected completeToken': function( quote, token, data, callback )
-    {
-        this._dao.updateToken( quote.getId(), this._ns, token.id, 'DONE', data )
-            .then( () => callback( null, { id: token, status: 'DONE' } ) )
-            .catch( err => callback( err, null ) );
+    'virtual protected completeToken': function (quote, token, data, callback) {
+      this._dao
+        .updateToken(quote.getId(), this._ns, token.id, 'DONE', data)
+        .then(() => callback(null, {id: token, status: 'DONE'}))
+        .catch(err => callback(err, null));
     },
-} );
-
+  });

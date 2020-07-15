@@ -19,19 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class   = require( 'easejs' ).Class,
-    DataApi = require( 'liza/dapi/DataApi' ),
-
-    RestDataApiStrategy = require( './RestDataApiStrategy' );
-
+var Class = require('easejs').Class,
+  DataApi = require('liza/dapi/DataApi'),
+  RestDataApiStrategy = require('./RestDataApiStrategy');
 
 /**
  * Retrieve data over a RESTful API
  */
-module.exports = Class( 'RestDataApi' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Class('RestDataApi')
+  .implement(DataApi)
+  .extend({
     /**
      * URL of RESTful service
      * @type {string}
@@ -44,26 +41,20 @@ module.exports = Class( 'RestDataApi' )
      */
     'private _strategy': null,
 
-
     /**
      * Initialize data API
      *
      * @param {string}              url      service URL
      * @param {RestDataApiStrategy} strategy request strategy
      */
-    __construct: function( url, strategy )
-    {
-        if ( !( Class.isA( RestDataApiStrategy, strategy ) ) )
-        {
-            throw Error(
-                'Expected RestDataApiStrategy; given ' + strategy
-            );
-        }
+    __construct: function (url, strategy) {
+      if (!Class.isA(RestDataApiStrategy, strategy)) {
+        throw Error('Expected RestDataApiStrategy; given ' + strategy);
+      }
 
-        this._url      = ''+( url );
-        this._strategy = strategy;
+      this._url = '' + url;
+      this._strategy = strategy;
     },
-
 
     /**
      * Request data from the service
@@ -73,17 +64,14 @@ module.exports = Class( 'RestDataApi' )
      *
      * @return {RestDataApi} self
      */
-    'public request': function( data, callback, id )
-    {
-        var _self = this.__inst;
+    'public request': function (data, callback, id) {
+      var _self = this.__inst;
 
-        this._strategy.requestData( this._url, data, function( data )
-        {
-            // return the data, but bind 'this' to ourself
-            callback.call( _self, data );
-        } );
+      this._strategy.requestData(this._url, data, function (data) {
+        // return the data, but bind 'this' to ourself
+        callback.call(_self, data);
+      });
 
-        return this;
-    }
-} );
-
+      return this;
+    },
+  });

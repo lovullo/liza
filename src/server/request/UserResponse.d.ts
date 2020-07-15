@@ -19,10 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * Manipulates response to user request
  */
-export declare class UserResponse
-{
-}
+export declare class UserResponse {}

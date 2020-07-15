@@ -19,8 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DataApiManager } from "../../dapi/DataApiManager";
-import { PositiveInteger } from "../../numeric";
+import {DataApiManager} from '../../dapi/DataApiManager';
+import {PositiveInteger} from '../../numeric';
 
 /**
  * Retrieve data for meta field using Data API
@@ -28,24 +28,23 @@ import { PositiveInteger } from "../../numeric";
  * TODO: The reason this class exists at all is to encapsulate the horrid
  * API.  Once refactored, perhaps this class will no longer be necessary.
  */
-export declare class DapiMetaSource
-{
-    /**
-     * Retrieve field data
-     *
-     * @param field        - field name
-     * @param index        - field index
-     * @param dapi_manager - manager for dapi calls
-     * @param dapi         - dapi descriptor
-     * @param data         - dapi input data
-     *
-     * @return object containing `field`, `index`, and return data
-     */
-    getFieldData(
-        field:        string,
-        index:        PositiveInteger,
-        dapi_manager: DataApiManager,
-        dapi:         any,
-        data:         Record<string, any>,
-    ): Promise<any>;
+export declare class DapiMetaSource {
+  /**
+   * Retrieve field data
+   *
+   * @param field        - field name
+   * @param index        - field index
+   * @param dapi_manager - manager for dapi calls
+   * @param dapi         - dapi descriptor
+   * @param data         - dapi input data
+   *
+   * @return object containing `field`, `index`, and return data
+   */
+  getFieldData(
+    field: string,
+    index: PositiveInteger,
+    dapi_manager: DataApiManager,
+    dapi: any,
+    data: Record<string, any>
+  ): Promise<any>;
 }

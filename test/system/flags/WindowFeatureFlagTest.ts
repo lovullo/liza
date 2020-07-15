@@ -19,42 +19,34 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { expect } from 'chai';
-import { WindowFeatureFlag as Sut } from "../../../src/system/flags/WindowFeatureFlag";
+import {expect} from 'chai';
+import {WindowFeatureFlag as Sut} from '../../../src/system/flags/WindowFeatureFlag';
 
 before(function () {
-    this.jsdom = require('jsdom-global')()
-})
+  this.jsdom = require('jsdom-global')();
+});
 
 after(function () {
-    this.jsdom()
-})
+  this.jsdom();
+});
 
+describe('WindowFeatureFlag', () => {
+  it('getDomPerfFlag is true when global is set', () => {
+    (<any>window).dom_perf_flag = true;
+    const sut = Sut.getInstance();
+    expect(sut.isEnabled('dom_perf_flag')).to.be.true;
+    (<any>window).dom_perf_flag = undefined;
+  });
 
-describe( "WindowFeatureFlag", () =>
-{
-    it( "getDomPerfFlag is true when global is set", () =>
-    {
-        (<any>window).dom_perf_flag = true;
-        const sut = Sut.getInstance();
-        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.true;
-        (<any>window).dom_perf_flag = undefined;
-    } );
+  it('getDomPerfFlag is false when global is not defined', () => {
+    const sut = Sut.getInstance();
+    expect(sut.isEnabled('dom_perf_flag')).to.be.false;
+  });
 
-
-    it( "getDomPerfFlag is false when global is not defined", () =>
-    {
-        const sut = Sut.getInstance();
-        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.false;
-    } );
-
-
-    it( "getDomPerfFlag is false when global is false", () =>
-    {
-        (<any>window).dom_perf_flag = false;
-        const sut = Sut.getInstance();
-        expect( sut.isEnabled( 'dom_perf_flag' ) ).to.be.false;
-        (<any>window).dom_perf_flag = undefined;
-    } );
-
-} );
+  it('getDomPerfFlag is false when global is false', () => {
+    (<any>window).dom_perf_flag = false;
+    const sut = Sut.getInstance();
+    expect(sut.isEnabled('dom_perf_flag')).to.be.false;
+    (<any>window).dom_perf_flag = undefined;
+  });
+});

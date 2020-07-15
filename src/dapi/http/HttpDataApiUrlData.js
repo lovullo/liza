@@ -21,107 +21,93 @@
 
 'use strict';
 
-const { Trait }   = require( 'easejs' );
-const HttpDataApi = require( './HttpDataApi' );
-
+const {Trait} = require('easejs');
+const HttpDataApi = require('./HttpDataApi');
 
 /**
  * Place fields from given data in the URL
  *
  * All remaining fields are passed to the underlying supertype.
  */
-module.exports = Trait( 'HttpDataApiUrlData' )
-    .extend( HttpDataApi,
-{
-    /**
-     * Fields to take from data and place in URL
-     * @type {string}
-     */
-    'private _fields': [],
+module.exports = Trait('HttpDataApiUrlData').extend(HttpDataApi, {
+  /**
+   * Fields to take from data and place in URL
+   * @type {string}
+   */
+  'private _fields': [],
 
+  /**
+   * Initialize with URL field list
+   *
+   * @param {Array<string>} fields list of fields to include in URL
+   */
+  __mixin(fields) {
+    this._fields = fields;
+  },
 
-    /**
-     * Initialize with URL field list
-     *
-     * @param {Array<string>} fields list of fields to include in URL
-     */
-    __mixin( fields )
-    {
-        this._fields = fields;
-    },
+  /**
+   * Concatenate chosen fields with URL
+   *
+   * The previously specified fields will have their values delimited by '/'
+   * and will be concatenated with the URL.  All used fields in DATA will be
+   * removed before being passed to the supertype.  METHOD and CALLBACK are
+   * proxied as-is.
+   *
+   * @param {string}                  url      destination URL
+   * @param {string}                  method   RFC-2616-compliant HTTP method
+   * @param {Object|string}           data     request params
+   * @param {function(Error, Object)} callback server response callback
+   *
+   * @return {HttpImpl} self
+   */
+  'override public requestData'(url, method, data, callback) {
+    const [values, filtered_data] = this._getFieldValues(data);
 
+    const params = values.map(([, value]) => value);
+    const missing = values.filter(([, value]) => value === undefined);
 
-    /**
-     * Concatenate chosen fields with URL
-     *
-     * The previously specified fields will have their values delimited by '/'
-     * and will be concatenated with the URL.  All used fields in DATA will be
-     * removed before being passed to the supertype.  METHOD and CALLBACK are
-     * proxied as-is.
-     *
-     * @param {string}                  url      destination URL
-     * @param {string}                  method   RFC-2616-compliant HTTP method
-     * @param {Object|string}           data     request params
-     * @param {function(Error, Object)} callback server response callback
-     *
-     * @return {HttpImpl} self
-     */
-    'override public requestData'( url, method, data, callback )
-    {
-        const [ values, filtered_data ]  = this._getFieldValues( data );
+    if (missing.length > 0) {
+      callback(
+        Error(
+          'Missing URL parameters: ' +
+            missing.map(([field]) => field).join(', ')
+        ),
+        null
+      );
 
-        const params  = values.map( ( [ , value ] ) => value );
-        const missing = values.filter( ( [ , value ] ) => value === undefined );
+      return this;
+    }
 
-        if ( missing.length > 0 )
-        {
-            callback(
-                Error(
-                    "Missing URL parameters: " +
-                    missing.map( ( [ field ] ) => field ).join( ", " )
-                ),
-                null
-            );
+    const built_url = params.length > 0 ? url + '/' + params.join('/') : url;
 
-            return this;
-        }
+    return this.__super(built_url, method, filtered_data, callback);
+  },
 
-        const built_url = ( params.length > 0 )
-            ? url + '/' + params.join( '/' )
-            : url;
+  /**
+   * Associate fields with their respective values from DATA
+   *
+   * The returned values are of the form `[ [ field, value ], ... ]`.
+   * The returned data object is a copy of the original and is stripped
+   * of the respective fields.
+   *
+   * @param {Object} data source data
+   *
+   * @return {Array} values and copy of data stripped of those fields
+   */
+  'private _getFieldValues'(data) {
+    const fieldset = new Set(this._fields);
+    const values = this._fields.map(field => [field, data[field]]);
 
-        return this.__super( built_url, method, filtered_data, callback );
-    },
+    // copy of data with fields stripped
+    const new_data = Object.keys(data).reduce((dest, key) => {
+      if (fieldset.has(key)) {
+        return dest;
+      }
 
+      dest[key] = data[key];
+      return dest;
+    }, {});
 
-    /**
-     * Associate fields with their respective values from DATA
-     *
-     * The returned values are of the form `[ [ field, value ], ... ]`.
-     * The returned data object is a copy of the original and is stripped
-     * of the respective fields.
-     *
-     * @param {Object} data source data
-     *
-     * @return {Array} values and copy of data stripped of those fields
-     */
-    'private _getFieldValues'( data )
-    {
-        const fieldset = new Set( this._fields );
-        const values   = this._fields.map( field => [ field, data[ field ] ] );
-
-        // copy of data with fields stripped
-        const new_data = Object.keys( data ).reduce( ( dest, key ) =>
-        {
-            if ( fieldset.has( key ) )
-            {
-                return dest;
-            }
-
-            dest[ key ] = data[ key ];
-            return dest;
-        }, {} );
-
-        return [ values, new_data ];
-    },
-} );
+    return [values, new_data];
+  },
+});

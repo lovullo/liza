@@ -31,18 +31,17 @@
  * make people less likely to copy existing code that uses it.
  */
 
-declare module 'naughty'
-{
-    /**
-     * Make type `T` writable while otherwise maintaining type safety
-     *
-     * _Only use this generic if you are the owner of the object being
-     * manipulated!__
-     *
-     * This should be used when we want types to be readonly, but we need to
-     * be able to modify an existing object to initialize the
-     * properties.  This should only be used in situations where it's not
-     * feasible to add those properties when the object is first created.
-     */
-    export type ___Writable<T> = { -readonly [K in keyof T]: T[K] };
+declare module 'naughty' {
+  /**
+   * Make type `T` writable while otherwise maintaining type safety
+   *
+   * _Only use this generic if you are the owner of the object being
+   * manipulated!__
+   *
+   * This should be used when we want types to be readonly, but we need to
+   * be able to modify an existing object to initialize the
+   * properties.  This should only be used in situations where it's not
+   * feasible to add those properties when the object is first created.
+   */
+  export type ___Writable<T> = {-readonly [K in keyof T]: T[K]};
 }

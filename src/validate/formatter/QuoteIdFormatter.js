@@ -19,15 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * Validates quote ids
  *
  * A quote id must be numeric and may optionally begin with WEB.
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        /^(?:WEB)? *([1-9][0-9]{5,})$/, '$1'
-    ]
-);
-
+module.exports = require('./PatternFormatter')([
+  /^(?:WEB)? *([1-9][0-9]{5,})$/,
+  '$1',
+]);

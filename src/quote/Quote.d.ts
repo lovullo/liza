@@ -21,13 +21,11 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-import { Program } from "../program/Program";
-import { QuoteId } from "../document/Document";
+import {Program} from '../program/Program';
+import {QuoteId} from '../document/Document';
 
-
-export declare interface Quote
-{
-    // TODO: the easejs interface is empty; is this actually needed?
+export declare interface Quote {
+  // TODO: the easejs interface is empty; is this actually needed?
 }
 
-export { QuoteId };
+export {QuoteId};

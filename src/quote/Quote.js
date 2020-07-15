@@ -21,11 +21,8 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-
-module.exports = Interface( 'Quote',
-{
-    /** TODO **/
-} );
-
+module.exports = Interface('Quote', {
+  /** TODO **/
+});

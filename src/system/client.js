@@ -19,12 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const { Cmatch } = require( '../client/Cmatch' );
-const field  = require( '../field' );
-const store  = require( '../store' );
-
+const {Cmatch} = require('../client/Cmatch');
+const field = require('../field');
+const store = require('../store');
 
 /**
  * Typical client system
@@ -35,41 +34,38 @@ const store  = require( '../store' );
  * This is incomplete; it will be added to as code is ported to liza.
  */
 module.exports = {
-    cmatch: ( program, client ) => new Cmatch(
-        field.FieldClassMatcher( program.whens ),
-        program,
-        client
-    ),
+  cmatch: (program, client) =>
+    new Cmatch(field.FieldClassMatcher(program.whens), program, client),
 
-    data: {
-        /**
-         * Create a store suitable for comparing diffs
-         *
-         * This relies very much on assumptions about how the rest of the
-         * system works:
-         *   - bstore expects the diff format to be provided directly to it;
-         *   - cstore expects a full classification result set with which
-         *     _it_ will compute the diff; and
-         *   - the outer store proxies to cstore for 'c:*'.
-         */
-        diffStore: () => {
-            const cstore = store.DiffStore();
-            const bstore = store.MemoryStore();
+  data: {
+    /**
+     * Create a store suitable for comparing diffs
+     *
+     * This relies very much on assumptions about how the rest of the
+     * system works:
+     *   - bstore expects the diff format to be provided directly to it;
+     *   - cstore expects a full classification result set with which
+     *     _it_ will compute the diff; and
+     *   - the outer store proxies to cstore for 'c:*'.
+     */
+    diffStore: () => {
+      const cstore = store.DiffStore();
+      const bstore = store.MemoryStore();
 
-            const proxy = store.MemoryStore.use(
-                store.PatternProxy( [
-                    [ /^c:(.*)$/, cstore ],
-                    [ /./,        bstore ],
-                ] )
-            )();
+      const proxy = store.MemoryStore.use(
+        store.PatternProxy([
+          [/^c:(.*)$/, cstore],
+          [/./, bstore],
+        ])
+      )();
 
-            // TODO: breaking encapsulation should not be necessary in the
-            // future
-            return {
-                store:  proxy,
-                cstore: cstore,
-                bstore: bstore,
-            };
-        },
+      // TODO: breaking encapsulation should not be necessary in the
+      // future
+      return {
+        store: proxy,
+        cstore: cstore,
+        bstore: bstore,
+      };
     },
+  },
 };

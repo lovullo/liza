@@ -19,90 +19,66 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class  = require( 'easejs' ).Class,
-    Styler = require( './Styler' );
-
+var Class = require('easejs').Class,
+  Styler = require('./Styler');
 
 /**
  * Handle error generation and defer styling to supertype
  */
-module.exports = Class( 'ErrorStyler' )
-    .implement( Styler )
-    .extend(
-{
+module.exports = Class('ErrorStyler')
+  .implement(Styler)
+  .extend({
     /**
      * Hash of error messages by field name
      * @type {Object}
      */
     'private _msgs': {},
 
-
     /**
      * Initialize error styler with a hash of error messages by field name
      *
      * @param {Object} msgs hash of error messages by field name
      */
-    'virtual __construct': function( msgs )
-    {
-        this._msgs = msgs;
+    'virtual __construct': function (msgs) {
+      this._msgs = msgs;
     },
 
+    'public getHooks': function (uistyler) {
+      var _self = this;
 
-    'public getHooks': function( uistyler )
-    {
-        var _self = this;
+      return {
+        fieldError: function (context, failures, msgs) {
+          msgs = msgs || {};
 
-        return {
-            fieldError: function( context, failures, msgs )
-            {
-                msgs = msgs || {};
+          for (var name in failures) {
+            var msgset = msgs[name] || [];
 
-                for ( var name in failures )
-                {
-                    var msgset = ( msgs[ name ] || [] );
+            for (var index in failures[name]) {
+              // if no error message was provided, fall back to one of
+              // the defaults
+              var msg =
+                msgset[index] || _self._msgs[name] || 'Field is invalid';
 
-                    for ( var index in failures[ name ] )
-                    {
-                        // if no error message was provided, fall back to one of
-                        // the defaults
-                        var msg = (
-                            msgset[ index ]
-                            || _self._msgs[ name ]
-                            || "Field is invalid"
-                        );
-
-                        _self.onFieldError(
-                            context.getFieldByName( name, index ),
-                            msg
-                        );
-                    }
-                }
-            },
-
-            fieldFixed: function( context, fixed )
-            {
-                for ( var name in fixed )
-                {
-                    for ( var index in fixed[ name ] )
-                    {
-                        _self.onFieldFixed(
-                            context.getFieldByName( name, index )
-                        );
-                    }
-                }
+              _self.onFieldError(context.getFieldByName(name, index), msg);
             }
-        };
+          }
+        },
+
+        fieldFixed: function (context, fixed) {
+          for (var name in fixed) {
+            for (var index in fixed[name]) {
+              _self.onFieldFixed(context.getFieldByName(name, index));
+            }
+          }
+        },
+      };
     },
 
-
-    'virtual protected onFieldError': function( field, msg )
-    {
-        // do nothing by default
+    'virtual protected onFieldError': function (field, msg) {
+      // do nothing by default
     },
 
-
-    'virtual protected onFieldFixed': function( field )
-    {
-        // do nothing by default
-    }
-} );
+    'virtual protected onFieldFixed': function (field) {
+      // do nothing by default
+    },
+  });

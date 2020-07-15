@@ -19,81 +19,62 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const event  = require( '../../' ).client.event;
-const expect = require( 'chai' ).expect;
-const Class  = require( 'easejs' ).Class;
+const event = require('../../').client.event;
+const expect = require('chai').expect;
+const Class = require('easejs').Class;
 
-const { ValueSetEventHandler: Sut } = event;
+const {ValueSetEventHandler: Sut} = event;
 
+describe('ValueSetEventHandler', () => {
+  it('sets relative indexes up until last source index', done => {
+    const expected = {
+      foo: ['zero', 'one', 'one'],
+    };
 
-describe( 'ValueSetEventHandler', () =>
-{
-    it( "sets relative indexes up until last source index", done =>
-    {
-        const expected = {
-            foo: [ "zero", "one", "one" ],
-        };
+    let qcalled = false;
+    const quote = {
+      setData(data) {
+        expect(data).to.deep.equal(expected);
+        qcalled = true;
+      },
+    };
 
-        let   qcalled = false;
-        const quote   = {
-            setData( data )
-            {
-                expect( data ).to.deep.equal( expected );
-                qcalled = true;
-            }
-        };
+    const callback = () => {
+      expect(qcalled).to.be.true;
+      done();
+    };
 
-        const callback = () =>
-        {
-            expect( qcalled ).to.be.true;
-            done();
-        };
+    Sut({getQuote: () => quote}).handle('', callback, {
+      elementName: 'foo',
+      indexes: [0, 1, 2],
+      value: ['zero', 'one'],
+    });
+  });
 
-        Sut( { getQuote: () => quote } )
-            .handle(
-                '',
-                callback,
-                {
-                    elementName: 'foo',
-                    indexes:     [ 0, 1, 2 ],
-                    value:       [ "zero", "one" ],
-                }
-            );
-    } );
+  it('sets only given indexes', done => {
+    const expected = {
+      bar: [, 'set1', 'set2'],
+    };
 
+    let qcalled = false;
+    const quote = {
+      setData(data) {
+        expect(data).to.deep.equal(expected);
+        qcalled = true;
+      },
+    };
 
-    it( "sets only given indexes", done =>
-    {
-        const expected = {
-            bar: [ , "set1", "set2" ],
-        };
+    const callback = () => {
+      expect(qcalled).to.be.true;
+      done();
+    };
 
-        let   qcalled = false;
-        const quote   = {
-            setData( data )
-            {
-                expect( data ).to.deep.equal( expected );
-                qcalled = true;
-            }
-        };
-
-        const callback = () =>
-        {
-            expect( qcalled ).to.be.true;
-            done();
-        };
-
-        Sut( { getQuote: () => quote } )
-            .handle(
-                '',
-                callback,
-                {
-                    elementName: 'bar',
-                    indexes:     [ 1, 2 ],
-                    value:       [ "ignore", "set1", "set2", "extra" ],
-                }
-            );
-    } );
-} );
+    Sut({getQuote: () => quote}).handle('', callback, {
+      elementName: 'bar',
+      indexes: [1, 2],
+      value: ['ignore', 'set1', 'set2', 'extra'],
+    });
+  });
+});

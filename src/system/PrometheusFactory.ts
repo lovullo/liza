@@ -20,35 +20,33 @@
  *
  * Prometheus Metrics
  */
-import { Pushgateway, Histogram, Counter, Gauge } from 'prom-client';
-
+import {Pushgateway, Histogram, Counter, Gauge} from 'prom-client';
 
 export declare type PrometheusConfig = {
-    /** The hostname to connect to */
-    hostname: string;
+  /** The hostname to connect to */
+  hostname: string;
 
-    /** The host the processor is running on */
-    instance: string;
+  /** The host the processor is running on */
+  instance: string;
 
-    /** The port to connect to */
-    port: number;
+  /** The port to connect to */
+  port: number;
 
-    /** The environment ( dev, test, demo, live ) */
-    env: string;
+  /** The environment ( dev, test, demo, live ) */
+  env: string;
 
-    /** The rate (in milliseconds) at which metrics are pushed */
-    push_interval_ms: number;
+  /** The rate (in milliseconds) at which metrics are pushed */
+  push_interval_ms: number;
 
-    /** The starting point for process time buckets */
-    buckets_start: number;
+  /** The starting point for process time buckets */
+  buckets_start: number;
 
-    /** The width of process time buckets */
-    buckets_width: number;
+  /** The width of process time buckets */
+  buckets_width: number;
 
-    /** The number of process time buckets */
-    buckets_count: number;
-}
-
+  /** The number of process time buckets */
+  buckets_count: number;
+};
 
 /**
  * Create a prometheus configuration from the environment
@@ -58,119 +56,93 @@ export declare type PrometheusConfig = {
  * @return the prometheus configuration
  */
 export function createPrometheusConfig(
-    env:      NodeJS.ProcessEnv,
-    hostname: string,
-): PrometheusConfig
-{
-    return <PrometheusConfig>{
-        hostname:         env.PROM_HOST,
-        instance:         hostname,
-        port:             +( env.PROM_PORT || 0 ),
-        env:              process.env.NODE_ENV,
-        push_interval_ms: +( process.env.PROM_PUSH_INTERVAL_MS || 10000 ),
-        buckets_start:    +( process.env.PROM_BUCKETS_START || 0 ),
-        buckets_width:    +( process.env.PROM_BUCKETS_WIDTH || 10 ),
-        buckets_count:    +( process.env.PROM_BUCKETS_COUNT || 10 ),
-    };
+  env: NodeJS.ProcessEnv,
+  hostname: string
+): PrometheusConfig {
+  return <PrometheusConfig>{
+    hostname: env.PROM_HOST,
+    instance: hostname,
+    port: +(env.PROM_PORT || 0),
+    env: process.env.NODE_ENV,
+    push_interval_ms: +(process.env.PROM_PUSH_INTERVAL_MS || 10000),
+    buckets_start: +(process.env.PROM_BUCKETS_START || 0),
+    buckets_width: +(process.env.PROM_BUCKETS_WIDTH || 10),
+    buckets_count: +(process.env.PROM_BUCKETS_COUNT || 10),
+  };
 }
 
+export class PrometheusFactory {
+  /**
+   * Create a PushGateway
+   *
+   * @param client   - prometheus client
+   * @param hostname - push gateway url
+   * @param port     - push gateway port
+   *
+   * @return the gateway
+   */
+  createGateway(client: any, hostname: string, port: number): Pushgateway {
+    const url = 'http://' + hostname + ':' + port;
 
-export class PrometheusFactory
-{
-    /**
-     * Create a PushGateway
-     *
-     * @param client   - prometheus client
-     * @param hostname - push gateway url
-     * @param port     - push gateway port
-     *
-     * @return the gateway
-     */
-    createGateway(
-        client:   any,
-        hostname: string,
-        port:     number,
-    ): Pushgateway
-    {
-        const url = 'http://' + hostname + ':' + port;
+    return new client.Pushgateway(url);
+  }
 
-        return new client.Pushgateway( url );
-    }
+  /**
+   * Create a histogram metric
+   *
+   * @param client       - prometheus client
+   * @param name         - metric name
+   * @param help         - a description of the metric
+   * @param bucket_start - where to start the range of buckets
+   * @param bucket_width - the size of each bucket
+   * @param bucket_count - the total number of buckets
+   *
+   * @return the metric
+   */
+  createHistogram(
+    client: any,
+    name: string,
+    help: string,
+    bucket_start: number,
+    bucket_width: number,
+    bucket_count: number
+  ): Histogram {
+    return new client.Histogram({
+      name: name,
+      help: help,
+      buckets: client.linearBuckets(bucket_start, bucket_width, bucket_count),
+    });
+  }
 
+  /**
+   * Create a counter metric
+   *
+   * @param client       - prometheus client
+   * @param name         - metric name
+   * @param help         - a description of the metric
+   *
+   * @return the metric
+   */
+  createCounter(client: any, name: string, help: string): Counter {
+    return new client.Counter({
+      name: name,
+      help: help,
+    });
+  }
 
-    /**
-     * Create a histogram metric
-     *
-     * @param client       - prometheus client
-     * @param name         - metric name
-     * @param help         - a description of the metric
-     * @param bucket_start - where to start the range of buckets
-     * @param bucket_width - the size of each bucket
-     * @param bucket_count - the total number of buckets
-     *
-     * @return the metric
-     */
-    createHistogram(
-        client:       any,
-        name:         string,
-        help:         string,
-        bucket_start: number,
-        bucket_width: number,
-        bucket_count: number,
-    ): Histogram
-    {
-        return new client.Histogram( {
-            name:    name,
-            help:    help,
-            buckets: client.linearBuckets(
-                bucket_start,
-                bucket_width,
-                bucket_count
-            ),
-        } );
-    }
-
-
-    /**
-     * Create a counter metric
-     *
-     * @param client       - prometheus client
-     * @param name         - metric name
-     * @param help         - a description of the metric
-     *
-     * @return the metric
-     */
-    createCounter(
-        client: any,
-        name:   string,
-        help:   string,
-    ): Counter
-    {
-        return new client.Counter( {
-            name:    name,
-            help:    help,
-        } );
-    }
-
-
-    /**
-     * Create a gauge metric
-     *
-     * @param client       - prometheus client
-     * @param name         - metric name
-     * @param help         - a description of the metric
-     *
-     * @return the metric
-     */
-    createGauge(
-        client: any,
-        name:   string,
-        help:   string,
-    ): Gauge
-    {
-        return new client.Gauge( {
-            name:    name,
-            help:    help,
-        } );
-    }
+  /**
+   * Create a gauge metric
+   *
+   * @param client       - prometheus client
+   * @param name         - metric name
+   * @param help         - a description of the metric
+   *
+   * @return the metric
+   */
+  createGauge(client: any, name: string, help: string): Gauge {
+    return new client.Gauge({
+      name: name,
+      help: help,
+    });
+  }
 }

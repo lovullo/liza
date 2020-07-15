@@ -19,31 +19,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class          = require( 'easejs' ).Class,
-    ClientDebugTab = require( './ClientDebugTab' ),
-    calc           = require( '../../calc/Calc' );
-
+var Class = require('easejs').Class,
+  ClientDebugTab = require('./ClientDebugTab'),
+  calc = require('../../calc/Calc');
 
 /**
  * Monitors client-side assertions
  */
-module.exports = Class( 'CalcClientDebugTab' )
-    .implement( ClientDebugTab )
-    .extend(
-{
+module.exports = Class('CalcClientDebugTab')
+  .implement(ClientDebugTab)
+  .extend({
     'private _$content': null,
-
 
     /**
      * Retrieve tab title
      *
      * @return {string} tab title
      */
-    'public getTitle': function()
-    {
-        return 'Calculated Values';
+    'public getTitle': function () {
+      return 'Calculated Values';
     },
-
 
     /**
      * Retrieve tab content
@@ -53,21 +48,20 @@ module.exports = Class( 'CalcClientDebugTab' )
      *
      * @return {jQuery|string} tab content
      */
-    'public getContent': function( client, bucket )
-    {
-        this._$content = $( '<div>' )
-            .append( $( '<p>' ).text(
-                "Quick-n-dirty calculated value test tool. Select the " +
-                "method to test below, followed by the data and value " +
-                "arguments. See the Calc module for more information."
-            ) );
+    'public getContent': function (client, bucket) {
+      this._$content = $('<div>').append(
+        $('<p>').text(
+          'Quick-n-dirty calculated value test tool. Select the ' +
+            'method to test below, followed by the data and value ' +
+            'arguments. See the Calc module for more information.'
+        )
+      );
 
-        this._addRow();
-        this._addButtons();
+      this._addRow();
+      this._addButtons();
 
-        return this._$content;
+      return this._$content;
     },
-
 
     /**
      * Add calculated value row which will perform the requested calculation
@@ -75,47 +69,34 @@ module.exports = Class( 'CalcClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _addRow': function()
-    {
-        var _self   = this,
-            $sel    = null,
-            $data   = null,
-            $value  = null,
-            $result = null,
+    'private _addRow': function () {
+      var _self = this,
+        $sel = null,
+        $data = null,
+        $value = null,
+        $result = null,
+        changeCallback = function () {
+          _self._doCalc($sel.val(), $data.val(), $value.val(), $result);
+        };
+      this._$content.append(
+        $('<div>')
+          .addClass('row')
+          .append(($sel = $('<select>').change(changeCallback)))
+          .append(
+            ($data = $('<input type="text">').val('[]').change(changeCallback))
+          )
+          .append(
+            ($value = $('<input type="text">').val('[]').change(changeCallback))
+          )
+          .append(($result = $('<span>')))
+      );
 
-            changeCallback = function()
-            {
-                _self._doCalc( $sel.val(), $data.val(), $value.val(), $result );
-            }
-        ;
+      for (method in calc) {
+        $sel.append($('<option>').val(method).text(method));
+      }
 
-        this._$content.append( $( '<div>' )
-            .addClass( 'row' )
-            .append( $sel = $( '<select>' )
-                .change( changeCallback )
-            )
-            .append( $data = $( '<input type="text">' )
-                .val( '[]' )
-                .change( changeCallback )
-            )
-            .append( $value = $( '<input type="text">' )
-                .val( '[]' )
-                .change( changeCallback )
-            )
-            .append( $result = $( '<span>' ) )
-        );
-
-        for ( method in calc )
-        {
-            $sel.append( $( '<option>' )
-                .val( method )
-                .text( method )
-            );
-        }
-
-        changeCallback();
+      changeCallback();
     },
-
 
     /**
      * Perform calculation and update given result element
@@ -127,32 +108,23 @@ module.exports = Class( 'CalcClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _doCalc': function( sel, data, value, $result )
-    {
-        var result = null;
+    'private _doCalc': function (sel, data, value, $result) {
+      var result = null;
 
-        // don't do anything if no method was selected
-        if ( !sel)
-        {
-            return;
-        }
+      // don't do anything if no method was selected
+      if (!sel) {
+        return;
+      }
 
-        try
-        {
-            result = calc[ sel ](
-                JSON.parse( data || [] ),
-                JSON.parse( value || [] )
-            );
-        }
-        catch ( e )
-        {
-            result = 'ERROR (see console)';
-            console.error( e );
-        }
+      try {
+        result = calc[sel](JSON.parse(data || []), JSON.parse(value || []));
+      } catch (e) {
+        result = 'ERROR (see console)';
+        console.error(e);
+      }
 
-        $result.text( JSON.stringify( result ) );
+      $result.text(JSON.stringify(result));
     },
-
 
     /**
      * Append button that allows for the creation of additional calc rows and a
@@ -160,31 +132,29 @@ module.exports = Class( 'CalcClientDebugTab' )
      *
      * @return {undefined}
      */
-    'private _addButtons': function()
-    {
-        var _self = this;
+    'private _addButtons': function () {
+      var _self = this;
 
-        this._$content.append( $( '<div>' )
-            .append( $( '<button>' )
-                .text( '+' )
-                .click( function()
-                {
-                    _self._addRow();
+      this._$content.append(
+        $('<div>')
+          .append(
+            $('<button>')
+              .text('+')
+              .click(function () {
+                _self._addRow();
 
-                    // move the button down to the bottom (quick and easy means
-                    // of doing so)
-                    $( this ).parents( 'div:first' )
-                        .detach().appendTo( _self._$content );
-                } )
-            )
-            .append( $( '<button>' )
-                .text( 'Clear' )
-                .click( function()
-                {
-                    _self._$content.find( 'div.row:not(:first)' ).remove();
-                } )
-            )
-        );
-    }
-} );
-
+                // move the button down to the bottom (quick and easy means
+                // of doing so)
+                $(this).parents('div:first').detach().appendTo(_self._$content);
+              })
+          )
+          .append(
+            $('<button>')
+              .text('Clear')
+              .click(function () {
+                _self._$content.find('div.row:not(:first)').remove();
+              })
+          )
+      );
+    },
+  });

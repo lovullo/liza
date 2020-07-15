@@ -19,18 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-
-module.exports = Interface( 'BucketDiff',
-{
-    /**
-     * Perform a diff given a diff context
-     *
-     * @param {BucketDiffContext} context diff context
-     *
-     * @return {BucketDiffResult} result of diff
-     */
-    'public diff': [ 'context' ]
-} );
-
+module.exports = Interface('BucketDiff', {
+  /**
+   * Perform a diff given a diff context
+   *
+   * @param {BucketDiffContext} context diff context
+   *
+   * @return {BucketDiffResult} result of diff
+   */
+  'public diff': ['context'],
+});

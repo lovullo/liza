@@ -20,379 +20,348 @@
  */
 
 import {
-    TokenDao,
-    TokenData,
-    TokenEntry,
-    TokenNamespaceData,
-    TokenNamespaceResults,
-    TokenQueryResult,
-    TokenStateHistory,
-    TokenStatus,
-} from "./TokenDao";
+  TokenDao,
+  TokenData,
+  TokenEntry,
+  TokenNamespaceData,
+  TokenNamespaceResults,
+  TokenQueryResult,
+  TokenStateHistory,
+  TokenStatus,
+} from './TokenDao';
 
-import { DocumentId } from "../../document/Document";
-import { TokenId, TokenNamespace, TokenState } from "./Token";
-import { UnknownTokenError } from "./UnknownTokenError";
-import { context } from "../../error/ContextError";
-import { MongoCollection } from "mongodb";
-
-
+import {DocumentId} from '../../document/Document';
+import {TokenId, TokenNamespace, TokenState} from './Token';
+import {UnknownTokenError} from './UnknownTokenError';
+import {context} from '../../error/ContextError';
+import {MongoCollection} from 'mongodb';
 
 /**
  * Manages token updates
  *
  * This uses MongoDB as the underlying database.
  */
-export class MongoTokenDao implements TokenDao
-{
-    /**
-     * Initialize connection
-     *
-     * @param _collection Mongo collection
-     * @param _root_field topmost field in mongo document
-     * @param _date_ctor  Date constructor
-     */
-    constructor(
-        private readonly _collection:   MongoCollection,
-        private readonly _root_field:   string,
-        private readonly _getTimestamp: () => UnixTimestamp,
-    ) {}
+export class MongoTokenDao implements TokenDao {
+  /**
+   * Initialize connection
+   *
+   * @param _collection Mongo collection
+   * @param _root_field topmost field in mongo document
+   * @param _date_ctor  Date constructor
+   */
+  constructor(
+    private readonly _collection: MongoCollection,
+    private readonly _root_field: string,
+    private readonly _getTimestamp: () => UnixTimestamp
+  ) {}
 
+  /**
+   * Create or update a token record
+   *
+   * The token entry is entered in the token log, and then the current
+   * entry is updated to reflect the changes.  The operation is atomic.
+   *
+   * @param doc_id   unique document identifier
+   * @param ns       token namespace
+   * @param token    token value
+   * @param data     token data, if any
+   * @param status   arbitrary token type
+   *
+   * @return token data
+   */
+  updateToken(
+    doc_id: DocumentId,
+    ns: TokenNamespace,
+    token_id: TokenId,
+    type: TokenState,
+    data: string | null
+  ): Promise<TokenData> {
+    const root = this._genRoot(ns) + '.';
 
-    /**
-     * Create or update a token record
-     *
-     * The token entry is entered in the token log, and then the current
-     * entry is updated to reflect the changes.  The operation is atomic.
-     *
-     * @param doc_id   unique document identifier
-     * @param ns       token namespace
-     * @param token    token value
-     * @param data     token data, if any
-     * @param status   arbitrary token type
-     *
-     * @return token data
-     */
-    updateToken(
-        doc_id:   DocumentId,
-        ns:       TokenNamespace,
-        token_id: TokenId,
-        type:     TokenState,
-        data:     string | null,
-    ): Promise<TokenData>
-    {
-        const root = this._genRoot( ns ) + '.';
+    const token_entry: TokenStatus = {
+      type: type,
+      timestamp: this._getTimestamp(),
+      data: data,
+    };
 
-        const token_entry: TokenStatus = {
-            type:      type,
-            timestamp: this._getTimestamp(),
-            data:      data,
-        };
+    const token_data = {
+      [root + 'last']: token_id,
+      [root + 'lastState.' + type]: token_id,
+      [root + 'lastStatus']: token_entry,
+      [root + token_id + '.status']: token_entry,
+    };
 
-        const token_data = {
-            [ root + 'last' ]:               token_id,
-            [ root + 'lastState.' + type ]:  token_id,
-            [ root + 'lastStatus' ]:         token_entry,
-            [ root + token_id + '.status' ]: token_entry,
-        };
+    const token_log = {
+      [root + token_id + '.statusLog']: token_entry,
+    };
 
-        const token_log = {
-            [ root + token_id + '.statusLog' ]: token_entry,
-        };
-
-        return new Promise( ( resolve, reject ) =>
+    return new Promise((resolve, reject) => {
+      this._collection.findAndModify(
+        {id: +doc_id},
+        [],
         {
-            this._collection.findAndModify(
-                { id: +doc_id },
-                [],
-                {
-                    $set: token_data,
-                    $push: token_log
-                },
-                {
-                    upsert: true,
-                    new:    false,
-                    fields: {
-                        [ root + 'last' ]:               1,
-                        [ root + 'lastState' ]:          1,
-                        [ root + 'lastStatus' ]:         1,
-                        [ root + token_id + '.status' ]: 1,
-                    },
-                },
-
-                ( err: NullableError, prev_data ) =>
-                {
-                    if ( err )
-                    {
-                        reject( err );
-                        return;
-                    }
-
-                    const prev_result = <TokenNamespaceResults>
-                        prev_data[ this._root_field ] || {};
-
-                    const prev_ns = prev_result[ ns ];
-
-                    resolve( {
-                        id:          token_id,
-                        status:      token_entry,
-                        prev_status: this._getPrevStatus( prev_ns, token_id ),
-                        prev_last:   this._getPrevLast( prev_ns ),
-                        prev_state:  this._getPrevState( prev_ns ),
-                    } );
-                }
-            );
-        } );
-    }
-
-
-    /**
-     * Determine previous token status, or produce `null`
-     *
-     * @param prev_ns  previous namespace data
-     * @param token_id token identifier
-     *
-     * @return previous token status
-     */
-    private _getPrevStatus(
-        prev_ns: TokenNamespaceData | undefined,
-        token_id: TokenId
-    ): TokenStatus | null
-    {
-        if ( prev_ns === undefined )
+          $set: token_data,
+          $push: token_log,
+        },
         {
-            return null;
+          upsert: true,
+          new: false,
+          fields: {
+            [root + 'last']: 1,
+            [root + 'lastState']: 1,
+            [root + 'lastStatus']: 1,
+            [root + token_id + '.status']: 1,
+          },
+        },
+
+        (err: NullableError, prev_data) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          const prev_result =
+            <TokenNamespaceResults>prev_data[this._root_field] || {};
+
+          const prev_ns = prev_result[ns];
+
+          resolve({
+            id: token_id,
+            status: token_entry,
+            prev_status: this._getPrevStatus(prev_ns, token_id),
+            prev_last: this._getPrevLast(prev_ns),
+            prev_state: this._getPrevState(prev_ns),
+          });
         }
+      );
+    });
+  }
 
-        const entry = <TokenEntry>( prev_ns[ token_id ] );
-
-        return ( entry === undefined )
-            ? null
-            : entry.status;
+  /**
+   * Determine previous token status, or produce `null`
+   *
+   * @param prev_ns  previous namespace data
+   * @param token_id token identifier
+   *
+   * @return previous token status
+   */
+  private _getPrevStatus(
+    prev_ns: TokenNamespaceData | undefined,
+    token_id: TokenId
+  ): TokenStatus | null {
+    if (prev_ns === undefined) {
+      return null;
     }
 
+    const entry = <TokenEntry>prev_ns[token_id];
 
-    /**
-     * Determine previous last updated token for namespace, otherwise `null`
-     *
-     * @param prev_ns previous namespace data
-     *
-     * @return previous last token data
-     */
-    private _getPrevLast(
-        prev_ns: TokenNamespaceData | undefined
-    ): TokenData | null
-    {
-        if ( prev_ns === undefined || ( prev_ns || {} ).last === undefined )
-        {
-            return null;
-        }
+    return entry === undefined ? null : entry.status;
+  }
 
-        return {
-            id:          prev_ns.last,
-            status:      prev_ns.lastStatus,
-            prev_status: null,
-            prev_last:   null,
-            prev_state:  {},
-        };
+  /**
+   * Determine previous last updated token for namespace, otherwise `null`
+   *
+   * @param prev_ns previous namespace data
+   *
+   * @return previous last token data
+   */
+  private _getPrevLast(
+    prev_ns: TokenNamespaceData | undefined
+  ): TokenData | null {
+    if (prev_ns === undefined || (prev_ns || {}).last === undefined) {
+      return null;
     }
 
+    return {
+      id: prev_ns.last,
+      status: prev_ns.lastStatus,
+      prev_status: null,
+      prev_last: null,
+      prev_state: {},
+    };
+  }
 
-    /**
-     * Retrieve previous token states
-     *
-     * If token state information is missing, an empty object will be
-     * returned.
-     *
-     * @param prev_ns previous namespace data
-     *
-     * @return previous token states
-     */
-    private _getPrevState(
-        prev_ns: TokenNamespaceData | undefined
-    ): TokenStateHistory
-    {
-        return ( !prev_ns || prev_ns.lastState === undefined )
-            ? {}
-            : prev_ns.lastState;
+  /**
+   * Retrieve previous token states
+   *
+   * If token state information is missing, an empty object will be
+   * returned.
+   *
+   * @param prev_ns previous namespace data
+   *
+   * @return previous token states
+   */
+  private _getPrevState(
+    prev_ns: TokenNamespaceData | undefined
+  ): TokenStateHistory {
+    return !prev_ns || prev_ns.lastState === undefined ? {} : prev_ns.lastState;
+  }
+
+  /**
+   * Retrieve existing token under the namespace NS, if any, for the doc
+   * identified by DOC_ID
+   *
+   * If a TOKEN_ID is provided, only that token will be queried; otherwise,
+   * the most recently created token will be the subject of the query.
+   *
+   * @param doc_id   document identifier
+   * @param ns       token namespace
+   * @param token_id token identifier (unique to NS)
+   *
+   * @return token data
+   */
+  getToken(
+    doc_id: DocumentId,
+    ns: TokenNamespace,
+    token_id: TokenId
+  ): Promise<TokenData> {
+    const root = this._genRoot(ns) + '.';
+    const fields: any = {};
+
+    fields[root + 'last'] = 1;
+    fields[root + 'lastState'] = 1;
+    fields[root + 'lastStatus'] = 1;
+
+    if (token_id) {
+      // XXX: injectable
+      fields[root + token_id] = 1;
     }
 
+    return new Promise((resolve, reject) => {
+      this._collection.findOne(
+        {id: +doc_id},
+        {fields: fields},
+        (err: NullableError, data: TokenQueryResult) => {
+          if (err || !data) {
+            reject(err);
+            return;
+          }
 
-    /**
-     * Retrieve existing token under the namespace NS, if any, for the doc
-     * identified by DOC_ID
-     *
-     * If a TOKEN_ID is provided, only that token will be queried; otherwise,
-     * the most recently created token will be the subject of the query.
-     *
-     * @param doc_id   document identifier
-     * @param ns       token namespace
-     * @param token_id token identifier (unique to NS)
-     *
-     * @return token data
-     */
-    getToken( doc_id: DocumentId, ns: TokenNamespace, token_id: TokenId ):
-        Promise<TokenData>
-    {
-        const root        = this._genRoot( ns ) + '.';
-        const fields: any = {};
+          const field = <TokenNamespaceResults>data[this._root_field] || {};
 
-        fields[ root + 'last' ]       = 1;
-        fields[ root + 'lastState' ]  = 1;
-        fields[ root + 'lastStatus' ] = 1;
+          const ns_data = field[ns];
 
-        if ( token_id )
-        {
-            // XXX: injectable
-            fields[ root + token_id ] = 1;
-        }
-
-        return new Promise( ( resolve, reject ) =>
-        {
-            this._collection.findOne(
-                { id: +doc_id },
-                { fields: fields },
-                ( err: NullableError, data: TokenQueryResult ) =>
-                {
-                    if ( err || !data )
-                    {
-                        reject( err );
-                        return;
-                    }
-
-                    const field = <TokenNamespaceResults>data[ this._root_field ]
-                        || {};
-
-                    const ns_data = field[ ns ];
-
-                    if ( !ns_data )
-                    {
-                        reject( context(
-                            new UnknownTokenError(
-                                `Unknown token namespace '${ns}' for document '${doc_id}`
-                            ),
-                            {
-                                doc_id:   doc_id,
-                                quote_id: doc_id,
-                                ns:       ns,
-                            }
-                        ) );
-
-                        return;
-                    }
-
-                    resolve( ( token_id )
-                        ? this._getRequestedToken( doc_id, ns, token_id, ns_data )
-                        : this._getLatestToken( doc_id, ns, ns_data )
-                    );
-                }
-            );
-        } );
-    }
-
-
-    /**
-     * Retrieve latest token data
-     *
-     * @param doc_id  document id
-     * @param ns      token namespace
-     * @param ns_data namespace data
-     *
-     * @return data of latest token in namespace
-     *
-     * @throws UnknownTokenError if last token data is missing
-     */
-    private _getLatestToken(
-        doc_id:  DocumentId,
-        ns:      TokenNamespace,
-        ns_data: TokenNamespaceData
-    ): TokenData
-    {
-        var last = ns_data.last;
-
-        if ( !last )
-        {
-            throw context(
+          if (!ns_data) {
+            reject(
+              context(
                 new UnknownTokenError(
-                    `Failed to locate last token for namespace '${ns}'` +
-                        `on document '${doc_id}'`
+                  `Unknown token namespace '${ns}' for document '${doc_id}`
                 ),
                 {
-                    doc_id:   doc_id,
-                    quote_id: doc_id,
-                    ns:       ns,
-                },
+                  doc_id: doc_id,
+                  quote_id: doc_id,
+                  ns: ns,
+                }
+              )
             );
+
+            return;
+          }
+
+          resolve(
+            token_id
+              ? this._getRequestedToken(doc_id, ns, token_id, ns_data)
+              : this._getLatestToken(doc_id, ns, ns_data)
+          );
         }
+      );
+    });
+  }
 
-        return {
-            id:          last,
-            status:      ns_data.lastStatus,
-            prev_status: ns_data.lastStatus,
-            prev_last:   this._getPrevLast( ns_data ),
-            prev_state:  this._getPrevState( ns_data ),
-        };
-    }
+  /**
+   * Retrieve latest token data
+   *
+   * @param doc_id  document id
+   * @param ns      token namespace
+   * @param ns_data namespace data
+   *
+   * @return data of latest token in namespace
+   *
+   * @throws UnknownTokenError if last token data is missing
+   */
+  private _getLatestToken(
+    doc_id: DocumentId,
+    ns: TokenNamespace,
+    ns_data: TokenNamespaceData
+  ): TokenData {
+    var last = ns_data.last;
 
-
-    /**
-     * Retrieve latest token data
-     *
-     * @param doc_id   document id
-     * @param ns       token namespace
-     * @param token_id token identifier for namespace associated with NS_DATA
-     * @param ns_data  namespace data
-     *
-     * @return data of requested token
-     *
-     * @throws UnknownTokenError if token data is missing
-     */
-    private _getRequestedToken(
-        doc_id:   DocumentId,
-        ns:       TokenNamespace,
-        token_id: TokenId,
-        ns_data:  TokenNamespaceData
-    ): TokenData
-    {
-        const reqtok = <TokenEntry>ns_data[ <string>token_id ];
-
-        if ( !reqtok )
+    if (!last) {
+      throw context(
+        new UnknownTokenError(
+          `Failed to locate last token for namespace '${ns}'` +
+            `on document '${doc_id}'`
+        ),
         {
-            throw context(
-                new UnknownTokenError(
-                    `Missing data for requested token '${ns}.${token_id}'` +
-                        `for document '${doc_id}'`
-                ),
-                {
-                    doc_id:   doc_id,
-                    quote_id: doc_id,
-                    ns:       ns,
-                    token_id: token_id,
-                },
-            );
+          doc_id: doc_id,
+          quote_id: doc_id,
+          ns: ns,
         }
-
-        return {
-            id:          token_id,
-            status:      reqtok.status,
-            prev_status: reqtok.status,
-            prev_last:   this._getPrevLast( ns_data ),
-            prev_state:  this._getPrevState( ns_data ),
-        };
+      );
     }
 
+    return {
+      id: last,
+      status: ns_data.lastStatus,
+      prev_status: ns_data.lastStatus,
+      prev_last: this._getPrevLast(ns_data),
+      prev_state: this._getPrevState(ns_data),
+    };
+  }
 
-    /**
-     * Determine token root for the given namespace
-     *
-     * @param ns token namespace
-     *
-     * @return token root for namespace NS
-     */
-    private _genRoot( ns: TokenNamespace ): string
-    {
-        // XXX: injectable
-        return this._root_field + '.' + ns;
+  /**
+   * Retrieve latest token data
+   *
+   * @param doc_id   document id
+   * @param ns       token namespace
+   * @param token_id token identifier for namespace associated with NS_DATA
+   * @param ns_data  namespace data
+   *
+   * @return data of requested token
+   *
+   * @throws UnknownTokenError if token data is missing
+   */
+  private _getRequestedToken(
+    doc_id: DocumentId,
+    ns: TokenNamespace,
+    token_id: TokenId,
+    ns_data: TokenNamespaceData
+  ): TokenData {
+    const reqtok = <TokenEntry>ns_data[<string>token_id];
+
+    if (!reqtok) {
+      throw context(
+        new UnknownTokenError(
+          `Missing data for requested token '${ns}.${token_id}'` +
+            `for document '${doc_id}'`
+        ),
+        {
+          doc_id: doc_id,
+          quote_id: doc_id,
+          ns: ns,
+          token_id: token_id,
+        }
+      );
     }
-};
 
+    return {
+      id: token_id,
+      status: reqtok.status,
+      prev_status: reqtok.status,
+      prev_last: this._getPrevLast(ns_data),
+      prev_state: this._getPrevState(ns_data),
+    };
+  }
+
+  /**
+   * Determine token root for the given namespace
+   *
+   * @param ns token namespace
+   *
+   * @return token root for namespace NS
+   */
+  private _genRoot(ns: TokenNamespace): string {
+    // XXX: injectable
+    return this._root_field + '.' + ns;
+  }
+}

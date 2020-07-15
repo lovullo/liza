@@ -19,82 +19,74 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Ui } from "../ui/Ui"
-import { ClientQuote } from "./quote/ClientQuote";
-import { Nav } from "./nav/Nav";
-import { ElementStyler } from "../ui/ElementStyler";
-import { Program } from "../program/Program";
+import {Ui} from '../ui/Ui';
+import {ClientQuote} from './quote/ClientQuote';
+import {Nav} from './nav/Nav';
+import {ElementStyler} from '../ui/ElementStyler';
+import {Program} from '../program/Program';
 
 /**
  * Controller for the program client
  */
-export declare class Client
-{
-    /**
-     * Handles navigation
-     */
-    nav: Nav;
+export declare class Client {
+  /**
+   * Handles navigation
+   */
+  nav: Nav;
 
-    /**
-     * Styles DOM elements
-     */
-    elementStyler: ElementStyler;
+  /**
+   * Styles DOM elements
+   */
+  elementStyler: ElementStyler;
 
-    /**
-     * Holds the Program object generated from the XML
-     */
-    program: Program;
+  /**
+   * Holds the Program object generated from the XML
+   */
+  program: Program;
 
+  /**
+   * Returns the UI object
+   */
+  getUi(): Ui;
 
-    /**
-     * Returns the UI object
-     */
-    getUi(): Ui;
+  /**
+   * Returns the current quote
+   */
+  getQuote(): ClientQuote;
 
+  /**
+   * Handle error events
+   *
+   * Ideally, this should never happen. This method indicates an error that
+   * could not be properly handled by another part of the system. Let the user
+   * know that this should not be happening and trigger our own error event.
+   */
+  handleError(e: Error): undefined;
 
-    /**
-     * Returns the current quote
-     */
-    getQuote(): ClientQuote;
+  /**
+   * Handles client-side events
+   */
+  handleEvent(
+    event_name: string,
+    data: object,
+    callback?: (data: any) => void,
+    error_callback?: (err: Error) => void
+  ): Client;
 
+  /**
+   * Hooks quote for performing validations on data change
+   *
+   * @param diff - Diff to validate
+   */
+  validateChange(diff: any): void;
 
-    /**
-     * Handle error events
-     *
-     * Ideally, this should never happen. This method indicates an error that
-     * could not be properly handled by another part of the system. Let the user
-     * know that this should not be happening and trigger our own error event.
-     */
-    handleError(e: Error): undefined;
+  /**
+   * Whether there is a current save event
+   */
+  isSaving(): boolean;
 
-
-    /**
-     * Handles client-side events
-     */
-    handleEvent(
-        event_name: string,
-        data: object,
-        callback?: ( data: any ) => void,
-        error_callback?: (err: Error) => void
-    ): Client;
-
-
-    /**
-     * Hooks quote for performing validations on data change
-     *
-     * @param diff - Diff to validate
-     */
-    validateChange( diff: any ): void;
-
-
-    /**
-     * Whether there is a current save event
-     */
-    isSaving(): boolean;
-
-
-    /**
-     * Whether there is a navigation event in progress
-     */
-    isNavigating(): boolean;
+  /**
+   * Whether there is a navigation event in progress
+   */
+  isNavigating(): boolean;
 }

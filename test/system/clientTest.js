@@ -22,54 +22,48 @@
  * unit tests.
  */
 
-"use strict";
+'use strict';
 
-const root   = require( '../../' );
-const sut    = root.system.client;
-const expect = require( 'chai' ).expect;
-const Class  = require( 'easejs' ).Class;
+const root = require('../../');
+const sut = root.system.client;
+const expect = require('chai').expect;
+const Class = require('easejs').Class;
 
-const { Store, DiffStore } = root.store;
+const {Store, DiffStore} = root.store;
 
+describe('client', () => {
+  describe('data.diffStore', () => {
+    it('produces proper Stores', () => {
+      const {store, cstore, bstore} = sut.data.diffStore();
 
-describe( 'client', () =>
-{
-    describe( 'data.diffStore', () =>
-    {
-        it( 'produces proper Stores', () =>
-        {
-            const { store, cstore, bstore } = sut.data.diffStore();
+      // we don't care what type of store these two are
+      expect(Class.isA(Store, store)).to.be.true;
+      expect(Class.isA(Store, bstore)).to.be.true;
 
-            // we don't care what type of store these two are
-            expect( Class.isA( Store, store ) )
-                .to.be.true;
-            expect( Class.isA( Store, bstore ) )
-                .to.be.true;
+      // but it's essential that this is a DiffStore
+      expect(Class.isA(DiffStore, cstore)).to.be.true;
+    });
 
-            // but it's essential that this is a DiffStore
-            expect( Class.isA( DiffStore, cstore ) )
-                .to.be.true;
-        } );
+    it('proxies c:* to cstore, others to bstore', () => {
+      const {store, cstore, bstore} = sut.data.diffStore();
 
+      const cname = 'c:foo'; // Master Shifu
+      const cval = 'panda';
 
-        it( 'proxies c:* to cstore, others to bstore', () =>
-        {
-            const { store, cstore, bstore } = sut.data.diffStore();
+      const bname = 'henry';
+      const bval = 'liza';
 
-            const cname = 'c:foo';  // Master Shifu
-            const cval  = 'panda';
-
-            const bname = 'henry';
-            const bval  = 'liza';
-
-            return expect(
-                store.add( cname, cval )
-                    .then( () => store.add( bname, bval ) )
-                    .then( () => Promise.all( [
-                        cstore.get( cname.replace( /^c:/, '' ) ),
-                        bstore.get( bname )
-                    ] ) )
-            ).to.eventually.deep.equal( [ cval, bval ] );
-        } );
-    } );
-} );
+      return expect(
+        store
+          .add(cname, cval)
+          .then(() => store.add(bname, bval))
+          .then(() =>
+            Promise.all([
+              cstore.get(cname.replace(/^c:/, '')),
+              bstore.get(bname),
+            ])
+          )
+      ).to.eventually.deep.equal([cval, bval]);
+    });
+  });
+});

@@ -19,27 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+module.exports = require('./PatternFormatter')([
+  new RegExp(
+    '^' +
+      // optional protocol (we only permit http and ftp...no no
+      // particular reason, unless you can think of a reason to accept
+      // others)
+      '(?:(?:ht|f)tps?://)?' +
+      // hostname
+      '[\\w\\d-]+[\\w\\d.-]*' +
+      // optionally a filename, parameters, etc after the hostname, so
+      // long as it is delimited by a forward slash
+      "(?:/[\\w\\d$_.+!*'(),%?:@=&;-]*)?" +
+      '$'
+  ),
 
-module.exports = require( './PatternFormatter' )(
-    [
-        new RegExp(
-            '^' +
-                // optional protocol (we only permit http and ftp...no no
-                // particular reason, unless you can think of a reason to accept
-                // others)
-                '(?:(?:ht|f)tps?://)?' +
-
-                // hostname
-                '[\\w\\d-]+[\\w\\d.-]*' +
-
-                // optionally a filename, parameters, etc after the hostname, so
-                // long as it is delimited by a forward slash
-                '(?:/[\\w\\d$_.+!*\'(),%?:@=&;-]*)?' +
-            '$'
-        ),
-
-        // no formatting
-        '$&'
-    ]
-);
-
+  // no formatting
+  '$&',
+]);

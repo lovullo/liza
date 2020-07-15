@@ -19,27 +19,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export declare interface PriorityLog
-{
-    readonly PRIORITY_ERROR: number;
-    readonly PRIORITY_IMPORTANT: number;
-    readonly PRIORITY_DB: number;
-    readonly PRIORITY_INFO: number;
-    readonly PRIORITY_SOCKET: number;
+export declare interface PriorityLog {
+  readonly PRIORITY_ERROR: number;
+  readonly PRIORITY_IMPORTANT: number;
+  readonly PRIORITY_DB: number;
+  readonly PRIORITY_INFO: number;
+  readonly PRIORITY_SOCKET: number;
 
-    /**
-     * Write to the log at the given priority
-     *
-     * If the priority is less than or equal to the set priority for this
-     * object, it will be logged. Otherwise, the message will be ignored.
-     *
-     * The first argument should be the priority. The remaining arguments should
-     * be provided in a sprintf()-style fashion
-     *
-     * @param priority - logging priority
-     * @param ...args  - sprintf-style aruments
-     *
-     * @return self
-     */
-    log( priority: number, ...args: Array<string|number> ): this;
+  /**
+   * Write to the log at the given priority
+   *
+   * If the priority is less than or equal to the set priority for this
+   * object, it will be logged. Otherwise, the message will be ignored.
+   *
+   * The first argument should be the priority. The remaining arguments should
+   * be provided in a sprintf()-style fashion
+   *
+   * @param priority - logging priority
+   * @param ...args  - sprintf-style aruments
+   *
+   * @return self
+   */
+  log(priority: number, ...args: Array<string | number>): this;
 }

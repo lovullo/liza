@@ -35,12 +35,10 @@
  * literature on the topic, which will hopefully help in debugging when
  * errors are inevitable encountered.
  */
-type NominalType<K, T> = K & { __nominal_type__: T };
-
+type NominalType<K, T> = K & {__nominal_type__: T};
 
 /** Unit of time in seconds */
 type Seconds = NominalType<number, 'Seconds'>;
-
 
 /**
  * Unix timestamp
@@ -49,14 +47,11 @@ type Seconds = NominalType<number, 'Seconds'>;
  */
 type UnixTimestamp = NominalType<Seconds, 'UnixTimestamp'>;
 
-
 /** Unit of time in milliseconds */
 type Milliseconds = NominalType<number, 'Milliseconds'>;
 
-
 /** Unix timestamp represented in milliseconds */
 type UnixTimestampMillis = NominalType<Milliseconds, 'UnixTimestampMillis'>;
-
 
 /**
  * Oldschool NodeJS callback
@@ -65,7 +60,7 @@ type UnixTimestampMillis = NominalType<Milliseconds, 'UnixTimestampMillis'>;
  * reduce the boilerplate of these function definitions, and to clearly
  * document that this pattern is something that used to be done frequently.
  */
-type NodeCallback<T, R = void> = ( e: NullableError, result: T | null ) => R;
+type NodeCallback<T, R = void> = (e: NullableError, result: T | null) => R;
 
 /** Nullable error */
 type NullableError = Error | null;

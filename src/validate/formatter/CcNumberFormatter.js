@@ -19,7 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /**
  * Simply validates cc number length
  *
@@ -29,21 +28,17 @@
  * We do not format the output in any particular manner, as different carriers
  * may provider different styles.
  */
-module.exports = require( './PatternFormatter' )(
-    [
-        /^[0-9 -]+$/, function( match )
-        {
-            // remove set delimiters
-            var result = match.replace( /[ -]/g, '' );
+module.exports = require('./PatternFormatter')([
+  /^[0-9 -]+$/,
+  function (match) {
+    // remove set delimiters
+    var result = match.replace(/[ -]/g, '');
 
-            // easier to simply check here rather than convoluting the regex
-            if ( ( result.length < 15 ) || ( result.length > 16 ) )
-            {
-                throw Error( 'Invalid length' );
-            }
+    // easier to simply check here rather than convoluting the regex
+    if (result.length < 15 || result.length > 16) {
+      throw Error('Invalid length');
+    }
 
-            return result;
-        }
-    ]
-);
-
+    return result;
+  },
+]);

@@ -22,9 +22,8 @@
  * @module validate/formatter
  */
 
-var Trait              = require( 'easejs' ).Trait,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Trait = require('easejs').Trait,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Basic data formatting
@@ -55,10 +54,9 @@ var Trait              = require( 'easejs' ).Trait,
  * implementation, which complicates the design.  Simply: it's easy to
  * reason about.
  */
-module.exports = Trait( 'StringFormat' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Trait('StringFormat')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Prefix string
      *
@@ -73,7 +71,6 @@ module.exports = Trait( 'StringFormat' )
      */
     'private _post': '',
 
-
     /**
      * Define format string
      *
@@ -82,14 +79,12 @@ module.exports = Trait( 'StringFormat' )
      *
      * @param {string} format format string with single `'%s'`
      */
-    __mixin: function( format )
-    {
-        var parts = this.parseFormat( ''+format );
+    __mixin: function (format) {
+      var parts = this.parseFormat('' + format);
 
-        this._pre  = parts.pre;
-        this._post = parts.post;
+      this._pre = parts.pre;
+      this._post = parts.post;
     },
-
 
     /**
      * Extract prefix and suffix from format string FORMAT
@@ -103,23 +98,18 @@ module.exports = Trait( 'StringFormat' )
      *
      * @throws {Error} if FORMAT does not have exactly one `'%s'`
      */
-    'virtual protected parseFormat': function( format )
-    {
-        var parts = format.split( '%s' );
+    'virtual protected parseFormat': function (format) {
+      var parts = format.split('%s');
 
-        if ( parts.length !== 2 )
-        {
-            throw Error(
-                "Format string must have a single '%s': " + format
-            );
-        }
+      if (parts.length !== 2) {
+        throw Error("Format string must have a single '%s': " + format);
+      }
 
-        return {
-            pre:  parts[ 0 ],
-            post: parts[ 1 ]
-        };
+      return {
+        pre: parts[0],
+        post: parts[1],
+      };
     },
-
 
     /**
      * Remove prefix and suffix from data
@@ -128,11 +118,9 @@ module.exports = Trait( 'StringFormat' )
      *
      * @return {string} data formatted for storage
      */
-    'virtual abstract override public parse': function( data )
-    {
-        return this.__super( this._stripPrePost( data ) );
+    'virtual abstract override public parse': function (data) {
+      return this.__super(this._stripPrePost(data));
     },
-
 
     /**
      * Recursively strip prefixes and suffixes from STR
@@ -144,25 +132,19 @@ module.exports = Trait( 'StringFormat' )
      *
      * @return {string} stripped string
      */
-    'private _stripPrePost': function( str )
-    {
-        if ( this._pre && ( str.substr( 0, this._pre.length ) === this._pre ) )
-        {
-            return this._stripPrePost(
-                str.substr( this._pre.length )
-            );
-        }
+    'private _stripPrePost': function (str) {
+      if (this._pre && str.substr(0, this._pre.length) === this._pre) {
+        return this._stripPrePost(str.substr(this._pre.length));
+      }
 
-        if ( this._post && ( str.substr( -this._post.length ) === this._post ) )
-        {
-            return this._stripPrePost(
-                str.substr( 0, str.length - this._post.length )
-            );
-        }
+      if (this._post && str.substr(-this._post.length) === this._post) {
+        return this._stripPrePost(
+          str.substr(0, str.length - this._post.length)
+        );
+      }
 
-        return str;
+      return str;
     },
-
 
     /**
      * Format data by adding prefix and suffix
@@ -171,8 +153,7 @@ module.exports = Trait( 'StringFormat' )
      *
      * @return {string} data formatted for display
      */
-    'virtual abstract override public retrieve': function( data )
-    {
-        return this._pre + this.__super( data ) + this._post;
+    'virtual abstract override public retrieve': function (data) {
+      return this._pre + this.__super(data) + this._post;
     },
-} );
+  });

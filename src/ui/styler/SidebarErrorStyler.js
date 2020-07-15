@@ -19,9 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class       = require( 'easejs' ).Class,
-    ErrorStyler = require( './ErrorStyler' );
-
+var Class = require('easejs').Class,
+  ErrorStyler = require('./ErrorStyler');
 
 /**
  * Displays errors in the sidebar
@@ -29,38 +28,30 @@ var Class       = require( 'easejs' ).Class,
  * TODO: This is an adapter around the old system; it could use some
  * refactoring.
  */
-module.exports = Class( 'SidebarErrorStyler' )
-    .extend( ErrorStyler,
-{
-    /**
-     * Error box in which to display errors
-     * @type {FormErrorBox}
-     */
-    'private _errbox': null,
+module.exports = Class('SidebarErrorStyler').extend(ErrorStyler, {
+  /**
+   * Error box in which to display errors
+   * @type {FormErrorBox}
+   */
+  'private _errbox': null,
 
-    /**
-     * Ui instance
-     * @type {Ui}
-     */
-    'private _ui': null,
+  /**
+   * Ui instance
+   * @type {Ui}
+   */
+  'private _ui': null,
 
+  'override __construct': function (msgs, error_box, ui) {
+    this._errbox = error_box;
+    this._ui = ui;
+    this.__super(msgs);
+  },
 
-    'override __construct': function( msgs, error_box, ui )
-    {
-        this._errbox = error_box;
-        this._ui     = ui;
-        this.__super( msgs );
-    },
+  'override protected onFieldError': function (field, msg) {
+    this._errbox.show(field.getName(), field.getIndex(), msg);
+  },
 
-
-    'override protected onFieldError': function( field, msg )
-    {
-        this._errbox.show( field.getName(), field.getIndex(), msg );
-    },
-
-
-    'override protected onFieldFixed': function( field )
-    {
-        this._errbox.removeError( field.getName(), field.getIndex() );
-    }
-} );
+  'override protected onFieldFixed': function (field) {
+    this._errbox.removeError(field.getName(), field.getIndex());
+  },
+});

@@ -19,16 +19,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * A subset of a larger collection of fields that can be used to restrict
  * operations for both convenience and (moreso) performance
  */
-module.exports = Interface( 'Context',
-{
-    'public getFieldByName': [ 'name', 'index', 'filter' ],
+module.exports = Interface('Context', {
+  'public getFieldByName': ['name', 'index', 'filter'],
 
-    'public split': [ 'on' ]
-} );
+  'public split': ['on'],
+});

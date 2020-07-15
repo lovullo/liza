@@ -19,50 +19,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var Class = require('easejs').Class,
+  liza = require('../../../../'),
+  Sut = liza.validate.formatter.insurance.Limit,
+  EchoFormatter = liza.validate.formatter.EchoFormatter,
+  ValidatorFormatter = liza.validate.ValidatorFormatter,
+  common = require('../common'),
+  expect = require('chai').expect;
 
-var Class              = require( 'easejs' ).Class,
-    liza               = require( '../../../../' ),
-    Sut                = liza.validate.formatter.insurance.Limit,
-    EchoFormatter      = liza.validate.formatter.EchoFormatter,
-    ValidatorFormatter = liza.validate.ValidatorFormatter,
-    common             = require( '../common' ),
-    expect             = require( 'chai' ).expect;
+var DummyFormatter = Class.implement(ValidatorFormatter).extend({
+  'virtual parse': function (data) {
+    return '+' + data;
+  },
 
-var DummyFormatter = Class.implement( ValidatorFormatter )
-    .extend(
-{
-    'virtual parse': function( data )
-    {
-        return '+' + data;
-    },
+  'virtual retrieve': function (data) {
+    return '-' + data;
+  },
+});
 
-    'virtual retrieve': function( data )
-    {
-        return '-' + data;
-    },
-} );
+describe('validate.formatter.insurance.Limit', function () {
+  common.testValidate(DummyFormatter.use(Sut)(), {
+    // plain strings are ignored (and do not invoke supertype)
+    '': [''],
+    abc: ['abc'],
+    abc_: ['abc_'],
+    '_ -': ['_ -'],
 
+    // numbers >3 digits echoed
+    '1234': ['+1234', '-+1234'],
+    '123456': ['+123456', '-+123456'],
+  });
 
-describe( 'validate.formatter.insurance.Limit', function()
-{
-    common.testValidate( DummyFormatter.use( Sut )(), {
-        // plain strings are ignored (and do not invoke supertype)
-        "":     [ ""     ],
-        "abc":  [ "abc"  ],
-        "abc_": [ "abc_" ],
-        "_ -":  [ "_ -"  ],
-
-        // numbers >3 digits echoed
-        "1234":   [ "+1234",     "-+1234"    ],
-        "123456": [ "+123456",   "-+123456"  ],
-    } );
-
-
-    // 3-digit abbreviations are converted *on retrieval* (we'll often
-    // be styling existing data, so we don't want to rely on prior
-    // conversion)
-    common.testValidate( EchoFormatter.use( Sut )(), {
-        "100": [ "100", "100000" ],
-        "500": [ "500", "500000" ],
-    } );
-} );
+  // 3-digit abbreviations are converted *on retrieval* (we'll often
+  // be styling existing data, so we don't want to rely on prior
+  // conversion)
+  common.testValidate(EchoFormatter.use(Sut)(), {
+    '100': ['100', '100000'],
+    '500': ['500', '500000'],
+  });
+});

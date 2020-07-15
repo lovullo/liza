@@ -19,42 +19,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
-
+var Interface = require('easejs').Interface;
 
 /**
  * Represents server DAO
  *
  * @todo: terminology is tied very tightly with mongo; fix that
  */
-exports.ServerDao = Interface.extend(
-{
-    'public init': [ 'callback' ],
+exports.ServerDao = Interface.extend({
+  'public init': ['callback'],
 
-    'public connect': [ 'callback' ],
+  'public connect': ['callback'],
 
-    'public initQuoteIdSeq': [ 'callback' ],
+  'public initQuoteIdSeq': ['callback'],
 
-    'public saveQuote': [
-        'quote', 'success_callback', 'failure_callback', 'save_data'
-    ],
+  'public saveQuote': [
+    'quote',
+    'success_callback',
+    'failure_callback',
+    'save_data',
+  ],
 
-    'public saveQuoteState': [
-        'quote', 'succes_callback', 'failure_callback'
-    ],
+  'public saveQuoteState': ['quote', 'succes_callback', 'failure_callback'],
 
-    'public pullQuote': [ 'quote_id', 'callback' ],
+  'public pullQuote': ['quote_id', 'callback'],
 
-    'public getMinQuoteId': [ 'callback' ],
+  'public getMinQuoteId': ['callback'],
 
-    'public getMaxQuoteId': [ 'callback' ],
+  'public getMaxQuoteId': ['callback'],
 
-    'public getNextQuoteId': [ 'callback' ],
+  'public getNextQuoteId': ['callback'],
 
-
-    /**
-     * Create a new revision with the provided quote data
-     */
-    'public createRevision': [ 'quote', 'callback' ],
-} );
-
+  /**
+   * Create a new revision with the provided quote data
+   */
+  'public createRevision': ['quote', 'callback'],
+});

@@ -19,19 +19,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class   = require( 'easejs' ).Class,
-    DataApi = require( './DataApi' ),
-
-    EventEmitter = require( '../events' ).EventEmitter;
-
+var Class = require('easejs').Class,
+  DataApi = require('./DataApi'),
+  EventEmitter = require('../events').EventEmitter;
 
 /**
  * Prepends static data to a response
  */
-module.exports = Class( 'StaticAdditionDataApi' )
-    .implement( DataApi )
-    .extend( EventEmitter,
-{
+module.exports = Class('StaticAdditionDataApi')
+  .implement(DataApi)
+  .extend(EventEmitter, {
     /**
      * DataApi to restrict
      * @type {DataApi}
@@ -55,7 +52,6 @@ module.exports = Class( 'StaticAdditionDataApi' )
      */
     'private _static': [],
 
-
     /**
      * Initialize static API response data
      *
@@ -64,14 +60,12 @@ module.exports = Class( 'StaticAdditionDataApi' )
      * @param {Boolean}        multiple    to append if more than 1 result
      * @param {Array.<Object>} static_data static data to prepend
      */
-    __construct: function( data_api, nonempty, multiple, static_data )
-    {
-        this._api      = data_api;
-        this._static   = static_data;
-        this._nonempty = !!nonempty;
-        this._multiple = !!multiple;
+    __construct: function (data_api, nonempty, multiple, static_data) {
+      this._api = data_api;
+      this._static = static_data;
+      this._nonempty = !!nonempty;
+      this._multiple = !!multiple;
     },
-
 
     /**
      * Request data from the service
@@ -81,31 +75,28 @@ module.exports = Class( 'StaticAdditionDataApi' )
      *
      * @return {DataApi} self
      */
-    'public request': function( data, callback, id )
-    {
-        data     = data     || {};
-        callback = callback || function() {};
+    'public request': function (data, callback, id) {
+      data = data || {};
+      callback = callback || function () {};
 
-        var _self = this,
-            inst  = this.__inst;
+      var _self = this,
+        inst = this.__inst;
 
-        this._api.request( data, function( err, response )
-        {
-            // if the data are invalid, do nothing
-            if ( !Array.isArray( response ) )
-            {
-                callback.call( inst, err, response );
-                return;
-            }
+      this._api.request(
+        data,
+        function (err, response) {
+          // if the data are invalid, do nothing
+          if (!Array.isArray(response)) {
+            callback.call(inst, err, response);
+            return;
+          }
 
-            // return the response with our data
-            callback.call( inst,
-                err,
-                _self._unshiftData( response )
-            );
-        }, id );
+          // return the response with our data
+          callback.call(inst, err, _self._unshiftData(response));
+        },
+        id
+      );
     },
-
 
     /**
      * Unshifts the static data onto the given data set
@@ -118,28 +109,24 @@ module.exports = Class( 'StaticAdditionDataApi' )
      *
      * @return {Array} augmented data
      */
-    'private _unshiftData': function( data )
-    {
-        // if the nonempty flag is set, then we should not augment empty sets
-        if ( ( data.length === 0 ) && ( this._nonempty ) )
-        {
-            return data;
-        }
-
-        // if multiple flag is set but result contains < 2 results, do
-        // not augment
-        if ( ( data.length < 2 ) && ( this._multiple ) )
-        {
-            return data;
-        }
-
-        // note that this modifies the actual reference!
-        var i = this._static.length;
-        while ( i-- )
-        {
-            data.unshift( this._static[ i ] );
-        }
-
+    'private _unshiftData': function (data) {
+      // if the nonempty flag is set, then we should not augment empty sets
+      if (data.length === 0 && this._nonempty) {
         return data;
-    }
-} );
+      }
+
+      // if multiple flag is set but result contains < 2 results, do
+      // not augment
+      if (data.length < 2 && this._multiple) {
+        return data;
+      }
+
+      // note that this modifies the actual reference!
+      var i = this._static.length;
+      while (i--) {
+        data.unshift(this._static[i]);
+      }
+
+      return data;
+    },
+  });

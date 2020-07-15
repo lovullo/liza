@@ -19,13 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { PositiveInteger } from "../../../src/numeric";
+import {PositiveInteger} from '../../../src/numeric';
 
 /**
  * HTMLElement type that allows null values
  */
 export type NullableHTMLElement = HTMLElement | null;
-
 
 /**
  * Helper to get nth ancestor
@@ -36,26 +35,22 @@ export type NullableHTMLElement = HTMLElement | null;
  * @return the element's ancestor
  */
 export const getNthAncestor = (
-    element: HTMLElement,
-    n:       PositiveInteger
-): NullableHTMLElement =>
-{
-    while ( element.parentNode && n-- > 0 )
-    {
-        element = <HTMLElement> element.parentNode;
-    }
+  element: HTMLElement,
+  n: PositiveInteger
+): NullableHTMLElement => {
+  while (element.parentNode && n-- > 0) {
+    element = <HTMLElement>element.parentNode;
+  }
 
-    return ( n > 0 ) ? null : element;
+  return n > 0 ? null : element;
 };
-
 
 /**
  * Interface for conditional styling
  */
-export interface AncestorAwareStyler
-{
-    /**
-     * Conditionally apply a style to an HTML element based on an ancestor
-     */
-    style( elem: HTMLElement, generation: PositiveInteger ): void;
+export interface AncestorAwareStyler {
+  /**
+   * Conditionally apply a style to an HTML element based on an ancestor
+   */
+  style(elem: HTMLElement, generation: PositiveInteger): void;
 }

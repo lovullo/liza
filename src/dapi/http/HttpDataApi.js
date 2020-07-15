@@ -21,30 +21,28 @@
 
 'use strict';
 
-const { Class } = require( 'easejs' );
-const DataApi   = require( '../DataApi' );
-const HttpImpl  = require( './HttpImpl' );
+const {Class} = require('easejs');
+const DataApi = require('../DataApi');
+const HttpImpl = require('./HttpImpl');
 
 // RFC 2616 methods
 const rfcmethods = {
-    DELETE:  true,
-    GET:     true,
-    HEAD:    true,
-    OPTIONS: true,
-    POST:    true,
-    PUT:     true,
-    TRACE:   true
+  DELETE: true,
+  GET: true,
+  HEAD: true,
+  OPTIONS: true,
+  POST: true,
+  PUT: true,
+  TRACE: true,
 };
-
 
 /**
  * HTTP request abstraction. Does minor validation, but delegates to a specific
  * HTTP implementation for the actual request.
  */
-module.exports = Class( 'HttpDataApi' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Class('HttpDataApi')
+  .implement(DataApi)
+  .extend({
     /**
      * Request URL
      * @type {string}
@@ -69,7 +67,6 @@ module.exports = Class( 'HttpDataApi' )
      */
     'private _enctype': '',
 
-
     /**
      * Initialize Data API with destination and HTTP implementation
      *
@@ -88,22 +85,19 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {TypeError} when non-HttpImpl is provided
      */
-    __construct: function( url, method, impl, enctype )
-    {
-        if ( !( Class.isA( HttpImpl, impl ) ) )
-        {
-            throw TypeError( "Expected HttpImpl" );
-        }
+    __construct: function (url, method, impl, enctype) {
+      if (!Class.isA(HttpImpl, impl)) {
+        throw TypeError('Expected HttpImpl');
+      }
 
-        this._url    = ''+url;
-        this._method = this._validateMethod( method );
-        this._impl   = impl;
+      this._url = '' + url;
+      this._method = this._validateMethod(method);
+      this._impl = impl;
 
-        this._enctype = ( enctype )
-            ? ''+enctype
-            : 'application/x-www-form-urlencoded';
+      this._enctype = enctype
+        ? '' + enctype
+        : 'application/x-www-form-urlencoded';
     },
-
 
     /**
      * Perform an asynchronous request and invoke the callback with the reply
@@ -128,22 +122,19 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {TypeError} on validation failure
      */
-    'virtual public request': function( data, callback, id )
-    {
-        // null is a good indicator of "I have no intent to send any data";
-        // empty strings and objects are not, since those are valid data
-        if ( data === null )
-        {
-            data = "";
-        }
+    'virtual public request': function (data, callback, id) {
+      // null is a good indicator of "I have no intent to send any data";
+      // empty strings and objects are not, since those are valid data
+      if (data === null) {
+        data = '';
+      }
 
-        this._validateDataType( data );
+      this._validateDataType(data);
 
-        this.requestData( this._url, this._method, data, callback );
+      this.requestData(this._url, this._method, data, callback);
 
-        return this;
+      return this;
     },
-
 
     /**
      * Request data from underlying HttpImpl
@@ -158,16 +149,14 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @return {HttpDataApi} self
      */
-    'virtual protected requestData'( url, method, data, callback )
-    {
-        return this._impl.requestData(
-            url,
-            method,
-            this.encodeData( data ),
-            callback
-        );
+    'virtual protected requestData'(url, method, data, callback) {
+      return this._impl.requestData(
+        url,
+        method,
+        this.encodeData(data),
+        callback
+      );
     },
-
 
     /**
      * Ensures that the provided method conforms to RFC 2616
@@ -177,16 +166,13 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {Error} on non-conforming method
      */
-    'private _validateMethod': function( method )
-    {
-        if ( !( rfcmethods[ method ] ) )
-        {
-            throw Error( "Invalid RFC 2616 method: " + method );
-        }
+    'private _validateMethod': function (method) {
+      if (!rfcmethods[method]) {
+        throw Error('Invalid RFC 2616 method: ' + method);
+      }
 
-        return method;
+      return method;
     },
-
 
     /**
      * Validates that the provided data type is accepted by the Data API
@@ -196,19 +182,16 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @throws {TypeError} on validation failure
      */
-    'private _validateDataType': function( data )
-    {
-        const type = typeof data;
+    'private _validateDataType': function (data) {
+      const type = typeof data;
 
-        if( !( ( type === 'string' ) || ( type === 'object' ) ) )
-        {
-            throw TypeError(
-                "Data must be a string of raw data or object containing " +
-                "key-value params"
-            );
-        }
+      if (!(type === 'string' || type === 'object')) {
+        throw TypeError(
+          'Data must be a string of raw data or object containing ' +
+            'key-value params'
+        );
+      }
     },
-
 
     /**
      * Generate params for URI from key-value `data`
@@ -224,31 +207,26 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @return {string} generated URI, or empty if no keys
      */
-    'protected encodeData': function( data )
-    {
-        if ( typeof data !== 'object' )
-        {
-            return ''+data;
-        }
+    'protected encodeData': function (data) {
+      if (typeof data !== 'object') {
+        return '' + data;
+      }
 
-        if ( this._method !== 'POST' )
-        {
-            return this._urlEncode( data );
-        }
+      if (this._method !== 'POST') {
+        return this._urlEncode(data);
+      }
 
-        switch ( this._enctype )
-        {
-            case 'application/x-www-form-urlencoded':
-                return this._urlEncode( data );
+      switch (this._enctype) {
+        case 'application/x-www-form-urlencoded':
+          return this._urlEncode(data);
 
-            case 'application/json':
-                return JSON.stringify( data );
+        case 'application/json':
+          return JSON.stringify(data);
 
-            default:
-                throw Error( 'Unknown enctype for POST: ' + this._enctype );
-        }
+        default:
+          throw Error('Unknown enctype for POST: ' + this._enctype);
+      }
     },
-
 
     /**
      * urlencode each key of provided object
@@ -257,11 +235,11 @@ module.exports = Class( 'HttpDataApi' )
      *
      * @return {string} urlencoded string, joined with '&'
      */
-    'private _urlEncode'( obj )
-    {
-        return Object.keys( obj ).map( key =>
-            encodeURIComponent( key ) + '=' +
-                encodeURIComponent( obj[ key ] )
-        ).join( '&' );
+    'private _urlEncode'(obj) {
+      return Object.keys(obj)
+        .map(
+          key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])
+        )
+        .join('&');
     },
-} );
+  });

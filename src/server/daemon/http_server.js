@@ -24,52 +24,44 @@
  * liza's server, and has barely evolved since then.
  */
 
-var http = require( 'http' );
+var http = require('http');
 
+exports.create = function (routers, request_builder, access_log, debug_log) {
+  return log_server(
+    http.createServer(function (request, response) {
+      // easy request/response management
+      var user_request = request_builder(request, response);
 
-exports.create = function( routers, request_builder, access_log, debug_log )
-{
-    return log_server( http.createServer( function( request, response )
-    {
-        // easy request/response management
-        var user_request = request_builder( request, response );
+      // log this request to the access log
+      access_log.attach(user_request);
 
-        // log this request to the access log
-        access_log.attach( user_request );
+      // process the request when it's ready (all data is available)
+      user_request.on('ready', function () {
+        var routed = false;
+        Promise.all(
+          routers.map(function (router) {
+            return router.route(user_request, debug_log);
+          })
+        ).then(function (routed) {
+          var was_routed = routed.some(function (handled) {
+            return handled === true;
+          });
 
-        // process the request when it's ready (all data is available)
-        user_request.on( 'ready', function()
-        {
-            var routed = false;
-            Promise.all(
-                routers.map( function( router )
-                {
-                    return router.route( user_request, debug_log );
-                } )
-            ).then( function( routed )
-            {
-                var was_routed = routed.some( function( handled )
-                {
-                    return handled === true;
-                } );
-
-                // display a 404 if we weren't able to route the request
-                if ( !was_routed )
-                {
-                    return_404( user_request );
-                }
-            } );
+          // display a 404 if we weren't able to route the request
+          if (!was_routed) {
+            return_404(user_request);
+          }
         });
-    }), debug_log );
+      });
+    }),
+    debug_log
+  );
 };
 
-
-function return_404( response )
-{
-    response.setResponseCode( 404 );
-    response.end( '404 Not found.' );
+function return_404(response) {
+  response.setResponseCode(404);
+  response.end('404 Not found.');
 }
-
 
 /**
  * Enables logging on the server
@@ -79,12 +71,10 @@ function return_404( response )
  *
  * @return {HttpServer}
  */
-function log_server( server, debug_log )
-{
-    server
-        .on( 'connection', function( stream )
-        {
-            /** this is useless until not behind a proxy, since the IP address
+function log_server(server, debug_log) {
+  server
+    .on('connection', function (stream) {
+      /** this is useless until not behind a proxy, since the IP address
              * is always the same
             debug_log.log( debug_log.PRIORITY_SOCKET,
                 'HTTP connection received from %s',
@@ -92,30 +82,29 @@ function log_server( server, debug_log )
             );
             */
 
-            // log errors on the connection
-            stream.on( 'error', function( exception )
-            {
-                debug_log.log( debug_log.PRIORITY_SOCKET,
-                    'HTTP server connection error on %s: %s',
-                    stream.remoteAddress,
-                    exception
-                );
-            });
-        })
-        .on( 'close', function( errno )
-        {
-            debug_log.log( debug_log.PRIORITY_SOCKET,
-                "HTTP server connection closed."
-            );
-        })
-        .on( 'clientError', function( exception )
-        {
-            debug_log.log( debug_log.PRIORITY_SOCKET,
-                'HTTP client connection error: %s',
-                exception
-            );
-        });
+      // log errors on the connection
+      stream.on('error', function (exception) {
+        debug_log.log(
+          debug_log.PRIORITY_SOCKET,
+          'HTTP server connection error on %s: %s',
+          stream.remoteAddress,
+          exception
+        );
+      });
+    })
+    .on('close', function (errno) {
+      debug_log.log(
+        debug_log.PRIORITY_SOCKET,
+        'HTTP server connection closed.'
+      );
+    })
+    .on('clientError', function (exception) {
+      debug_log.log(
+        debug_log.PRIORITY_SOCKET,
+        'HTTP client connection error: %s',
+        exception
+      );
+    });
 
-    return server;
+  return server;
 }
-

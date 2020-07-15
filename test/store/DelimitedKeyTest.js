@@ -21,87 +21,75 @@
 
 'use strict';
 
-const chai   = require( 'chai' );
+const chai = require('chai');
 const expect = chai.expect;
 
-chai.use( require( 'chai-as-promised' ) );
+chai.use(require('chai-as-promised'));
 
 const {
-    DelimitedKey: Sut,
-    MemoryStore:   Store,
-    StoreMissError,
-} = require( '../../' ).store;
+  DelimitedKey: Sut,
+  MemoryStore: Store,
+  StoreMissError,
+} = require('../../').store;
 
+describe('DelimitedKey', () => {
+  describe('#get', () => {
+    it('retrieves nested store keys', () => {
+      const outer = Store.use(Sut('.'))();
+      const middle = Store();
+      const inner = Store();
+      const inner_val = {};
 
+      return expect(
+        inner
+          .add('foo', inner_val)
+          .then(() => middle.add('inner', inner))
+          .then(() => outer.add('middle', middle))
+          .then(() => outer.get('middle.inner.foo'))
+      ).to.eventually.equal(inner_val);
+    });
 
-describe( 'DelimitedKey', () =>
-{
-    describe( '#get', () =>
-    {
-        it( "retrieves nested store keys", () =>
-        {
-            const outer     = Store.use( Sut( '.' ) )();
-            const middle    = Store();
-            const inner     = Store();
-            const inner_val = {};
+    it('fails on unknown nested key', () => {
+      const outer = Store.use(Sut('.'))();
+      const inner = Store();
 
-            return expect(
-                inner.add( 'foo', inner_val )
-                    .then( () => middle.add( 'inner', inner ) )
-                    .then( () => outer.add( 'middle', middle ) )
-                    .then( () => outer.get( 'middle.inner.foo' ) )
-            ).to.eventually.equal( inner_val );
-        } );
+      return expect(
+        outer.add('inner', inner).then(() => outer.get('inner.foo.bar.baz'))
+      ).to.eventually.be.rejectedWith(StoreMissError, /[^.]foo\b/);
+    });
 
+    // rather than blowing up attempting to split
+    it('fails gracefully on non-string key', () => {
+      return expect(
+        Store.use(Sut('.'))().get(undefined)
+      ).to.eventually.be.rejectedWith(StoreMissError);
+    });
+  });
 
-        it( "fails on unknown nested key", () =>
-        {
-            const outer = Store.use( Sut( '.' ) )();
-            const inner = Store();
+  describe('#add', () => {
+    it('sets nested store keys', () => {
+      const outer = Store.use(Sut('.'))();
+      const inner = Store();
+      const inner_val = {};
 
-            return expect(
-                outer.add( 'inner', inner )
-                    .then( () => outer.get( 'inner.foo.bar.baz' ) )
-            ).to.eventually.be.rejectedWith( StoreMissError, /[^.]foo\b/ );
-        } );
+      return expect(
+        inner
+          .add('foo', inner_val)
+          .then(() => outer.add('inner', inner))
+          .then(() => outer.add('inner.foo', inner_val))
+          .then(() => inner.get('foo'))
+      ).to.eventually.equal(inner_val);
+    });
 
+    it('fails on unknown nested key', () => {
+      const outer = Store.use(Sut('.'))();
+      const inner = Store();
 
-        // rather than blowing up attempting to split
-        it( "fails gracefully on non-string key", () =>
-        {
-            return expect(
-                Store.use( Sut( '.' ) )().get( undefined )
-            ).to.eventually.be.rejectedWith( StoreMissError );
-        } );
-    } );
-
-
-    describe( '#add', () =>
-    {
-        it( "sets nested store keys", () =>
-        {
-            const outer     = Store.use( Sut( '.' ) )();
-            const inner     = Store();
-            const inner_val = {};
-
-            return expect(
-                inner.add( 'foo', inner_val )
-                    .then( () => outer.add( 'inner', inner ) )
-                    .then( () => outer.add( 'inner.foo', inner_val ) )
-                    .then( () => inner.get( 'foo' ) )
-            ).to.eventually.equal( inner_val );
-        } );
-
-
-        it( "fails on unknown nested key", () =>
-        {
-            const outer = Store.use( Sut( '.' ) )();
-            const inner = Store();
-
-            return expect(
-                outer.add( 'inner', inner )
-                    .then( () => outer.add( 'inner.none.foo', "fail" ) )
-            ).to.eventually.be.rejectedWith( StoreMissError, /[^.]none\b/ );
-        } );
-    } );
-} );
+      return expect(
+        outer
+          .add('inner', inner)
+          .then(() => outer.add('inner.none.foo', 'fail'))
+      ).to.eventually.be.rejectedWith(StoreMissError, /[^.]none\b/);
+    });
+  });
+});

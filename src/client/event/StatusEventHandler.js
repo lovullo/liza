@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class        = require( 'easejs' ).Class,
-    EventHandler = require( './EventHandler' );
-
+var Class = require('easejs').Class,
+  EventHandler = require('./EventHandler');
 
 /**
  * Performs rate requests
  */
-module.exports = Class( 'StatusEventHandler' )
-    .implement( EventHandler )
-    .extend(
-{
+module.exports = Class('StatusEventHandler')
+  .implement(EventHandler)
+  .extend({
     /**
      * Styler used to manipulate the DOM
      *
@@ -39,17 +37,14 @@ module.exports = Class( 'StatusEventHandler' )
      */
     'private _styler': null,
 
-
     /**
      * Initializes with client that will delegate the event
      *
      * @param {ElementStyler} styler element styler
      */
-    __construct: function( styler )
-    {
-        this._styler = styler;
+    __construct: function (styler) {
+      this._styler = styler;
     },
-
 
     /**
      * Handles kick-back
@@ -60,22 +55,18 @@ module.exports = Class( 'StatusEventHandler' )
      *
      * @return {StatusEventHandler} self
      */
-    'public handle': function( type, c, data )
-    {
-        var indexes = data.indexes || [],
-            value   = data.value || '',
-            name    = data.elementName;
+    'public handle': function (type, c, data) {
+      var indexes = data.indexes || [],
+        value = data.value || '',
+        name = data.elementName;
 
-        for ( var i in indexes )
-        {
-            // string means a static value; otherwise, an array
-            // represents bucket values, of which we should take the
-            // associated index
-            var value = ( typeof value === 'string' )
-                ? value
-                : value[ i ];
+      for (var i in indexes) {
+        // string means a static value; otherwise, an array
+        // represents bucket values, of which we should take the
+        // associated index
+        var value = typeof value === 'string' ? value : value[i];
 
-            this._styler.setStatus( name, indexes[ i ], value );
-        }
-    }
-} );
+        this._styler.setStatus(name, indexes[i], value);
+      }
+    },
+  });

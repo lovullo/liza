@@ -19,142 +19,113 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Sut    = require( '../../../' ).ui.group.StackedGroupUi,
-      expect = require( 'chai' ).expect,
-      sinon  = require( 'sinon' );
+const Sut = require('../../../').ui.group.StackedGroupUi,
+  expect = require('chai').expect,
+  sinon = require('sinon');
 
 import {
-    createSut,
-    createQuote,
-    createContent,
-    createContainer
-} from "./CommonResources";
+  createSut,
+  createQuote,
+  createContent,
+  createContainer,
+} from './CommonResources';
 
+describe('ui.group.StackedGroupUi', () => {
+  describe('#showField', function () {
+    [
+      {
+        field: 'foo_bar',
+        index: 0,
+      },
+      {
+        field: 'bar_foo',
+        index: 1,
+      },
+    ].forEach(({field, index}) => {
+      it(`it shows the header for ${field} when group fields are visible`, () => {
+        const container = createContainer();
+        const content = createContent();
 
-describe( 'ui.group.StackedGroupUi', () =>
-{
-    describe( '#showField', function()
-    {
-        [
-            {
-                field: 'foo_bar',
-                index: 0,
-            },
-            {
-                field: 'bar_foo',
-                index: 1,
-            },
-        ].forEach( ( { field, index } ) =>
-        {
-            it( `it shows the header for ${field} when group fields are visible`, () =>
-            {
-                const container = createContainer();
-                const content   = createContent();
+        content.querySelector
+          .withArgs('div.stacked-container')
+          .returns(container);
 
-                content.querySelector
-                    .withArgs( 'div.stacked-container' )
-                    .returns( container );
+        const sut = createSut(Sut, {
+          field: field,
+          content: content,
+        });
 
-                const sut = createSut(
-                    Sut,
-                    {
-                        field: field,
-                        content: content
-                    }
-                );
+        const removeClass = sinon.stub();
 
-                const removeClass = sinon.stub();
+        const header = {
+          classList: {
+            remove: removeClass,
+          },
+        };
 
-                const header = {
-                    classList: {
-                        remove: removeClass
-                    },
-                };
+        sut.getCurrentIndex = sinon.stub().returns(10);
+        sut.hasVisibleField = sinon.stub().withArgs(index).returns(true);
 
-                sut.getCurrentIndex = sinon.stub().returns( 10 );
-                sut.hasVisibleField = sinon.stub()
-                    .withArgs( index )
-                    .returns( true );
+        container.querySelectorAll.withArgs('dl').returns([header, header]);
 
-                container.querySelectorAll
-                    .withArgs( 'dl' )
-                    .returns( [ header, header ] );
+        const quote = createQuote();
 
-                const quote = createQuote();
+        content.querySelectorAll.withArgs('dl').returns([header, header]);
 
-                content.querySelectorAll
-                    .withArgs( 'dl' )
-                    .returns( [ header, header ] );
+        sut.init(quote);
+        sut.showField(field, index);
 
-                sut.init( quote );
-                sut.showField( field, index );
+        expect(removeClass.calledOnce).to.be.true;
+      });
+    });
+  });
 
-                expect( removeClass.calledOnce ).to.be.true;
-            } );
-        } );
-    } );
+  describe('#hideField', function () {
+    [
+      {
+        field: 'foo_baz',
+        index: 0,
+      },
+      {
+        field: 'baz_foo',
+        index: 1,
+      },
+    ].forEach(({field, index}) => {
+      it(`it hides the header for ${field} when no group fields are visible`, () => {
+        const container = createContainer();
+        const content = createContent();
 
+        content.querySelector
+          .withArgs('div.stacked-container')
+          .returns(container);
 
-    describe( '#hideField', function()
-    {
-        [
-            {
-                field: 'foo_baz',
-                index: 0,
-            },
-            {
-                field: 'baz_foo',
-                index: 1,
-            },
-        ].forEach( ( { field, index } ) =>
-        {
-            it( `it hides the header for ${field} when no group fields are visible`, () =>
-            {
-                const container = createContainer();
-                const content   = createContent();
+        const sut = createSut(Sut, {
+          field: field,
+          content: content,
+        });
 
-                content.querySelector
-                    .withArgs( 'div.stacked-container' )
-                    .returns( container );
+        const addClass = sinon.stub();
 
-                const sut = createSut(
-                    Sut,
-                    {
-                        field: field,
-                        content: content
-                    }
-                );
+        const header = {
+          classList: {
+            add: addClass,
+          },
+        };
 
-                const addClass = sinon.stub();
+        sut.getCurrentIndex = sinon.stub().returns(10);
+        sut.hasVisibleField = sinon.stub().withArgs(index).returns(false);
 
-                const header = {
-                    classList: {
-                        add: addClass
-                    },
-                };
+        container.querySelectorAll.withArgs('dl').returns([header, header]);
 
-                sut.getCurrentIndex = sinon.stub().returns( 10 );
-                sut.hasVisibleField = sinon.stub()
-                    .withArgs( index )
-                    .returns( false );
+        const quote = createQuote();
 
-                container.querySelectorAll
-                    .withArgs( 'dl' )
-                    .returns( [ header, header ] );
+        content.querySelectorAll.withArgs('dl').returns([header, header]);
 
-                const quote = createQuote();
+        sut.init(quote);
+        sut.hideField(field, index);
 
-                content.querySelectorAll
-                    .withArgs( 'dl' )
-                    .returns( [ header, header ] );
-
-                sut.init( quote );
-                sut.hideField( field, index );
-
-                expect( addClass.calledOnce ).to.be.true;
-            } );
-        } );
-    } );
-} );
-
-
+        expect(addClass.calledOnce).to.be.true;
+      });
+    });
+  });
+});

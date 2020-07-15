@@ -20,17 +20,16 @@
  */
 
 /** Format of version array */
-type VersionTuple = [ number, number, number, string ];
+type VersionTuple = [number, number, number, string];
 
 /** Version information */
-declare interface Version extends VersionTuple
-{
-    major:  number;
-    minor:  number;
-    rev:    number;
-    suffix: string;
+declare interface Version extends VersionTuple {
+  major: number;
+  minor: number;
+  rev: number;
+  suffix: string;
 
-    toString(): string;
+  toString(): string;
 }
 
 /** Exported version data */

@@ -19,29 +19,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export type FeatureFlagConditions = Record<string, any>
+export type FeatureFlagConditions = Record<string, any>;
 
 /**
  * Feature flag interface
  */
-export interface FeatureFlag
-{
-    /**
-     * Look up a feature flag by key
-     *
-     * @param key        - the key to lookup
-     * @param conditions - optional conditions to specify
-     *
-     * @return whether or not this feature flag is enabled
-     */
-    isEnabled(
-        key:         string,
-        conditions?: FeatureFlagConditions
-    ): Promise<boolean>
+export interface FeatureFlag {
+  /**
+   * Look up a feature flag by key
+   *
+   * @param key        - the key to lookup
+   * @param conditions - optional conditions to specify
+   *
+   * @return whether or not this feature flag is enabled
+   */
+  isEnabled(key: string, conditions?: FeatureFlagConditions): Promise<boolean>;
 
-
-    /**
-     * Cleanup any active connections or set variables
-     */
-    close(): void
+  /**
+   * Cleanup any active connections or set variables
+   */
+  close(): void;
 }

@@ -19,23 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Interface = require( 'easejs' ).Interface;
+var Interface = require('easejs').Interface;
 
-
-module.exports = Interface( 'ArrayDiff',
-{
-    /**
-     * Return non-matching indexes and their values
-     *
-     * The returned array will set the value of the associated changed index to
-     * an array containing both values of a and b respectively; unchanged
-     * indexes will be undefined.
-     *
-     * @param {Array} a first array to compare
-     * @param {Array} b second array to compare
-     *
-     * @return {Array.Array.<*>} an array of non-matching values
-     */
-    'public diff': [ 'a', 'b' ]
-} );
-
+module.exports = Interface('ArrayDiff', {
+  /**
+   * Return non-matching indexes and their values
+   *
+   * The returned array will set the value of the associated changed index to
+   * an array containing both values of a and b respectively; unchanged
+   * indexes will be undefined.
+   *
+   * @param {Array} a first array to compare
+   * @param {Array} b second array to compare
+   *
+   * @return {Array.Array.<*>} an array of non-matching values
+   */
+  'public diff': ['a', 'b'],
+});

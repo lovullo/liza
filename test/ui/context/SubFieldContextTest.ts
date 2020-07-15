@@ -19,148 +19,139 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { SubFieldContext as Sut } from "../../../src/ui/context/SubFieldContext";
-import { ContextContent } from "../../../src/ui/context/FieldContext";
-import { FieldStyler } from "../../../src/ui/context/styler/FieldStyler";
+import {SubFieldContext as Sut} from '../../../src/ui/context/SubFieldContext';
+import {ContextContent} from '../../../src/ui/context/FieldContext';
+import {FieldStyler} from '../../../src/ui/context/styler/FieldStyler';
 
-import { expect } from 'chai';
-
+import {expect} from 'chai';
 
 before(function () {
-    this.jsdom = require('jsdom-global')()
-})
+  this.jsdom = require('jsdom-global')();
+});
 
 after(function () {
-    this.jsdom()
-})
+  this.jsdom();
+});
 
+describe('SubFieldContext', () => {
+  [
+    {
+      label: 'attaches a subfield to its parent',
+      content_element_id: 'qcontainer_subfield_single',
+      element_id: 'q_subfield_single_0',
+      expected:
+        '<dd id="qcontainer_subfield_single">' +
+        '<select id="q_subfield_single_type_0" class="foo widget">' +
+        '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
+        '</select>' +
+        '</dd>',
+    },
+    {
+      label: 'attaches a subfield to its parent after its sibling subfields',
+      content_element_id: 'qcontainer_subfield',
+      element_id: 'q_baz_subfield_0',
+      expected:
+        '<dd id="qcontainer_subfield">' +
+        '<select id="q_subfield_0" class="foo widget">' +
+        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+        '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+        '</select>' +
+        '</dd>',
+    },
+  ].forEach(({label, content_element_id, element_id, expected}) => {
+    it(label, () => {
+      const group_content = getGroupContent();
+      const content = group_content.querySelector('#' + content_element_id);
+      const sut = new Sut(
+        document,
+        getStylerStub(),
+        element_id,
+        <ContextContent>content
+      );
 
-describe( "SubFieldContext", () => {
+      // First detach it
+      sut.hide();
+      expect(sut.isAttached()).to.be.false;
 
-    [
-        {
-            label: 'attaches a subfield to its parent',
-            content_element_id: 'qcontainer_subfield_single',
-            element_id: 'q_subfield_single_0',
-            expected:
-                '<dd id="qcontainer_subfield_single">' +
-                    '<select id="q_subfield_single_type_0" class="foo widget">' +
-                        '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
-                    '</select>' +
-                '</dd>'
-        },
-        {
-            label: 'attaches a subfield to its parent after its sibling subfields',
-            content_element_id: 'qcontainer_subfield',
-            element_id: 'q_baz_subfield_0',
-            expected:
-                '<dd id="qcontainer_subfield">' +
-                    '<select id="q_subfield_0" class="foo widget">' +
-                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
-                        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
-                        '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
-                     '</select>' +
-                '</dd>'
-        },
-    ].forEach( ( { label, content_element_id, element_id, expected } ) => {
-        it( label, () => {
+      const to_content = document.createElement('dl');
+      sut.show(to_content, null);
 
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + content_element_id );
-            const sut = new Sut(
-                document,
-                getStylerStub(),
-                element_id,
-                <ContextContent>content
-            );
+      const final_content = sut.getFirstOfContentSet();
+      expect(final_content.outerHTML).to.equal(expected);
 
-            // First detach it
-            sut.hide();
-            expect( sut.isAttached() ).to.be.false;
+      // Ensure isAttached is true for subfield being attached
+      expect(sut.isAttached()).to.be.true;
+    });
+  });
 
-            const to_content = document.createElement("dl");
-            sut.show( to_content, null );
+  [
+    {
+      label: 'detaches a subfield from its parent',
+      content_element_id: 'qcontainer_subfield_single',
+      element_id: 'q_subfield_single_0',
+      expected:
+        '<dd id="qcontainer_subfield_single">' +
+        '<select id="q_subfield_single_type_0" class="foo widget">' +
+        '</select>' +
+        '</dd>',
+    },
+    {
+      label: 'detaches a subfield that has sibling subfields from its parent ',
+      content_element_id: 'qcontainer_subfield',
+      element_id: 'q_baz_subfield_0',
+      expected:
+        '<dd id="qcontainer_subfield">' +
+        '<select id="q_subfield_0" class="foo widget">' +
+        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+        '</select>' +
+        '</dd>',
+    },
+  ].forEach(({label, content_element_id, element_id, expected}) => {
+    it(label, () => {
+      const group_content = getGroupContent();
+      const content = group_content.querySelector('#' + content_element_id);
+      const sut = new Sut(
+        document,
+        getStylerStub(),
+        element_id,
+        <ContextContent>content
+      );
 
-            const final_content = sut.getFirstOfContentSet();
-            expect( final_content.outerHTML ).to.equal( expected );
+      sut.hide();
+      const final_content = sut.getFirstOfContentSet();
+      expect(final_content.outerHTML).to.equal(expected);
 
-            // Ensure isAttached is true for subfield being attached
-            expect( sut.isAttached() ).to.be.true;
-        } )
-    } );
+      // Ensure isAttached is false when subfield is removed
+      expect(sut.isAttached()).to.be.false;
+    });
+  });
+});
 
-
-    [
-        {
-            label: 'detaches a subfield from its parent',
-            content_element_id: 'qcontainer_subfield_single',
-            element_id: 'q_subfield_single_0',
-            expected:
-                '<dd id="qcontainer_subfield_single">' +
-                    '<select id="q_subfield_single_type_0" class="foo widget">' +
-                    '</select>' +
-                '</dd>'
-        },
-        {
-            label: 'detaches a subfield that has sibling subfields from its parent ',
-            content_element_id: 'qcontainer_subfield',
-            element_id: 'q_baz_subfield_0',
-            expected:
-                '<dd id="qcontainer_subfield">' +
-                    '<select id="q_subfield_0" class="foo widget">' +
-                        '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
-                        '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
-                     '</select>' +
-                '</dd>'
-        },
-    ].forEach( ( { label, content_element_id, element_id, expected } ) => {
-        it( label, () => {
-
-            const group_content = getGroupContent();
-            const content = group_content.querySelector( "#" + content_element_id );
-            const sut = new Sut(
-                document,
-                getStylerStub(),
-                element_id,
-                <ContextContent>content
-            );
-
-            sut.hide();
-            const final_content = sut.getFirstOfContentSet();
-            expect( final_content.outerHTML ).to.equal( expected );
-
-            // Ensure isAttached is false when subfield is removed
-            expect( sut.isAttached() ).to.be.false;
-        } )
-    } );
-} );
-
-
-function getStylerStub()
-{
-    return <FieldStyler>{
-        'setValue': ( _: any, __: any ) => {},
-    };
+function getStylerStub() {
+  return <FieldStyler>{
+    setValue: (_: any, __: any) => {},
+  };
 }
 
-function getGroupContent()
-{
-    // Mock group content
-    var group = document.createElement( "dl" );
+function getGroupContent() {
+  // Mock group content
+  var group = document.createElement('dl');
 
-    group.innerHTML =
-        '<dd id="qcontainer_subfield">' +
-            '<select id="q_subfield_0" class="foo widget">' +
-                '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
-                '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
-                '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
-            '</select>' +
-        '</dd>' +
-        '<dd id="qcontainer_subfield_single">' +
-            '<select id="q_subfield_single_type_0" class="foo widget">' +
-                '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
-            '</select>' +
-        '</dd>';
+  group.innerHTML =
+    '<dd id="qcontainer_subfield">' +
+    '<select id="q_subfield_0" class="foo widget">' +
+    '<option id="q_bar_subfield_0" value="Bar">Bar</option>' +
+    '<option id="q_baz_subfield_0" value="Baz">Baz</option>' +
+    '<option id="q_qux_subfield_0" value="Qux">Qux</option>' +
+    '</select>' +
+    '</dd>' +
+    '<dd id="qcontainer_subfield_single">' +
+    '<select id="q_subfield_single_type_0" class="foo widget">' +
+    '<option id="q_subfield_single_0" value="Foo">Foo</option>' +
+    '</select>' +
+    '</dd>';
 
-    return group;
+  return group;
 }

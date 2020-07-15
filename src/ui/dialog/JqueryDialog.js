@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class  = require( 'easejs' ).Class,
-    Dialog = require( './Dialog' );
-
+var Class = require('easejs').Class,
+  Dialog = require('./Dialog');
 
 /**
  * Dialog using jQuery UI
  */
-module.exports = Class( 'JqueryDialog' )
-    .implement( Dialog )
-    .extend(
-{
+module.exports = Class('JqueryDialog')
+  .implement(Dialog)
+  .extend({
     /**
      * jQuery object to use for dialog
      *
@@ -45,7 +43,6 @@ module.exports = Class( 'JqueryDialog' )
      */
     'private _$dialog': null,
 
-
     /**
      * Buttons to append to dialog
      * @type {Object}
@@ -59,7 +56,6 @@ module.exports = Class( 'JqueryDialog' )
      */
     'private _typeId': 'liza-dialog',
 
-
     /**
      * Initializes dialog
      *
@@ -67,18 +63,14 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {undefined}
      */
-    __construct: function( jquery, id )
-    {
-        this._jquery = jquery;
+    __construct: function (jquery, id) {
+      this._jquery = jquery;
 
-        this._$dialog = this._jquery( '<div>' )
-            .dialog( {
-                // don't show until we're ready
-                autoOpen: false,
-            }
-        );
+      this._$dialog = this._jquery('<div>').dialog({
+        // don't show until we're ready
+        autoOpen: false,
+      });
     },
-
 
     /**
      * Uniquely identify dialog type
@@ -89,12 +81,10 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setTypeId': function( type_id )
-    {
-        this._typeId = ''+type_id;
-        return this;
+    'public setTypeId': function (type_id) {
+      this._typeId = '' + type_id;
+      return this;
     },
-
 
     /**
      * Sets the dialog title
@@ -103,23 +93,18 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setTitle': function( title )
-    {
-        title = ''+( title );
+    'public setTitle': function (title) {
+      title = '' + title;
 
-        this._$dialog.dialog( { title: title } );
-        return this;
+      this._$dialog.dialog({title: title});
+      return this;
     },
 
+    'public hideTitlebar': function () {
+      this._$dialog.parent('.ui-dialog').find('.ui-dialog-titlebar').hide();
 
-    'public hideTitlebar': function()
-    {
-        this._$dialog.parent( '.ui-dialog' ).find( '.ui-dialog-titlebar' )
-            .hide();
-
-        return this;
+      return this;
     },
-
 
     /**
      * Sets/unsets the dialog as modal
@@ -128,14 +113,12 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setModal': function( modal )
-    {
-        modal = ( modal === undefined ) ? true : !!modal;
+    'public setModal': function (modal) {
+      modal = modal === undefined ? true : !!modal;
 
-        this._$dialog.dialog( { modal: modal } );
-        return this;
+      this._$dialog.dialog({modal: modal});
+      return this;
     },
-
 
     /**
      * Sets whether the dialog can be resized
@@ -144,14 +127,12 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setResizable': function( resizable )
-    {
-        resizable = ( resizable === undefined ) ? true : !!resizable;
+    'public setResizable': function (resizable) {
+      resizable = resizable === undefined ? true : !!resizable;
 
-        this._$dialog.dialog( { resizable: resizable } );
-        return this;
+      this._$dialog.dialog({resizable: resizable});
+      return this;
     },
-
 
     /**
      * Sets whether the dialog can be dragged
@@ -160,14 +141,12 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setDraggable': function( draggable )
-    {
-        draggable = ( draggable === undefined ) ? true : !!draggable;
+    'public setDraggable': function (draggable) {
+      draggable = draggable === undefined ? true : !!draggable;
 
-        this._$dialog.dialog( { draggable: draggable } );
-        return this;
+      this._$dialog.dialog({draggable: draggable});
+      return this;
     },
-
 
     /**
      * Shows/hides the 'X' button, allowing the dialog to be manually closed
@@ -177,14 +156,12 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public hideX': function( hide )
-    {
-        hide = ( hide === undefined ) ? true : !!hide;
+    'public hideX': function (hide) {
+      hide = hide === undefined ? true : !!hide;
 
-        this._$dialog.dialog( { dialogClass: 'nox' } );
-        return this;
+      this._$dialog.dialog({dialogClass: 'nox'});
+      return this;
     },
-
 
     /**
      * Sets the width and height of the dialog
@@ -193,23 +170,19 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setSize': function( size )
-    {
-        size = size || {};
+    'public setSize': function (size) {
+      size = size || {};
 
-        if ( size.x )
-        {
-            this._$dialog.dialog( { width: size.x } );
-        }
+      if (size.x) {
+        this._$dialog.dialog({width: size.x});
+      }
 
-        if ( size.y )
-        {
-            this._$dialog.dialog( { height: size.y } );
-        }
+      if (size.y) {
+        this._$dialog.dialog({height: size.y});
+      }
 
-        return this;
+      return this;
     },
-
 
     /**
      * Adds a CSS class to the dialog
@@ -218,12 +191,10 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JquerDialog} self
      */
-    'public addClass': function( class_name )
-    {
-        this._$dialog.addClass( class_name );
-        return this;
+    'public addClass': function (class_name) {
+      this._$dialog.addClass(class_name);
+      return this;
     },
-
 
     /**
      * Sets the buttons to be displayed on the dialog
@@ -232,31 +203,27 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setButtons': function( buttons )
-    {
-        buttons = buttons || {};
+    'public setButtons': function (buttons) {
+      buttons = buttons || {};
 
-        var dialog = this,
-            orig   = null;
+      var dialog = this,
+        orig = null;
 
-        for ( label in buttons )
-        {
-            orig = buttons[ label ];
+      for (label in buttons) {
+        orig = buttons[label];
 
-            // remove if the callback is undefined (meaning the button will not
-            // be shown)
-            if ( orig === undefined )
-            {
-                delete buttons[ label ];
-                continue;
-            }
-
-            dialog.appendButton( label, buttons[ label ] );
+        // remove if the callback is undefined (meaning the button will not
+        // be shown)
+        if (orig === undefined) {
+          delete buttons[label];
+          continue;
         }
 
-        return this;
-    },
+        dialog.appendButton(label, buttons[label]);
+      }
 
+      return this;
+    },
 
     /**
      * Appends a button to the dialog
@@ -266,27 +233,25 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public appendButton': function( label, callback )
-    {
-        var _self = this;
+    'public appendButton': function (label, callback) {
+      var _self = this;
 
-        label    = label    || 'Close';
-        callback = callback || function()
-        {
-            _self.close();
+      label = label || 'Close';
+      callback =
+        callback ||
+        function () {
+          _self.close();
         };
 
-        this._buttons[ label ] = function()
-        {
-            // WARNING: Breaks encapsulation, since callback will have access to
-            // private members. Consider alternative in the future (may break
-            // existing callbacks).
-            callback.call( _self );
-        };
+      this._buttons[label] = function () {
+        // WARNING: Breaks encapsulation, since callback will have access to
+        // private members. Consider alternative in the future (may break
+        // existing callbacks).
+        callback.call(_self);
+      };
 
-        return this;
+      return this;
     },
-
 
     /**
      * Sets the dialog content as HTML
@@ -295,12 +260,10 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setHtml': function( html )
-    {
-        this._$dialog.html( html );
-        return this;
+    'public setHtml': function (html) {
+      this._$dialog.html(html);
+      return this;
     },
-
 
     /**
      * Appends HTML to the dialog content
@@ -309,12 +272,10 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public appendHtml': function( html )
-    {
-        this._$dialog.append( html );
-        return this;
+    'public appendHtml': function (html) {
+      this._$dialog.append(html);
+      return this;
     },
-
 
     /**
      * Sets the dialog content as plain text
@@ -323,81 +284,69 @@ module.exports = Class( 'JqueryDialog' )
      *
      * @return {JqueryDialog} self
      */
-    'public setText': function( text )
-    {
-        text = ''+( text );
+    'public setText': function (text) {
+      text = '' + text;
 
-        this._$dialog.text( text );
-        return this;
+      this._$dialog.text(text);
+      return this;
     },
-
 
     /**
      * Callback to call when dialog is opened
      *
      * @return {JqueryDialog} self
      */
-    'public onOpen': function( callback )
-    {
-        var dialog = this;
+    'public onOpen': function (callback) {
+      var dialog = this;
 
-        this._$dialog.dialog( {
-            open: function()
-            {
-                callback.call( dialog );
-            }
-        } );
+      this._$dialog.dialog({
+        open: function () {
+          callback.call(dialog);
+        },
+      });
 
-        return this;
+      return this;
     },
-
 
     /**
      * Callback to call when dialog is closed
      *
      * @return {JqueryDialog} self
      */
-    'public onClose': function( callback )
-    {
-        var dialog = this;
+    'public onClose': function (callback) {
+      var dialog = this;
 
-        this._$dialog.dialog( {
-            close: function()
-            {
-                callback.call( dialog );
-            }
-        } );
+      this._$dialog.dialog({
+        close: function () {
+          callback.call(dialog);
+        },
+      });
 
-        return this;
+      return this;
     },
-
 
     /**
      * Displays the dialog
      *
      * @return {JqueryDialog} self
      */
-    'virtual public open': function()
-    {
-        this._$dialog.dialog( {
-            buttons:     this._buttons,
-            dialogClass: this._typeId,
-        } );
+    'virtual public open': function () {
+      this._$dialog.dialog({
+        buttons: this._buttons,
+        dialogClass: this._typeId,
+      });
 
-        this._$dialog.dialog( 'open' );
-        return this;
+      this._$dialog.dialog('open');
+      return this;
     },
-
 
     /**
      * Hides the dialog
      *
      * @return {JqueryDialog} self
      */
-    'public close': function()
-    {
-        this._$dialog.dialog( 'close' );
-        return this;
-    }
-} );
-
+    'public close': function () {
+      this._$dialog.dialog('close');
+      return this;
+    },
+  });

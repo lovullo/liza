@@ -20,183 +20,158 @@
  *
  * Standard out logger implementing PSR-3 standards
  */
-import { PsrLogger, LogLevel } from './PsrLogger';
+import {PsrLogger, LogLevel} from './PsrLogger';
 
 declare type StructuredLog = {
-    message:   string;
-    timestamp: string;
-    service:   string;
-    env:       string;
-    severity:  string;
-    context?:  Record<string, any>;
-}
+  message: string;
+  timestamp: string;
+  service: string;
+  env: string;
+  severity: string;
+  context?: Record<string, any>;
+};
 
-export class StandardLogger implements PsrLogger
-{
-    /**
-     * Initialize logger
-     *
-     * @param _console
-     * @param _ts_ctor - a timestamp constructor
-     * @param _env     - The environment ( dev, test, demo, live )
-     */
-    constructor(
-        private readonly _console: Console,
-        private readonly _ts_ctor: () => UnixTimestamp,
-        private readonly _env:     string,
-    ) {}
+export class StandardLogger implements PsrLogger {
+  /**
+   * Initialize logger
+   *
+   * @param _console
+   * @param _ts_ctor - a timestamp constructor
+   * @param _env     - The environment ( dev, test, demo, live )
+   */
+  constructor(
+    private readonly _console: Console,
+    private readonly _ts_ctor: () => UnixTimestamp,
+    private readonly _env: string
+  ) {}
 
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  debug(msg: string | object, context?: object): void {
+    this._console.info(this._format(LogLevel.DEBUG, msg, context));
+  }
 
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    debug( msg: string | object, context?: object ): void
-    {
-        this._console.info( this._format( LogLevel.DEBUG, msg, context ) );
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  info(msg: string | object, context?: object): void {
+    this._console.info(this._format(LogLevel.INFO, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  notice(msg: string | object, context?: object): void {
+    this._console.log(this._format(LogLevel.NOTICE, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  warning(msg: string | object, context?: object): void {
+    this._console.warn(this._format(LogLevel.WARNING, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  error(msg: string | object, context?: object): void {
+    this._console.error(this._format(LogLevel.ERROR, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  critical(msg: string | object, context?: object): void {
+    this._console.error(this._format(LogLevel.CRITICAL, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  alert(msg: string | object, context?: object): void {
+    this._console.error(this._format(LogLevel.ALERT, msg, context));
+  }
+
+  /**
+   * Log at a debug level
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  emergency(msg: string | object, context?: object): void {
+    this._console.error(this._format(LogLevel.EMERGENCY, msg, context));
+  }
+
+  /**
+   * Log a message
+   *
+   * @param msg     - the message to log
+   * @param context - additional message context
+   */
+  log(level: LogLevel, msg: string | object, context?: object): void {
+    this._console.error(this._format(level, msg, context));
+  }
+
+  /**
+   * Get structured log object
+   *
+   * @param msg   - the string or object to log
+   * @param level - the log level
+   * @param context - additional message context
+   *
+   * @returns a structured logging object
+   */
+  private _format(
+    level: LogLevel,
+    msg: string | object,
+    context: object = {}
+  ): string {
+    let str: string;
+
+    if (msg !== null && typeof msg === 'object') {
+      str = JSON.stringify(msg);
+    } else {
+      str = msg;
     }
 
+    const ts = this._ts_ctor();
+    const tsFormatted = new Date(ts * 1000).toISOString();
 
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    info( msg: string | object, context?: object ): void
-    {
-        this._console.info( this._format( LogLevel.INFO, msg, context ) );
+    const structured_log = <StructuredLog>{
+      message: str,
+      timestamp: tsFormatted,
+      service: 'quote-server',
+      env: this._env,
+      severity: LogLevel[level],
+    };
+
+    if (Object.keys(context).length > 0) {
+      structured_log['context'] = context;
     }
 
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    notice( msg: string | object, context?: object ): void
-    {
-        this._console.log( this._format( LogLevel.NOTICE, msg, context ) );
-    }
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    warning( msg: string | object, context?: object ): void
-    {
-        this._console.warn( this._format( LogLevel.WARNING, msg, context ) );
-    }
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    error( msg: string | object, context?: object ): void
-    {
-        this._console.error( this._format( LogLevel.ERROR, msg, context ) );
-    }
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    critical( msg: string | object, context?: object ): void
-    {
-        this._console.error( this._format( LogLevel.CRITICAL, msg, context ) );
-    }
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    alert( msg: string | object, context?: object ): void
-    {
-        this._console.error( this._format( LogLevel.ALERT, msg, context ) );
-    }
-
-
-    /**
-     * Log at a debug level
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    emergency( msg: string | object, context?: object ): void
-    {
-        this._console.error( this._format( LogLevel.EMERGENCY, msg, context ) );
-    }
-
-
-    /**
-     * Log a message
-     *
-     * @param msg     - the message to log
-     * @param context - additional message context
-     */
-    log( level: LogLevel, msg: string | object, context?: object ): void
-    {
-        this._console.error( this._format( level, msg, context ) );
-    }
-
-
-    /**
-     * Get structured log object
-     *
-     * @param msg   - the string or object to log
-     * @param level - the log level
-     * @param context - additional message context
-     *
-     * @returns a structured logging object
-     */
-    private _format(
-        level:   LogLevel,
-        msg:     string | object,
-        context: object = {},
-    ): string
-    {
-        let str: string;
-
-        if ( msg !== null && typeof( msg ) === 'object' )
-        {
-            str = JSON.stringify( msg );
-        }
-        else
-        {
-            str = msg;
-        }
-
-        const ts          = this._ts_ctor();
-        const tsFormatted = new Date( ts * 1000 ).toISOString()
-
-        const structured_log = <StructuredLog>{
-            message:   str,
-            timestamp: tsFormatted,
-            service:   'quote-server',
-            env:       this._env,
-            severity:  LogLevel[level],
-        };
-
-        if ( Object.keys( context ).length > 0 )
-        {
-            structured_log[ "context" ] = context;
-        }
-
-        return JSON.stringify( structured_log );
-    }
+    return JSON.stringify(structured_log);
+  }
 }

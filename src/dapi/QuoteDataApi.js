@@ -22,11 +22,9 @@
  * producing insurance quote data.
  */
 
-
-const { Class }    = require( 'easejs' );
-const DataApi      = require( './DataApi' );
-const EventEmitter = require( '../events' ).EventEmitter;
-
+const {Class} = require('easejs');
+const DataApi = require('./DataApi');
+const EventEmitter = require('../events').EventEmitter;
 
 /**
  * Structure flat key/value data for quote request
@@ -39,10 +37,9 @@ const EventEmitter = require( '../events' ).EventEmitter;
  * This DataApi is responsible only for data transformation---it is expected
  * to decorate a DataApi capable of performing an actual data transfer.
  */
-module.exports = Class( 'QuoteDataApi' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Class('QuoteDataApi')
+  .implement(DataApi)
+  .extend({
     /**
      * Decorated DataApi
      *
@@ -50,24 +47,18 @@ module.exports = Class( 'QuoteDataApi' )
      */
     'private _dapi': null,
 
-
     /**
      * Initialize with DataApi to decorate
      *
      * @param {DataApi} dapi subject to decorate
      */
-    constructor( dapi )
-    {
-        if ( !( Class.isA( DataApi, dapi ) ) )
-        {
-            throw TypeError(
-                'Expected object of type DataApi; given: ' + dapi
-            );
-        }
+    constructor(dapi) {
+      if (!Class.isA(DataApi, dapi)) {
+        throw TypeError('Expected object of type DataApi; given: ' + dapi);
+      }
 
-        this._dapi = dapi;
+      this._dapi = dapi;
     },
-
 
     /**
      * Request data from the service
@@ -77,11 +68,9 @@ module.exports = Class( 'QuoteDataApi' )
      *
      * @return {DataApi} self
      */
-    'public request'( data, callback, id )
-    {
-        this._dapi.request( this.mapData( data ), callback );
+    'public request'(data, callback, id) {
+      this._dapi.request(this.mapData(data), callback);
     },
-
 
     /**
      * Map key/value data into quote request
@@ -90,40 +79,34 @@ module.exports = Class( 'QuoteDataApi' )
      *
      * @return {Object} mapped request data
      */
-    'protected mapData'( data )
-    {
-        const rate_date = data.rate_date || data.effective_date || "";
+    'protected mapData'(data) {
+      const rate_date = data.rate_date || data.effective_date || '';
 
-        return {
-            "effective_date": this._formatDate( data.effective_date || "" ),
-            "rate_date":      this._formatDate( rate_date ),
-            "insured": {
-                "location": {
-                    "city":   data.insured_city   || "",
-                    "state":  data.insured_state  || "",
-                    "zip":    data.insured_zip    || "",
-                    "county": data.insured_county || "",
-                },
-                "business_year_count": +data.business_year_count || 0,
-            },
-            "coverages": ( data.classes || [] ).map(
-                ( class_code, i ) => ( {
-                    "class": class_code,
-                    "limit": {
-                        "occurrence": +( data.limit_occurrence || 0 ),
-                        "aggregate":  +( data.limit_aggregate || 0 ),
-                    },
-                    "exposure": +( data.exposure || [] )[ i ] || 0,
-                } )
-            ),
-            "losses": ( data.loss_type || [] ).map(
-                loss_type => ( {
-                    type: loss_type,
-                } )
-            ),
-        };
+      return {
+        effective_date: this._formatDate(data.effective_date || ''),
+        rate_date: this._formatDate(rate_date),
+        insured: {
+          location: {
+            city: data.insured_city || '',
+            state: data.insured_state || '',
+            zip: data.insured_zip || '',
+            county: data.insured_county || '',
+          },
+          business_year_count: +data.business_year_count || 0,
+        },
+        coverages: (data.classes || []).map((class_code, i) => ({
+          class: class_code,
+          limit: {
+            occurrence: +(data.limit_occurrence || 0),
+            aggregate: +(data.limit_aggregate || 0),
+          },
+          exposure: +(data.exposure || [])[i] || 0,
+        })),
+        losses: (data.loss_type || []).map(loss_type => ({
+          type: loss_type,
+        })),
+      };
     },
-
 
     /**
      * Append time to ISO 8601 date+time format
@@ -134,10 +117,7 @@ module.exports = Class( 'QuoteDataApi' )
      *
      * @return {string} ISO 8601 combined date and time
      */
-    'private _formatDate'( date )
-    {
-        return ( date === "" )
-            ? ""
-            : ( date + "T00:00:00" );
+    'private _formatDate'(date) {
+      return date === '' ? '' : date + 'T00:00:00';
     },
-} );
+  });

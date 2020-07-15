@@ -24,15 +24,12 @@
  * SOFTWARE.
  */
 
+var EventEmitter = (exports.EventEmitter = function () {});
 
-var EventEmitter = exports.EventEmitter = function() {};
-
-EventEmitter.prototype.emit = function(type) {
+EventEmitter.prototype.emit = function (type) {
   // If there is no 'error' event listener then throw.
   if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        !this._events.error.length)
-    {
+    if (!this._events || !this._events.error || !this._events.error.length) {
       if (arguments[1] instanceof Error) {
         throw arguments[1]; // Unhandled 'error' event
       } else {
@@ -57,7 +54,7 @@ EventEmitter.prototype.emit = function(type) {
 
 // EventEmitter is defined in src/node_events.cc
 // EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
+EventEmitter.prototype.addListener = function (type, listener) {
   if ('function' !== typeof listener) {
     throw new Error('addListener only takes instances of Function');
   }
@@ -78,7 +75,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-EventEmitter.prototype.once = function(type, listener) {
+EventEmitter.prototype.once = function (type, listener) {
   var self = this;
 
   // keep this separate; don't inline (doesn't work in IE)
@@ -92,7 +89,7 @@ EventEmitter.prototype.once = function(type, listener) {
   return this;
 };
 
-EventEmitter.prototype.removeListener = function(type, listener) {
+EventEmitter.prototype.removeListener = function (type, listener) {
   if ('function' !== typeof listener) {
     throw new Error('removeListener only takes instances of Function');
   }
@@ -104,28 +101,28 @@ EventEmitter.prototype.removeListener = function(type, listener) {
 
   var position = -1;
   for (var i = 0, length = list.length; i < length; i++) {
-    if (list[i] === listener ||
-        (list[i].listener && list[i].listener === listener))
-    {
+    if (
+      list[i] === listener ||
+      (list[i].listener && list[i].listener === listener)
+    ) {
       position = i;
       break;
     }
   }
   if (position < 0) return this;
   list.splice(position, 1);
-  if (list.length == 0)
-    delete this._events[type];
+  if (list.length == 0) delete this._events[type];
 
   return this;
 };
 
-EventEmitter.prototype.removeAllListeners = function(type) {
+EventEmitter.prototype.removeAllListeners = function (type) {
   // does not use listeners(), so no side effect of creating _events[type]
   if (type && this._events && this._events[type]) this._events[type] = null;
   return this;
 };
 
-EventEmitter.prototype.listeners = function(type) {
+EventEmitter.prototype.listeners = function (type) {
   if (!this._events) this._events = {};
   if (!this._events[type]) this._events[type] = [];
   return this._events[type];

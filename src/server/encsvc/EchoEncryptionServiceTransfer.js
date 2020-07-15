@@ -19,24 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require( 'easejs' ).Class;
+var Class = require('easejs').Class;
 
-    /**
-     * Interface
-     * @type {EncryptionServiceTransfer}
-     */
-    EncryptionServiceTransfer = require( './EncryptionServiceTransfer' );
-
+/**
+ * Interface
+ * @type {EncryptionServiceTransfer}
+ */
+EncryptionServiceTransfer = require('./EncryptionServiceTransfer');
 
 /**
  * Simply echoes back the data to be encrypted. Does not do any actual
  * encryption. Useful fallback when service is unavailable or is not intended to
  * be available (e.g. local development).
  */
-module.exports = Class( 'EchoEncryptionServiceTransfer' )
-    .implement( EncryptionServiceTransfer )
-    .extend(
-{
+module.exports = Class('EchoEncryptionServiceTransfer')
+  .implement(EncryptionServiceTransfer)
+  .extend({
     /**
      * Echo back the provided data
      *
@@ -45,12 +43,10 @@ module.exports = Class( 'EchoEncryptionServiceTransfer' )
      *
      * @return undefined
      */
-    'public encrypt': function( data, callback )
-    {
-        // simply echo the data back as a buffer
-        callback( Buffer.from( data, 'binary' ) );
+    'public encrypt': function (data, callback) {
+      // simply echo the data back as a buffer
+      callback(Buffer.from(data, 'binary'));
     },
-
 
     /**
      * Echo back the provided data
@@ -62,10 +58,8 @@ module.exports = Class( 'EchoEncryptionServiceTransfer' )
      *
      * @return undefined
      */
-    'public decrypt': function( data, callback )
-    {
-        // simply echo the data back as a buffer
-        callback( Buffer.from( data, 'binary' ) );
+    'public decrypt': function (data, callback) {
+      // simply echo the data back as a buffer
+      callback(Buffer.from(data, 'binary'));
     },
-} );
-
+  });

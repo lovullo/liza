@@ -21,18 +21,16 @@
 
 'use strict';
 
-const { Class } = require( 'easejs' );
-const HttpImpl  = require( './HttpImpl' );
-const HttpError = require( './HttpError' );
-
+const {Class} = require('easejs');
+const HttpImpl = require('./HttpImpl');
+const HttpError = require('./HttpError');
 
 /**
  * HTTP adapter using Node.js-compatible objects (e.g. its `http` modules)
  */
-module.exports = Class( 'NodeHttpImpl' )
-    .implement( HttpImpl )
-    .extend(
-{
+module.exports = Class('NodeHttpImpl')
+  .implement(HttpImpl)
+  .extend({
     /**
      * Clients for desired protocols (e.g. HTTP(s))
      * @type {Object}
@@ -51,7 +49,6 @@ module.exports = Class( 'NodeHttpImpl' )
      */
     'private _origin': '',
 
-
     /**
      * Initialize with protocol handlers and URL parser
      *
@@ -65,13 +62,11 @@ module.exports = Class( 'NodeHttpImpl' )
      * @param {Object} url_parser     URL parser
      * @param {string} origin         request origin
      */
-    constructor( proto_handlers, url_parser, origin )
-    {
-        this._protoHandlers = proto_handlers;
-        this._urlParser     = url_parser;
-        this._origin        = ( origin !== undefined ) ? ''+origin : '';
+    constructor(proto_handlers, url_parser, origin) {
+      this._protoHandlers = proto_handlers;
+      this._urlParser = url_parser;
+      this._origin = origin !== undefined ? '' + origin : '';
     },
-
 
     /**
      * Perform HTTP request
@@ -87,48 +82,43 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {HttpImpl} self
      */
-    'virtual public requestData'( url, method, data, callback )
-    {
-        const options  = this._parseUrl( url );
-        const protocol = options.protocol.replace( /:$/, '' );
-        const handler  = this._protoHandlers[ protocol ];
+    'virtual public requestData'(url, method, data, callback) {
+      const options = this._parseUrl(url);
+      const protocol = options.protocol.replace(/:$/, '');
+      const handler = this._protoHandlers[protocol];
 
-        if ( !handler )
-        {
-            throw Error( `No handler for ${protocol}` );
-        }
+      if (!handler) {
+        throw Error(`No handler for ${protocol}`);
+      }
 
-        this.setOptions( options, method, data );
+      this.setOptions(options, method, data);
 
-        let forbid_end = false;
+      let forbid_end = false;
 
-        const req = handler.request( options, res =>
-        {
-            let data = '';
+      const req = handler.request(options, res => {
+        let data = '';
 
-            res.on( 'data', chunk => data += chunk );
-            res.on( 'end', () =>
-                !forbid_end && this.requestEnd( res, data, callback )
-            );
-        } );
+        res.on('data', chunk => (data += chunk));
+        res.on(
+          'end',
+          () => !forbid_end && this.requestEnd(res, data, callback)
+        );
+      });
 
-        req.on( 'error', e =>
-        {
-            this.serveError( e, null, null, callback );
+      req.on('error', e => {
+        this.serveError(e, null, null, callback);
 
-            // guarantee that the callback will not be invoked a second time
-            // if something tries to end the request
-            forbid_end = true;
-        } );
+        // guarantee that the callback will not be invoked a second time
+        // if something tries to end the request
+        forbid_end = true;
+      });
 
-        if ( method === 'POST' )
-        {
-            req.write( data );
-        }
+      if (method === 'POST') {
+        req.write(data);
+      }
 
-        req.end();
+      req.end();
     },
-
 
     /**
      * Parse given URL
@@ -139,15 +129,11 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {Object} parsed URL
      */
-    'private _parseUrl'( url )
-    {
-        const origin = ( url[ 0 ] === '/' )
-              ? this._origin
-              : '';
+    'private _parseUrl'(url) {
+      const origin = url[0] === '/' ? this._origin : '';
 
-        return this._urlParser.parse( origin + url );
+      return this._urlParser.parse(origin + url);
     },
-
 
     /**
      * Set request options
@@ -161,28 +147,21 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {Object} request headers
      */
-    'virtual public setOptions'( options, method, data )
-    {
-        const { headers = {} } = options;
+    'virtual public setOptions'(options, method, data) {
+      const {headers = {}} = options;
 
-        options.method = method;
+      options.method = method;
 
-        if ( method === 'POST' )
-        {
-            headers[ 'Content-Type' ] = 'application/x-www-form-urlencoded';
+      if (method === 'POST') {
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
-            options.headers = headers;
+        options.headers = headers;
+      } else {
+        if (data) {
+          options.path += '?' + data;
         }
-        else
-        {
-            if ( data )
-            {
-                options.path += '?' + data;
-            }
-        }
+      }
     },
-
-
 
     /**
      * Invoked when a request is completed
@@ -199,23 +178,20 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {undefined}
      */
-    'virtual protected requestEnd'( res, data, callback )
-    {
-        if ( !this.isSuccessful( res ) )
-        {
-            this.serveError(
-                HttpError( res.statusMessage, res.statusCode ),
-                res,
-                data,
-                callback
-            );
+    'virtual protected requestEnd'(res, data, callback) {
+      if (!this.isSuccessful(res)) {
+        this.serveError(
+          HttpError(res.statusMessage, res.statusCode),
+          res,
+          data,
+          callback
+        );
 
-            return;
-        }
+        return;
+      }
 
-        callback( null, data );
+      callback(null, data);
     },
-
 
     /**
      * Predicate to determine whether HTTP request was successful
@@ -226,11 +202,9 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {boolean} whether HTTP status code represents a success
      */
-    'virtual protected isSuccessful'( res )
-    {
-        return ( +res.statusCode >= 200 ) && ( +res.statusCode < 300 );
+    'virtual protected isSuccessful'(res) {
+      return +res.statusCode >= 200 && +res.statusCode < 300;
     },
-
 
     /**
      * Invoke continuation `callback` with an error `e`
@@ -242,8 +216,7 @@ module.exports = Class( 'NodeHttpImpl' )
      *
      * @return {undefined}
      */
-    'virtual protected serveError'( e, res, data, callback )
-    {
-        callback( e, data );
+    'virtual protected serveError'(e, res, data, callback) {
+      callback(e, data);
     },
-} );
+  });

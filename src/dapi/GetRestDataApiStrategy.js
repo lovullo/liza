@@ -19,26 +19,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class               = require( 'easejs' ).Class,
-    RestDataApiStrategy = require( './RestDataApiStrategy' ),
-
-    // XXX: decouple (this couples us to the client)!
-    HttpDataProxy = require( '../client/proxy/HttpDataProxy' );
-
+var Class = require('easejs').Class,
+  RestDataApiStrategy = require('./RestDataApiStrategy'),
+  // XXX: decouple (this couples us to the client)!
+  HttpDataProxy = require('../client/proxy/HttpDataProxy');
 
 /**
  * Requests data from a RESTful service, GETing arguments
  */
-module.exports = Class( 'GetRestDataApiStrategy' )
-    .implement( RestDataApiStrategy )
-    .extend(
-{
+module.exports = Class('GetRestDataApiStrategy')
+  .implement(RestDataApiStrategy)
+  .extend({
     /**
      * Data proxy used to communicate with the service
      * @type {HttpDataProxy}
      */
     'private _proxy': null,
-
 
     /**
      * Initialize strategy
@@ -48,18 +44,13 @@ module.exports = Class( 'GetRestDataApiStrategy' )
      *
      * @param {HttpDataProxy} data_proxy proxy to handle all requests
      */
-    __construct: function( data_proxy )
-    {
-        if ( !( Class.isA( HttpDataProxy, data_proxy ) ) )
-        {
-            throw Error(
-                'Expected HttpDataProxy; given ' + data_proxy
-            );
-        }
+    __construct: function (data_proxy) {
+      if (!Class.isA(HttpDataProxy, data_proxy)) {
+        throw Error('Expected HttpDataProxy; given ' + data_proxy);
+      }
 
-        this._proxy = data_proxy;
+      this._proxy = data_proxy;
     },
-
 
     /**
      * Request data from the service
@@ -70,23 +61,20 @@ module.exports = Class( 'GetRestDataApiStrategy' )
      *
      * @return {RestDataApi} self
      */
-    'public requestData': function( url, data, callback )
-    {
-        // generate the params for the URL
-        var params = this._genUrlParams( data );
+    'public requestData': function (url, data, callback) {
+      // generate the params for the URL
+      var params = this._genUrlParams(data);
 
-        // only delimit the params if they exist
-        var geturl = url + ( ( params ) ? '?' + params : '' );
+      // only delimit the params if they exist
+      var geturl = url + (params ? '?' + params : '');
 
-        // make the request
-        this._proxy.get( geturl, function( retdata )
-        {
-            callback( retdata );
-        } );
+      // make the request
+      this._proxy.get(geturl, function (retdata) {
+        callback(retdata);
+      });
 
-        return this;
+      return this;
     },
-
 
     /**
      * Generate URL params for a GET request
@@ -95,16 +83,12 @@ module.exports = Class( 'GetRestDataApiStrategy' )
      *
      * @return {string} URL with params and arguments
      */
-    'private _genUrlParams': function( data )
-    {
-        var params = '';
-        for ( var field in data )
-        {
-            params += ( ( params ) ? '&' : '' ) +
-                field + '=' + data[ field ];
-        }
+    'private _genUrlParams': function (data) {
+      var params = '';
+      for (var field in data) {
+        params += (params ? '&' : '') + field + '=' + data[field];
+      }
 
-        return encodeURI( params );
-    }
-} );
-
+      return encodeURI(params);
+    },
+  });

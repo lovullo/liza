@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait              = require( 'easejs' ).Trait,
-    ValidatorFormatter = require( '../ValidatorFormatter' );
-
+var Trait = require('easejs').Trait,
+  ValidatorFormatter = require('../ValidatorFormatter');
 
 /**
  * Applies supertype for each item in a delimited string
  */
-module.exports = Trait( 'AcceptReject' )
-    .implement( ValidatorFormatter )
-    .extend(
-{
+module.exports = Trait('AcceptReject')
+  .implement(ValidatorFormatter)
+  .extend({
     /**
      * Format accept/reject string as an integer boolean
      *
@@ -37,23 +35,20 @@ module.exports = Trait( 'AcceptReject' )
      *
      * @return {string} data formatted for storage
      */
-    'virtual abstract override public parse': function( data )
-    {
-        switch ( data )
-        {
-            case '0':
-            case 'Rejected':
-                return '0';
+    'virtual abstract override public parse': function (data) {
+      switch (data) {
+        case '0':
+        case 'Rejected':
+          return '0';
 
-            case '1':
-            case 'Accepted':
-                return '1';
+        case '1':
+        case 'Accepted':
+          return '1';
 
-            default:
-                return this.__super( data );
-        }
+        default:
+          return this.__super(data);
+      }
     },
-
 
     /**
      * Format boolean integer as accept/reject string
@@ -62,18 +57,16 @@ module.exports = Trait( 'AcceptReject' )
      *
      * @return {string} data formatted for display
      */
-    'virtual abstract override public retrieve': function( data )
-    {
-        switch ( data )
-        {
-            case '0':
-                return 'Rejected';
+    'virtual abstract override public retrieve': function (data) {
+      switch (data) {
+        case '0':
+          return 'Rejected';
 
-            case '1':
-                return 'Accepted';
+        case '1':
+          return 'Accepted';
 
-            default:
-                return this.__super( data );
-        }
-    }
-} );
+        default:
+          return this.__super(data);
+      }
+    },
+  });

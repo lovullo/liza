@@ -19,34 +19,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-exports.route = function( request, log )
-{
-    if ( !( request.getSession().isLoggedIn() ) )
-    {
-        return Promise.resolve( false );
-    }
+exports.route = function (request, log) {
+  if (!request.getSession().isLoggedIn()) {
+    return Promise.resolve(false);
+  }
 
-    if ( !( request.getUri().match( /^\/?clienterr/ ) ) )
-    {
-        return Promise.resolve( false );
-    }
+  if (!request.getUri().match(/^\/?clienterr/)) {
+    return Promise.resolve(false);
+  }
 
-    request.getPostData( function( data )
-    {
-        log.log( log.PRIORITY_ERROR,
-            "[Client-side error] %s \"%s\" %s:%s  \"%s\" \"%s\" :: %s",
-            request.getSession().agentId(),
-            data.file || '',
-            data.line || '-',
-            data.column || '-',
-            data.message || '<no message>',
-            request.getRequest().headers['user-agent'] || '',
-            data.stack && JSON.stringify( data.stack ) || '<no stack trace>'
-        );
-    } );
+  request.getPostData(function (data) {
+    log.log(
+      log.PRIORITY_ERROR,
+      '[Client-side error] %s "%s" %s:%s  "%s" "%s" :: %s',
+      request.getSession().agentId(),
+      data.file || '',
+      data.line || '-',
+      data.column || '-',
+      data.message || '<no message>',
+      request.getRequest().headers['user-agent'] || '',
+      (data.stack && JSON.stringify(data.stack)) || '<no stack trace>'
+    );
+  });
 
-    // we handled the request
-    request.end();
-    return Promise.resolve( true );
-}
-
+  // we handled the request
+  request.end();
+  return Promise.resolve(true);
+};

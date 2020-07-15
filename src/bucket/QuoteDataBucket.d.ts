@@ -19,10 +19,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-import { PositiveInteger } from "../numeric";
-import { EventEmitter } from "events";
-
+import {PositiveInteger} from '../numeric';
+import {EventEmitter} from 'events';
 
 /**
  * General key/value store for document
@@ -32,93 +30,80 @@ import { EventEmitter } from "events";
  *
  * @todo Rename to DocumentDataBucket
  */
-export declare class QuoteDataBucket extends EventEmitter
-{
-    /**
-     * Triggered when data in the bucket is updated, before it's committed
-     */
-    static readonly EVENT_UPDATE: string;
+export declare class QuoteDataBucket extends EventEmitter {
+  /**
+   * Triggered when data in the bucket is updated, before it's committed
+   */
+  static readonly EVENT_UPDATE: string;
 
+  /**
+   * Explicitly sets the contents of the bucket
+   *
+   * @param data - associative array of the data
+   */
+  setValues(data: Record<string, any>): this;
 
-    /**
-     * Explicitly sets the contents of the bucket
-     *
-     * @param data - associative array of the data
-     */
-    setValues( data: Record<string, any> ): this;
+  /**
+   * Alias of setValues
+   */
+  setCommittedValues(): this;
 
+  /**
+   * Clears all data from the bucket
+   */
+  clear(): this;
 
-    /**
-     * Alias of setValues
-     */
-    setCommittedValues(): this;
+  /**
+   * Overwrites values in the original bucket
+   *
+   * For this buckeet, overwriteValues() is an alias for setValues() without
+   * index merging. However, other Bucket implementations may handle it
+   * differently.
+   *
+   * @param data - associative array of the data
+   */
+  overwriteValues(data: Record<string, any>): this;
 
+  /**
+   * Calls a function for each each of the values in the bucket
+   *
+   * Note: This format is intended to be consistent with Array.forEach()
+   *
+   * @param callback - function to call for each value in the bucket
+   */
+  each(callback: (val: any, key: string) => {}): this;
 
-    /**
-     * Clears all data from the bucket
-     */
-    clear(): this;
+  /**
+   * Calls a function for each each of the values in the bucket matching the
+   * given predicate
+   *
+   * @param pred - predicate
+   * @param c    - function to call for each value in the bucket
+   */
+  filter(pred: (key: string) => {}, _c: (val: any, key: string) => {}): this;
 
+  /**
+   * Returns the data for the requested field
+   *
+   * @param name - name of the field (with or without trailing brackets)
+   *
+   * @return data for the field, or empty array if none
+   */
+  getDataByName(name: string): any;
 
-    /**
-     * Overwrites values in the original bucket
-     *
-     * For this buckeet, overwriteValues() is an alias for setValues() without
-     * index merging. However, other Bucket implementations may handle it
-     * differently.
-     *
-     * @param data - associative array of the data
-     */
-    overwriteValues( data: Record<string, any> ): this;
+  /**
+   * Returns the data as a JSON string
+   *
+   * @return data represented as JSON
+   */
+  getDataJson(): string;
 
-
-    /**
-     * Calls a function for each each of the values in the bucket
-     *
-     * Note: This format is intended to be consistent with Array.forEach()
-     *
-     * @param callback - function to call for each value in the bucket
-     */
-    each( callback: ( val: any, key: string) => {} ): this;
-
-
-    /**
-     * Calls a function for each each of the values in the bucket matching the
-     * given predicate
-     *
-     * @param pred - predicate
-     * @param c    - function to call for each value in the bucket
-     */
-    filter(
-        pred: ( key: string ) => {},
-        _c:   ( val: any, key: string) => {}
-    ): this;
-
-
-    /**
-     * Returns the data for the requested field
-     *
-     * @param name - name of the field (with or without trailing brackets)
-     *
-     * @return data for the field, or empty array if none
-     */
-    getDataByName( name: string ): any;
-
-
-    /**
-     * Returns the data as a JSON string
-     *
-     * @return data represented as JSON
-     */
-    getDataJson(): string;
-
-
-    /**
-     * Return raw bucket data
-     *
-     * TODO: remove; breaks encapsulation
-     *
-     * @return raw bucket data
-     */
-    getData(): Record<string, any>;
+  /**
+   * Return raw bucket data
+   *
+   * TODO: remove; breaks encapsulation
+   *
+   * @return raw bucket data
+   */
+  getData(): Record<string, any>;
 }

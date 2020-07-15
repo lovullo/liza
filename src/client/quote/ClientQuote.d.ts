@@ -18,86 +18,76 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { StagingBucket } from '../../bucket/StagingBucket';
-import { BaseQuote } from '../../quote/BaseQuote';
-import { QuoteTransport } from '../transport/QuoteTransport';
-import { PositiveInteger } from "../../numeric";
+import {StagingBucket} from '../../bucket/StagingBucket';
+import {BaseQuote} from '../../quote/BaseQuote';
+import {QuoteTransport} from '../transport/QuoteTransport';
+import {PositiveInteger} from '../../numeric';
 
 export type Data = Record<string, any>;
 
 /**
  * Controller for the program client
  */
-export declare class ClientQuote extends BaseQuote
-{
+export declare class ClientQuote extends BaseQuote {
+  /**
+   * Set the classifier to be used for data classification
+   *
+   * The classifier should return an object containing all classifications and
+   * a single boolean value per classification.
+   */
+  setClassifier(known_fields: any, classifier: any): ClientQuote;
 
-    /**
-     * Set the classifier to be used for data classification
-     *
-     * The classifier should return an object containing all classifications and
-     * a single boolean value per classification.
-     */
-    setClassifier( known_fields: any, classifier: any ): ClientQuote;
+  /**
+   * Hook events
+   */
+  on(event_id: string, callback: (classes: any) => void): void;
 
+  /**
+   * Returns data from the quote
+   */
+  getDataByName(name: string): Data;
 
-    /**
-     * Hook events
-     */
-    on( event_id: string, callback: ( classes: any ) => void ): void;
+  /**
+   * Visits staging data
+   */
+  visitData(visitor: (bucket: StagingBucket) => void): void;
 
+  /**
+   * Stages the given data
+   *
+   * Data is not written directly to the quote. It must be committed.
+   */
+  setData(data: Data): ClientQuote;
 
-    /**
-     * Returns data from the quote
-     */
-    getDataByName( name: string ): Data;
+  /**
+   * Commits changes to quote and attempts to save
+   *
+   * @param transport - Transport for the data
+   * @param callback  - Function to call with results
+   */
+  autosave(transport: QuoteTransport, callback?: any): this;
 
+  /**
+   * Returns whether the quote is locked from modifications
+   *
+   * @return true if locked, otherwise false
+   */
+  isLocked(): boolean;
 
-    /**
-     * Visits staging data
-     */
-    visitData( visitor: ( bucket: StagingBucket) => void ): void;
+  /**
+   * Sets the top visited step id
+   *
+   * If the provided step id is less than the current step, then the current
+   * step id is used instead.
+   *
+   * @param step_id - ID of the step to set
+   */
+  setTopVisitedStepId(step_id: PositiveInteger): void;
 
-
-    /**
-     * Stages the given data
-     *
-     * Data is not written directly to the quote. It must be committed.
-     */
-    setData( data: Data ): ClientQuote;
-
-
-    /**
-     * Commits changes to quote and attempts to save
-     *
-     * @param transport - Transport for the data
-     * @param callback  - Function to call with results
-     */
-    autosave( transport: QuoteTransport, callback?: any ): this;
-
-
-    /**
-     * Returns whether the quote is locked from modifications
-     *
-     * @return true if locked, otherwise false
-     */
-    isLocked(): boolean;
-
-
-    /**
-     * Sets the top visited step id
-     *
-     * If the provided step id is less than the current step, then the current
-     * step id is used instead.
-     *
-     * @param step_id - ID of the step to set
-     */
-    setTopVisitedStepId( step_id: PositiveInteger ): void;
-
-
-    /**
-     * Returns the id of the highest step the quote has reached
-     *
-     * @return top visited step id
-     */
-    getTopVisitedStepId(): PositiveInteger;
+  /**
+   * Returns the id of the highest step the quote has reached
+   *
+   * @return top visited step id
+   */
+  getTopVisitedStepId(): PositiveInteger;
 }

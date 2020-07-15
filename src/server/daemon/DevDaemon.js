@@ -19,32 +19,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class  = require( 'easejs' ).Class,
-    Daemon = require( './Daemon' );
-
+var Class = require('easejs').Class,
+  Daemon = require('./Daemon');
 
 /**
  * Daemon to use for local development
  *
  * This daemon does not use the encryption service.
  */
-module.exports = Class( 'DevDaemon' ).extend( Daemon,
-{
-    /**
-     * Returns dummy encryption service
-     *
-     * For development purposes, running the encryption service is unnecessary.
-     * Instead, use a dummy service that simply returns what it was given.
-     *
-     * @return {EncryptionService}
-     */
-    'protected getEncryptionService': function()
-    {
-        var log = this.getDebugLog();
-        log.log( log.PRIORITY_INFO, "Using dummy (echo) encryption service" );
+module.exports = Class('DevDaemon').extend(Daemon, {
+  /**
+   * Returns dummy encryption service
+   *
+   * For development purposes, running the encryption service is unnecessary.
+   * Instead, use a dummy service that simply returns what it was given.
+   *
+   * @return {EncryptionService}
+   */
+  'protected getEncryptionService': function () {
+    var log = this.getDebugLog();
+    log.log(log.PRIORITY_INFO, 'Using dummy (echo) encryption service');
 
-        return require( '../encsvc/EchoEncryptionServiceFactory' )()
-            .create();
-    },
-} );
-
+    return require('../encsvc/EchoEncryptionServiceFactory')().create();
+  },
+});

@@ -19,34 +19,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class       = require( 'easejs' ).Class,
-    ErrorStyler = require( './ErrorStyler' );
-
+var Class = require('easejs').Class,
+  ErrorStyler = require('./ErrorStyler');
 
 /**
  * Trigger field styling for errors on the parent step itself
  */
-module.exports = Class( 'StepErrorStyler' )
-    .extend( ErrorStyler,
-{
-    'private _style': null,
+module.exports = Class('StepErrorStyler').extend(ErrorStyler, {
+  'private _style': null,
 
+  'override __construct': function (msgs, field_style) {
+    this._style = field_style;
+    this.__super(msgs);
+  },
 
-    'override __construct': function( msgs, field_style )
-    {
-        this._style = field_style;
-        this.__super( msgs );
-    },
+  'override protected onFieldError': function (field, msg) {
+    field.applyStyle(this._style, msg);
+  },
 
-
-    'override protected onFieldError': function( field, msg )
-    {
-        field.applyStyle( this._style, msg );
-    },
-
-
-    'override protected onFieldFixed': function( field )
-    {
-        field.revokeStyle( this._style );
-    }
-} );
+  'override protected onFieldFixed': function (field) {
+    field.revokeStyle(this._style);
+  },
+});

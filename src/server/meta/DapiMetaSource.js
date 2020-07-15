@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-const { Class } = require( 'easejs' );
-
+const {Class} = require('easejs');
 
 /**
  * Retrieve data for meta field using Data API
@@ -30,89 +29,80 @@ const { Class } = require( 'easejs' );
  * TODO: The reason this class exists at all is to encapsulate the horrid
  * API.  Once refactored, perhaps this class will no longer be necessary.
  */
-module.exports = Class( 'DapiMetaSource',
-{
-    /**
-     * Metabucket constructor
-     * @type {function()}
-     */
-    'private _bucketf': null,
+module.exports = Class('DapiMetaSource', {
+  /**
+   * Metabucket constructor
+   * @type {function()}
+   */
+  'private _bucketf': null,
 
+  /**
+   * Initialize with metabucket constructor
+   * @type {function()}
+   */
+  constructor(bucketf) {
+    this._bucketf = bucketf;
+  },
 
-    /**
-     * Initialize with metabucket constructor
-     * @type {function()}
-     */
-    constructor( bucketf )
-    {
-        this._bucketf = bucketf;
-    },
+  /**
+   * Retrieve field data
+   *
+   * @param {string}         field        field name
+   * @param {number}         index        field index
+   * @param {DataApiManager} dapi_manager manager for dapi calls
+   * @param {Object}         dapi         dapi descriptor
+   * @param {Object}         data         dapi input data
+   *
+   * @return {Promise} object containing `field`, `index`, and return data
+   */
+  'public getFieldData'(field, index, dapi_manager, dapi, data) {
+    const metabucket = this._bucketf();
 
-
-    /**
-     * Retrieve field data
-     *
-     * @param {string}         field        field name
-     * @param {number}         index        field index
-     * @param {DataApiManager} dapi_manager manager for dapi calls
-     * @param {Object}         dapi         dapi descriptor
-     * @param {Object}         data         dapi input data
-     *
-     * @return {Promise} object containing `field`, `index`, and return data
-     */
-    'public getFieldData'( field, index, dapi_manager, dapi, data )
-    {
-        const metabucket = this._bucketf();
-
-        return new Promise( ( resolve, reject ) =>
-        {
-            dapi_manager.getApiData(
-                dapi.name,
-                data,
-                ( err, api_data ) =>
-                {
-                    if ( api_data.length !== 1 )
-                    {
-                        reject( Error(
-                            "Data API request produced " +
-                                api_data.length + " results"
-                        ) );
-                        return;
-                    }
-
-                    dapi_manager.setFieldData(
-                        dapi.name,
-                        index,
-                        api_data,
-                        dapi.value,
-                        '',
-                        false
-                    );
-
-                    dapi_manager.expandFieldData(
-                        dapi.name,
-                        index,
-                        metabucket,
-                        dapi.mapdest,
-                        true,
-                        {
-                            [dapi.name]: {
-                                [index]: api_data[ 0 ][ dapi.value ],
-                            },
-                        }
-                    );
-
-                    resolve( {
-                        field: field,
-                        index: index,
-                        data:  metabucket.getData(),
-                    } );
-                },
-                field,
-                index,
-                {},
-                reject
+    return new Promise((resolve, reject) => {
+      dapi_manager.getApiData(
+        dapi.name,
+        data,
+        (err, api_data) => {
+          if (api_data.length !== 1) {
+            reject(
+              Error('Data API request produced ' + api_data.length + ' results')
             );
-        } );
-    },
-} );
+            return;
+          }
+
+          dapi_manager.setFieldData(
+            dapi.name,
+            index,
+            api_data,
+            dapi.value,
+            '',
+            false
+          );
+
+          dapi_manager.expandFieldData(
+            dapi.name,
+            index,
+            metabucket,
+            dapi.mapdest,
+            true,
+            {
+              [dapi.name]: {
+                [index]: api_data[0][dapi.value],
+              },
+            }
+          );
+
+          resolve({
+            field: field,
+            index: index,
+            data: metabucket.getData(),
+          });
+        },
+        field,
+        index,
+        {},
+        reject
+      );
+    });
+  },
+});

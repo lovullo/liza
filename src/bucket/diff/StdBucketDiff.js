@@ -21,16 +21,14 @@
  * This can be called a "dumb diff".
  */
 
-var Class      = require( 'easejs' ).Class,
-    ArrayDiff  = require( '../../util/ArrayDiff' ),
-    BucketDiff = require( './BucketDiff' ),
-    Context    = require( './BucketDiffContext' );
+var Class = require('easejs').Class,
+  ArrayDiff = require('../../util/ArrayDiff'),
+  BucketDiff = require('./BucketDiff'),
+  Context = require('./BucketDiffContext');
 
-
-module.exports = Class( 'StdBucketDiff' )
-    .implement( BucketDiff )
-    .extend(
-{
+module.exports = Class('StdBucketDiff')
+  .implement(BucketDiff)
+  .extend({
     /**
      * Constructor for diff result
      */
@@ -42,18 +40,14 @@ module.exports = Class( 'StdBucketDiff' )
      */
     'private _arrdiff': null,
 
+    __construct: function (arrdiff, Result) {
+      if (!Class.isA(ArrayDiff, arrdiff)) {
+        throw TypeError('Expecting ArrayDiff; received ' + arrdiff);
+      }
 
-    __construct: function( arrdiff, Result )
-    {
-        if ( !( Class.isA( ArrayDiff, arrdiff ) ) )
-        {
-            throw TypeError( "Expecting ArrayDiff; received " + arrdiff );
-        }
-
-        this._arrdiff = arrdiff;
-        this._Result  = Result;
+      this._arrdiff = arrdiff;
+      this._Result = Result;
     },
-
 
     /**
      * Perform a diff given a diff context
@@ -62,31 +56,26 @@ module.exports = Class( 'StdBucketDiff' )
      *
      * @return {BucketDiffResult} result of diff
      */
-    'public diff': function( context )
-    {
-        if ( !( Class.isA( Context, context ) ) )
-        {
-            throw TypeError( "Expected BucketDiffContext" );
+    'public diff': function (context) {
+      if (!Class.isA(Context, context)) {
+        throw TypeError('Expected BucketDiffContext');
+      }
+
+      var changed = {};
+
+      var arrdiff = this._arrdiff;
+      context.forEachField(function (field, a, b) {
+        var diff = arrdiff.diff(a, b),
+          i = a.length > b.length ? a.length : b.length,
+          changes = [];
+
+        while (i--) {
+          changes[i] = diff[i] !== undefined;
         }
 
-        var changed = {};
+        changed[field] = changes;
+      });
 
-        var arrdiff = this._arrdiff;
-        context.forEachField( function( field, a, b )
-        {
-            var diff    = arrdiff.diff( a, b ),
-                i       = ( a.length > b.length ) ? a.length : b.length,
-                changes = [];
-
-            while ( i-- )
-            {
-                changes[ i ] = ( diff[ i ] !== undefined );
-            }
-
-            changed[ field ] = changes;
-        } );
-
-        return this._Result( context, changed );
-    }
-} );
-
+      return this._Result(context, changed);
+    },
+  });

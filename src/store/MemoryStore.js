@@ -19,10 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class          = require( 'easejs' ).Class,
-    Store          = require( './Store' ),
-    StoreMissError = require( './StoreMissError' );
-
+var Class = require('easejs').Class,
+  Store = require('./Store'),
+  StoreMissError = require('./StoreMissError');
 
 /**
  * Generic key/value store with bulk clear
@@ -60,17 +59,15 @@ var Class          = require( 'easejs' ).Class,
  *           } );
  *   } );
  */
-module.exports = Class( 'MemoryStore' )
-    .implement( Store )
-    .extend(
-{
+module.exports = Class('MemoryStore')
+  .implement(Store)
+  .extend({
     /**
      * Key/value store
      *
      * @type {Object}
      */
     'private _store': {},
-
 
     /**
      * Add item to store under `key` with value `value`
@@ -81,13 +78,11 @@ module.exports = Class( 'MemoryStore' )
      * @return {Promise.<Store>} promise to add item to store, resolving to
      *                           self (for chaining)
      */
-    'virtual public add'( key, value )
-    {
-        this._store[ key ] = value;
+    'virtual public add'(key, value) {
+      this._store[key] = value;
 
-        return Promise.resolve( this.__inst );
+      return Promise.resolve(this.__inst);
     },
-
 
     /**
      * Populate store with each element in object `obj`
@@ -104,15 +99,9 @@ module.exports = Class( 'MemoryStore' )
      *
      * @return {Array.<Promise.<Store>>} array of #add promises
      */
-    'virtual public populate'( obj )
-    {
-        return Promise.all(
-            Object.keys( obj ).map(
-                key => this.add( key, obj[ key ] )
-            )
-        );
+    'virtual public populate'(obj) {
+      return Promise.all(Object.keys(obj).map(key => this.add(key, obj[key])));
     },
-
 
     /**
      * Retrieve item from store under `key`
@@ -123,15 +112,11 @@ module.exports = Class( 'MemoryStore' )
      *
      * @return {Promise} promise for the key value
      */
-    'virtual public get'( key )
-    {
-        return ( this._store[ key ] !== undefined )
-            ? Promise.resolve( this._store[ key ] )
-            : Promise.reject(
-                StoreMissError( "Key '" + key + "' does not exist" )
-            );
+    'virtual public get'(key) {
+      return this._store[key] !== undefined
+        ? Promise.resolve(this._store[key])
+        : Promise.reject(StoreMissError("Key '" + key + "' does not exist"));
     },
-
 
     /**
      * Clear all items in store
@@ -139,13 +124,11 @@ module.exports = Class( 'MemoryStore' )
      * @return {Promise<Store>} promise to clear store, resolving to self
      *                          (for chaining)
      */
-    'virtual public clear'()
-    {
-        this._store = {};
+    'virtual public clear'() {
+      this._store = {};
 
-        return Promise.resolve( this.__inst );
+      return Promise.resolve(this.__inst);
     },
-
 
     /**
      * Fold (reduce) all stored values
@@ -168,15 +151,14 @@ module.exports = Class( 'MemoryStore' )
      *
      * @return {Promise} promise of a folded value (final accumulator value)
      */
-    'public reduce'( callback, initial )
-    {
-        const store = this._store;
+    'public reduce'(callback, initial) {
+      const store = this._store;
 
-        return Promise.resolve(
-            Object.keys( store ).reduce(
-                ( accum, key ) => callback( accum, store[ key ], key ),
-                initial
-            )
-        );
-    }
-} );
+      return Promise.resolve(
+        Object.keys(store).reduce(
+          (accum, key) => callback(accum, store[key], key),
+          initial
+        )
+      );
+    },
+  });

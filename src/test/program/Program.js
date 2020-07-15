@@ -19,12 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-"use strict";
+'use strict';
 
-
-module.exports = program_path => require( program_path )
-    .extend(
-{
+module.exports = program_path =>
+  require(program_path).extend({
     classifier: __dirname + '/DummyClassifier',
-} );
-
+  });

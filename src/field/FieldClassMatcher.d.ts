@@ -19,23 +19,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-import { ClassData } from "../client/Cmatch";
+import {ClassData} from '../client/Cmatch';
 
 /**
  * Generate match vector for fields given field predicates and
  * classification results
  */
-export declare class FieldClassMatcher
-{
-    /**
-     * Generate classification match array for each field
-     *
-     * Any index for any field will be considered to be a match if the index
-     * is classified as each of the field's required classifications.
-     */
-    match(
-        classes: ClassData,
-        callback: ( cmatch: any ) => void
-    ): FieldClassMatcher;
+export declare class FieldClassMatcher {
+  /**
+   * Generate classification match array for each field
+   *
+   * Any index for any field will be considered to be a match if the index
+   * is classified as each of the field's required classifications.
+   */
+  match(classes: ClassData, callback: (cmatch: any) => void): FieldClassMatcher;
 }

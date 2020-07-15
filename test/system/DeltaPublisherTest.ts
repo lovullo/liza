@@ -19,219 +19,198 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { AmqpConnection } from '../../src/system/amqp/AmqpConnection';
-import { Delta, DeltaResult, DeltaType } from '../../src/bucket/delta';
-import { DeltaPublisher as Sut } from '../../src/system/DeltaPublisher';
-import { DocumentId, DocumentMeta } from '../../src/document/Document';
-import { EventEmitter } from 'events';
-import { hasContext } from '../../src/error/ContextError';
-import { AmqpError } from '../../src/error/AmqpError';
-import { Channel } from 'amqplib';
-import { MessageWriter } from '../../src/system/MessageWriter';
+import {AmqpConnection} from '../../src/system/amqp/AmqpConnection';
+import {Delta, DeltaResult, DeltaType} from '../../src/bucket/delta';
+import {DeltaPublisher as Sut} from '../../src/system/DeltaPublisher';
+import {DocumentId, DocumentMeta} from '../../src/document/Document';
+import {EventEmitter} from 'events';
+import {hasContext} from '../../src/error/ContextError';
+import {AmqpError} from '../../src/error/AmqpError';
+import {Channel} from 'amqplib';
+import {MessageWriter} from '../../src/system/MessageWriter';
 
+import {expect, use as chai_use} from 'chai';
+chai_use(require('chai-as-promised'));
 
-import { expect, use as chai_use } from 'chai';
-chai_use( require( 'chai-as-promised' ) );
+describe('server.DeltaPublisher', () => {
+  describe('#publish', () => {
+    it('sends a message', () => {
+      let publish_called = false;
+      const delta = createMockDelta();
+      const bucket = createMockBucketData();
+      const ratedata = createMockBucketData();
+      const emitter = new EventEmitter();
+      const conn = createMockAmqpConnection();
+      const writer = createMockWriter();
+      const meta = <DocumentMeta>{
+        id: <DocumentId>123,
+        entity_name: 'Some Agency',
+        entity_id: 234,
+        startDate: <UnixTimestamp>345,
+        lastUpdate: <UnixTimestamp>456,
+      };
 
+      conn.getAmqpChannel = () => {
+        return <Channel>{
+          publish: (_: any, __: any, buf: any, ___: any) => {
+            expect(buf instanceof Buffer).to.be.true;
 
-describe( 'server.DeltaPublisher', () =>
-{
-    describe( '#publish', () =>
-    {
-        it( 'sends a message', () =>
-        {
-            let   publish_called  = false;
-            const delta           = createMockDelta();
-            const bucket          = createMockBucketData();
-            const ratedata        = createMockBucketData();
-            const emitter         = new EventEmitter();
-            const conn            = createMockAmqpConnection();
-            const writer          = createMockWriter();
-            const meta            = <DocumentMeta>{
-                id:          <DocumentId>123,
-                entity_name: 'Some Agency',
-                entity_id:   234,
-                startDate:   <UnixTimestamp>345,
-                lastUpdate:  <UnixTimestamp>456,
-            };
+            publish_called = true;
 
-            conn.getAmqpChannel   = () =>
-            {
-                return <Channel>{
-                    publish: ( _: any, __: any, buf: any, ___: any ) =>
-                    {
-                        expect( buf instanceof Buffer ).to.be.true;
+            return true;
+          },
+        };
+      };
 
-                        publish_called = true;
+      const sut = new Sut(emitter, ts_ctor, conn, writer);
 
-                        return true;
-                    }
-                };
-            };
+      return expect(sut.publish(meta, delta, bucket, ratedata))
+        .to.eventually.deep.equal(undefined)
+        .then(_ => {
+          expect(publish_called).to.be.true;
+        });
+    });
 
-            const sut = new Sut( emitter, ts_ctor, conn, writer );
+    (<[string, () => Channel | undefined, Error, string][]>[
+      [
+        'Throws an error when publishing was unsuccessful',
+        () => {
+          return <Channel>{
+            publish: (_: any, __: any, _buf: any, ___: any) => {
+              return false;
+            },
+          };
+        },
+        Error,
+        'Delta publish failed',
+      ],
+      [
+        'Throws an error when no amqp channel is found',
+        () => {
+          return undefined;
+        },
+        AmqpError,
+        'Error sending message: No channel',
+      ],
+    ]).forEach(([label, getChannelF, error_type, err_msg]) =>
+      it(label, () => {
+        const delta = createMockDelta();
+        const bucket = createMockBucketData();
+        const ratedata = createMockBucketData();
+        const emitter = new EventEmitter();
+        const conn = createMockAmqpConnection();
+        const writer = createMockWriter();
+        const meta = <DocumentMeta>{
+          id: <DocumentId>123,
+          entity_name: 'Some Agency',
+          entity_id: 234,
+          startDate: <UnixTimestamp>345,
+          lastUpdate: <UnixTimestamp>456,
+        };
 
-            return expect(
-                    sut.publish( meta, delta, bucket, ratedata )
-                ).to.eventually.deep.equal( undefined )
-                .then( _ =>
-                {
-                    expect( publish_called ).to.be.true;
-                } );
-        } );
+        const expected = {
+          doc_id: meta.id,
+          quote_id: meta.id,
+          delta_type: delta.type,
+          delta_ts: delta.timestamp,
+        };
 
-        ( <[string, () => Channel | undefined, Error, string ][]>[
-            [
-                'Throws an error when publishing was unsuccessful',
-                () =>
-                {
-                    return <Channel>{
-                        publish: ( _: any, __: any, _buf: any, ___: any ) =>
-                        {
-                            return false;
-                        }
-                    };
-                },
-                Error,
-                'Delta publish failed'
-            ],
-            [
-                'Throws an error when no amqp channel is found',
-                () =>
-                {
-                    return undefined;
-                },
-                AmqpError,
-                'Error sending message: No channel'
-            ]
-        ] ).forEach( ( [ label, getChannelF, error_type, err_msg ] ) =>
-        it( label, () =>
-        {
-            const delta           = createMockDelta();
-            const bucket          = createMockBucketData();
-            const ratedata        = createMockBucketData();
-            const emitter         = new EventEmitter();
-            const conn            = createMockAmqpConnection();
-            const writer          = createMockWriter();
-            const meta            = <DocumentMeta>{
-                id:          <DocumentId>123,
-                entity_name: 'Some Agency',
-                entity_id:   234,
-                startDate:   <UnixTimestamp>345,
-                lastUpdate:  <UnixTimestamp>456,
-            };
+        conn.getAmqpChannel = getChannelF;
 
-            const expected        = {
-                doc_id:     meta.id,
-                quote_id:   meta.id,
-                delta_type: delta.type,
-                delta_ts:   delta.timestamp
+        const result = new Sut(emitter, ts_ctor, conn, writer).publish(
+          meta,
+          delta,
+          bucket,
+          ratedata
+        );
+
+        return Promise.all([
+          expect(result).to.eventually.be.rejectedWith(error_type, err_msg),
+          result.catch(e => {
+            if (!hasContext(e)) {
+              return expect.fail();
             }
 
-            conn.getAmqpChannel = getChannelF;
+            return expect(e.context).to.deep.equal(expected);
+          }),
+        ]);
+      })
+    );
 
-            const result = new Sut( emitter, ts_ctor, conn, writer )
-                            .publish( meta, delta, bucket, ratedata );
+    it('writer#write rejects', () => {
+      const delta = createMockDelta();
+      const bucket = createMockBucketData();
+      const ratedata = createMockBucketData();
+      const emitter = new EventEmitter();
+      const conn = createMockAmqpConnection();
+      const writer = createMockWriter();
+      const error = new Error('Bad thing happened');
+      const meta = <DocumentMeta>{
+        id: <DocumentId>123,
+        entity_name: 'Some Agency',
+        entity_id: 234,
+        startDate: <UnixTimestamp>345,
+        lastUpdate: <UnixTimestamp>456,
+      };
 
-            return Promise.all( [
-                expect( result ).to.eventually.be.rejectedWith(
-                    error_type, err_msg
-                ),
-                result.catch( e =>
-                {
-                    if ( !hasContext( e ) )
-                    {
-                        return expect.fail();
-                    }
+      writer.write = (
+        _: any,
+        __: any,
+        ___: any,
+        ____: any,
+        _____: any
+      ): Promise<Buffer> => {
+        return Promise.reject(error);
+      };
 
-                    return expect( e.context ).to.deep.equal( expected );
-                } )
-            ] );
-        } ) );
+      const result = new Sut(emitter, ts_ctor, conn, writer).publish(
+        meta,
+        delta,
+        bucket,
+        ratedata
+      );
 
+      return Promise.all([
+        expect(result).to.eventually.be.rejectedWith(error),
+        result.catch(e => {
+          return expect(e).to.deep.equal(error);
+        }),
+      ]);
+    });
+  });
+});
 
-        it( 'writer#write rejects', () =>
-        {
-            const delta           = createMockDelta();
-            const bucket          = createMockBucketData();
-            const ratedata        = createMockBucketData();
-            const emitter         = new EventEmitter();
-            const conn            = createMockAmqpConnection();
-            const writer          = createMockWriter();
-            const error           = new Error( 'Bad thing happened' );
-            const meta            = <DocumentMeta>{
-                id:          <DocumentId>123,
-                entity_name: 'Some Agency',
-                entity_id:   234,
-                startDate:   <UnixTimestamp>345,
-                lastUpdate:  <UnixTimestamp>456,
-            };
-
-            writer.write = (
-                _:     any,
-                __:    any,
-                ___:   any,
-                ____:  any,
-                _____: any
-            ): Promise<Buffer> =>
-            {
-                return Promise.reject( error );
-            };
-
-            const result = new Sut( emitter, ts_ctor, conn, writer )
-                            .publish( meta, delta, bucket, ratedata );
-
-            return Promise.all( [
-                expect( result ).to.eventually.be.rejectedWith( error ),
-                result.catch( e =>
-                {
-                    return expect( e ).to.deep.equal( error );
-                } )
-            ] );
-        } )
-    } );
-} );
-
-
-function ts_ctor(): UnixTimestamp
-{
-    return <UnixTimestamp>Math.floor( new Date().getTime() / 1000 );
+function ts_ctor(): UnixTimestamp {
+  return <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 }
 
-
-function createMockAmqpConnection(): AmqpConnection
-{
-    return <AmqpConnection>{
-        connect:         () => {},
-        getExchangeName: () => { 'Foo' },
-    };
+function createMockAmqpConnection(): AmqpConnection {
+  return <AmqpConnection>{
+    connect: () => {},
+    getExchangeName: () => {
+      'Foo';
+    },
+  };
 }
 
-
-function createMockBucketData(): Record<string, any>
-{
-    return {
-        foo: [ 'bar', 'baz' ]
-    }
+function createMockBucketData(): Record<string, any> {
+  return {
+    foo: ['bar', 'baz'],
+  };
 }
 
-
-function createMockDelta(): Delta<any>
-{
-    return <Delta<any>>{
-        type:      <DeltaType>'data',
-        timestamp: <UnixTimestamp>123123123,
-        data:      <DeltaResult<any>>{},
-    }
+function createMockDelta(): Delta<any> {
+  return <Delta<any>>{
+    type: <DeltaType>'data',
+    timestamp: <UnixTimestamp>123123123,
+    data: <DeltaResult<any>>{},
+  };
 }
 
-
-function createMockWriter(): MessageWriter
-{
-    return <MessageWriter>{
-        write( _: any, __:any, ___:any, ____:any, _____:any ): Promise<Buffer>
-        {
-            return Promise.resolve( Buffer.from( '' ) );
-        }
-    };
+function createMockWriter(): MessageWriter {
+  return <MessageWriter>{
+    write(_: any, __: any, ___: any, ____: any, _____: any): Promise<Buffer> {
+      return Promise.resolve(Buffer.from(''));
+    },
+  };
 }

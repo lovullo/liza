@@ -19,14 +19,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait   = require( 'easejs' ).Trait,
-    DataApi = require( '../DataApi' );
+var Trait = require('easejs').Trait,
+  DataApi = require('../DataApi');
 
-
-module.exports = Trait( 'ResponseApply' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Trait('ResponseApply')
+  .implement(DataApi)
+  .extend({
     /**
      * Function to apply to data
      *
@@ -34,22 +32,18 @@ module.exports = Trait( 'ResponseApply' )
      */
     'private _dataf': () => {},
 
-
     /**
      * Initialize with function to apply to return data
      *
      * @param {function(*)} req_callback return data function
      */
-    __mixin( dataf )
-    {
-        if ( typeof dataf !== 'function' )
-        {
-            throw TypeError( 'expected function for #request callback' );
-        }
+    __mixin(dataf) {
+      if (typeof dataf !== 'function') {
+        throw TypeError('expected function for #request callback');
+      }
 
-        this._dataf = dataf;
+      this._dataf = dataf;
     },
-
 
     /**
      * Apply function to response
@@ -65,13 +59,15 @@ module.exports = Trait( 'ResponseApply' )
      *
      * @return {DataApi} self
      */
-    'virtual abstract override public request'( data, callback, id )
-    {
-        this.__super( data, ( e, retdata ) =>
-        {
-            callback( e, this._dataf( retdata ) );
-        }, id );
+    'virtual abstract override public request'(data, callback, id) {
+      this.__super(
+        data,
+        (e, retdata) => {
+          callback(e, this._dataf(retdata));
+        },
+        id
+      );
 
-        return this;
+      return this;
     },
-} );
+  });

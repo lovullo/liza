@@ -19,17 +19,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Trait   = require( 'easejs' ).Trait,
-    DataApi = require( '../DataApi' );
-
+var Trait = require('easejs').Trait,
+  DataApi = require('../DataApi');
 
 /**
  * Processes DataApi return data as JSON
  */
-module.exports = Trait( 'JsonResponse' )
-    .implement( DataApi )
-    .extend(
-{
+module.exports = Trait('JsonResponse')
+  .implement(DataApi)
+  .extend({
     /**
      * Processes response as JSON
      *
@@ -47,18 +45,19 @@ module.exports = Trait( 'JsonResponse' )
      *
      * @return {DataApi} self
      */
-    'virtual abstract override public request': function( data, callback, id )
-    {
-        var _self = this;
+    'virtual abstract override public request': function (data, callback, id) {
+      var _self = this;
 
-        this.__super( data, function( err, resp )
-        {
-            _self._tryParse( err, resp, callback );
-        }, id );
+      this.__super(
+        data,
+        function (err, resp) {
+          _self._tryParse(err, resp, callback);
+        },
+        id
+      );
 
-        return this;
+      return this;
     },
-
 
     /**
      * Attempt to parse SRC as JSON and invoke callback according to the
@@ -70,28 +69,20 @@ module.exports = Trait( 'JsonResponse' )
      *
      * @return {undefined}
      */
-    'private _tryParse': function( err, src, callback )
-    {
-        try
-        {
-            var data = JSON.parse( src );
-        }
-        catch ( e )
-        {
-            // parsing failed; provide response text in addition to
-            // original data so that the caller can handle how they
-            // please
-            callback(
-                this._getReturnError( err, e ),
-                { text: src }
-            );
+    'private _tryParse': function (err, src, callback) {
+      try {
+        var data = JSON.parse(src);
+      } catch (e) {
+        // parsing failed; provide response text in addition to
+        // original data so that the caller can handle how they
+        // please
+        callback(this._getReturnError(err, e), {text: src});
 
-            return;
-        }
+        return;
+      }
 
-        callback( err, data );
+      callback(err, data);
     },
-
 
     /**
      * Produce the parse error, or a combined error containing both the
@@ -102,17 +93,14 @@ module.exports = Trait( 'JsonResponse' )
      *
      * @return {Error} parse error or combined error
      */
-    'private _getReturnError': function( orig, parse )
-    {
-        if ( !orig )
-        {
-            return parse;
-        }
+    'private _getReturnError': function (orig, parse) {
+      if (!orig) {
+        return parse;
+      }
 
-        var e = Error( "Multiple errors occurred; see `list` property" );
-        e.list = [ orig, parse ];
+      var e = Error('Multiple errors occurred; see `list` property');
+      e.list = [orig, parse];
 
-        return e;
-    }
-} );
-
+      return e;
+    },
+  });

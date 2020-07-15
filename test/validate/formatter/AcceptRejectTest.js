@@ -19,75 +19,59 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var liza               = require( '../../../' ),
-    Class              = require( 'easejs' ).Class,
-    Sut                = liza.validate.formatter.AcceptReject,
-    EchoFormatter      = liza.validate.formatter.EchoFormatter,
-    ValidatorFormatter = liza.validate.ValidatorFormatter,
-    common             = require( './common' ),
-    expect             = require( 'chai' ).expect;
+var liza = require('../../../'),
+  Class = require('easejs').Class,
+  Sut = liza.validate.formatter.AcceptReject,
+  EchoFormatter = liza.validate.formatter.EchoFormatter,
+  ValidatorFormatter = liza.validate.ValidatorFormatter,
+  common = require('./common'),
+  expect = require('chai').expect;
 
-var DummyFormatter = Class.implement( ValidatorFormatter )
-    .extend(
-{
-    'virtual parse': function( data )
-    {
-        return '+' + data;
-    },
+var DummyFormatter = Class.implement(ValidatorFormatter).extend({
+  'virtual parse': function (data) {
+    return '+' + data;
+  },
 
-    'virtual retrieve': function( data )
-    {
-        return '-' + data;
-    },
-} );
+  'virtual retrieve': function (data) {
+    return '-' + data;
+  },
+});
 
+describe('validate.formatter.Number', function () {
+  common.testValidate(EchoFormatter.use(Sut)(), {
+    '': [''],
+    '0': ['0', 'Rejected'],
+    '1': ['1', 'Accepted'],
+    Rejected: ['0', 'Rejected'],
+    Accepted: ['1', 'Accepted'],
 
-describe( 'validate.formatter.Number', function()
-{
-    common.testValidate( EchoFormatter.use( Sut )(), {
-        "":         [ ''              ],
-        "0":        [ "0", "Rejected" ],
-        "1":        [ "1", "Accepted" ],
-        "Rejected": [ "0", "Rejected" ],
-        "Accepted": [ "1", "Accepted" ],
+    // arbitrary text left alone
+    foo: ['foo'],
+  });
 
-        // arbitrary text left alone
-        "foo": [ "foo" ],
-    } );
+  describe('#parse', function () {
+    it('considers accept/reject before supertype formatting', function () {
+      // will equal +Accepted if supertype is called first
+      expect(DummyFormatter.use(Sut)().parse('Accepted')).to.equal('1');
 
+      // will equal +1 if supertype is called first
+      expect(DummyFormatter.use(Sut)().parse('1')).to.equal('1');
+    });
+  });
 
-    describe( '#parse', function()
-    {
-        it( 'considers accept/reject before supertype formatting', function()
-        {
-            // will equal +Accepted if supertype is called first
-            expect( DummyFormatter.use( Sut )().parse( 'Accepted' ) )
-                .to.equal( '1' );
+  describe('#retrieve', function () {
+    it('considers accept/reject before supertype formatting', function () {
+      // will equal -1 if supertype is called first
+      expect(DummyFormatter.use(Sut)().retrieve('1')).to.equal('Accepted');
+    });
+  });
 
-            // will equal +1 if supertype is called first
-            expect( DummyFormatter.use( Sut )().parse( '1' ) )
-                .to.equal( '1' );
-        } );
-    } );
-
-
-    describe( '#retrieve', function()
-    {
-        it( 'considers accept/reject before supertype formatting', function()
-        {
-            // will equal -1 if supertype is called first
-            expect( DummyFormatter.use( Sut )().retrieve( '1' ) )
-                .to.equal( 'Accepted' );
-        } );
-    } );
-
-
-    common.testMixin(
-        EchoFormatter,
-        Sut,
-        'asdf',
-        'given',
-        'asdfgiven',
-        'asdfgiven'
-    );
-} );
+  common.testMixin(
+    EchoFormatter,
+    Sut,
+    'asdf',
+    'given',
+    'asdfgiven',
+    'asdfgiven'
+  );
+});

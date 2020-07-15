@@ -21,94 +21,82 @@
  * @todo This has hard-coded references to the ``quote server'' and LoVullo
  */
 
-var Class               = require( 'easejs' ).Class,
-    JqueryHttpDataProxy = require( './proxy/JqueryHttpDataProxy' );
-
+var Class = require('easejs').Class,
+  JqueryHttpDataProxy = require('./proxy/JqueryHttpDataProxy');
 
 /**
  * Handles additional processing before passing HTTP request off to the
  * requester
  */
-module.exports = Class( 'ClientDataProxy' )
-    .extend( JqueryHttpDataProxy,
-{
-    /**
-     * Log error (if any) and process data before returning the parent's GET
-     * request
-     *
-     * @param {string}                url      request URL
-     * @param {function( Object, * }) callback request callback (success or
-     *                                         failure)
-     *
-     * @return {ClientDataProxy} self
-     */
-    'protected override getData': function( url, callback )
-    {
-        var _self = this;
+module.exports = Class('ClientDataProxy').extend(JqueryHttpDataProxy, {
+  /**
+   * Log error (if any) and process data before returning the parent's GET
+   * request
+   *
+   * @param {string}                url      request URL
+   * @param {function( Object, * }) callback request callback (success or
+   *                                         failure)
+   *
+   * @return {ClientDataProxy} self
+   */
+  'protected override getData': function (url, callback) {
+    var _self = this;
 
-        this.__super( url, function( data, err )
-        {
-            if ( err )
-            {
-                console.error( 'XHR GET Error: (%s) %s', url, err );
-            }
+    this.__super(url, function (data, err) {
+      if (err) {
+        console.error('XHR GET Error: (%s) %s', url, err);
+      }
 
-            callback( _self._processData( data ), err );
-        } );
+      callback(_self._processData(data), err);
+    });
 
-        return this;
-    },
+    return this;
+  },
 
+  /**
+   * Log error (if any) and process data before returning the parent's POST
+   * request
+   *
+   * @param {string}                url      request URL
+   * @param {Object}                data     data to post to server
+   * @param {function( Object, * }) callback request callback (success or
+   *                                         failure)
+   *
+   * @return {ClientDataProxy} self
+   */
+  'protected override postData': function (url, data, callback) {
+    var _self = this;
 
-    /**
-     * Log error (if any) and process data before returning the parent's POST
-     * request
-     *
-     * @param {string}                url      request URL
-     * @param {Object}                data     data to post to server
-     * @param {function( Object, * }) callback request callback (success or
-     *                                         failure)
-     *
-     * @return {ClientDataProxy} self
-     */
-    'protected override postData': function( url, data, callback )
-    {
-        var _self = this;
+    this.__super(url, data, function (data, err) {
+      if (err) {
+        console.error('XHR POST Error: (%s) %s', url, err);
+      }
 
-        this.__super( url, data, function( data, err )
-        {
-            if ( err )
-            {
-                console.error( 'XHR POST Error: (%s) %s', url, err );
-            }
+      callback(_self._processData(data), err);
+    });
+  },
 
-            callback( _self._processData( data ), err );
-        } );
-    },
+  /**
+   * Basic data post-processing
+   *
+   * If the response is empty/doesn't make sense, this will generate a
+   * generic error.
+   *
+   * @param {Object} data response data
+   *
+   * @return processed data
+   */
+  'private _processData': function (data) {
+    // if the data is null, then we didn't actually get a response from the
+    // server - rather, the response was empty (that's bad!)
+    data = data || {
+      hasError: true,
+      content:
+        'There was a problem communicating with the quote ' +
+        'server. If you continue to receive this message, please ' +
+        'contact our support team for assistance.',
+    };
 
-
-    /**
-     * Basic data post-processing
-     *
-     * If the response is empty/doesn't make sense, this will generate a
-     * generic error.
-     *
-     * @param {Object} data response data
-     *
-     * @return processed data
-     */
-    'private _processData': function( data )
-    {
-        // if the data is null, then we didn't actually get a response from the
-        // server - rather, the response was empty (that's bad!)
-        data = data || {
-            hasError: true,
-            content:  'There was a problem communicating with the quote ' +
-                'server. If you continue to receive this message, please ' +
-                'contact our support team for assistance.'
-        };
-
-        return data;
-    }
-} );
-
+    return data;
+  },
+});
