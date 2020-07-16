@@ -132,8 +132,8 @@ describe('GridGroup', () => {
 
       let get_data_calls = 0;
 
-      const content = createContent();
-      const box_content = createContent();
+      const content = createContent(true);
+      const box_content = createContent(true);
       box_content.querySelector = () => content;
 
       const quote = createQuote();
@@ -224,6 +224,66 @@ describe('GridGroup', () => {
       expect(sut.isSelected()).to.be.false;
     });
 
+    it('sets a group to deselected if it is not visible', () => {
+      const selected_current_key = 'cur';
+      const selected_list_key = 'foo';
+      const selected_value = 'bar';
+      const mock_data = [selected_value];
+
+      const expected_data = {
+        foo: [null],
+        cur: [],
+      };
+
+      let set_data_calls = 0;
+
+      const group = createGroup('foo', [], [], false);
+      const state_manager = createStateManager();
+
+      // Make these hidden
+      const content = createContent(false);
+      const box_content = createContent(false);
+      box_content.querySelector = () => content;
+
+      const quote = createQuote();
+
+      quote.getDataByName.withArgs(selected_list_key).returns(mock_data);
+
+      quote.getDataByName.withArgs(selected_current_key).returns(mock_data);
+
+      quote.setData = (data: any) => {
+        set_data_calls++;
+        expect(data).to.deep.equal(expected_data);
+      };
+
+      content.getAttribute
+        .withArgs('data-selected-current-key')
+        .returns(selected_current_key);
+
+      content.getAttribute
+        .withArgs('data-selected-list-key')
+        .returns(selected_list_key);
+
+      content.getAttribute
+        .withArgs('data-selected-value')
+        .returns(selected_value);
+
+      const sut = createSut(Sut, {
+        content: box_content,
+        state_manager: state_manager,
+        group: group,
+      });
+
+      sut.init(quote);
+
+      // Simulate calling select first
+      sut.select();
+      sut.visit();
+
+      expect(set_data_calls).to.equal(1);
+      expect(sut.isSelected()).to.be.false;
+    });
+
     it('does not set a group to deselected if disabled state is true as an internal user', () => {
       const selected_current_key = 'cur';
       const selected_list_key = 'foo';
@@ -240,8 +300,8 @@ describe('GridGroup', () => {
       const group = createGroup('foo', [], [], true);
       const state_manager = createStateManager();
 
-      const content = createContent();
-      const box_content = createContent();
+      const content = createContent(true);
+      const box_content = createContent(true);
       box_content.querySelector = () => content;
 
       const quote = createQuote();
