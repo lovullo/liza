@@ -209,12 +209,6 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
     }
 
     trigger_callback.call(this, 'kickBack', '', step_id);
-
-    var callback = this.eventData[step_id].postSubmit;
-    if (callback !== undefined) {
-      callback.call(this, trigger_callback, bucket);
-    }
-
     return true;
   },
 
