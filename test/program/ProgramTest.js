@@ -35,10 +35,19 @@ describe('Program#postSubmit', () => {
     done();
   });
 
-  it('kicks back when valid step', done => {
+  it('returns false when step is manage type', done => {
     // setup 2 steps
     const sut = getSut([0, 1]);
-    const kb_step_id = 1;
+
+    // call with manage step #1
+    expect(sut.postSubmit(1, {}, {})).to.be.false;
+    done();
+  });
+
+  it('kicks back when valid step', done => {
+    // setup 2 steps
+    const sut = getSut([0, 1, 2]);
+    const kb_step_id = 2;
     let callback_called = false;
 
     const callback = (event, quote_id, value) => {
@@ -58,5 +67,11 @@ function getSut(step_data) {
     'override __construct': function (dapi_manager) {},
     initQuote: function (bucket, store_only) {},
     eventData: step_data,
+    steps: [
+      ,
+      {id: 'Manage Quote', type: 'manage'},
+      {id: 'Info', type: ''},
+      {id: 'Location', type: ''},
+    ],
   })();
 }
