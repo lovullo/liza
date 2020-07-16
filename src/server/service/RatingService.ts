@@ -492,10 +492,11 @@ export class RatingService {
     const retries = quote.getRetryCount(data);
     const pending_count = retries.true_count;
     const retry_total = retries.field_count;
+    const supplier_total = data.__result_ids?.length || retry_total;
     const retry_attempts = quote.getRetryAttempts();
     const step = quote.getCurrentStepId();
     const is_rate_step = (program.rateSteps || [])[step] === true;
-    const missing_retries = data.__result_ids.length - retry_total;
+    const missing_retries = supplier_total - retry_total;
 
     // Make determinations
     const max_attempts = retry_attempts >= this.RETRY_MAX_ATTEMPTS;

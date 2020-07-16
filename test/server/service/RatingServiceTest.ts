@@ -453,6 +453,42 @@ describe('RatingService', () => {
     });
   });
 
+  it('Default to retry field count if __result_ids is undefined', () => {
+    const rate_data = {};
+
+    const {
+      dao,
+      logger,
+      quote,
+      raters,
+      session,
+      createDelta,
+      ts_ctor,
+    } = getStubs(rate_data);
+    let retry_attempts_given: number;
+
+    quote.setRetryAttempts = (attempts: number) => {
+      retry_attempts_given = attempts;
+
+      return quote;
+    };
+
+    quote.getRetryCount = () => {
+      return {
+        field_count: 0,
+        true_count: 0,
+      };
+    };
+
+    const sut = new Sut(logger, dao, raters, createDelta, ts_ctor);
+    return sut.request(session, quote, '').then((_: RateRequestResult) => {
+      // Because there were no missing fields and zero true retries returned
+      // we will expect the retry attempts to be cleared because there are no
+      // more pending
+      expect(retry_attempts_given).to.equal(0);
+    });
+  });
+
   (<
     [
       string,
@@ -688,7 +724,7 @@ describe('RatingService', () => {
   });
 });
 
-function getStubs() {
+function getStubs(rate_data?: any) {
   const program_id = 'foo';
 
   const program = <Program>{
@@ -698,7 +734,7 @@ function getStubs() {
   };
 
   // rate reply
-  const stub_rate_data: RateResult = {
+  const stub_rate_data: RateResult = rate_data || {
     __result_ids: ['foo'],
     _unavailable_all: '0',
   };
