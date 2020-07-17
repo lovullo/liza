@@ -203,8 +203,12 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
   postSubmit: function (step_id, bucket, trigger_callback) {
     trigger_callback = trigger_callback || function () {};
 
-    // make sure that the step they're trying to load actually exists
-    if (this.eventData[step_id] === undefined) {
+    // make sure that the step they're trying to load actually exists and that
+    // it is not a manage step
+    if (
+      this.eventData[step_id] === undefined ||
+      this.steps[step_id].type === 'manage'
+    ) {
       return false;
     }
 
