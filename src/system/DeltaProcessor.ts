@@ -210,8 +210,12 @@ export class DeltaProcessor {
 
     const [delta, bucket, ratedata] = history[0];
 
-    if (delta.step_id > meta.topSavedStepId) {
-      return Promise.resolve();
+    // We only want to restict data deltas to the highest saved step
+    if (delta.type === this.DELTA_DATA && delta.step_id > meta.topSavedStepId) {
+      return this._processNextDelta(
+        meta,
+        history.filter(([delta, _, __]) => delta.type === this.DELTA_RATEDATA)
+      );
     }
 
     const delta_uid = meta.id + '_' + delta.timestamp + '_' + delta.type;

@@ -402,7 +402,7 @@ describe('system.DeltaProcessor', () => {
 
       {
         label:
-          'Deltas with step_id higher than topSavedStepId ' +
+          'Data deltas with step_id higher than topSavedStepId ' +
           'are not published',
         given: [
           {
@@ -437,6 +437,66 @@ describe('system.DeltaProcessor', () => {
             rdelta: {foo: ['']},
             bucket: {foo: ['first']},
             ratedata: {},
+          },
+        ],
+      },
+
+      {
+        label:
+          'Ratedata deltas with step_id higher than topSavedStepId ' +
+          'are published',
+        given: [
+          {
+            id: 111,
+            lastUpdate: 123123123,
+            deltaPublishedTs: {data: <UnixTimestamp>0},
+            topSavedStepId: 2,
+            data: {foo: ['current']},
+            ratedata: {bar: ['current']},
+            rdelta: {
+              data: [
+                {
+                  data: {foo: ['']},
+                  step_id: 2,
+                  timestamp: 123,
+                },
+                {
+                  data: {foo: ['data_update_1']},
+                  step_id: 3,
+                  timestamp: 234,
+                },
+                {
+                  data: {foo: ['data_update_2']},
+                  step_id: 3,
+                  timestamp: 456,
+                },
+              ],
+              ratedata: [
+                {
+                  data: {bar: ['ratedata_update']},
+                  step_id: 3,
+                  timestamp: 345,
+                },
+              ],
+            },
+            totalPublishDelta: {
+              data: 1,
+              ratedata: 1,
+            },
+          },
+        ],
+        expected: [
+          {
+            doc_id: 111,
+            rdelta: {foo: ['']},
+            bucket: {foo: ['data_update_1']},
+            ratedata: {bar: ['ratedata_update']},
+          },
+          {
+            doc_id: 111,
+            rdelta: {bar: ['ratedata_update']},
+            bucket: {foo: ['data_update_2']},
+            ratedata: {bar: ['current']},
           },
         ],
       },
