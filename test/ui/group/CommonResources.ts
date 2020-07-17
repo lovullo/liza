@@ -36,12 +36,12 @@ export const createContainer = () => {
   return container;
 };
 
-export const createContent = () => {
+export const createContent = (visible: boolean = false) => {
   return {
     querySelector: sinon.stub(),
     querySelectorAll: sinon.stub(),
     getAttribute: sinon.stub().returns('foo'),
-    classList: createClassList(),
+    classList: createClassList(visible),
     addEventListener: sinon.stub(),
   };
 };
@@ -113,9 +113,9 @@ export const createFeatureFlag = () => {
   };
 };
 
-export const createClassList = () => {
+export const createClassList = (visible: boolean = false) => {
   return {
-    contains: sinon.stub().returns(false),
+    contains: sinon.stub().returns(visible),
     add: sinon.stub(),
     remove: sinon.stub(),
   };

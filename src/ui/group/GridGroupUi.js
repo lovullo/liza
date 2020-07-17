@@ -422,6 +422,10 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
     const operation = this._is_visible ? 'remove' : 'add';
 
     this.content.classList[operation]('hidden');
+
+    if (!this._is_visible) {
+      this._setDeSelectedStatus();
+    }
   },
 
   /**
