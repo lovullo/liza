@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off" */
 var Interface = require('easejs').Interface;
 
 /** XXX: This is temporary; GNU ease.js 0.2.5 release pending to allow

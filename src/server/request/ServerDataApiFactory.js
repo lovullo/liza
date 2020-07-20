@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint node/no-unpublished-require: "off", no-var: "off" */
 /**
  * Instantiate appropriate DataApi
  *

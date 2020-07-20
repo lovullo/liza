@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint prefer-arrow-callback: "off", prefer-const: "off" */
 /**
  * Staging key/value store
  *

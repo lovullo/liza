@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint prefer-const: "off", @typescript-eslint/no-inferrable-types: "off" */
 /**
  * A delta
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off", node/no-unpublished-require: "off", no-var: "off", prefer-arrow-callback: "off", no-dupe-keys: "off", eqeqeq: "off", no-unreachable: "off", block-scoped-var: "off", no-undef: "off" */
 /*
  * Contains program Server class
  *

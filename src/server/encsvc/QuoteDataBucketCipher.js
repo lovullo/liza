@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", block-scoped-var: "off", node/no-deprecated-api: "off", no-redeclare: "off", prefer-arrow-callback: "off" */
 /**
  * Handles encryption/decryption of buckets
  *

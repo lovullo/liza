@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off" */
 /**
  * Data transmission over HTTP(S)
  *

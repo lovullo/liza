@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off", prefer-arrow-callback: "off", no-unused-vars: "off", block-scoped-var: "off" */
 /**
  * Handles rating with local, JS-compiled TAME-written raters
  *

@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# Adds eslint ignores to the top of each file that contains the error.
+# To use: redirect the output of eslint to lint_results.txt. Remove the heading and trailing stats
+# so that all that is left is the file path, list of errors, and a trailing empty new line after
+# each result like so:
+#
+#/home/some_dir/my_file.txt
+#   33:28  error  Some error    prefer-const
+#
+#/home/some_other_dir....
+
+file="lint_results.txt"
+current_file=""
+disable_rule="/* eslint"
+rule_array=()
+# main loop
+while IFS= read -r line
+do
+    # remove leading whitespace
+    trimmed_line=$(echo -e "$line" | sed -e 's/^[[:space:]]*//')
+
+    first_char=$(echo $trimmed_line | cut -c 1)
+    digit_regex='[0-9]'
+
+    if [ "$first_char" = "/" ]
+    then
+        current_file="$trimmed_line"
+        echo "Fixing File: $current_file"
+    elif [[ "$first_char" =~ $digit_regex ]]
+    then
+        new_rule=$(echo "$line" | sed -e 's/.*error\b *.*\s\s//' )
+        # loop through all rules
+        match="false"
+        for rule in "${rule_array[@]}"; do
+            if [ "$rule" = "$new_rule" ]
+            then
+                match="true"
+            fi
+        done
+
+        if [ "$match" = "false" ]
+        then
+            if ! [ "$disable_rule" = "/* eslint" ]
+            then
+                disable_rule="$disable_rule,"
+            fi
+            rule_array+=( "$new_rule" )
+            disable_rule="$disable_rule $new_rule: \"off\""
+        fi
+    else
+        comment="/* TODO auto-generated eslint ignore, please fix! */"
+        # empty line add rules to the file now
+        echo "Fix it now!"
+        disable_rule="$disable_rule */"
+        echo "Disable Rule: $disable_rule"
+        echo "Making replacement"
+        sed -i "1 s%^%$disable_rule\n%" $current_file
+        sed -i "1 s@^@$comment\n@" $current_file
+        # reset rule array and the disable
+        disable_rule="/* eslint"
+        rule_array=()
+    fi
+done < "$file"

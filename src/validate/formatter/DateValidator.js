@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unused-vars: "off", no-useless-escape: "off", block-scoped-var: "off", no-redeclare: "off", no-undef: "off", eqeqeq: "off" */
 /**
  * Contains date validation/formatting methods
  *

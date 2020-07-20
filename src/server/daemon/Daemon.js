@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", node/no-unpublished-require: "off", prefer-arrow-callback: "off", no-unused-vars: "off", no-process-exit: "off", no-undef: "off" */
 /**
  * Daemon class
  *

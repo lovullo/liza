@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", eqeqeq: "off", prefer-const: "off", block-scoped-var: "off", no-redeclare: "off", no-unused-vars: "off", prefer-arrow-callback: "off" */
 /**
  * Key/value store
  *

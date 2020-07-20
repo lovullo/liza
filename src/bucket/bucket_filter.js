@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-useless-escape: "off", no-undef: "off" */
 /**
  * Filters bucket data
  *

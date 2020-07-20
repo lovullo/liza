@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", node/no-missing-require: "off", no-unused-vars: "off", prefer-arrow-callback: "off" */
 /**
  * Contains concrete RestDataApi class
  *

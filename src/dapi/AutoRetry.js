@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unused-vars: "off", prefer-arrow-callback: "off" */
 /**
  * DataApi auto-retry requests on specified failure
  *

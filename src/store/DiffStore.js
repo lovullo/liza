@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint prefer-const: "off" */
 /**
  * Store that lazily computes diffs since last change
  *

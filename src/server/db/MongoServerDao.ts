@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-inferrable-types: "off", no-var: "off", @typescript-eslint/no-this-alias: "off", prefer-arrow-callback: "off", eqeqeq: "off" */
 /**
  * Mongo DB DAO for program server
  *

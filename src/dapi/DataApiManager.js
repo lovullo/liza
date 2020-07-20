@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * Manages DataAPI requests and return data
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", block-scoped-var: "off", no-constant-condition: "off", eqeqeq: "off", no-unused-vars: "off", no-undef: "off" */
 /**
  * Contains calculation methods
  *

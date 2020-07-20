@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", node/no-unpublished-require: "off", node/no-missing-require: "off" */
 /**
  * Standard formatters
  *

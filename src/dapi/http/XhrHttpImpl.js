@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-redeclare: "off", prefer-arrow-callback: "off" */
 /**
  * XMLHttpRequest HTTP protocol implementation
  *

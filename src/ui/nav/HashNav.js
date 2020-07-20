@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off", prefer-arrow-callback: "off", no-unused-vars: "off", eqeqeq: "off" */
 /**
  * Program HashNav class
  *

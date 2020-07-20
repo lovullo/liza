@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off", no-unused-vars: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * Represents the result of performing a grouped diff on bucket data
  *

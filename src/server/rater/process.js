@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", no-process-exit: "off", no-undef: "off" */
 /**
  * Rating process
  *

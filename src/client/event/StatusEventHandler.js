@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * Field status event handler
  *

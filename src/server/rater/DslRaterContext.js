@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unused-vars: "off", eqeqeq: "off", prefer-arrow-callback: "off" */
 /**
  * Provides context-specific data to the DslRater
  *

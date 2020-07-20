@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off" */
 /**
  * Add and retrieve nested store values using string of delimited keys
  *

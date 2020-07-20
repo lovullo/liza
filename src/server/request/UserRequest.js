@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", node/no-deprecated-api: "off", prefer-arrow-callback: "off", no-unused-vars: "off", no-undef: "off" */
 /**
  * UserRequest class
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off", no-unused-vars: "off" */
 /**
  * Invidiual rate request event handler
  *

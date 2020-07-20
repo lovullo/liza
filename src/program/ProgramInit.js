@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-prototype-builtins: "off" */
 /**
  * Initialize document data for a given Program
  *

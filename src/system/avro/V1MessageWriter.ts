@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-inferrable-types: "off", eqeqeq: "off", prefer-const: "off" */
 /**
  * Message Writer
  *

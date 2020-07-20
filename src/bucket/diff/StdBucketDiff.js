@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off" */
 /**
  * Performs a standard value-by-value diff between buckets
  *

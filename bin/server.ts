@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint node/no-unpublished-import: "off", @typescript-eslint/no-var-requires: "off", no-process-exit: "off" */
 /**
  * Start the Liza Server
  *

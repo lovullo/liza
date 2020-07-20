@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint node/no-unpublished-require: "off" */
 /**
  * Client system
  *

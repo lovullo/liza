@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unreachable: "off", prefer-arrow-callback: "off", eqeqeq: "off", no-undef: "off", no-unused-vars: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * UiStyler class
  *

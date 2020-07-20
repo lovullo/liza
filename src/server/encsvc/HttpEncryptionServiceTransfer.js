@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", node/no-deprecated-api: "off" */
 /**
  * Contains HttpEncryptionServiceTransfer class
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-inferrable-types: "off", no-var: "off", prefer-const: "off" */
 /**
  * Liza Field Context Store
  *

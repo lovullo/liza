@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-undef: "off" */
 /**
  * Instantiate appropriate DataApi
  *
