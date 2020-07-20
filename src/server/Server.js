@@ -1327,7 +1327,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             quote.setTopSavedStepId(step_id);
             server.dao.saveQuoteState(quote);
           }
-          if (step_id < quote.getTopSavedStepId()) {
+          if (step_id <= quote.getTopSavedStepId()) {
             // data has been saved on an earlier step, force them back
             quote.setTopSavedStepId(step_id);
             quote.setTopVisitedStepId(step_id);
