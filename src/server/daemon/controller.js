@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off", no-var: "off", node/no-unpublished-require: "off", prefer-arrow-callback: "off", no-undef: "off", eqeqeq: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * Route controller
  *

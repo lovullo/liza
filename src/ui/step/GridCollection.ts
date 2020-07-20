@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-var-requires: "off", @typescript-eslint/no-inferrable-types: "off", prefer-const: "off" */
 /**
  *  Grid Collection
  *

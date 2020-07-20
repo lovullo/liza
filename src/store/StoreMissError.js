@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off" */
 /**
  * Error when key is not found in store
  *

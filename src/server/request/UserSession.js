@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", node/no-missing-require: "off", prefer-arrow-callback: "off" */
 /**
  * UserSession class
  *

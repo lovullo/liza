@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", @typescript-eslint/no-this-alias: "off", prefer-spread: "off", prefer-rest-params: "off", prefer-arrow-callback: "off", block-scoped-var: "off", prefer-const: "off" */
 /**
  * Liza classification match (cmatch) handling
  *

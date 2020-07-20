@@ -57,6 +57,11 @@ modindex: $(nsindex)
 .prettiertmp: .prettierignore .gitignore $(path_src)/.gitignore $(path_test)/.gitignore
 	grep -Pv '^#' $^ | sed -E 's#/?.(git|prettier)ignore:#/#;s#^./##;s#^/##' > .prettiertmp
 
+# ignore linting for generated js files and unit tests
+.INTERMEDIATE: .eslinttmp
+.eslinttmp: .eslintignore .prettiertmp
+	sed -n 'p' $^ > $@
+
 # tsc handles its own incremental builds, and in the past has gotten into
 # states where it did not recognize missing files as needing to be
 # built.  Since those files are not part of _our_ dependency graph here, we
@@ -70,18 +75,24 @@ check-ts-out:
 	      }; \
 	    done
 
+.PHONY: check-lint
+check-lint: .eslinttmp
+	npx eslint --quiet --ignore-path .eslinttmp --ext .js,.ts .
+
 .PHONY: check-format
 check-format: .prettiertmp
 	npx prettier --ignore-path .prettiertmp --check "./**/*.[j,t]s"
 
-.PHONY: fix fmt format
-fix: fmt
+.PHONY: fix fmt fix-lint format
+fix: fix-lint fmt
 fmt: format
+fix-lint: .eslinttmp
+	npx eslint --ignore-path .eslinttmp --ext .js,.ts . --fix
 format: .prettiertmp
 	npx prettier --ignore-path .prettiertmp --write './**/*.[j,t]s'
 
 test: check
-check: $(tsout) check-ts-out check-format
+check: $(tsout) check-ts-out check-format check-lint
 	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
 		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \

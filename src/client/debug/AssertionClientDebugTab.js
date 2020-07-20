@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unused-vars: "off", no-undef: "off", prefer-arrow-callback: "off" */
 /**
  * Contains AssertionClientDebugTab class
  *

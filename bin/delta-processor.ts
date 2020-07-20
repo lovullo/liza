@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-process-exit: "off" */
 /**
  * Start the Liza delta processor
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off" */
 /**
  * Group UI rendering only the first index
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", prefer-const: "off", no-undef: "off" */
 /**
  * General UI logic for groups
  *

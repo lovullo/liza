@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", no-undef: "off", eqeqeq: "off", no-extra-boolean-cast: "off" */
 /**
  * Group table UI
  *

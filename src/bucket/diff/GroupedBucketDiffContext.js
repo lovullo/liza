@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-unused-vars: "off" */
 /**
  * Describes a context with which diffing may take place between buckets
  *

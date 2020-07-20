@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off", prefer-const: "off", no-var: "off" */
 /**
  * Field validity monitor
  *

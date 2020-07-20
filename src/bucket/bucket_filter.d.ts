@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/prefer-namespace-keyword: "off" */
 /**
  * Filters bucket data
  *

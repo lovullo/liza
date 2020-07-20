@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-inferrable-types: "off" */
 /**
  * Metrics Collector
  *

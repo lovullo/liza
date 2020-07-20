@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off" */
 /**
  * Contains validator for credit card expiration dates
  *

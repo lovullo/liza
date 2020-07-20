@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off" */
 /**
  * Augments a quote with additional data for use by the quote server
  *

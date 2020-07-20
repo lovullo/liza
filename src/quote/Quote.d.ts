@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-empty-interface: "off" */
 /**
  * Generic interface to represent quotes
  *

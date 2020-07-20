@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off", no-unused-vars: "off", prefer-arrow-callback: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * FormErrorBox class
  *

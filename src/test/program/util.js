@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-undef: "off", prefer-const: "off", no-unreachable: "off", no-unused-vars: "off" */
 /**
  * Utility functions for Program testing
  *

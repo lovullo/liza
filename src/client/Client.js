@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off", no-undef: "off", no-var: "off", eqeqeq: "off", prefer-arrow-callback: "off", block-scoped-var: "off" */
 /**
  * Liza client
  *

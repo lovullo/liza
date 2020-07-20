@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint @typescript-eslint/no-var-requires: "off" */
 /**
  * Amqp error
  *

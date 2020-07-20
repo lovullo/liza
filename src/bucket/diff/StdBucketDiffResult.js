@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-undef: "off" */
 /**
  * Represents the result of performing a standard ("dumb") diff on bucket data
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-redeclare: "off", no-import-assign: "off", @typescript-eslint/no-var-requires: "off", eqeqeq: "off", no-var: "off", block-scoped-var: "off" */
 /**
  * Mongo Factory functions
  *

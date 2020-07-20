@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", block-scoped-var: "off" */
 /**
  * Processes DataApi return data as JSON
  *

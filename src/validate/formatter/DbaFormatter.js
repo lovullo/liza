@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-useless-escape: "off" */
 /**
  * Contains validator for DBA names
  *

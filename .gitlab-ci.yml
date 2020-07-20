@@ -20,16 +20,6 @@ build:
             - coverage/
         expire_in: 30 min
 
-eslint:
-    stage: build
-    image: $CI_REGISTRY/devops/docker-gts
-    script:
-        - cp /app/.eslintrc.json .
-        - cp /app/.prettierrc.json .
-        - eslint --ext .js,.ts .
-    allow_failure: true
-    before_script: []
-
 pages:
     stage: deploy
     script:

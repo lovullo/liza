@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", prefer-arrow-callback: "off", prefer-const: "off", no-undef: "off", block-scoped-var: "off", no-redeclare: "off", no-unused-vars: "off" */
 /**
  * Group tabbed block UI
  *

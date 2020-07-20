@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-var: "off", no-useless-escape: "off", node/no-deprecated-api: "off", prefer-arrow-callback: "off" */
 /**
  * Script provider
  *

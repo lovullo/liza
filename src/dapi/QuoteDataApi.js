@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint no-unused-vars: "off" */
 /**
  * Transform key/value data into standard quote request
  *

@@ -1,3 +1,5 @@
+/* TODO auto-generated eslint ignore, please fix! */
+/* eslint prefer-arrow-callback: "off" */
 /**
  * Logs client-side errors
  *
