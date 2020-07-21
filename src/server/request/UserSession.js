@@ -25,7 +25,7 @@
 
 // php compatibility
 var Class = require('easejs').Class,
-  php = require('php');
+  php = require('php-serialize');
 
 /**
  * Stores/retrieves user PHP session data from memcached
