@@ -1684,7 +1684,7 @@ module.exports = Class('Client').extend(EventEmitter, {
 
           // if discarding is not permitted, then do not even show the
           // dialog; just save and continue
-          if (!client.program.discardable[step_id]) {
+          if (!client.program.discardable[step_id] || client.program.autosave) {
             dosave();
             return;
           }
