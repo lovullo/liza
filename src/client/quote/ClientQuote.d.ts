@@ -18,12 +18,15 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {StagingBucket} from '../../bucket/StagingBucket';
 import {BaseQuote} from '../../quote/BaseQuote';
-import {QuoteTransport} from '../transport/QuoteTransport';
 import {PositiveInteger} from '../../numeric';
+import {QuoteTransport} from '../transport/QuoteTransport';
+import {StagingBucket} from '../../bucket/StagingBucket';
 
 export type Data = Record<string, any>;
+export type VisibilityScalar = PositiveInteger;
+export type VisibilityVector = VisibilityScalar[];
+export type VisibilityMatrix = VisibilityVector[];
 
 /**
  * Controller for the program client
@@ -42,10 +45,17 @@ export declare class ClientQuote extends BaseQuote {
    */
   on(event_id: string, callback: (classes: any) => void): void;
 
+  getData(): Data;
+
   /**
    * Returns data from the quote
    */
   getDataByName(name: string): Data;
+
+  /**
+   * Returns most recent classifications
+   */
+  getLastClassify(): Data;
 
   /**
    * Visits staging data

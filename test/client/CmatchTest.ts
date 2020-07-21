@@ -1,7 +1,7 @@
 /**
  * Test case for Cmatch
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -19,33 +19,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import {ClassificationResult, Program} from '../../src/program/Program';
+import {ClientQuote} from '../../src/client/quote/ClientQuote';
+import {Client} from '../../src/client/Client';
+import {CmatchVisibility} from '../../src/client/CmatchVisibility';
+import {DataApiResult} from '../../src/dapi/DataApi';
+import {ExclusiveFields, Step} from '../../src/step/Step';
+import {FieldClassMatcher} from '../../src/field/FieldClassMatcher';
+import {FieldResetter} from '../../src/client/FieldResetter';
+import {GroupUi} from '../../src/ui/group/GroupUi';
+import {PositiveInteger} from '../../src/numeric';
+import {StagingBucket} from '../../src/bucket/StagingBucket';
+import {StepUi} from '../../src/ui/step/StepUi';
+import {expect} from 'chai';
 import {
   Cmatch as Sut,
   CmatchData,
   VisibilityQueue,
 } from '../../src/client/Cmatch';
-
-// const { event }  = require( '../../' ).client;
-import {expect} from 'chai';
-
-import {ClientQuote, Data} from '../../src/client/quote/ClientQuote';
-import {StagingBucket} from '../../src/bucket/StagingBucket';
+import {
+  createStubClientQuote,
+  createStubUi,
+  createStubClient,
+} from './CommonResources';
 import {
   DataDiff,
   DataValidator,
   ValidationFailure,
 } from '../../src/validate/DataValidator';
-import {FieldClassMatcher} from '../../src/field/FieldClassMatcher';
-import {ClassificationResult, Program} from '../../src/program/Program';
-import {DataApiResult} from '../../src/dapi/DataApi';
-import {Client} from '../../src/client/Client';
-import {Nav} from '../../src/client/nav/Nav';
-import {ElementStyler} from '../../src/ui/ElementStyler';
-import {Ui} from '../../src/ui/Ui';
-import {StepUi} from '../../src/ui/step/StepUi';
-import {ExclusiveFields, Step} from '../../src/step/Step';
-import {GroupUi} from '../../src/ui/group/GroupUi';
-import {PositiveInteger} from '../../src/numeric';
+
+const sinon = require('sinon');
+
+type FieldKey = 'shown_field' | 'hidden_field';
+type FieldObject = {[key in FieldKey]: any};
 
 // these tests aren't terribly effective right now
 describe('Cmatch', () => {
@@ -245,45 +251,67 @@ describe('Cmatch', () => {
     sut.hookClassifier(data_validator);
     quote.emit('classify');
   });
+
+  describe('clearCmatchFields', () => {
+    it('clear only invisible fields', () => {
+      const data = {
+        shown_field: ['foo'],
+        hidden_field: ['foo'],
+      };
+
+      const expected = {
+        shown_field: ['foo'],
+        hidden_field: ['default'],
+      };
+
+      const {sut, quote, program, ui, visibility} = createStubs();
+
+      sinon.stub(ui, 'getCurrentStep').callsFake(() => true);
+
+      sinon.stub(quote, 'setData').callsFake((new_data: FieldObject) => {
+        if (new_data.shown_field) {
+          data.shown_field = new_data.shown_field;
+        }
+
+        if (new_data.hidden_field) {
+          data.hidden_field = new_data.hidden_field;
+        }
+      });
+
+      sinon.stub(quote, 'getDataByName').callsFake(() => {
+        return ['foo'];
+      });
+
+      sinon.stub(program, 'whens').get(() => {
+        return {
+          shown_field: ['--vis-shown-field'],
+          hidden_field: ['--vis-hidden-field'],
+        };
+      });
+
+      sinon.stub(visibility, 'getBlueprints').callsFake(() => {
+        return [
+          {
+            name: 'shown_field',
+            cname: '--vis-shown-field',
+            show: [0],
+            hide: [],
+          },
+          {
+            name: 'hidden_field',
+            cname: '--vis-hidden-field',
+            show: [],
+            hide: [0],
+          },
+        ];
+      });
+
+      sut.clearCmatchFields();
+
+      expect(data).to.deep.equal(expected);
+    });
+  });
 });
-
-function createStubClientQuote() {
-  const callbacks: any = {};
-
-  const quote = {
-    setClassifier(_known_fields: any, _classifier: any): ClientQuote {
-      return <ClientQuote>(<unknown>this);
-    },
-
-    getDataByName(_name: string): Record<string, any> {
-      return {};
-    },
-
-    visitData(visitor: (bucket: StagingBucket) => void): void {
-      visitor(<StagingBucket>{});
-    },
-
-    setData(_data: Data): ClientQuote {
-      return <ClientQuote>(<unknown>this);
-    },
-
-    on(name: string, callback: any): void {
-      callbacks[name] = callback;
-    },
-
-    emit(name: string) {
-      const data = Array.prototype.slice.call(arguments, 1);
-
-      callbacks[name].apply(null, data);
-    },
-
-    autosave(_: any) {
-      return this;
-    },
-  };
-
-  return quote;
-}
 
 function createStubDataValidator() {
   return new (class implements DataValidator {
@@ -312,6 +340,7 @@ function createStubProgram() {
     ineligibleLockCount: 0,
     cretain: {},
     apis: {},
+    whens: {},
     internal: {},
     autosave: false,
     meta: {
@@ -328,13 +357,6 @@ function createStubProgram() {
     getClassifierKnownFields: () => <ClassificationResult>{},
     classify: () => <ClassificationResult>{},
   };
-}
-
-function createStubUi(step: StepUi | null) {
-  return <Ui>(<unknown>{
-    setCmatch: () => {},
-    getCurrentStep: () => step,
-  });
 }
 
 function createStubStepUi(field_names: ExclusiveFields) {
@@ -370,22 +392,6 @@ function createStubStepUi(field_names: ExclusiveFields) {
   return step_ui;
 }
 
-function createStubClient(quote: ClientQuote, ui: Ui) {
-  return <Client>(<unknown>{
-    program: <Program>{},
-    nav: <Nav>{
-      getCurrentStepId: () => <PositiveInteger>0,
-    },
-    elementStyler: <ElementStyler>{},
-    getUi: () => <Ui>ui,
-    getQuote: () => <ClientQuote>quote,
-    handleError: (_e: Error) => {},
-    handleEvent: () => <Client>{},
-    validateChange: (_: any) => {},
-    isSaving: () => false,
-  });
-}
-
 function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
   const data_validator = createStubDataValidator();
   const quote = createStubClientQuote();
@@ -393,6 +399,8 @@ function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
   const class_matcher = createStubClassMatcher(cmatch);
   const ui = createStubUi(step);
   const client = createStubClient(<ClientQuote>(<unknown>quote), ui);
+  const visibility = createStubVisibility(client);
+  const resetter = createStubFieldResetter(client);
 
   const sut = new (class extends Sut {
     public markShowHide(
@@ -407,15 +415,35 @@ function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
     public handleClassMatch(cmatch: CmatchData, force?: boolean): void {
       super.handleClassMatch(cmatch, force);
     }
-  })(class_matcher, program, client);
+  })(class_matcher, program, client, visibility, resetter);
 
   return {
-    sut: sut,
-    data_validator: data_validator,
-    quote: quote,
-    ui: ui,
-    client: client,
-    program: program,
-    class_matcher: class_matcher,
+    sut,
+    data_validator,
+    quote,
+    ui,
+    client,
+    program,
+    class_matcher,
+    visibility,
+    resetter,
   };
+}
+
+function createStubFieldResetter(client: Client) {
+  const element_styler = {
+    getDefault(_field: string): string {
+      return 'default';
+    },
+  };
+
+  sinon.stub(client, 'elementStyler').get(() => {
+    return element_styler;
+  });
+
+  return new (class extends FieldResetter {})(client);
+}
+
+function createStubVisibility(client: Client) {
+  return new (class extends CmatchVisibility {})(client);
 }
