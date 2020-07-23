@@ -107,11 +107,11 @@ module.exports = Class('ProcessManager', {
       [],
 
       // pass all our arguments to the child, incrementing the debug
-      // port if --debug was provided
+      // port if --inspect was provided
       {
         env: process.env,
         execArgv: process.execArgv.map(arg => {
-          const debug = arg.match(/^--debug(?:=(\d+))?$/);
+          const debug = arg.match(/^--inspect(?:=(\d+))?$/);
 
           if (debug === null) {
             return arg;
@@ -121,7 +121,7 @@ module.exports = Class('ProcessManager', {
           const parent_port = +debug[1] || 5858,
             new_port = parent_port + 1;
 
-          return '--debug=' + new_port;
+          return '--inspect=' + new_port;
         }),
       }
     );
