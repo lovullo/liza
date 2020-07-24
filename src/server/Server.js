@@ -567,18 +567,8 @@ module.exports = Class('Server').extend(EventEmitter, {
       server.sendResponse(request, quote, {valid: false});
     }
 
-    // should we override the quote id?
-    var rqn;
-    if ((rqn = session.getReturnQuoteNumber()) > 0) {
-      donew(rqn);
-
-      // we don't need to wait for this to finish, since the next request
-      // won't be for a new quote
-      session.clearReturnQuoteNumber();
-    } else {
-      // get the next available quote id
-      this.dao.getNextQuoteId(donew);
-    }
+    // get the next available quote id
+    this.dao.getNextQuoteId(donew);
 
     return this;
   },

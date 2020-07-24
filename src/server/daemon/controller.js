@@ -386,15 +386,10 @@ function doRoute(program, request, data, resolve, reject) {
     // this check once we can error out before we even get to this point
     // (PHP current handles the initial page load)
     if (cmd !== 'program.js') {
-      session.setRedirect('/quote/' + program_id + '/', function () {
-        session.setReturnQuoteNumber(quote_id, function () {
-          // peoples are trying to steal our secrets!?!!?
-          server.sendError(
-            request,
-            'Please <a href="/login">click here</a> to log in.'
-          );
-        });
-      });
+      server.sendError(
+        request,
+        'Please <a href="/login">click here</a> to log in.'
+      );
 
       resolve(true);
       return;
