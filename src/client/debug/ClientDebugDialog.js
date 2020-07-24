@@ -237,6 +237,16 @@ module.exports = Class('ClientDebugDialog').extend(EventEmitter, {
               .attr('for', 'devdialog-errdebug')
               .text('Execute debugger on client-handled errors')
           )
+      )
+      .append(
+        $('<div>').append(
+          $('<button>')
+            .text('Copy Quote')
+            .click(() => {
+              window.location.href =
+                '/quote/copy/' + _self._client.getQuote().getId();
+            })
+        )
       );
   },
 
