@@ -26,6 +26,7 @@ import {Program} from '../../../src/program/Program';
 import {QuoteTransport} from '../../../src/client/transport/QuoteTransport';
 
 import {expect} from 'chai';
+import {Ui} from '../../../src/ui/Ui';
 
 describe('createQuoteStagingHook', () => {
   it('Do not hook quote when autosave is missing', () => {
@@ -97,7 +98,7 @@ describe('createQuoteStagingHook', () => {
       expected_autosave_called: false,
     },
     {
-      label: 'does not autosave when client is saving a step',
+      label: 'does not autosave when step save is in progress',
       diff: {foo: [1]},
       save_pending: true,
       navigation_pending: false,
@@ -150,10 +151,16 @@ function createStubClientQuote(diff: any = {}) {
   });
 }
 
-function createStubClient(save_pending: boolean, navigation_pending: boolean) {
+function createStubClient(ui: Ui, navigation_pending: boolean) {
   return <Client>(<unknown>{
-    isSaving: () => save_pending,
     isNavigating: () => navigation_pending,
+    getUi: () => ui,
+  });
+}
+
+function createStubUi(save_pending: boolean) {
+  return <Ui>(<unknown>{
+    isSaving: () => save_pending,
   });
 }
 
@@ -172,13 +179,15 @@ function createStubs(
   save_pending: boolean = false,
   navigation_pending: boolean = false
 ) {
-  const client = createStubClient(save_pending, navigation_pending);
+  const ui = createStubUi(save_pending);
+  const client = createStubClient(ui, navigation_pending);
   const quote = createStubClientQuote(diff);
   const program = createStubProgram();
   const transport = createStubTransport();
 
   return {
     client: client,
+    ui: ui,
     quote: quote,
     program: program,
     transport: transport,
