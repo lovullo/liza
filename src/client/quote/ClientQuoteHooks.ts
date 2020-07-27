@@ -51,7 +51,6 @@ export let createQuotePreStagingHook = (client: Client): QuoteHook => quote => {
  * @return a function to hook the quote when data is staged
  */
 export let createQuoteStagingHook = (
-  client: Client,
   program: Program,
   transport: QuoteTransport
 ): QuoteHook => quote => {
@@ -60,7 +59,7 @@ export let createQuoteStagingHook = (
   }
 
   quote.on('dataUpdate', diff => {
-    if (!diff || client.getUi().isSaving() || client.isNavigating()) {
+    if (!diff) {
       return;
     }
 

@@ -2183,7 +2183,6 @@ module.exports = Class('Client').extend(EventEmitter, {
 
     hooks.push(
       this._factory.createQuoteStagingHook(
-        this,
         this.program,
         this._quote.getId(),
         this.dataProxy
