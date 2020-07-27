@@ -60,7 +60,7 @@ export let createQuoteStagingHook = (
   }
 
   quote.on('dataUpdate', diff => {
-    if (!diff || client.isSaving() || client.isNavigating()) {
+    if (!diff || client.getUi().isSaving() || client.isNavigating()) {
       return;
     }
 
