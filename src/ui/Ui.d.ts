@@ -47,9 +47,4 @@ export declare class Ui {
    * Redraw (style) the navigation bar
    */
   redrawNav(): this;
-
-  /**
-   * Whether there is a current save event
-   */
-  isSaving(): boolean;
 }
