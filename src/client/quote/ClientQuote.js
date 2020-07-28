@@ -98,6 +98,14 @@ module.exports = Class('ClientQuote')
     'private _classKnown': {},
 
     /**
+     * Quote is considered dirty if step level assertions are
+     * required
+     *
+     * @type {boolean}
+     */
+    'private _dirty': false,
+
+    /**
      * The timestamp of the last autosave
      */
     'private _autosave_id': 0,
@@ -402,6 +410,9 @@ module.exports = Class('ClientQuote')
           _self._staging.setValues(old_store.old, true, false);
         }
 
+        // once save has occurred we can consider this quote clean again
+        _self._dirty = false;
+
         callback.apply(null, arguments);
       });
 
@@ -432,6 +443,7 @@ module.exports = Class('ClientQuote')
 
       this._doSave(transport, function (data) {
         if (!data.hasError && _self._autosave_id === id) {
+          _self._dirty = true;
           _self._staging.commit();
         }
 
@@ -483,8 +495,15 @@ module.exports = Class('ClientQuote')
       });
     },
 
+    /**
+     * A quote is considered dirty if the staging bucket is dirty or
+     * an autosave has occurred; Dirty quotes require step level assertions
+     * before they can be considered clean
+     *
+     * @return {boolean}
+     */
     'public isDirty': function () {
-      return this._staging.isDirty();
+      return !!this._dirty || this._staging.isDirty();
     },
 
     'public clientSideUnlock': function () {

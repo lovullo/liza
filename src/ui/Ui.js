@@ -1087,8 +1087,6 @@ module.exports = Class('Ui').extend(EventEmitter, {
 
       // raise the event
       try {
-        ui.saving = true;
-
         for (var i = 0; i < len; i++) {
           ui.saveStepHooks[i].call(event, step);
 
@@ -1104,8 +1102,6 @@ module.exports = Class('Ui').extend(EventEmitter, {
         abort = true;
         ui.emit('error', Error('Step save hook failure: ' + e.message));
       }
-
-      ui.saving = false;
 
       // if we aborted, we do not want to call the callback
       if (abort) {
@@ -1154,15 +1150,6 @@ module.exports = Class('Ui').extend(EventEmitter, {
    */
   'virtual protected hideErrors': function () {
     this.errorBox.hide();
-  },
-
-  /**
-   * Whether there is a save event in progress
-   *
-   * @return {boolean}
-   */
-  isSaving: function () {
-    return !!this.saving;
   },
 
   /**

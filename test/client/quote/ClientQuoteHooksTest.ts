@@ -26,16 +26,12 @@ import {Program} from '../../../src/program/Program';
 import {QuoteTransport} from '../../../src/client/transport/QuoteTransport';
 
 import {expect} from 'chai';
-import {Ui} from '../../../src/ui/Ui';
 
 describe('createQuoteStagingHook', () => {
   it('Do not hook quote when autosave is missing', () => {
-    const {
-      client: client,
-      quote: quote,
-      program: program,
-      transport: transport,
-    } = createStubs({foo: [1]});
+    const {quote: quote, program: program, transport: transport} = createStubs({
+      foo: [1],
+    });
 
     let quote_hooked = false;
 
@@ -47,18 +43,15 @@ describe('createQuoteStagingHook', () => {
       return quote;
     };
 
-    sut(client, program, transport)(quote);
+    sut(program, transport)(quote);
 
     expect(quote_hooked).to.be.false;
   });
 
   it('Do not hook quote when quote is locked', () => {
-    const {
-      client: client,
-      quote: quote,
-      program: program,
-      transport: transport,
-    } = createStubs({foo: [1]});
+    const {quote: quote, program: program, transport: transport} = createStubs({
+      foo: [1],
+    });
 
     let quote_hooked = false;
 
@@ -70,7 +63,7 @@ describe('createQuoteStagingHook', () => {
       return quote;
     };
 
-    sut(client, program, transport)(quote);
+    sut(program, transport)(quote);
 
     expect(quote_hooked).to.be.false;
   });
@@ -79,68 +72,39 @@ describe('createQuoteStagingHook', () => {
     {
       label: 'hook calls autosave',
       diff: {bar: [1]},
-      save_pending: false,
-      navigation_pending: false,
       expected_autosave_called: true,
     },
     {
       label: 'does not autosave an empty diff',
       diff: {},
-      save_pending: false,
-      navigation_pending: false,
       expected_autosave_called: false,
     },
     {
       label: 'does not autosave a diff with only empty arrays',
       diff: {foo: []},
-      save_pending: false,
-      navigation_pending: false,
       expected_autosave_called: false,
     },
-    {
-      label: 'does not autosave when step save is in progress',
-      diff: {foo: [1]},
-      save_pending: true,
-      navigation_pending: false,
-      expected_autosave_called: false,
-    },
-    {
-      label: 'does not autosave when navigation is in progress',
-      diff: {foo: [1]},
-      save_pending: false,
-      navigation_pending: true,
-      expected_autosave_called: false,
-    },
-  ].forEach(
-    ({
-      label,
-      diff,
-      save_pending,
-      navigation_pending,
-      expected_autosave_called,
-    }) => {
-      it(label, () => {
-        const {
-          client: client,
-          quote: quote,
-          program: program,
-          transport: transport,
-        } = createStubs(diff, save_pending, navigation_pending);
+  ].forEach(({label, diff, expected_autosave_called}) => {
+    it(label, () => {
+      const {
+        quote: quote,
+        program: program,
+        transport: transport,
+      } = createStubs(diff);
 
-        let autosave_called = false;
+      let autosave_called = false;
 
-        quote.autosave = (_: any) => {
-          autosave_called = true;
+      quote.autosave = (_: any) => {
+        autosave_called = true;
 
-          return quote;
-        };
+        return quote;
+      };
 
-        sut(client, program, transport)(quote);
+      sut(program, transport)(quote);
 
-        expect(autosave_called).to.equal(expected_autosave_called);
-      });
-    }
-  );
+      expect(autosave_called).to.equal(expected_autosave_called);
+    });
+  });
 });
 
 function createStubClientQuote(diff: any = {}) {
@@ -151,17 +115,8 @@ function createStubClientQuote(diff: any = {}) {
   });
 }
 
-function createStubClient(ui: Ui, navigation_pending: boolean) {
-  return <Client>(<unknown>{
-    isNavigating: () => navigation_pending,
-    getUi: () => ui,
-  });
-}
-
-function createStubUi(save_pending: boolean) {
-  return <Ui>(<unknown>{
-    isSaving: () => save_pending,
-  });
+function createStubClient() {
+  return <Client>(<unknown>{});
 }
 
 function createStubProgram() {
@@ -174,20 +129,14 @@ function createStubTransport() {
   return <QuoteTransport>(<unknown>{});
 }
 
-function createStubs(
-  diff: any = {},
-  save_pending: boolean = false,
-  navigation_pending: boolean = false
-) {
-  const ui = createStubUi(save_pending);
-  const client = createStubClient(ui, navigation_pending);
+function createStubs(diff: any = {}) {
+  const client = createStubClient();
   const quote = createStubClientQuote(diff);
   const program = createStubProgram();
   const transport = createStubTransport();
 
   return {
     client: client,
-    ui: ui,
     quote: quote,
     program: program,
     transport: transport,

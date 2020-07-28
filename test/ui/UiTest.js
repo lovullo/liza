@@ -26,7 +26,7 @@ const expect = chai.expect;
 const Sut = require('../../').ui.Ui;
 
 describe('Ui', () => {
-  it('isSaving is true while step is being saved', () => {
+  it('stepSave calls save hooks', () => {
     const step = createMockStepUi();
 
     const sut = Sut.extend({
@@ -34,14 +34,15 @@ describe('Ui', () => {
       'override hideErrors': function () {},
     })();
 
-    expect(sut.isSaving()).to.be.false;
+    let hook_one_called = false;
+    let hook_two_called = false;
 
-    let is_saving_calls = 0;
-
-    // set save hook
+    // set a save hook
     sut.saveStep(function () {
-      expect(sut.isSaving()).to.be.true;
-      is_saving_calls++;
+      hook_one_called = true;
+    });
+    sut.saveStep(function () {
+      hook_two_called = true;
     });
 
     sut.saveStep(
@@ -51,8 +52,8 @@ describe('Ui', () => {
       true
     );
 
-    expect(sut.isSaving()).to.be.false;
-    expect(is_saving_calls).to.equal(1);
+    expect(hook_one_called).to.true;
+    expect(hook_two_called).to.true;
   });
 });
 

@@ -1488,12 +1488,6 @@ module.exports = Class('Server').extend(EventEmitter, {
       // autosave event will respond with a kickBack action to prevent
       // navigation to higher steps; this forces the user to save the step
       case 'autosave':
-        actions.push({
-          action: 'kickBack',
-          stepId: step_id,
-          force: true,
-        });
-
         mergeAndFinish();
         return;
 
