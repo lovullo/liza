@@ -403,15 +403,15 @@ module.exports = Class('ClientQuote')
       var _self = this,
         old_store = {};
 
+      // void any pending autosave
+      this._autosave_id++;
+
       this._doSave(transport, function (data) {
         // re-populate the previously staged values on error; otherwise,
         // they would not be saved the next time around!
         if (data.hasError) {
           _self._staging.setValues(old_store.old, true, false);
         }
-
-        // once save has occurred we can consider this quote clean again
-        _self._dirty = false;
 
         callback.apply(null, arguments);
       });
@@ -424,6 +424,7 @@ module.exports = Class('ClientQuote')
 
       // commit staged quote data to the data bucket (important: do this
       // *after* save); will make the staged values available as old_store.old
+      this._dirty = false;
       this._staging.commit(old_store);
 
       return this;
