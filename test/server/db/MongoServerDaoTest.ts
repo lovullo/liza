@@ -239,6 +239,8 @@ function createMockDb(on_update: any): MongoDb {
 
 function createStubQuote(metadata: Record<string, any>) {
   const program = <Program>{
+    clearNaFields: false,
+    naFieldValue: '',
     getId: () => '1',
     ineligibleLockCount: 0,
     cretain: {},

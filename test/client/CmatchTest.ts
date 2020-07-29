@@ -264,9 +264,15 @@ describe('Cmatch', () => {
         hidden_field: ['default'],
       };
 
-      const {sut, quote, program, ui, visibility} = createStubs();
+      const fields = {
+        shown_field: true,
+        hidden_field: true,
+      };
 
-      sinon.stub(ui, 'getCurrentStep').callsFake(() => true);
+      const cmatch = {};
+      const step_ui = createStubStepUi(fields);
+
+      const {sut, quote, visibility} = createStubs(cmatch, step_ui);
 
       sinon.stub(quote, 'setData').callsFake((new_data: FieldObject) => {
         if (new_data.shown_field) {
@@ -280,13 +286,6 @@ describe('Cmatch', () => {
 
       sinon.stub(quote, 'getDataByName').callsFake(() => {
         return ['foo'];
-      });
-
-      sinon.stub(program, 'whens').get(() => {
-        return {
-          shown_field: ['--vis-shown-field'],
-          hidden_field: ['--vis-hidden-field'],
-        };
       });
 
       sinon.stub(visibility, 'getBlueprints').callsFake(() => {
@@ -336,6 +335,8 @@ function createStubClassMatcher(cmatch: CmatchData) {
 
 function createStubProgram() {
   return <Program>{
+    clearNaFields: false,
+    naFieldValue: '',
     getId: () => '1',
     ineligibleLockCount: 0,
     cretain: {},

@@ -39,7 +39,7 @@ export class FieldResetter {
   ) {}
 
   /**
-   * Return data with their reset values based on an input
+   * Return fields with their reset values based on the field names input
    *
    * @param fields - key-value store that contains relevant indexes for a field
    *

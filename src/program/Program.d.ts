@@ -34,6 +34,10 @@ export type AnswerRefs = Record<string, string>;
 export declare abstract class Program {
   readonly ineligibleLockCount: number;
 
+  clearNaFields: boolean;
+
+  naFieldValue: string;
+
   cretain: ClassificationRetain;
 
   apis: DataApiDefinitions;

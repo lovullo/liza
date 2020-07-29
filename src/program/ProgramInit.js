@@ -55,11 +55,6 @@ module.exports = Class('ProgramInit', {
   'public init'(program, doc_data) {
     const data = doc_data || {};
 
-    const has_shared_default =
-      (program && program.useGlobalFieldDefault) || false;
-
-    const global_default_field_value = '';
-
     const {
       defaults = {},
       meta: {groups = {}, qtypes = {}},
@@ -70,8 +65,8 @@ module.exports = Class('ProgramInit', {
 
       while (i--) {
         const field = program.groupExclusiveFields[group][i];
-        const default_value = has_shared_default
-          ? global_default_field_value
+        const default_value = program.clearNaFields
+          ? program.naFieldValue
           : defaults[field];
 
         // generated questions with no types should never be part of

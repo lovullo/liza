@@ -40,12 +40,9 @@ const store = require('../store');
  */
 module.exports = {
   cmatch: (program, client) => {
-    const has_shared_default =
-      (program && program.useGlobalFieldDefault) || false;
-
     const matcher = field.FieldClassMatcher(program.whens);
     const visibility = new CmatchVisibility(client);
-    const resetter = new FieldResetter(client, has_shared_default);
+    const resetter = new FieldResetter(client, program.clearNaFields);
 
     return new Cmatch(matcher, program, client, visibility, resetter);
   },

@@ -221,6 +221,7 @@ export class Cmatch {
     }
 
     let fields = cur_step.getStep().getExclusiveFieldNames();
+    const shown: {[index: string]: any} = {};
 
     let visq: VisibilityQueue = {};
 
@@ -281,7 +282,28 @@ export class Cmatch {
       }
 
       this.markShowHide(field, visq, show, hide);
+
+      /**
+       * When we clear N/A fields, ensure that their default value is restored
+       * if they become visible
+       */
+      if (this._program.clearNaFields && show.length) {
+        shown[field] = [];
+
+        const default_value = this._client.elementStyler.getDefault(field);
+        const current_value = this._client.getQuote().getDataByName(field);
+
+        for (const index of show) {
+          // only update value on show when it has been reset previously
+          if (current_value[index] !== this._program.naFieldValue) {
+            continue;
+          }
+          shown[field][index] = default_value;
+        }
+      }
     }
+
+    this._client.getQuote().setData(shown);
 
     // it's important to do this before showing/hiding fields, since
     // those might trigger events that check the current cmatches
@@ -383,8 +405,7 @@ export class Cmatch {
     let reset: CmatchData = {};
 
     // TODO: feature flag here
-    // flag === true ? program.whens : step.getStep().getExclusiveFieldNames()
-    for (let name in program.whens) {
+    for (let name in step.getStep().getExclusiveFieldNames()) {
       let data = this._cmatchHidden[name];
 
       // if there is no data or we have been asked to retain this field's
