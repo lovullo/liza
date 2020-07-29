@@ -41,7 +41,7 @@ If `configure` is not available, see the section "Configuring" above.
   $ ./configure   # see --help for optional arguments
   $ npm install   # install js dependencies
   $ make          # build
-  $ make check    # run test cases
+  $ make check    # run code checks
 ```
 
 
