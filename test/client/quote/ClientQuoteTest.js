@@ -187,6 +187,37 @@ describe('ClientQuote', () => {
 
     sut.autosave(transport);
   });
+
+  it('autosave commit is superceded by a step save', done => {
+    const bucket = createMockBucket();
+    const base_quote = createMockBaseQuote(bucket);
+    const data = {foo: 'bar'};
+    const transport = createMockTransport(data);
+
+    let commit_call_count = 0;
+    bucket.commit = () => {
+      commit_call_count++;
+    };
+
+    const sut = Sut(base_quote, {}, bucket => bucket);
+
+    let transport_send_called = false;
+
+    transport.send = (_, cb) => {
+      if (transport_send_called === false) {
+        transport_send_called = true;
+
+        sut.save(transport, () => {});
+      }
+
+      cb('', data);
+    };
+
+    sut.autosave(transport, () => {
+      expect(commit_call_count).to.equal(1);
+      done();
+    });
+  });
 });
 
 function createMockBucket(bucket_dirty = false) {
