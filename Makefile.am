@@ -76,28 +76,30 @@ check-ts-out:
 	    done
 
 .PHONY: check-lint
-check-lint: .eslinttmp
+check-lint: .eslinttmp $(tsout)
 	npx eslint --quiet --ignore-path .eslinttmp --ext .js,.ts .
 
 .PHONY: check-format
-check-format: .prettiertmp
+check-format: .prettiertmp $(tsout)
 	npx prettier --ignore-path .prettiertmp --check "./**/*.[j,t]s"
 
 .PHONY: fix fmt fix-lint format
 fix: fix-lint fmt
 fmt: format
-fix-lint: .eslinttmp
+fix-lint: .eslinttmp $(tsout)
 	npx eslint --ignore-path .eslinttmp --ext .js,.ts . --fix
-format: .prettiertmp
+format: .prettiertmp $(tsout)
 	npx prettier --ignore-path .prettiertmp --write './**/*.[j,t]s'
 
-test: check
-check: $(tsout) check-ts-out check-format check-lint
+.PHONY: test
+test: $(tsout)
 	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
 		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \
 		      --recursive \
 		      @COV_ARGS@ \
 		      $(TESTARGS)
+
+check-local: test check-ts-out check-format check-lint
 
 FORCE:
