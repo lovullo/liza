@@ -199,7 +199,7 @@ describe('ui.GeneralStepUi', function () {
         var sut = createSut({}, {}, step);
 
         // should only throw a single error
-        sut.once('error', function (error) {
+        sut.once('error', function (error: any) {
           expect(error).to.be.instanceof(Error);
           expect(error.message).to.have.string('Could not scroll');
 
@@ -237,7 +237,7 @@ describe('ui.GeneralStepUi', function () {
 
       var sut = createSut({}, styler, {});
 
-      sut.once('error', function (error) {
+      sut.once('error', function (error: any) {
         expect(error).to.be.instanceof(Error);
         expect(error.message).to.have.string('Could not scroll');
         expect(error.message).to.have.string('could not locate');
@@ -271,7 +271,7 @@ describe('ui.GeneralStepUi', function () {
 
       var sut = createSut({}, styler, {});
 
-      sut.once('error', function (error) {
+      sut.once('error', function (error: any) {
         expect(error).to.be.instanceof(Error);
         expect(error.message).to.have.string('Could not scroll');
         expect(error.message).to.have.string('not visible');
@@ -336,24 +336,6 @@ describe('ui.GeneralStepUi', function () {
 
       var result = sut.scrollTo(field, index, true, message);
       expect(result).to.equal(sut);
-    });
-  });
-
-  describe('#initChildGroups', () => {
-    it('inits all child groups', () => {
-      const group = createGroupUi();
-
-      let children_set = 0;
-
-      group.setChildren = () => (children_set += 1);
-
-      const sut = createSut({}, {}, {});
-
-      sut.groups = [group, group];
-
-      sut.initChildGroups();
-
-      expect(children_set).to.equal(2);
     });
   });
 
@@ -461,11 +443,9 @@ function createFeatureFlag(flag_ind = false) {
  * @return {Object} GroupUi
  */
 function createGroupUi(): GroupUi {
-  return <GroupUi>{
+  return <GroupUi>(<unknown>{
     setValueByName: (_: any, __: any, ___: any, ____: any) => {},
-    hasChildren: () => true,
-    setChildren: () => sinon.stub(),
-  };
+  });
 }
 
 /**

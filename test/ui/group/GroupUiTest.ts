@@ -19,10 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Sut = require('../../../').ui.group.GroupUi,
-  expect = require('chai').expect,
+const expect = require('chai').expect,
   sinon = require('sinon');
 
+import {GroupUi as Sut} from '../../../src/ui/group/GroupUi';
 import {
   createSut,
   createGroup,

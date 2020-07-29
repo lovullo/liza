@@ -43,6 +43,7 @@ export const createContent = (visible: boolean = false) => {
     getAttribute: sinon.stub().returns('foo'),
     classList: createClassList(visible),
     addEventListener: sinon.stub(),
+    getElementsByClassName: sinon.stub().returns([]),
   };
 };
 
@@ -88,6 +89,7 @@ export const createGroup = (
 
 export const createJqueryContent = () => {
   return {
+    show: sinon.stub(),
     hide: sinon.stub(),
     find: sinon.stub().returns({live: sinon.stub()}),
     0: getDomElement(),
@@ -170,7 +172,7 @@ export const createSut = (Sut: any, input: any = {}) => {
   const styler = input.styler ?? null;
   const state_manager = input.state_manager ?? createStateManager();
 
-  return Sut(
+  return new Sut(
     group,
     content,
     styler,

@@ -36,11 +36,12 @@
 
 import {Collection} from './Collection';
 import {ElementStyler} from '../ElementStyler';
-import {EventEmitter} from 'events';
 import {GroupUi} from '../group/GroupUi';
 import {Step} from '../../step/Step';
 import {StepUi} from './StepUi';
 import {WindowFeatureFlag} from '../../system/flags/WindowFeatureFlag';
+
+const EventEmitter = require('events').EventEmitter;
 
 /**
  * Handles display of a step
@@ -227,15 +228,6 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
   }
 
   /**
-   * Initialize child groups for each group
-   */
-  initChildGroups(): void {
-    for (let group in this.groups) {
-      this.groups[group].setChildren(this.groups);
-    }
-  }
-
-  /**
    * Sets content to be displayed
    *
    * @param content - content to display
@@ -395,7 +387,7 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
       doUpdate(bucket.getData());
 
       // set the values when a row is added
-      _self.on('postAddRow', function (index) {
+      _self.on('postAddRow', function (index: number) {
         var data = bucket.getData();
 
         for (var name in _self._answerContext) {

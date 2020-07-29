@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", prefer-const: "off", no-undef: "off" */
+/* eslint @typescript-eslint/no-this-alias: "off", @typescript-eslint/no-inferrable-types: "off", no-var: 'off', prefer-arrow-callback: 'off', no-unused-vars: 'off', prefer-const: 'off', no-undef: 'off' */
 /**
  * General UI logic for groups
  *
@@ -28,120 +28,110 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  EventEmitter = require('../../events').EventEmitter;
+import {Group} from '../../group/Group';
+import {ElementStyler} from '../ElementStyler';
+import {WindowFeatureFlag} from '../../system/flags/WindowFeatureFlag';
+import {GroupContext} from '../context/GroupContext';
+import {FieldStyler} from '../context/styler/FieldStyler';
+import {GroupStateManager} from './GroupStateManager';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
+import {PositiveInteger} from '../../numeric';
+
+const EventEmitter = require('events').EventEmitter;
+
+declare type jQuery = any;
 
 /**
  * Styles a group for display in the UI
  */
-module.exports = Class('GroupUi').extend(EventEmitter, {
+export class GroupUi extends EventEmitter {
   /**
    * Raised when an index is added to the group (e.g. row addition)
-   * @type {string}
    */
-  'const EVENT_INDEX_ADD': 'indexAdd',
+  readonly EVENT_INDEX_ADD: string = 'indexAdd';
 
   /**
    * Raised when an index is removed from the group (e.g. row deletion)
-   * @type {string}
    */
-  'const EVENT_INDEX_REMOVE': 'indexRemove',
+  readonly EVENT_INDEX_REMOVE: string = 'indexRemove';
 
   /**
    * Raised when an index is reset rather than removed
-   * @type {string}
    */
-  'const EVENT_INDEX_RESET': 'indexReset',
+  readonly EVENT_INDEX_RESET: string = 'indexReset';
 
   /**
    * Emitted when a row/tab/etc is added to a group
-   * @type {string}
    */
-  'const EVENT_POST_ADD_ROW': 'postAddRow',
+  readonly EVENT_POST_ADD_ROW: string = 'postAddRow';
 
   /**
    * An action taken by the user
-   * @type {string}
    */
-  'const EVENT_ACTION': 'action',
+  readonly EVENT_ACTION: string = 'action';
 
   /**
    * Group being styled
-   * @type {Group}
    */
-  group: null,
+  group: Group;
 
   /**
    * Group content
-   * @type {jQuery}
    */
-  $content: null,
+  $content: jQuery;
 
   /**
    * Styler used to style elements
-   * @type {ElementStyler}
    */
-  styler: null,
+  styler: ElementStyler;
 
   /**
    * Functions to call when group is invalidated
    * @type {Array.<Function>}
    */
-  invalidateHooks: [],
+  invalidateHooks: any[] = [];
 
   /**
    * Whether the group is visible
-   * @type {boolean}
    */
-  'private _visible': true,
+  private _visible: boolean = true;
 
   /**
    * Number of indexes (1-based)
-   * @type {number}
    */
-  'private _indexCount': 0,
+  private _indexCount: number = 0;
 
   /**
    * Whether the group is active (available for the user to interact with)
-   * @type {boolean}
    */
-  'private _active': false,
+  private _active: boolean = false;
 
   /**
    * Continuation to perform on step visit
    * @type {function()}
    */
-  'private _emptyOnVisit': null,
+  private _emptyOnVisit: any = null;
 
   /**
    * Field visibility cache by field id (reduces DOM lookups)
-   * @type {Object}
    */
-  'private _visCache': {},
+  private _visCache: Record<string, boolean[]> = {};
 
   /**
    * Number of visibile fields per index
-   * @type {number}
    */
-  'private _visCount': [],
+  private _visCount: any = [];
 
   /**
    * Number of visibile fields, including multiple indexes
-   * @type {number}
    */
-  'private _visCountTotal': 0,
-
-  /**
-   * Total number of fields, including multiple indexes
-   * @type {number}
-   */
-  'private _fieldCount': 0,
+  private _visCountTotal: number = 0;
 
   /**
    * Number of unique fields, disregarding indexes
-   * @type {number}
    */
-  'private _rawFieldCount': 0,
+  private _rawFieldCount: number = 0;
 
   /**
    * An array of classifications with css classes we
@@ -149,99 +139,74 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    *
    * Structured: classification => css class
    */
-  'private _bind_classes': [],
+  private _bind_classes: any[] = [];
 
   /**
    * DOM group context
-   * @type {GroupContext}
    */
-  'protected context': null,
+  protected context: GroupContext;
 
   /**
    * Root DOM context (deprecated)
    * @type {DomContext}
    */
-  'protected rcontext': null,
+  protected rcontext: any = null;
 
   /**
    * Group context
-   * @type {HTMLElement}
    */
-  'protected content': null,
+  protected content: HTMLElement;
 
   /**
    * Array of direct parent of field content per index
-   * @type {Array.<HTMLElement>}
    */
-  'protected fieldContentParent': [],
+  protected fieldContentParent: HTMLElement[] = [];
 
   /**
    * jQuery object
-   * @type {jQuery}
    */
-  'protected jquery': null,
-
-  /**
-   * Styler when fields are no longer applicable
-   * @type {FieldStyler}
-   */
-  'private _naStyler': null,
-
-  /**
-   * Access feature flags for new UI features
-   * @type {FeatureFlag}
-   */
-  'private _feature_flag': null,
-
-  /**
-   * State manager of the group
-   * @type {GroupStateManager}
-   */
-  'protected _state_manager': null,
+  protected jquery: jQuery = null;
 
   /**
    * Initializes GroupUi
    *
    * @todo remove root (DOM) context, and na field styler!
    *
-   * @param {Group}         group        group to style
-   * @param {HTMLElement}   content      the group content
-   * @param {ElementStyler} styler       styler to use to style elements
-   * @param {jQuery}        jquery       jQuery-compatible object
-   * @param {GroupContext}  context      group context
-   * @param {DomContext}    rcontext     root context
-   * @param {FieldStyler}   na_styler    styler for fields that are N/A
-   * @param {FeatureFlag}   feature_flag toggle access to new UI features
-   * @param {GroupStateManager} state_manager state manager for the group
-   *
-   * @return  {undefined}
+   * @param group         - group to style
+   * @param content       - the group content
+   * @param styler        - styler to use to style elements
+   * @param jquery        - jQuery-compatible object
+   * @param context       - group context
+   * @param rcontext      - root context
+   * @param na_styler     - styler for fields that are N/A
+   * @param feature_flag  - toggle access to new UI features
+   * @param state_manager - state manager for the group
    */
-  'public __construct': function (
-    group,
-    content,
-    styler,
-    jquery,
-    context,
-    rcontext,
-    na_styler,
-    feature_flag,
-    state_manager
+  constructor(
+    group: Group,
+    content: HTMLElement,
+    styler: ElementStyler,
+    jquery: jQuery,
+    context: GroupContext,
+    rcontext: any,
+    protected readonly _na_styler: FieldStyler,
+    protected readonly _feature_flag: WindowFeatureFlag,
+    protected readonly _state_manager: GroupStateManager
   ) {
+    super();
+
     this.group = group;
     this.content = content;
     this.styler = styler;
     this.jquery = jquery;
     this.context = context;
     this.rcontext = rcontext;
-    this._naStyler = na_styler;
-    this._feature_flag = feature_flag;
-    this._state_manager = state_manager;
 
     // Todo: Transition away from jQuery
     this.$content = this.jquery(content);
-  },
+  }
 
-  'public init': function (quote) {
+  public init(quote: ClientQuote) {
     const fields = this.group.getExclusiveFieldNames();
     const cmatch_fields = this.group.getExclusiveCmatchFieldNames();
 
@@ -272,9 +237,9 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     this._bindClasses(quote);
 
     return this;
-  },
+  }
 
-  'private _monitorIndexChange': function (quote) {
+  private _monitorIndexChange(quote: ClientQuote) {
     var _self = this,
       first = this.getFirstElementName();
 
@@ -290,7 +255,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
       var blen = quote.getDataByName(first).length,
         dlen = _self._stripRm(data[first]).length,
         len = 0,
-        rm = [];
+        rm: any[] = [];
 
       // did we remove an index? if so, then this represents the correct
       // length.
@@ -315,14 +280,14 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
       function doempty() {
         // TODO: knock it off.
-        quote.visitData(function (bucket) {
+        quote.visitData(function (_: any) {
           // we cannot call preEmptyBucket because the bucket, at this
           // point, has not yet been modified with the new data
-          _self._quickIndexChange(bucket, true, len, rm);
+          _self._quickIndexChange(true, len, rm);
         });
       }
 
-      // if we're not an active group, then there's little use in updating
+      // if we're not an active group, then theres little use in updating
       // ourselves; next time they visit the step, we can update ourselves
       // (not only does this help with performance, but it also eliminates
       // some problems that may occur due to us not being attached to the
@@ -335,18 +300,18 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
       doempty();
     });
-  },
+  }
 
   /**
    * Strip removes from a data diff
    *
    * Removes are represented by nulls
    *
-   * @param {Object} data data diff
+   * @param data - data diff
    *
-   * @return {Object} data with nulls stripped
+   * @return data with nulls stripped
    */
-  'private _stripRm': function (data) {
+  private _stripRm(data: any): any {
     for (var i in data) {
       if (data[i] === null) {
         // null marks the end of the data
@@ -355,55 +320,47 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     }
 
     return data;
-  },
+  }
 
   /**
-   * Performs any necessary processing on the content before it's displayed
+   * Performs any necessary processing on the content before its displayed
    *
    * Subtypes may override this for custom functionality
-   *
-   * @return undefined
    */
-  'virtual protected processContent': function () {},
+  protected processContent(_quote?: ClientQuote) {}
 
   /**
    * Group types that can support multiple index
-   *
-   * @return {boolean}
    */
-  'virtual protected supportsMultipleIndex': function () {
+  protected supportsMultipleIndex(): boolean {
     return true;
-  },
+  }
 
   /**
    * Gets the DOM Performance Flag
-   *
-   * @return {boolean}
    */
-  'public getDomPerfFlag': function () {
+  public getDomPerfFlag(): boolean {
     return this._feature_flag.isEnabled('dom_perf_flag');
-  },
+  }
 
   /**
    * Trigger events on action interaction
-   *
-   * @return {undefined}
    */
-  'private _initActions': function () {
+  private _initActions() {
     var _self = this;
 
-    this.$content.find('.action').live('click', function (e) {
+    this.$content.find('.action').live('click', function (e: any) {
       e.preventDefault();
 
       // TODO: index
-      var $this = _self.jquery(this),
+      var $this = _self.jquery(e.target),
         ref = $this.attr('data-ref'),
         type = $this.attr('data-type'),
         index = +$this.attr('data-index') || 0;
 
-      _self.emit(_self.__self.$('EVENT_ACTION'), type, ref, index);
+      _self.emit(_self.EVENT_ACTION, type, ref, index);
     });
-  },
+  }
 
   /**
    * Attempts to return the group id of the group containing the given element
@@ -411,31 +368,27 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This method will cache the value of the id upon the first request by
    * replacing itself with a function that returns only the value.
    *
-   * @param mixed element jQuery or DOM object to retrieve group id from
-   *
-   * @return String|undefined group id or undefined if no group/id exists
+   * @return group id or undefined if no group/id exists
    */
-  'public getGroupId': function () {
+  public getGroupId(): string | undefined {
     var id = this.$content.attr('id');
 
     return id;
-  },
+  }
 
   /**
    * Sets the index (for the name attribute) of all given elements
    *
    * The name format is expected to be: name_i, where i is the index.
    *
-   * @param HTML    elements  elements to set index on
-   * @param Integer index     index to set
-   *
-   * @return void
+   * @param elements - elements to set index on
+   * @param index    - index to set
    */
-  'protected setElementIdIndexes': function (elements, index) {
+  protected setElementIdIndexes(elements: any[], index: number) {
     for (var i = 0; i < elements.length; i++) {
       var element = elements[i];
-      var id = element.getAttribute('id') || '';
-      var element_data = 0;
+      var id: string = element.getAttribute('id') || '';
+      var element_data: any = 0;
 
       // grab the index from the id if found
       if ((element_data = id.match(/^(.*?)(\d+)$/))) {
@@ -445,7 +398,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
       element.setAttribute('data-index', index);
     }
-  },
+  }
 
   /**
    * Watches the first element for changes and invalidates the group when it
@@ -454,15 +407,13 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This is used when groups base their row/tab/whatever count on the first
    * element to ensure that they are properly regenerated when the count
    * changes.
-   *
-   * @return {undefined}
    */
-  'protected watchFirstElement': function ($base, quote) {
+  protected watchFirstElement($base: any, quote: any) {
     var group = this,
       first_name = this.getFirstElementName($base);
 
     if (first_name) {
-      quote.on('dataCommit', function (data) {
+      quote.on('dataCommit', function (data: any) {
         var first_data = data[first_name];
         if (first_data === undefined) {
           return;
@@ -471,7 +422,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
         group.invalidate();
       });
     }
-  },
+  }
 
   /**
    * Retireve the current index count
@@ -480,15 +431,15 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * length). Subtypes may override this if they do not wish to use the
    * built-in index tracking.
    *
-   * @return {number} index count
+   * @return index count
    */
-  'virtual public getCurrentIndexCount': function () {
+  public getCurrentIndexCount() {
     return this._indexCount;
-  },
+  }
 
-  'public getCurrentIndex': function () {
+  public getCurrentIndex() {
     return this.getCurrentIndexCount() - 1;
-  },
+  }
 
   /**
    * Allows groups to do any necessary processing before a bucket is emptied
@@ -501,49 +452,49 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * that too may be overridden to alter its functionality without overriding
    * this method.
    *
-   * @param {Bucket}  bucket  bucket
-   * @param {boolean} updated whether this is an update (rather than inital
+   * @param bucket  - bucket
+   * @param updated - whether this is an update (rather than inital
    *                          append)
-   *
-   * @return {GroupUi} self
    */
-  'virtual public preEmptyBucket': function (bucket, updated) {
+  public preEmptyBucket(bucket: QuoteDataBucket, updated: boolean): this {
     var first = this.getFirstElementName(),
-      flen = bucket.getDataByName(first).length;
+      flen: number = bucket.getDataByName(first).length;
 
-    this._quickIndexChange(bucket, updated, flen);
+    this._quickIndexChange(updated, flen);
 
     return this;
-  },
+  }
 
-  'private _quickIndexChange': function (bucket, updated, len, rm) {
-    rm = rm || [];
-
+  private _quickIndexChange(
+    updated: boolean,
+    len: number,
+    rm: any[] = []
+  ): void {
     var _self = this,
       curlen = this.getCurrentIndexCount();
 
     this.handleIndexChange(
       len,
       curlen,
-      function __add(n) {
+      function __add(n: number) {
         do {
           _self.addIndex(len - n);
         } while (--n);
       },
 
-      function __rm(n) {
+      function __rm(n: number) {
         while (n--) {
           _self.removeIndex(rm.pop());
         }
       }
     );
 
-    this.postPreEmptyBucket(bucket);
+    this.postPreEmptyBucket();
 
     if (!updated) {
-      this.postPreEmptyBucketFirst(bucket);
+      this.postPreEmptyBucketFirst();
     }
-  },
+  }
 
   /**
    * Indicates that a tab/row/column/etc (representing an index) should be
@@ -551,16 +502,14 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    *
    * Subtypes may override this for custom functionality.
    *
-   * @param {number} index index that has been added
-   *
-   * @return {GroupUi} self
+   * @param index - index that has been added
    */
-  'virtual protected addIndex': function (index) {
+  protected addIndex(index: number): this {
     this._indexCount++;
     this._recalcFieldCount(1, index);
 
     return this;
-  },
+  }
 
   /**
    * Indicates that a tab/row/column/etc (representing an index) should be
@@ -570,11 +519,9 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    *
    * Subtypes may override this for custom functionality.
    *
-   * @param {number} index index that has been removed
-   *
-   * @return {GroupUi} self
+   * @param index - index that has been removed
    */
-  'virtual protected removeIndex': function (index) {
+  protected removeIndex(index: number): this {
     var fields = this.group.getExclusiveFieldNames();
 
     for (var field in fields) {
@@ -587,21 +534,19 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     this._recalcFieldCount(-1, index);
 
     return this;
-  },
+  }
 
   /**
    * Allows for processing after preEmptyBucket() has been run without
    * overriding preEmptyBucket() itself
-   *
-   * @return {GroupUi} self
    */
-  'virtual protected postPreEmptyBucket': function () {
+  protected postPreEmptyBucket(): this {
     return this;
-  },
+  }
 
-  'virtual protected postPreEmptyBucketFirst': function () {
+  protected postPreEmptyBucketFirst(): this {
     return this;
-  },
+  }
 
   /**
    * Invokes add/remove procedures based on what must be done given a number
@@ -611,15 +556,17 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * appropriate callback will be called with the number of adds/removes to be
    * performed respectively. Otherwise, no callback will be called.
    *
-   * @param {number} n   desired index count
-   * @param {number} cur current index count
-   *
-   * @param {function(number)} ca  add continuation
-   * @param {function(number)} crm remove continuation
-   *
-   * @return {GroupUi} self
+   * @param n   - desired index count
+   * @param cur - current index count
+   * @param ca  - add continuation
+   * @param crm - remove continuation
    */
-  'protected handleIndexChange': function (n, cur, ca, crm) {
+  protected handleIndexChange(
+    n: number,
+    cur: number,
+    ca: (_: number) => void,
+    crm: (_: number) => void
+  ): this {
     var min = this.group.minRows(),
       max = this.group.maxRows(),
       diff = n - cur,
@@ -645,7 +592,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     (truediff < 0 ? crm : ca)(Math.abs(truediff));
 
     return this;
-  },
+  }
 
   /**
    * Initialize an index to be added to the group
@@ -657,47 +604,46 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * If properly handled, presumably the bucket will be updated with the new
    * index and that, in turn, will kick off the hooks to add the necessary UI
    * elements to reflect the addition.
-   *
-   * @return {GroupUi} self
    */
-  'protected initIndex': function () {
-    this.emit(this.__self.$('EVENT_INDEX_ADD'), this.getCurrentIndexCount());
+  protected initIndex(): this {
+    this.emit(this.EVENT_INDEX_ADD, this.getCurrentIndexCount());
 
     return this;
-  },
+  }
 
   /**
    * Initialize an index to be removed from the group
    *
    * This action simply raises an event that hooks may properly handle---that
-   * is, we're merely indicating our desire to remove an index. Whether or not
+   * is, were merely indicating our desire to remove an index. Whether or not
    * it actually happens [correctly] is beyond our control.
    *
    * If properly handled, presumably the bucket will be updated to reflect the
    * deletion and the hooks will then kick off the necessary UI updates.
-   *
-   * @return {GroupUi} self
    */
-  'protected destroyIndex': function (index) {
+  protected destroyIndex(index: number): this {
     index = index === undefined ? this.getCurrentIndex() : +index;
 
-    this.emit(this.__self.$('EVENT_INDEX_REMOVE'), index);
+    this.emit(this.EVENT_INDEX_REMOVE, index);
 
     var fields = this.group.getExclusiveFieldNames();
-    this.context.removeIndex(fields, index, this.getCurrentIndexCount());
+    this.context.removeIndex(
+      fields,
+      <PositiveInteger>index,
+      <PositiveInteger>this.getCurrentIndexCount()
+    );
 
     return this;
-  },
+  }
 
   /**
    * Allows group to perform any necessary operations before an element is
    * scrolled to
    *
-   * @param {string} field_name name of field to display
-   *
-   * @return {GroupUi} self
+   * @param field_name - name of field to display
+   * @param i          - index of field
    */
-  'virtual public preScrollTo': function (field_name, i) {
+  public preScrollTo(field_name: string, i: number): this {
     // do not do anything if this group does not contain the requested field
     if (!this.group.hasExclusiveField(field_name)) {
       return this;
@@ -707,7 +653,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     this.displayField(field_name, i);
 
     return this;
-  },
+  }
 
   /**
    * Display the requested field
@@ -718,36 +664,34 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This is intended for groups that may conceal fields from the user (e.g.
    * tabbed groups).
    *
-   * @param {string} field_name name of field to display
-   * @param {number} i          index of field
-   *
-   * @return {GroupUi} self
+   * @param field_name - name of field to display
+   * @param i          - index of field
    */
-  'virtual protected displayField': function (field_name, i) {
+  protected displayField(_field_name: string, _i: number): this {
     // subtypes must override this method if they have the ability to
     // conceal fields from the user (e.g. tabs)
     return this;
-  },
+  }
 
-  'public getId': function () {
+  public getId(): undefined | string {
     // return all but the beginning 'group_'
     return this.$content.attr('id').substring(6);
-  },
+  }
 
   /**
    * Bind css classes to classifications
    *
-   * @param {quote} quote the quote to listen on
+   * @param quote - the quote to listen on
    */
-  'private _bindClasses': function (quote) {
+  private _bindClasses(quote: ClientQuote): void {
     // Get the css classes that we would like to bind to classifications
     this._bind_classes = this._getBindClasses();
 
     const self = this;
 
-    quote.onClassifyAndNow(function (classes) {
+    quote.onClassifyAndNow(function (classes: any) {
       for (let bind_class in self._bind_classes) {
-        css_class = self._bind_classes[bind_class];
+        let css_class = self._bind_classes[bind_class];
 
         if (classes[bind_class] && classes[bind_class].is === true) {
           self.content.classList.add(css_class);
@@ -756,22 +700,22 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
         }
       }
     });
-  },
+  }
 
   /**
    * Get the class attributes and their classifiers
    *
-   * @return {array} bound classes and their conditional classifications
+   * @return bound classes and their conditional classifications
    */
-  'private _getBindClasses': function () {
-    // return all but the beginning 'group_'
+  private _getBindClasses(): any[] {
+    // return all but the beginning group_
     const class_str = this.content.getAttribute('data-class-bind');
 
     if (!class_str) {
       return [];
     }
 
-    const classes = [];
+    const classes: any[] = [];
 
     class_str.split(' ').forEach(datum => {
       const kv = datum.split(':');
@@ -781,11 +725,11 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
       }
 
       // Add the classifications as the keys and the css class as value
-      classes[kv[1]] = kv[0];
+      classes[<any>kv[1]] = kv[0];
     });
 
     return classes;
-  },
+  }
 
   /**
    * Gets the name of the first question or answer element available
@@ -793,43 +737,41 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This method exists because answer elements cannot have name attributes.
    * Instead they store the reference name in a 'ref_id' data key.
    *
-   * @param jQuery $parent parent element to search
+   * @param $parent - parent element to search
    *
    * @return String name, otherwise empty string
    */
-  'virtual public getFirstElementName': function ($parent) {
+  public getFirstElementName(_$parent?: jQuery): string {
     return this.group.getIndexFieldName();
-  },
+  }
 
   /**
    * Hooks the event to be triggered when a row is added to a group
    *
    * Children should call this method when they add a new row.
    *
-   * @param {jQuery} $element element that was added
-   * @param {number} index    index of the added element
-   *
-   * @return {GroupUi} self to allow for method chaining
+   * @param $element - element that was added
+   * @param index    - index of the added element
    */
-  'virtual protected postAddRow': function ($element, index) {
-    this.emit(this.__self.$('EVENT_POST_ADD_ROW'), index);
+  protected postAddRow(_$element: any, index: number): this {
+    this.emit(this.EVENT_POST_ADD_ROW, index);
 
     return this;
-  },
+  }
 
-  'public hide': function () {
+  public hide(): this {
     this.$content.hide();
     this._visible = false;
 
     return this;
-  },
+  }
 
-  'public show': function () {
+  public show(): this {
     this.$content.show();
     this._visible = true;
 
     return this;
-  },
+  }
 
   /**
    * Retrieve field elements for show/hide operations
@@ -838,27 +780,27 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * associated with it will be selected; otherwise, the parent container
    * of the field (which may be multiple elements) will be returned.
    *
-   * @param {string} field field name
-   * @param {number} index field index
+   * @param field - field name
+   * @param index - field index
    *
-   * @return {jQuery} field elements
+   * @return field elements
    */
-  'virtual protected getFieldElements': function (field, index) {
+  protected getFieldElements(field: string, index: number): any {
     var $element = this.getElementByName(field, index),
       is_sub = $element.parent().hasClass('widget');
 
     return !is_sub && $element.parents('dd').length
       ? $element.parents('dd').prev('dt').andSelf()
       : $element;
-  },
+  }
 
   /**
    * Hides the field based on field name and index
    *
-   * @param field
-   * @param index
+   * @param field - field name
+   * @param index - field index
    */
-  'virtual public hideField': function (field, index) {
+  public hideField(field: string, index: number): void {
     if (this.isFieldVisible(field, index) === false) {
       // nothing to do?
       return;
@@ -868,24 +810,23 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
     // can be overridden by subtypes
     this.doHideField(field, index);
-  },
+  }
 
-  'virtual protected doHideField': function (field, index) {
+  protected doHideField(field: string, index: number) {
     this.getDomPerfFlag() === true
-      ? this.context.hide(field, index)
-      : this.rcontext.getFieldByName(field, index).applyStyle(this._naStyler);
-  },
+      ? this.context.hide(field, <PositiveInteger>index)
+      : this.rcontext.getFieldByName(field, index).applyStyle(this._na_styler);
+  }
 
   /**
    * Returns a boolean depending on if there are visible fields
    * based off of the visCount
    *
    * @param index
-   * @returns {boolean}
    */
-  'public hasVisibleField': function (index) {
+  public hasVisibleField(index: number): boolean {
     return this._visCount[index] > 0 ? true : false;
-  },
+  }
 
   /**
    * Shows the field based on field name and index
@@ -893,7 +834,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * @param field
    * @param index
    */
-  'virtual public showField': function (field, index) {
+  public showField(field: string, index: number): void {
     if (this.isFieldVisible(field, index) === true) {
       // nothing to do
       return;
@@ -903,16 +844,20 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
     // can be overridden by subtypes
     this.doShowField(field, index);
-  },
+  }
 
-  'virtual protected doShowField': function (field, index) {
+  protected doShowField(field: string, index: number): void {
     this.getDomPerfFlag() === true
-      ? this.context.show(field, index, this.fieldContentParent[index])
-      : this.rcontext.getFieldByName(field, index).revokeStyle(this._naStyler);
-  },
+      ? this.context.show(
+          field,
+          <PositiveInteger>index,
+          this.fieldContentParent[index]
+        )
+      : this.rcontext.getFieldByName(field, index).revokeStyle(this._na_styler);
+  }
 
-  'public isFieldVisible': function (id, index) {
-    if (index > this.getCurrentIndex()) {
+  public isFieldVisible(id: string, index?: number): undefined | boolean {
+    if (<number>index > this.getCurrentIndex()) {
       return false;
     }
 
@@ -921,7 +866,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     // if no index was provided, then determine if *any* of the indexes are
     // available
     if (index === undefined) {
-      var result = false,
+      var result: undefined | boolean = false,
         i = this.getCurrentIndexCount();
 
       while (i--) {
@@ -933,9 +878,9 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
 
     // may be undefined
     return this._visCache[id][index];
-  },
+  }
 
-  'private _setFieldVisible': function (id, index, visible) {
+  private _setFieldVisible(id: string, index: number, visible: boolean) {
     var old = this._visCache[id][index];
 
     // should only ever be called after isFieldVisible(); if this is false,
@@ -949,21 +894,19 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     this._incVis(index, visible ? (old === undefined ? 0 : 1) : -1);
 
     this._checkVisCount();
-  },
+  }
 
-  'private _incVis': function (index, by) {
+  private _incVis(index: number, by: number) {
     if (this._visCount[index] === undefined) {
       this._visCount[index] = 0;
     }
 
     this._visCount[index] += by;
     this._visCountTotal += by;
-  },
+  }
 
-  'private _recalcFieldCount': function (change, index) {
+  private _recalcFieldCount(change: number, index: number) {
     var raw = this._rawFieldCount;
-
-    this._fieldCount = raw * this.getCurrentIndexCount();
 
     var count = 0;
     if (change === -1) {
@@ -973,10 +916,11 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     }
 
     this._incVis(index, change * count);
-    this._checkVisCount();
-  },
 
-  'private _checkVisCount': function () {
+    this._checkVisCount();
+  }
+
+  private _checkVisCount(): void {
     // if we have no fields, then ignore visibility checks
     if (this._rawFieldCount === 0) {
       return;
@@ -989,19 +933,19 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     } else if (!this._visible && this._visCountTotal > 0) {
       this.onFieldsVisible();
     }
-  },
+  }
 
-  'virtual protected onAllFieldsHidden': function () {
+  protected onAllFieldsHidden(): void {
     // default action is to hide self
     this.hide();
-  },
+  }
 
-  'virtual protected onFieldsVisible': function () {
+  protected onFieldsVisible(): void {
     // default action is to show self
     this.show();
-  },
+  }
 
-  'public invalidate': function (hook) {
+  public invalidate(hook?: any): this {
     if (hook instanceof Function) {
       this.invalidateHooks.push(hook);
       return this;
@@ -1013,18 +957,16 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     }
 
     return this;
-  },
+  }
 
   /**
    * Returns group object being styled
-   *
-   * @return {Group}
    */
-  'public getGroup': function () {
+  public getGroup(): Group {
     return this.group;
-  },
+  }
 
-  'virtual public preRender': function () {
+  public preRender(): this {
     if (this._emptyOnVisit === null) {
       return this;
     }
@@ -1035,11 +977,11 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     this._emptyOnVisit = null;
 
     return this;
-  },
+  }
 
-  'virtual public visit': function () {
+  public visit(): this {
     return this;
-  },
+  }
 
   /**
    * Return the given element within the group (if it exists)
@@ -1047,13 +989,11 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This has the performance benefit of searching *only* within the group
    * rather than scanning the entire DOM (or a much larger subset)
    *
-   * @param {string}  name   element name (question name)
-   * @param {number=} index  index of element to retrieve (bucket index)
-   * @param {string=} filter filter to apply to widgets
-   *
-   * @return {jQuery} matches
+   * @param name   - element name (question name)
+   * @param index  - index of element to retrieve (bucket index)
+   * @param filter - filter to apply to widgets
    */
-  'public getElementByName': function (name, index, filter) {
+  public getElementByName(name: string, index: number, filter?: string): any {
     // TODO: move me.
     if (!this.isAField(name)) {
       return this.$content.find('#' + name + ':nth(' + index + ')');
@@ -1064,7 +1004,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     // steps be avoiding scanning the DOM for the entire step
     // content)
     return this.styler.getElementByName(name, index, filter, this.$content);
-  },
+  }
 
   /**
    * Returns whether the given name is a field
@@ -1072,17 +1012,17 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * If not a field, it could be another non-input element, such as a static
    * element.
    *
-   * @param {string} name inquiry
+   * @param name - inquiry
    *
-   * @return {boolean} true if field, otherwise false
+   * @return true if field, otherwise false
    */
-  'public isAField': function (name) {
+  public isAField(name: string) {
     return this.styler.isAField(name);
-  },
+  }
 
-  'virtual public getContentByIndex': function (name, index) {
+  public getContentByIndex(_name: string, _index: number) {
     return this.$content;
-  },
+  }
 
   /**
    * Sets element value given a name and index
@@ -1090,16 +1030,19 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
    * This has the performance benefit of searching *only* within the group
    * rather than scanning the entire DOM (or a much larger subset)
    *
-   * @param {string}  name         element name
-   * @param {number}  index        index to set
-   * @param {string}  value        value to set
-   * @param {boolean} change_event whether to trigger change event
-   *
-   * @return {GroupUi} self
+   * @param name         - element name
+   * @param index        - index to set
+   * @param value        - value to set
+   * @param change_event - whether to trigger change event
    */
-  'virtual public setValueByName': function (name, index, value, change_event) {
+  public setValueByName(
+    name: string,
+    index: number,
+    value: string,
+    change_event: boolean
+  ) {
     if (this.getDomPerfFlag() === true) {
-      this.context.setValueByName(name, index, value);
+      this.context.setValueByName(name, <PositiveInteger>index, value);
     } else {
       this.styler.setValueByName(
         name,
@@ -1111,16 +1054,16 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     }
 
     return this;
-  },
+  }
 
-  'public setActive': function (active) {
+  public setActive(active: boolean) {
     active = active === undefined ? true : !!active;
 
     this._active = active;
     return this;
-  },
+  }
 
-  'public disableField': function (name, index, disable) {
+  public disableField(name: string, index: number, disable: boolean) {
     disable = disable === undefined ? true : !!disable;
     this.styler.disableField(
       name,
@@ -1130,9 +1073,9 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     );
 
     return this;
-  },
+  }
 
-  'public setOptions': function (name, index, options, val) {
+  public setOptions(name: string, index: number, options: any[], val?: string) {
     if (this.getDomPerfFlag() === false) {
       this.styler.setOptions(
         name,
@@ -1142,14 +1085,14 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
         this.getContentByIndex(name, index)
       );
     } else {
-      this.context.setOptions(name, index, options, val);
+      this.context.setOptions(name, <PositiveInteger>index, options, val);
     }
 
     return this;
-  },
+  }
 
-  'public clearOptions': function (name, index) {
+  public clearOptions(name: string, index: number) {
     this.setOptions(name, index, []);
     return this;
-  },
-});
+  }
+}

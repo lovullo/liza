@@ -46,7 +46,7 @@ export declare class QuoteDataBucket extends EventEmitter {
   /**
    * Alias of setValues
    */
-  setCommittedValues(): this;
+  setCommittedValues(data: Record<string, any>): this;
 
   /**
    * Clears all data from the bucket
@@ -80,7 +80,7 @@ export declare class QuoteDataBucket extends EventEmitter {
    * @param pred - predicate
    * @param c    - function to call for each value in the bucket
    */
-  filter(pred: (key: string) => {}, _c: (val: any, key: string) => {}): this;
+  filter(pred: (key: string) => {}, _c: (val: any, key: string) => void): this;
 
   /**
    * Returns the data for the requested field

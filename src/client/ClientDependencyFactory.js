@@ -34,19 +34,6 @@
 
 var Step = require('../step/Step'),
   StepUiBuilder = require('../ui/step/StepUiBuilder'),
-  Group = require('../group/Group'),
-  GroupUi = require('../ui/group/GroupUi'),
-  AccordionGroupUi = require('../ui/group/AccordionGroupUi'),
-  FlatGroupUi = require('../ui/group/FlatGroupUi'),
-  TableGroupUi = require('../ui/group/TableGroupUi'),
-  TabbedGroupUi = require('../ui/group/TabbedGroupUi'),
-  TabbedBlockGroupUi = require('../ui/group/TabbedBlockGroupUi'),
-  StackedGroupUi = require('../ui/group/StackedGroupUi'),
-  SideTableGroupUi = require('../ui/group/SideTableGroupUi'),
-  CollapseTableGroupUi = require('../ui/group/CollapseTableGroupUi'),
-  GridGroupUi = require('../ui/group/GridGroupUi'),
-  GroupStateManager = require('../ui/group/GroupStateManager')
-    .GroupStateManager,
   Ui = require('../ui/Ui'),
   UiStyler = require('../ui/UiStyler'),
   UiNotifyBar = require('../ui/UiNotifyBar'),
@@ -111,6 +98,18 @@ const {WindowFeatureFlag} = require('../system/flags/WindowFeatureFlag');
 const {GeneralStepUi} = require('../ui/step/GeneralStepUi');
 const {FieldContextFactory} = require('../ui/context/FieldContextFactory');
 const {FieldStylerFactory} = require('../ui/context/styler/FieldStylerFactory');
+const {GroupUi} = require('../ui/group/GroupUi');
+const {Group} = require('../group/Group');
+const {AccordionGroupUi} = require('../ui/group/AccordionGroupUi');
+const {FlatGroupUi} = require('../ui/group/FlatGroupUi');
+const {TableGroupUi} = require('../ui/group/TableGroupUi');
+const {TabbedGroupUi} = require('../ui/group/TabbedGroupUi');
+const {TabbedBlockGroupUi} = require('../ui/group/TabbedBlockGroupUi');
+const {StackedGroupUi} = require('../ui/group/StackedGroupUi');
+const {SideTableGroupUi} = require('../ui/group/SideTableGroupUi');
+const {CollapseTableGroupUi} = require('../ui/group/CollapseTableGroupUi');
+const {GridGroupUi} = require('../ui/group/GridGroupUi');
+const {GroupStateManager} = require('../ui/group/GroupStateManager');
 const {
   createQuotePreStagingHook,
   createQuoteStagingHook,
@@ -289,7 +288,9 @@ module.exports = Class('ClientDependencyFactory', {
       .build(GeneralStepUi, callback);
   },
 
-  createGroup: Group,
+  createGroup: () => {
+    return new Group();
+  },
 
   createGroupUi: function (
     group,
@@ -325,7 +326,7 @@ module.exports = Class('ClientDependencyFactory', {
     const feature_flag = WindowFeatureFlag.getInstance();
     const state_manager = new GroupStateManager();
 
-    return obj(
+    return new obj(
       group,
       content,
       styler,

@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off" */
+/* eslint @typescript-eslint/no-inferrable-types: "off", no-var: "off" */
 /**
  *  Grid Group UI
  *
@@ -21,158 +21,138 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
+import {AncestorAwareStyler} from '../styler/AncestorAwareStyler';
+import {GroupState} from './GroupStateManager';
+import {PositiveInteger} from '../../numeric';
 
-module.exports = Class('GridGroupUi').extend(GroupUi, {
+export class GridGroupUi extends GroupUi {
   /**
    * Reference to quote object
-   *
-   * @prop {ClientQuote}
    */
-  'private _quote': null,
+  private _quote?: ClientQuote;
 
   /**
    * Reference to the bucket
-   *
-   * @prop {Bucket}
    */
-  'private _bucket': null,
+  private _bucket?: QuoteDataBucket;
 
   /**
    * Categories pertaining to the group
-   *
-   * @prop {string[]}
    */
-  'private _categories': [],
+  private _categories: string[] = [];
 
   /**
    * Inner container
-   *
-   * @prop {HTMLElement}
    */
-  'private _box': null,
+  private _box: HTMLElement | null = null;
 
   /**
    * Details pane
-   *
-   * @prop {HTMLElement}
    */
-  'private _details': null,
+  private _details: HTMLElement | null = null;
 
   /**
    * Reference to the group's marker on the x-axis
-   *
-   * @prop {string}
    */
-  'private _x_type': null,
+  private _x_type: string | null = null;
 
   /**
    * If group is selected
-   *
-   * @prop {boolean}
    */
-  'private _is_selected': false,
+  private _is_selected: boolean = false;
 
   /**
    * Bucket key for currently selected group
-   *
-   * @prop {string}
    */
-  'private _selected_current_key': null,
+  private _selected_current_key: string | null = null;
 
   /**
    * Bucket key for list of selected group
-   *
-   * @prop {string}
    */
-  'private _selected_list_key': null,
+  private _selected_list_key: string | null = null;
 
   /**
    * Selectd bucket value of group
-   *
-   * @prop {string}
    */
-  'private _selected_value': null,
+  private _selected_value: string | null = null;
 
   /**
    * If the group is visible
-   *
-   * @prop {boolean}
    */
-  'private _is_visible': false,
+  private _is_visible: boolean = false;
 
   /**
    * Number of ancestors back to sync styles with
-   *
-   * @prop {number}
    */
-  'private _relevant_style_ancestor': 4,
+  private _relevant_style_ancestor: number = 4;
 
   /**
    * Get the group's visibility
    *
-   * @return {boolean} if the group is visibile
+   * @return if the group is visibile
    */
-  'public isVisible': function () {
+  public isVisible(): boolean {
     return this._is_visible;
-  },
+  }
 
   /**
    * Read the x-type of this group
    *
    * The x-type is an identifier for the column that this group belongs to.
    *
-   * @return {string} the x-type of the group
+   * @return the x-type of the group
    */
-  'public getXType': function () {
+  public getXType(): string | null {
     return this._x_type;
-  },
+  }
 
   /**
    * Read the categories of this group
    *
    * Categories are tags on a group that imply behavior.
    *
-   * @return {string[]} the categories of the group
+   * @return the categories of the group
    */
-  'public getCategories': function () {
+  public getCategories(): string[] {
     return this._categories;
-  },
+  }
 
   /**
    * Called when the group is visited
    */
-  'override public visit': function () {
+  public visit(): this {
     this._processDataAttributes();
     this._processClasses();
     this._setState();
-  },
+
+    return this;
+  }
 
   /**
    * Get selected value
-   *
-   * @return {string}
    */
-  'public getSelectedValue': function () {
+  public getSelectedValue(): string | null {
     return this._selected_value;
-  },
+  }
 
   /**
    * Determine if the group is selected
    *
-   * @return {boolean} if the group is selected
+   * @return if the group is selected
    */
-  'public isSelected': function () {
+  public isSelected(): boolean {
     return this._is_selected;
-  },
+  }
 
   /**
    * Select the group
    *
-   * @param {Array} selected_values selected values (optional)
+   * @param selected_values selected values (optional)
    */
-  'public select': function (selected_values) {
+  public select(selected_values?: any[]): void {
     this._is_selected = true;
 
     this.content.classList.remove('deselected');
@@ -181,14 +161,14 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
     if (selected_values !== undefined) {
       this._setSelectedData(selected_values);
     }
-  },
+  }
 
   /**
    * Deselect the group
    *
-   * @param {Array} selected_values selected values (optional)
+   * @param selected_values selected values (optional)
    */
-  'public deselect': function (selected_values) {
+  public deselect(selected_values?: any[]): void {
     if (this.isSelected()) {
       this._is_selected = false;
 
@@ -199,17 +179,17 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
         this._setSelectedData(selected_values);
       }
     }
-  },
+  }
 
   /**
    * Set selected if selected value is already set in the bucket
    */
-  'private _setSelectedStatus': function () {
+  private _setSelectedStatus(): void {
     if (this._selected_list_key === null || this._selected_value === null) {
       return;
     }
 
-    const current_values = this._quote.getDataByName(this._selected_list_key);
+    const current_values = this._quote?.getDataByName(this._selected_list_key);
 
     if (
       Array.isArray(current_values) &&
@@ -219,12 +199,12 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
     } else {
       this.deselect();
     }
-  },
+  }
 
   /**
    * Set deselected if required due to a change in state
    */
-  'private _setDeSelectedStatus': function () {
+  private _setDeSelectedStatus(): void {
     if (
       this.isSelected() === false ||
       this._selected_list_key === null ||
@@ -233,7 +213,7 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
       return;
     }
 
-    const current_values = this._quote.getDataByName(this._selected_list_key);
+    const current_values = this._quote?.getDataByName(this._selected_list_key);
 
     if (
       Array.isArray(current_values) &&
@@ -246,14 +226,14 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
 
       this.deselect(selected_values);
     }
-  },
+  }
 
   /**
    * Update the selected value in the bucket
    *
-   * @param {Array} selected_values selected values
+   * @param selected_values selected values
    */
-  'private _setSelectedData': function (selected_values) {
+  private _setSelectedData(selected_values: any[]): void {
     // Do not continue if any data is not valid
     if (
       Array.isArray(selected_values) === false ||
@@ -273,9 +253,8 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
       set_current = [this._selected_value];
     } else {
       // Get current selected value
-      const current_select = this._quote.getDataByName(
-        this._selected_current_key
-      );
+      const current_select =
+        this._quote?.getDataByName(this._selected_current_key) || [];
 
       if (
         !Array.isArray(current_select) ||
@@ -292,61 +271,67 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
     // Force entire array to be overwritten
     selected_values.push(null);
 
-    this._quote.setData({
+    this._quote?.setData({
       [this._selected_list_key]: selected_values,
       [this._selected_current_key]: set_current,
     });
-  },
+  }
 
   /**
    * Determine if the details pane is open
    *
-   * @return {boolean} if the details pane is open
+   * @return if the details pane is open
    */
-  'public areDetailsOpen': function () {
+  public areDetailsOpen(): boolean {
     if (this._details === null) {
       return false;
     }
 
     return this.content.classList.contains('details-open');
-  },
+  }
 
   /**
    * Open the details pane
    *
-   * @param {AncestorAwareStyler[]} stylers
+   * @param stylers
    */
-  'public openDetails': function (stylers) {
+  public openDetails(stylers: AncestorAwareStyler[]): void {
     if (this._details !== null) {
       this.content.classList.add('details-open');
 
       stylers.forEach(styler =>
-        styler.style(this._details, this._relevant_style_ancestor)
+        styler.style(
+          <HTMLElement>this._details,
+          <PositiveInteger>this._relevant_style_ancestor
+        )
       );
     }
-  },
+  }
 
   /**
    * Close the details pane
    *
-   * @param {AncestorAwareStyler[]} stylers
+   * @param stylers
    */
-  'public closeDetails': function (stylers) {
+  public closeDetails(stylers: AncestorAwareStyler[]): void {
     if (this.areDetailsOpen()) {
       this.content.classList.remove('details-open');
 
       stylers.forEach(styler =>
-        styler.style(this._details, this._relevant_style_ancestor)
+        styler.style(
+          <HTMLElement>this._details,
+          <PositiveInteger>this._relevant_style_ancestor
+        )
       );
     }
-  },
+  }
 
   /**
    * Process content of the group
    *
-   * @param {ClientQuote} quote target quote
+   * @param quote - target quote
    */
-  'override protected processContent': function (quote) {
+  protected processContent(quote: ClientQuote): void {
     this._box = this._getBox();
     this._details = this._getDetails();
     this._quote = quote;
@@ -357,70 +342,74 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
       this._bucket.on('stagingUpdate', () => this._setState());
     });
 
-    this.fieldContentParent[0] = this.content.querySelector('dl');
+    this.fieldContentParent[0] = <HTMLElement>this.content.querySelector('dl');
 
     this.context.createFieldCache();
-  },
+  }
 
   /**
    * Get the targeted inner div
    *
-   * @return {HTMLElement} inner div
+   * @return inner div
    */
-  'private _getBox': function () {
-    return this.content.querySelector('div');
-  },
+  private _getBox(): HTMLElement {
+    return <HTMLElement>this.content.querySelector('div');
+  }
 
   /**
    * Get the targeted div of the details pane
    *
-   * @return {HTMLElement} details pane div
+   * @return details pane div
    */
-  'private _getDetails': function () {
-    return this.content.querySelector('.details-pane');
-  },
+  private _getDetails(): HTMLElement {
+    return <HTMLElement>this.content.querySelector('.details-pane');
+  }
 
   /**
    * Set the current state of the group
    */
-  'private _setState': function () {
-    this._setPending(this._state_manager.is('pending', this._bucket));
+  private _setState(): void {
+    this._setPending(
+      this._state_manager.is(<GroupState>'pending', this._bucket)
+    );
 
-    if (this._state_manager.observes('disabled')) {
-      this._setDisabled(this._state_manager.is('disabled', this._bucket));
+    if (this._state_manager.observes(<GroupState>'disabled')) {
+      this._setDisabled(
+        this._state_manager.is(<GroupState>'disabled', this._bucket)
+      );
     }
-  },
+  }
 
   /**
    * Read all data attributes
    */
-  'private _processDataAttributes': function () {
-    this._x_type = this._box.getAttribute('data-x-type');
+  private _processDataAttributes(): void {
+    this._x_type = this._box?.getAttribute('data-x-type') || null;
 
     this._selected_current_key =
-      this._box.getAttribute('data-selected-current-key') || null;
+      this._box?.getAttribute('data-selected-current-key') || null;
     this._selected_list_key =
-      this._box.getAttribute('data-selected-list-key') || null;
+      this._box?.getAttribute('data-selected-list-key') || null;
     this._selected_value =
-      this._box.getAttribute('data-selected-value') || null;
+      this._box?.getAttribute('data-selected-value') || null;
 
     this._setSelectedStatus();
 
-    this._state_manager.processDataAttributes(this._box);
+    this._state_manager.processDataAttributes(<HTMLElement>this._box);
 
-    const categories = this._box.getAttribute('data-categories');
+    const categories = this._box?.getAttribute('data-categories');
 
     if (categories) {
       this._categories = categories.split(/\s+/);
     }
 
-    this._state_manager.processDataAttributes(this._box);
-  },
+    this._state_manager.processDataAttributes(<HTMLElement>this._box);
+  }
 
   /**
    * Process class-related data
    */
-  'private _processClasses': function () {
+  private _processClasses(): void {
     this._is_visible = this.content.classList.contains('is-visible');
 
     const operation = this._is_visible ? 'remove' : 'add';
@@ -430,25 +419,25 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
     if (!this._is_visible) {
       this._setDeSelectedStatus();
     }
-  },
+  }
 
   /**
    * Apply the pending state to this group
    *
-   * @param {boolean} isPending if the group is pending
+   * @param isPending if the group is pending
    */
-  'private _setPending': function (isPending) {
+  private _setPending(isPending: boolean): void {
     const operation = isPending ? 'add' : 'remove';
 
     this.content.classList[operation]('pending');
-  },
+  }
 
   /**
    * Apply the disabled state to this group
    *
-   * @param {boolean} isDisabled if the group is disabled
+   * @param isDisabled if the group is disabled
    */
-  'private _setDisabled': function (isDisabled) {
+  private _setDisabled(isDisabled: boolean) {
     const operation = isDisabled ? 'add' : 'remove';
 
     this.content.classList[operation]('disabled');
@@ -457,46 +446,42 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
       // Ensure the group is deselected
       this._setDeSelectedStatus();
     }
-  },
+  }
 
   /**
    * This group does not support multiple indexes
    *
-   * @return {boolean}
+   * @return false
    */
-  'protected override supportsMultipleIndex': function () {
+  protected supportsMultipleIndex(): boolean {
     return false;
-  },
+  }
 
   /**
    * Permit adding only a single index
    *
-   * @param {number} index index that has been added
-   *
-   * @return {GroupUi} self
+   * @param index - index that has been added
    */
-  'protected override addIndex': function (index) {
+  protected addIndex(index: number): this {
     if (index > 0) {
       return this;
     }
 
-    return this.__super(index);
-  },
+    return super.addIndex(index);
+  }
 
   /**
    * Permit removing only the first index
    *
    * This follows from #addIndex, since only one will ever exist.
    *
-   * @param {number} index index that has been removed
-   *
-   * @return {GroupUi} self
+   * @param index - index that has been removed
    */
-  'protected override removeIndex': function (index) {
+  protected removeIndex(index: number): this {
     if (index > 0) {
       return this;
     }
 
-    return this.__super(index);
-  },
-});
+    return super.removeIndex(index);
+  }
+}

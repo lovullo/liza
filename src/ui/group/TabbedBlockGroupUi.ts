@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", prefer-arrow-callback: "off", prefer-const: "off", no-undef: "off", block-scoped-var: "off", no-redeclare: "off", no-unused-vars: "off" */
+/* eslint no-undef: "off", @typescript-eslint/no-this-alias: "off", @typescript-eslint/no-inferrable-types: "off", no-var: "off", prefer-arrow-callback: "off", prefer-const: "off", block-scoped-var: "off", no-redeclare: "off", no-unused-vars: "off" */
 /**
  * Group tabbed block UI
  *
@@ -26,8 +26,13 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+import {GroupState} from './GroupStateManager';
+import {PositiveInteger} from '../../numeric';
+
+declare type DomElement = any;
 
 /**
  * Represents a tabbed block group
@@ -35,76 +40,65 @@ var Class = require('easejs').Class,
  * Does not currently support removing individual tabs (it will only clear
  * out all tabs)
  */
-module.exports = Class('TabbedGroupUi').extend(GroupUi, {
+export class TabbedBlockGroupUi extends GroupUi {
   /**
    * The parent element boxy thingy that contains all other elements
-   * @type {DomElement}
    */
-  'private _box': null,
+  private _box: DomElement = null;
 
   /**
    * The list containing all clickable tabs
-   * @type {DomElement}
    */
-  'private _tabList': null,
+  private _tabList: DomElement = null;
 
   /**
    * Element representing a tab itself
-   * @type {DomElement}
    */
-  'private _tabItem': null,
+  private _tabItem: DomElement = null;
 
   /**
    * Base tab content element
-   * @type {DomElement}
    */
-  'private _contentItem': null,
+  private _contentItem: DomElement = null;
 
   /**
    * Index of the currently selected tab
-   * @type {number}
    */
-  'private _curIndex': 0,
+  private _curIndex: number = 0;
 
   /**
    * Index of the default selected tab
-   * @type {number}
    */
-  'private _defaultSelectionField': null,
+  private _defaultSelectionField: string | null = null;
 
   /**
    * Disable flags
-   * @type {array}
    */
-  'private _disableFlags': [],
+  private _disableFlags: string[] = [];
 
   /**
    * Message to display when group is disabled after a blocking state resolves
-   * @type {string}
    */
-  'private _disableMessage': '',
+  private _disableMessage: string = '';
 
   /**
    * Bucket prefix for "tab extraction" source data
-   * @type {string}
    */
-  'private _tabExtractSrc': '',
+  private _tabExtractSrc: string = '';
 
   /**
    * Bucket prefix for "tab extraction" result data
-   * @type {string}
    */
-  'private _tabExtractDest': '',
+  private _tabExtractDest: string = '';
 
-  'private _bucket': null,
+  private _bucket: QuoteDataBucket | undefined;
 
   /**
    * Field to check for length (number of tabs); will default to first field
-   * @type {string}
    */
-  'private _lengthField': '',
+  private _lengthField: string = '';
 
-  'override protected processContent': function (quote) {
+  protected processContent(quote: ClientQuote): void {
     this._box = this.$content.find('.groupTabbedBlock')[0];
 
     // determine if we should lock this group down
@@ -117,9 +111,9 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._processElements();
     this._processAddButton();
     this._processLengthField();
-  },
+  }
 
-  'private _processNonInternalHides': function (quote) {
+  private _processNonInternalHides(quote: ClientQuote): void {
     var _self = this;
 
     var disable_attr = this._box.getAttribute('data-disable-flags');
@@ -136,16 +130,16 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     quote.visitData(function (bucket) {
       _self._bucket = bucket;
     });
-  },
+  }
 
-  'private _processTabExtract': function () {
+  private _processTabExtract(): void {
     this._tabExtractSrc = this._box.getAttribute('data-tabextract-src');
     this._tabExtractDest = this._box.getAttribute('data-tabextract-dest');
     this._defaultSelectionField =
       this._box.getAttribute('data-default-selected-field') || '';
-  },
+  }
 
-  'private _processElements': function () {
+  private _processElements(): void {
     this._tabList = this._box.querySelector('ul.tabs');
 
     var tab = this._box.querySelector('li');
@@ -170,27 +164,27 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
         innerText: this._disableMessage,
       })
     );
-  },
+  }
 
   /**
    * Create an element by tag name with a set of attributes
    *
-   * @param  {string} tagName    Element's tag name
-   * @param  {object} attributes List of attributes
+   * @param tagName    - Element's tag name
+   * @param attributes - List of attributes
    *
-   * @return {Element}           An HTML element
+   * @return An HTML element
    */
-  'private _createElement': function (tagName, attributes) {
+  private _createElement(tagName: string, attributes: any): HTMLElement {
     attributes = attributes || {};
 
     let elem = document.createElement(tagName);
 
     if (Array.isArray(attributes.classList)) {
-      attributes.classList.forEach(c => elem.classList.add(c));
+      attributes.classList.forEach((c: any) => elem.classList.add(c));
     }
 
     if (Array.isArray(attributes.elems)) {
-      attributes.elems.forEach(e => elem.appendChild(e));
+      attributes.elems.forEach((e: any) => elem.appendChild(e));
     }
 
     if (typeof attributes.innerText === 'string') {
@@ -198,50 +192,50 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     }
 
     return elem;
-  },
+  }
 
-  'private _processAddButton': function () {
-    var _self = this,
-      $btn = this._getAddButton();
+  private _processAddButton(): void {
+    var $btn = this._getAddButton();
 
     if (this.group.locked()) {
       $btn.hide();
       return;
     }
+  }
 
-    $btn.click(function () {
-      _self.initTab();
-    });
-  },
-
-  'private _processLengthField': function () {
+  private _processLengthField(): void {
     this._lengthField = this._box.getAttribute('data-length-field') || '';
-  },
+  }
 
-  'private _processHideFlags': function () {
+  private _processHideFlags(): boolean {
     if (this._disableFlags.length === 0) {
-      return;
+      return false;
     }
 
-    var data = this._bucket.getData();
+    var data = this._bucket?.getData();
+
+    if (!data) {
+      return false;
+    }
+
     var n = 0;
 
-    var disables = [];
-    for (var i in this._disableFlags) {
+    var disables: boolean[] = [];
+    for (let i in this._disableFlags) {
       var flag = this._disableFlags[i];
 
-      for (var tabi in data[flag] || {}) {
-        var val = data[flag][tabi],
+      for (let tabi in data[flag] || {}) {
+        let val = data[flag][tabi],
           hide = !(val === '' || +val === 0);
 
         // hides should be preserved for multiple criteria
-        disables[tabi] = disables[tabi] || false || hide;
+        disables[+tabi] = disables[+tabi] || hide;
       }
     }
 
     // perform the show/hide
-    for (var tabi in disables) {
-      var hide = disables[tabi];
+    for (let tabi = 0; tabi < disables.length; tabi++) {
+      let hide = disables[tabi];
       this._disableTab(tabi, hide);
 
       // count the number of hidden
@@ -253,31 +247,31 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._toggleClass(this._box, 'disabled', isHidden);
 
     return isHidden;
-  },
+  }
 
   /**
    * Handle forced-visibility for a disabled tab group when a blocking state
    * is resolved
    *
-   * @param {boolean} isDisabled If the group is disabled
-   * @param {boolean} isPending  If the group is pending the resolution of a
+   * @param isDisabled - If the group is disabled
+   * @param isPending  - If the group is pending the resolution of a
    *                             blocking flag
    */
-  'private _processUnavailable': function (isDisabled, isPending) {
+  private _processUnavailable(isDisabled: boolean, isPending: boolean): void {
     var unavailableMsg = this._box.querySelector('.group-unavailable');
 
     this._toggleClass(this._box, 'unavailable', isDisabled);
     this._toggleClass(unavailableMsg, 'hidden', isPending || !isDisabled);
-  },
+  }
 
   /**
    * Update the related pending UI elements
    *
-   * @param {boolean} pending whether we are setting pending to true or false
+   * @param pending - whether we are setting pending to true or false
    *
-   * @return {boolean} Pending state
+   * @return Pending state
    */
-  'private _setPending': function (pending) {
+  private _setPending(pending: boolean): boolean {
     this._toggleClass(
       this._box.querySelector('.group-pending'),
       'hidden',
@@ -299,9 +293,9 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._toggleClass(this._tabList, 'hidden', pending);
 
     return pending;
-  },
+  }
 
-  'private _disableTab': function (i, disable) {
+  private _disableTab(i: number, disable: boolean): void {
     var tab = this._getTab(i);
 
     if (disable && !tab.classList.contains('disabled')) {
@@ -309,25 +303,25 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     } else if (!disable && tab.classList.contains('disabled')) {
       tab.classList.remove('disabled');
     }
-  },
+  }
 
-  'private _removeTab': function (index) {
+  private _removeTab(index: number): void {
     var tab = this._getTab(index);
     var content = this._getTabContent(index);
 
     tab.parentElement.removeChild(tab);
     content.parentElement.removeChild(content);
-  },
+  }
 
-  'override public getFirstElementName': function (_) {
-    return this._lengthField || this.__super();
-  },
+  public getFirstElementName(_: any) {
+    return this._lengthField || super.getFirstElementName();
+  }
 
-  'override protected postPreEmptyBucketFirst': function () {
+  protected postPreEmptyBucketFirst(): this {
     // select the first tab
     this._selectTab(0);
     return this;
-  },
+  }
 
   /**
    * Sets element value given a name and index
@@ -335,62 +329,60 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
    * This has the performance benefit of searching *only* within the group
    * rather than scanning the entire DOM (or a much larger subset)
    *
-   * @param {string}  name         element name
-   * @param {number}  index        index to set
-   * @param {string}  value        value to set
-   * @param {boolean} change_event whether to trigger change event
-   *
-   * @return {TabbedBlockGroupUi} self
+   * @param name         - element name
+   * @param index        - index to set
+   * @param value        - value to set
+   * @param change_event - whether to trigger change event
    */
-  'override public setValueByName': function (
-    name,
-    index,
-    value,
-    change_event
+  public setValueByName(
+    name: string,
+    index: number,
+    value: string,
+    change_event: boolean
   ) {
     var isDisabled = this._processHideFlags();
-    var isPending = this._state_manager.is('pending', this._bucket);
+    var isPending = this._state_manager.is(<GroupState>'pending', this._bucket);
 
     this._setPending(isPending);
 
-    if (this._state_manager.observes('pending')) {
+    if (this._state_manager.observes(<GroupState>'pending')) {
       this._processUnavailable(isDisabled, isPending);
     }
 
-    this.__super.call(this, name, index, value, change_event);
+    super.setValueByName.call(this, name, index, value, change_event);
     return this;
-  },
+  }
 
-  'override protected addIndex': function (index) {
+  protected addIndex(index: number): this {
     this.addTab();
-    this.__super(index);
+    super.addIndex(index);
     return this;
-  },
+  }
 
-  'override public removeIndex': function (index) {
+  public removeIndex(index: number): this {
     this._removeTab(this.getCurrentIndexCount() - 1);
-    this.__super(index);
+    super.removeIndex(index);
     return this;
-  },
+  }
 
-  'private _getAddButton': function () {
+  private _getAddButton(): any {
     return this.$content.find('.addTab:first');
-  },
+  }
 
-  'private _showAddButton': function () {
+  private _showAddButton(): void {
     // only show if we're not locked
     if (this.group.locked()) {
       return;
     }
 
     this._getAddButton().show();
-  },
+  }
 
-  'private _hideAddButton': function () {
+  private _hideAddButton(): void {
     this._getAddButton().hide();
-  },
+  }
 
-  'private _checkAddButton': function () {
+  private _checkAddButton(): void {
     // max rows reached
     if (
       this.group.maxRows() &&
@@ -400,9 +392,9 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     } else {
       this._showAddButton();
     }
-  },
+  }
 
-  'private _getNextIndex': function () {
+  private _getNextIndex(): number {
     var index = this.getCurrentIndexCount();
 
     if (this.group.maxRows() && index === this.group.maxRows()) {
@@ -410,13 +402,13 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     }
 
     return index;
-  },
+  }
 
-  'private _getTabCount': function () {
+  private _getTabCount(): number {
     return this.getCurrentIndexCount();
-  },
+  }
 
-  'public addTab': function () {
+  public addTab(): boolean {
     try {
       var index = this._getNextIndex();
     } catch (e) {
@@ -441,9 +433,9 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._hideTab(index);
 
     return true;
-  },
+  }
 
-  'private _createTab': function (index) {
+  private _createTab(index: number): any {
     var _self = this;
 
     return this._finalizeContent(
@@ -454,27 +446,30 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
         })
         .find('a')
         // prevent anchor clicks from updating the URL
-        .click(function (event) {
+        .click(function (event: any) {
           event.preventDefault();
         })
         .end()
     );
-  },
+  }
 
-  'private _createTabContent': function (index) {
+  private _createTabContent(index: number): any {
     const item = this._contentItem.cloneNode(true);
 
     // Set field content parent for this index
     this.fieldContentParent[index] = item.querySelector('dl');
 
     if (this.getDomPerfFlag() === true) {
-      this.context.addIndex(index, this.fieldContentParent[index]);
+      this.context.addIndex(
+        <PositiveInteger>index,
+        this.fieldContentParent[index]
+      );
     }
 
     return this._finalizeContent(index, this.jquery(item));
-  },
+  }
 
-  'private _finalizeContent': function (index, $content) {
+  private _finalizeContent(index: number, $content: any): any {
     var content = $content[0];
 
     // properly name the elements to prevent id conflicts
@@ -486,19 +481,19 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this.postAddRow($content, index);
 
     return $content;
-  },
+  }
 
-  'private _selectTab': function (index) {
+  private _selectTab(index: number): void {
     this._hideTab(this._curIndex);
     this._showTab((this._curIndex = +index));
 
     this._tabExtract(index);
-  },
+  }
 
-  'private _tabExtract': function (index) {
+  private _tabExtract(index: number): void {
     var _self = this;
 
-    function pred(name) {
+    function pred(name: string) {
       // determine if the name matches the expected prefix (previously,
       // this was a regex, but profiling showed that performance was very
       // negatively impacted, so this is the faster solution)
@@ -509,8 +504,8 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
 
     // wait for a repaint so that we don't slow down the tab selection
     setTimeout(function () {
-      var cur = {};
-      _self._bucket.filter(pred, function (data, name) {
+      var cur: Record<string, any> = {};
+      _self._bucket?.filter(pred, function (data, name) {
         var curdata = data[index];
 
         // ignore bogus data
@@ -527,35 +522,29 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
         cur[_self._tabExtractDest + name] = curdata;
       });
 
-      _self._bucket.setValues(cur);
+      _self._bucket?.setValues(cur);
     }, 25);
-  },
+  }
 
-  'private _getBox': function () {
-    // avoiding use of jQuery selector because it caches DOM elements, which
-    // causes problems in other parts of the framework
-    return this.$content[0].getElementsByTagName('div')[0];
-  },
-
-  'private _getTabContent': function (index) {
+  private _getTabContent(index: number): any {
     return this._box.getElementsByClassName('tab-content')[index];
-  },
+  }
 
-  'private _getTab': function (index) {
+  private _getTab(index: number): any {
     return this._tabList.querySelectorAll('li')[index];
-  },
+  }
 
-  'private _showTab': function (index) {
+  private _showTab(index: number): void {
     this._toggleClass(this._getTab(index), 'inactive', false);
     this._toggleClass(this._getTabContent(index), 'inactive', false);
-  },
+  }
 
-  'private _hideTab': function (index) {
+  private _hideTab(index: number): void {
     this._toggleClass(this._getTab(index), 'inactive', true);
     this._toggleClass(this._getTabContent(index), 'inactive', true);
-  },
+  }
 
-  'private _getLastEligibleTab': function () {
+  private _getLastEligibleTab(): number {
     var tab_count = this._getTabCount();
     var tab_index = -1;
 
@@ -566,25 +555,25 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     }
 
     return Math.max(0, tab_index);
-  },
+  }
 
-  'private _isEligibleTab': function (index) {
+  private _isEligibleTab(index: number): boolean {
     return !this._tabList
       .querySelectorAll('li')
       [index].classList.contains('disabled');
-  },
+  }
 
-  'override public visit': function () {
+  public visit(): this {
     // let supertype do its own thing
-    this.__super();
+    super.visit();
 
     // we will have already rated once by the time this is called
     var isDisabled = this._processHideFlags();
-    var isPending = this._state_manager.is('pending', this._bucket);
+    var isPending = this._state_manager.is(<GroupState>'pending', this._bucket);
 
     this._setPending(isPending);
 
-    if (this._state_manager.observes('pending')) {
+    if (this._state_manager.observes(<GroupState>'pending')) {
       this._processUnavailable(isDisabled, isPending);
     }
 
@@ -594,7 +583,9 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
       this._selectTab(this._getLastEligibleTab());
     } else {
       // select the tab based on selection index
-      var index = this._bucket.getDataByName(this._defaultSelectionField)[0];
+      var index = this._bucket?.getDataByName(
+        this._defaultSelectionField || ''
+      )[0];
 
       if (index !== undefined && this._isEligibleTab(index)) {
         this._selectTab(index || 0);
@@ -604,18 +595,22 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     }
 
     return this;
-  },
+  }
 
   /**
    * Toggles a class name on a given element
    *
-   * @param {DomElement} elem       the element
-   * @param {string}     class_name the class to toggle`
-   * @param {boolean}    force      whether to add or remove the class
+   * @param elem       - the element
+   * @param class_name - the class to toggle`
+   * @param force      - whether to add or remove the class
    *
-   * @return {boolean} whether or not the toggle happened
+   * @return whether or not the toggle happened
    */
-  'private _toggleClass': function (elem, class_name, force) {
+  private _toggleClass(
+    elem: DomElement,
+    class_name: string,
+    force: boolean
+  ): boolean {
     if (elem) {
       if (force && !elem.classList.contains(class_name)) {
         elem.classList.add(class_name);
@@ -627,5 +622,5 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     }
 
     return false;
-  },
-});
+  }
+}

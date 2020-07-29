@@ -21,8 +21,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {PositiveInteger} from '../../numeric';
+import {ClientQuote} from '../../client/quote/ClientQuote';
 
 /**
  * Stacks groups of field indexes one atop of another, similar to how groups
@@ -30,41 +31,37 @@ var Class = require('easejs').Class,
  *
  * Does not yet support user adding or removing indexes.
  */
-module.exports = Class('StackedGroupUi').extend(GroupUi, {
+export class StackedGroupUi extends GroupUi {
   /**
    * Containing group DOM element
    */
-  'private _container': null,
+  private _container: any = null;
 
   /**
    * Definition list of each stacked item
    */
-  'private _dl': null,
+  private _dl: any = null;
 
   /**
    * Process group before initial display
    *
-   * @param {Quote} quote active quote
-   *
-   * @return {undefined}
+   * @param quote - active quote
    */
-  'override protected processContent': function (quote) {
+  protected processContent(_quote?: ClientQuote): void {
     this._container = this.content.querySelector('div.stacked-container');
 
     this._dl = this._container.querySelector('dl');
 
     this._dl.parentNode.removeChild(this._dl);
-  },
+  }
 
   /**
    * Add index (stacked item)
    *
-   * @param {number} index index that has been added (0-indexed)
-   *
-   * @return {StackedGroupUi} self
+   * @param index - index that has been added (0-indexed)
    */
-  'protected override addIndex': function (index) {
-    this.__super(index);
+  protected addIndex(index: number): this {
+    super.addIndex(index);
 
     const item = this._dl.cloneNode(true);
 
@@ -78,7 +75,10 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
     this.fieldContentParent[index] = item;
 
     if (this.getDomPerfFlag() === true) {
-      this.context.addIndex(index, this.fieldContentParent[index]);
+      this.context.addIndex(
+        <PositiveInteger>index,
+        this.fieldContentParent[index]
+      );
     }
 
     this._container.appendChild(item);
@@ -90,22 +90,20 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
     this.postAddRow($item, index);
 
     return this;
-  },
+  }
 
   /**
    * Remove index (stacked item)
    *
-   * @param {number} index index that has been removed (0-indexed)
-   *
-   * @return {StackedGroupUi} self
+   * @param index - index that has been removed (0-indexed)
    */
-  'protected override removeIndex': function (index) {
+  protected removeIndex(index: number): this {
     const item = this._container.querySelector('dl:last-child');
 
     this.styler.remove(this.jquery(item));
 
-    return this.__super(index);
-  },
+    return super.removeIndex(index);
+  }
 
   /**
    * Hide the header if there are no visible fields
@@ -113,8 +111,8 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
    * @param field
    * @param index
    */
-  'public override hideField'(field, index) {
-    this.__super(field, index);
+  public hideField(field: string, index: number) {
+    super.hideField(field, index);
 
     if (!this.hasVisibleField(index)) {
       // This possible effects of ignoring these errors has been
@@ -134,7 +132,7 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
         console.warn(e);
       }
     }
-  },
+  }
 
   /**
    * Show the header if there are visible fields
@@ -142,8 +140,8 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
    * @param field
    * @param index
    */
-  'public override showField'(field, index) {
-    this.__super(field, index);
+  public showField(field: string, index: number) {
+    super.showField(field, index);
 
     if (this.hasVisibleField(index)) {
       const header = this._container.querySelectorAll('dl')[index];
@@ -152,5 +150,5 @@ module.exports = Class('StackedGroupUi').extend(GroupUi, {
         header.classList.remove('hidden');
       }
     }
-  },
-});
+  }
+}

@@ -316,6 +316,7 @@ function createStubQuote(metadata: Record<string, any>) {
     apis: {},
     internal: {},
     autosave: false,
+    whens: {},
     meta: {
       arefs: {},
       fields: {},
