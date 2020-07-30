@@ -216,6 +216,8 @@ module.exports = Class('GridGroupUi').extend(GroupUi, {
       current_values.indexOf(this._selected_value) > -1
     ) {
       this.select();
+    } else {
+      this.deselect();
     }
   },
 
