@@ -22,11 +22,16 @@
  */
 
 import {ServerDao, Callback} from './ServerDao';
-import {MongoCollection, MongoUpdate, MongoDb} from 'mongodb';
 import {PositiveInteger} from '../../numeric';
 import {ServerSideQuote} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
+import {
+  MongoCollection,
+  MongoUpdate,
+  MongoDb,
+  MongoQueryUpdateOptions,
+} from 'mongodb';
 
 const EventEmitter = require('events').EventEmitter;
 
@@ -350,12 +355,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    * @param data    - quote data
    * @param success - successful callback
    * @param failure - failure callback
+   * @param options - mongo options to specify
    */
   mergeData(
     quote: ServerSideQuote,
     data: MongoUpdate,
     success: Callback = () => {},
-    failure: Callback = () => {}
+    failure: Callback = () => {},
+    options: MongoQueryUpdateOptions = {}
   ): this {
     // we do not want to alter the original data; use it as a prototype
     var update = data;
@@ -365,7 +372,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     this._collection!.update(
       {id: quote.getId()},
       {$set: update},
-      {},
+      options,
 
       function (err, _docs) {
         if (err) {
@@ -525,7 +532,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
       }
     }
 
-    this.mergeData(quote, update, success, failure);
+    this.mergeData(quote, update, success, failure, {j: true});
   }
 
   /**

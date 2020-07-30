@@ -99,9 +99,20 @@ module.exports = Class('RateEventHandler')
       // A value of -1 indicates that we do not want to see the rating dialog
       const hide_dialog = +data.value === -1;
 
+      const step_id = data.step_id || quote.getCurrentStepId();
+
+      // Allow a rate on a non-rate step only if we are on a beforeLoad event
+      const rate_on_step =
+        (this._client.program.rateSteps || [])[step_id] !== false ||
+        (data.onEvent || '') === 'beforeLoad';
+
       // do not perform rating if quote is locked; use existing rates, if
       // available (stored in bucket)
-      if (quote.isLocked() || qstep <= quote.getExplicitLockStep()) {
+      if (
+        quote.isLocked() ||
+        qstep <= quote.getExplicitLockStep() ||
+        !rate_on_step
+      ) {
         // no error, no data.
         c(null, null);
         return;
@@ -120,7 +131,7 @@ module.exports = Class('RateEventHandler')
 
       function dorate() {
         _self._scheduleRating(delay, data.indv, hide_dialog, function (finish) {
-          _self._performRating(quote, data.indv, data.stepId, function () {
+          _self._performRating(quote, data.indv, step_id, function () {
             finish();
             c.apply(null, arguments);
           });
@@ -163,7 +174,7 @@ module.exports = Class('RateEventHandler')
       }, delay_ms);
     },
 
-    'private _performRating': function (quote, indv, dest_step_id, c) {
+    'private _performRating': function (quote, indv, step_id, c) {
       var _self = this;
 
       // grab the rates from the server for the already posted quote data
@@ -197,7 +208,6 @@ module.exports = Class('RateEventHandler')
         // that data is updated on the screen when it's re-rated (will
         // be undefined if the step hasn't been loaded yet, in which
         // case it doesn't need to be invalidated)
-        const step_id = dest_step_id || quote.getCurrentStepId();
         var stepui = _self._client.getUi().getStep(step_id);
 
         if (stepui !== undefined) {

@@ -210,6 +210,80 @@ describe('RatingService', () => {
       });
   });
 
+  it('sets last premium date to zero if there was an override', () => {
+    const {
+      logger,
+      raters,
+      dao,
+      session,
+      quote,
+      stub_rate_data,
+      createDelta,
+      ts_ctor,
+    } = getStubs();
+
+    const rater = new (class implements Rater {
+      rate(
+        _quote: ServerSideQuote,
+        _session: UserSession,
+        _indv: string,
+        success: (
+          data: RateResult,
+          actions: ClientActions,
+          override: boolean
+        ) => void,
+        _failure: (message: string) => void
+      ) {
+        // force to be async so that the tests resemble how the code
+        // actually runs
+        process.nextTick(() => success(stub_rate_data, [], true));
+
+        return this;
+      }
+    })();
+
+    raters.byId = _ => rater;
+
+    const sut = new Sut(logger, dao, raters, createDelta, ts_ctor);
+
+    let last_prem_called = false;
+    let rated_date_called = false;
+
+    let stub_last_prem_ts = <UnixTimestamp>123;
+    let stub_rated_date_ts = <UnixTimestamp>2592001;
+
+    quote.setLastPremiumDate = ts => {
+      stub_last_prem_ts = ts;
+      last_prem_called = true;
+      return quote;
+    };
+
+    quote.setRatedDate = ts => {
+      stub_rated_date_ts = ts;
+      rated_date_called = true;
+      return quote;
+    };
+
+    quote.getLastPremiumDate = () => stub_last_prem_ts;
+    quote.getRatedDate = () => stub_rated_date_ts;
+
+    const expected = {
+      content: {
+        data: stub_rate_data,
+        initialRatedDate: stub_rated_date_ts,
+        lastRatedDate: 0,
+      },
+      actions: [],
+    };
+
+    return expect(sut.request(session, quote, '', true))
+      .to.eventually.deep.equal(expected)
+      .then((_: RateRequestResult) => {
+        expect(last_prem_called, 'baz').to.be.true;
+        expect(rated_date_called, 'baax').to.be.true;
+      });
+  });
+
   it('saves rate data to its own field', () => {
     const {
       logger,

@@ -26,7 +26,6 @@ import {ClientActions} from '../../client/action/ClientAction';
 import {PositiveInteger} from '../../numeric';
 import {PriorityLog} from '../log/PriorityLog';
 import {ProcessManager} from '../rater/ProcessManager';
-import {Program} from '../../program/Program';
 import {QuoteId} from '../../quote/Quote';
 import {ServerDao} from '../db/ServerDao';
 import {ServerSideQuote} from '../quote/ServerSideQuote';
@@ -104,9 +103,8 @@ export class RatingService {
       if (!cmd && !force && this._isQuoteValid(quote)) {
         const actions: ClientActions = [];
         const data = quote.getRatingData();
-        const program = quote.getProgram();
 
-        this._processRetries(program, quote, data, actions);
+        this._processRetries(quote, data, actions);
 
         // send last rated data
         return resolve({
@@ -191,33 +189,37 @@ export class RatingService {
         quote,
         session,
         indv,
-        (rate_data: RateResult, actions: ClientActions) => {
+        (
+          rate_data: RateResult,
+          actions: ClientActions,
+          override: boolean = false
+        ) => {
           actions = actions || [];
 
-          this.postProcessRaterData(
-            rate_data,
-            actions,
-            quote.getProgram(),
-            quote
-          );
-
+          this.postProcessRaterData(rate_data, actions, quote);
           quote.setRatingData(rate_data);
 
           const class_dest = {};
-
           const cleaned = this._cleanRateData(rate_data, class_dest);
 
           // save all data server-side (important: do after
           // post-processing); async
-          this._saveRatingData(quote, rate_data, class_dest, indv, () => {
-            const content = {
-              data: cleaned,
-              initialRatedDate: quote.getRatedDate(),
-              lastRatedDate: quote.getLastPremiumDate(),
-            };
+          this._saveRatingData(
+            quote,
+            rate_data,
+            class_dest,
+            indv,
+            override,
+            () => {
+              const content = {
+                data: cleaned,
+                initialRatedDate: quote.getRatedDate(),
+                lastRatedDate: quote.getLastPremiumDate(),
+              };
 
-            resolve({content: content, actions: actions});
-          });
+              resolve({content: content, actions: actions});
+            }
+          );
         },
         (message: string) => {
           this._logRatingError(quote, Error(message));
@@ -235,23 +237,27 @@ export class RatingService {
    * this is to allow us to reference the data (e.g. for reporting) even if
    * the client does not save it.
    *
-   * @param quote - quote to save data to
-   * @param data  - rating data
-   * @param indv  - individual supplier, or empty
-   * @param c     - callback
+   * @param quote    - quote to save data to
+   * @param data     - rating data
+   * @param indv     - individual supplier, or empty
+   * @param override - rating was overridden and results are custom
+   * @param c        - callback
    */
   private _saveRatingData(
     quote: ServerSideQuote,
     data: RateResult,
     classes: Record<string, any>,
     indv: string,
+    override: boolean,
     c: RequestCallback
   ): void {
     // only update the last premium calc date on the initial request
     if (!indv) {
       var cur_date = this._ts_ctor();
 
-      quote.setLastPremiumDate(cur_date);
+      // If we overrode the rating process we do not want to mark it as a
+      // valid rate
+      quote.setLastPremiumDate(override ? <UnixTimestamp>0 : cur_date);
       quote.setRatedDate(cur_date);
 
       const quote_data = quote.getRatingData();
@@ -289,13 +295,11 @@ export class RatingService {
    *
    * @param data     - rating data returned
    * @param actions  - actions to send to client
-   * @param program  - program used to perform rating
    * @param quote    - quote used for rating
    */
   protected postProcessRaterData(
     data: RateResult,
     actions: ClientActions,
-    program: Program,
     quote: ServerSideQuote
   ): void {
     var meta = data._cmpdata || {};
@@ -305,8 +309,9 @@ export class RatingService {
 
     // rating worksheets are returned as metadata
     this._processWorksheetData(quote.getId(), data);
+    this._processRetries(quote, data, actions);
 
-    this._processRetries(program, quote, data, actions);
+    const program = quote.getProgram();
 
     if (
       program.ineligibleLockCount > 0 &&
@@ -479,13 +484,11 @@ export class RatingService {
   /**
    * Process retry logic
    *
-   * @param program - program used to perform rating
-   * @param quote   - quote used for rating
-   * @param data    - rating data returned
-   * @param actions - actions to sent to the client
+   * @param quote    - quote used for rating
+   * @param data     - rating data returned
+   * @param actions  - actions to sent to the client
    */
   private _processRetries(
-    program: Program,
     quote: ServerSideQuote,
     data: RateResult,
     actions: ClientActions
@@ -496,8 +499,6 @@ export class RatingService {
     const retry_total = retries.field_count;
     const supplier_total = data.__result_ids?.length || retry_total;
     const retry_attempts = quote.getRetryAttempts();
-    const step = quote.getCurrentStepId();
-    const is_rate_step = (program.rateSteps || [])[step] === true;
     const missing_retries = supplier_total - retry_total;
 
     // Make determinations
@@ -513,7 +514,7 @@ export class RatingService {
       retryAttempts: quote.getRetryAttempts(),
     });
 
-    if (has_pending && !max_attempts && is_rate_step) {
+    if (has_pending && !max_attempts) {
       // Set rate event value to -1 so that it will be in the background
       actions.push({
         action: 'delay',

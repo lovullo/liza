@@ -265,7 +265,7 @@ module.exports = Class('ProcessManager', {
     }
 
     // that's right; who da man (or wo-man)?
-    success(msg.data, msg.actions || []);
+    success(msg.data, msg.actions || [], msg.override || false);
   },
 
   'private _purgeRateRequests'(msg) {
