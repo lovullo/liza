@@ -513,12 +513,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    * @param new_meta - bucket-formatted data to write
    * @param success  - callback on success
    * @param failure  - callback on error
+   * @param options  - mongo options to specify
    */
   saveQuoteMeta(
     quote: ServerSideQuote,
     new_meta?: Record<string, any>,
     success: Callback = () => {},
-    failure: Callback = () => {}
+    failure: Callback = () => {},
+    options: MongoQueryUpdateOptions = {}
   ): void {
     const update: MongoUpdate = {};
 
@@ -532,7 +534,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
       }
     }
 
-    this.mergeData(quote, update, success, failure, {j: true});
+    this.mergeData(quote, update, success, failure, options);
   }
 
   /**

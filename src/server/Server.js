@@ -1244,7 +1244,8 @@ module.exports = Class('Server').extend(EventEmitter, {
               quote,
               data,
               saved_quote => resolve(quote),
-              e => reject(e)
+              e => reject(e),
+              {j: true}
             );
           });
         })
