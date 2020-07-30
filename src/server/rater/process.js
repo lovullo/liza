@@ -152,7 +152,7 @@ function doRate(data) {
     rate_quote,
     rate_session,
     data.indv,
-    function (rdata, actions) {
+    function (rdata, actions, override = false) {
       process.send({
         cmd: 'rate-reply',
         rqid: rqid,
@@ -160,6 +160,7 @@ function doRate(data) {
         status: 'ok',
         data: rdata,
         actions: actions,
+        override: override,
 
         // not used by all raters
         imported: imported_flag,

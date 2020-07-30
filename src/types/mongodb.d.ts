@@ -79,6 +79,7 @@ type MongoCallback = (err: NullableError, data: {[P: string]: any}) => void;
  */
 interface MongoQueryUpdateOptions {
   upsert?: boolean;
+  j?: boolean;
 }
 
 /**

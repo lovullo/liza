@@ -71,6 +71,7 @@ describe('RateEventHandler', () => {
         isSaving: () => false,
         once: (event, callback) => {},
         getUi: () => ui,
+        program: {},
       };
 
       const response = {
@@ -145,6 +146,7 @@ describe('RateEventHandler', () => {
         getDataByName: name => {
           return ['foo'];
         },
+        program: {},
       };
 
       const proxy = {
@@ -226,6 +228,7 @@ describe('RateEventHandler', () => {
             },
           };
         },
+        program: {},
       };
 
       const proxy = {
@@ -305,6 +308,7 @@ describe('RateEventHandler', () => {
             },
           };
         },
+        program: {},
       };
 
       const proxy = {
@@ -371,6 +375,7 @@ describe('RateEventHandler', () => {
         getQuote: () => quote,
         isSaving: () => false,
         getUi: () => ui,
+        program: {},
       };
 
       const sut = Sut(client, proxy);
@@ -386,6 +391,106 @@ describe('RateEventHandler', () => {
           stepId: stepId,
         }
       );
+    });
+  });
+
+  describe('Only rates on applicable steps', () => {
+    [
+      {
+        label: 'Rates normally if program has no rate steps',
+        rate_steps: undefined,
+        step_id: 1,
+        on_event: 'foo',
+        rate_expected: true,
+      },
+      {
+        label: 'No rate when onEvent isnt beforeLoad and step is not rateable',
+        rate_steps: [false, false],
+        step_id: 1,
+        on_event: 'foo',
+        rate_expected: false,
+      },
+      {
+        label: 'No rate when onEvent is undefined and step is not rate step',
+        rate_steps: [false, false],
+        step_id: 1,
+        on_event: undefined,
+        rate_expected: false,
+      },
+      {
+        label: 'Rates when onEvent is beforeLoad and step is not rate step',
+        rate_steps: [false, false],
+        step_id: 1,
+        on_event: 'beforeLoad',
+        rate_expected: true,
+      },
+      {
+        label: 'Rates when onEvent is not beforeLoad and step is rate step',
+        rate_steps: [false, true],
+        step_id: 1,
+        on_event: 'foo',
+        rate_expected: true,
+      },
+    ].forEach(({label, rate_steps, step_id, on_event, rate_expected}) => {
+      it(label, done => {
+        let is_saving_called = false;
+
+        const proxy = {get: (_, cb) => cb({content: {data: '123'}}, null)};
+        const quote = {
+          getId: () => 123,
+          getExplicitLockStep: () => 0,
+          getCurrentStepId: () => step_id,
+          isLocked: _ => false,
+          refreshData: () => {},
+          setLastPremiumDate: _ => {},
+          setInitialRatedDate: _ => {},
+        };
+
+        const step = {
+          invalidate: () => {},
+          emptyBucket: () => {},
+        };
+
+        const ui = {
+          getStep: _ => step,
+        };
+
+        const client = {
+          uiDialog: {
+            showRatingInProgressDialog: () => {
+              return {close: () => {}};
+            },
+          },
+          getQuote: () => quote,
+          isSaving: () => {
+            is_saving_called = true;
+            return false;
+          },
+          getUi: () => ui,
+          program: {
+            rateSteps: rate_steps,
+          },
+        };
+
+        const data = {
+          value: 1,
+          step_id: step_id,
+          onEvent: on_event,
+        };
+
+        const sut = Sut(client, proxy);
+
+        sut.handle(
+          '',
+          (err, result) => {
+            expect(err).to.equal(null);
+            expect(result !== null).to.equal(rate_expected);
+            expect(is_saving_called).to.equal(rate_expected);
+            done();
+          },
+          data
+        );
+      });
     });
   });
 
@@ -435,6 +540,7 @@ describe('RateEventHandler', () => {
         },
         once: (event, callback) => callback(),
         getUi: () => ui,
+        program: {},
       };
 
       const response = {
@@ -507,6 +613,7 @@ describe('RateEventHandler', () => {
         },
         once: (event, callback) => callback(),
         getUi: () => ui,
+        program: {},
       };
 
       const response = {

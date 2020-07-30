@@ -654,6 +654,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         elementName: element_name,
         indexes: indexes,
         value: value,
+        onEvent: 'validation',
       });
     };
   },
@@ -670,6 +671,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         elementName: element_name,
         indexes: indexes,
         value: value,
+        onEvent: 'visit',
       });
     };
   },
@@ -1530,7 +1532,10 @@ module.exports = Class('Client').extend(EventEmitter, {
       question_id,
       value
     ) {
-      client.handleEvent(event, {stepId: +value});
+      client.handleEvent(event, {
+        stepId: +value,
+        onEvent: 'submit',
+      });
     });
 
     dosave();
@@ -1756,6 +1761,7 @@ module.exports = Class('Client').extend(EventEmitter, {
               elementName: element_name,
               indexes: indexes,
               value: value,
+              onEvent: 'beforeLoad',
             },
             function () {
               try_continue_nav();
@@ -1829,7 +1835,8 @@ module.exports = Class('Client').extend(EventEmitter, {
   'private _forwardValidate': function (event) {
     var step = this.ui.getCurrentStep().getStep(),
       cur_step_id = step.getId(),
-      bucket = step.getBucket();
+      bucket = step.getBucket(),
+      client = this;
 
     // perform the validations only if we are advancing one or more steps
     if (event.stepId <= cur_step_id) {
@@ -1842,7 +1849,10 @@ module.exports = Class('Client').extend(EventEmitter, {
       bucket,
       this._cmatch.getMatches(),
       function (trigger_event, question_id, value) {
-        client.handleEvent(trigger_event, {stepId: +value});
+        client.handleEvent(trigger_event, {
+          stepId: +value,
+          onEvent: 'forward',
+        });
       }
     );
 
