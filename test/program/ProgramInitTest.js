@@ -236,6 +236,7 @@ describe('ProgramInit', () => {
           defaults: defaults,
           meta: meta,
           groupExclusiveFields: groupExclusiveFields,
+          whens: defaults,
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(

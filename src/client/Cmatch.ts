@@ -222,6 +222,7 @@ export class Cmatch {
 
     let fields = cur_step.getStep().getExclusiveFieldNames();
     const shown: {[index: string]: any} = {};
+    const hidden: {[index: string]: any} = {};
 
     let visq: VisibilityQueue = {};
 
@@ -278,10 +279,24 @@ export class Cmatch {
         if (!force && vis[i] === cur[i]) {
           continue;
         }
+
         (vis[i] ? show : hide).push(<PositiveInteger>i);
       }
 
       this.markShowHide(field, visq, show, hide);
+
+      /**
+       * When we clear N/A fields, ensure that their value is reset if they are
+       * hidden on a class match. This is considered an initialization for the
+       * field at the new index.
+       */
+      if (this._program.clearNaFields && hide.length) {
+        hidden[field] = [];
+
+        for (const index of hide) {
+          hidden[field][index] = this._program.naFieldValue;
+        }
+      }
 
       /**
        * When we clear N/A fields, ensure that their default value is restored
@@ -303,8 +318,6 @@ export class Cmatch {
       }
     }
 
-    this._client.getQuote().setData(shown);
-
     // it's important to do this before showing/hiding fields, since
     // those might trigger events that check the current cmatches
     this._cmatch = cmatch;
@@ -323,6 +336,9 @@ export class Cmatch {
 
       this._dapiTrigger(field);
     });
+
+    this._client.getQuote().setData(shown);
+    this._client.getQuote().setData(hidden);
   }
 
   /**
