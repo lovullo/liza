@@ -401,6 +401,7 @@ describe('RateEventHandler', () => {
         rate_steps: undefined,
         step_id: 1,
         on_event: 'foo',
+        indv: undefined,
         rate_expected: true,
       },
       {
@@ -408,6 +409,7 @@ describe('RateEventHandler', () => {
         rate_steps: [false, false],
         step_id: 1,
         on_event: 'foo',
+        indv: undefined,
         rate_expected: false,
       },
       {
@@ -415,6 +417,7 @@ describe('RateEventHandler', () => {
         rate_steps: [false, false],
         step_id: 1,
         on_event: undefined,
+        indv: undefined,
         rate_expected: false,
       },
       {
@@ -422,6 +425,7 @@ describe('RateEventHandler', () => {
         rate_steps: [false, false],
         step_id: 1,
         on_event: 'beforeLoad',
+        indv: undefined,
         rate_expected: true,
       },
       {
@@ -429,9 +433,18 @@ describe('RateEventHandler', () => {
         rate_steps: [false, true],
         step_id: 1,
         on_event: 'foo',
+        indv: undefined,
         rate_expected: true,
       },
-    ].forEach(({label, rate_steps, step_id, on_event, rate_expected}) => {
+      {
+        label: 'Rate when indv is present',
+        rate_steps: [false, false],
+        step_id: 1,
+        on_event: undefined,
+        indv: 'foo',
+        rate_expected: true,
+      },
+    ].forEach(({label, rate_steps, step_id, on_event, indv, rate_expected}) => {
       it(label, done => {
         let is_saving_called = false;
 
@@ -476,6 +489,7 @@ describe('RateEventHandler', () => {
           value: 1,
           step_id: step_id,
           onEvent: on_event,
+          indv: indv,
         };
 
         const sut = Sut(client, proxy);

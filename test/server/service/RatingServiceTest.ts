@@ -497,7 +497,7 @@ describe('RatingService', () => {
     // we are specifying that there are no retry fields, so one must be
     // missing. Missing retry attempts should be treated as pending so we
     // expect the retry attempt counter to be incremented
-    const total_retry_fields = 0;
+    const total_retry_fields = 1;
     const retry_attempts_current = 12;
     const retry_attempts_expected = 13;
 
@@ -523,6 +523,48 @@ describe('RatingService', () => {
       // Expect that the missing field was added in once retries were
       // cleared. The id from the stub rate data is foo
       expect(result.content.data['foo___retry']).to.deep.equal([0]);
+      expect(retry_attempts_given).to.equal(retry_attempts_expected);
+    });
+  });
+
+  it('Ignore missing retry flag logic if no retry flags exist', () => {
+    const {
+      dao,
+      logger,
+      quote,
+      raters,
+      session,
+      createDelta,
+      ts_ctor,
+    } = getStubs();
+
+    // The stub rate data returned on rate has a total of 1 supplier and
+    // we are specifying that there are no retry fields, so one must be
+    // missing. Missing retry attempts should be treated as pending so we
+    // expect the retry attempt counter to be incremented
+    const total_retry_fields = 0;
+    const retry_attempts_current = 12;
+    const retry_attempts_expected = 0;
+
+    let retry_attempts_given: number;
+
+    quote.setRetryAttempts = (attempts: number) => {
+      retry_attempts_given = attempts;
+
+      return quote;
+    };
+
+    quote.getRetryCount = () => {
+      return {
+        field_count: total_retry_fields,
+        true_count: 0,
+      };
+    };
+
+    quote.getRetryAttempts = () => retry_attempts_current;
+
+    const sut = new Sut(logger, dao, raters, createDelta, ts_ctor);
+    return sut.request(session, quote, '').then((_: RateRequestResult) => {
       expect(retry_attempts_given).to.equal(retry_attempts_expected);
     });
   });
@@ -695,7 +737,7 @@ describe('RatingService', () => {
         };
         quote.getRetryCount = () => {
           return {
-            field_count: 1,
+            field_count: 2,
             true_count: retry_count,
           };
         };
@@ -809,7 +851,7 @@ function getStubs(rate_data?: any) {
 
   // rate reply
   const stub_rate_data: RateResult = rate_data || {
-    __result_ids: ['foo'],
+    __result_ids: ['foo', 'bar'],
     _unavailable_all: '0',
   };
 
@@ -951,7 +993,7 @@ function getStubs(rate_data?: any) {
     retryAttempted: () => quote,
     setMetadata: () => quote,
     getRetryCount: () => {
-      return {field_count: 1, true_count: 0};
+      return {field_count: 2, true_count: 0};
     },
     setInitialRatedDate: () => quote,
     getExpirationDate: () => 123,

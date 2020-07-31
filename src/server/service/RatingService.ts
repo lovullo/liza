@@ -499,7 +499,11 @@ export class RatingService {
     const retry_total = retries.field_count;
     const supplier_total = data.__result_ids?.length || retry_total;
     const retry_attempts = quote.getRetryAttempts();
-    const missing_retries = supplier_total - retry_total;
+
+    // Make the assumption here that if there are no retry fields at all then
+    // we do not want deferred rating
+    const missing_retries =
+      retry_total === 0 ? 0 : supplier_total - retry_total;
 
     // Make determinations
     const max_attempts = retry_attempts >= this.RETRY_MAX_ATTEMPTS;

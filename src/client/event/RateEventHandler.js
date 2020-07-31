@@ -104,7 +104,8 @@ module.exports = Class('RateEventHandler')
       // Allow a rate on a non-rate step only if we are on a beforeLoad event
       const rate_on_step =
         (this._client.program.rateSteps || [])[step_id] !== false ||
-        (data.onEvent || '') === 'beforeLoad';
+        (data.onEvent || '') === 'beforeLoad' ||
+        data.indv !== undefined;
 
       // do not perform rating if quote is locked; use existing rates, if
       // available (stored in bucket)
