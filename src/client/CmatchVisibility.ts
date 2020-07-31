@@ -1,5 +1,5 @@
 /**
- * Test case for CmatchVisibility
+ * CmatchVisibility
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -40,8 +40,8 @@ interface VisibilityLegend {
 /**
  * Field index visibility
 
- * @prop show  - indexes of the field that are visible
- * @prop hide  - indexes of the field that are hidden
+ * @prop show - indexes of the field that are visible
+ * @prop hide - indexes of the field that are hidden
  */
 interface IndexVisibility {
   show: PositiveInteger[];
@@ -104,6 +104,8 @@ export class CmatchVisibility {
    * Get visibility info for array-based visibility
    *
    * @param indexes - array of visibilty data
+   *
+   * @return index visibility grouped by show and hide
    */
   private _processArray(
     indexes: VisibilityVector | VisibilityMatrix

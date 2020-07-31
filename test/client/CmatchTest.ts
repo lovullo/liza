@@ -263,9 +263,11 @@ describe('Cmatch', () => {
         },
         cmatch: {foo: {all: true, any: true, indexes: [1, 0]}},
         expected: [
+          // show events
           {
             foo: {},
           },
+          // hide events
           {
             foo: {1: ''},
           },
@@ -278,9 +280,11 @@ describe('Cmatch', () => {
         },
         cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
         expected: [
+          // show events
           {
             foo: {1: 'default'},
           },
+          // hide events
           {
             foo: {},
           },

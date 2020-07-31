@@ -221,6 +221,9 @@ export class Cmatch {
     }
 
     let fields = cur_step.getStep().getExclusiveFieldNames();
+
+    // Prepare to keep track of any fields that show/hide in this process and
+    // update the bucket if necessary
     const shown: {[index: string]: any} = {};
     const hidden: {[index: string]: any} = {};
 
@@ -420,7 +423,6 @@ export class Cmatch {
 
     let reset: CmatchData = {};
 
-    // TODO: feature flag here
     for (let name in step.getStep().getExclusiveFieldNames()) {
       let data = this._cmatchHidden[name];
 

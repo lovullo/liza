@@ -45,6 +45,9 @@ export declare class ClientQuote extends BaseQuote {
    */
   on(event_id: string, callback: (classes: any) => void): void;
 
+  /**
+   * Returns all bucket data
+   */
   getData(): Data;
 
   /**

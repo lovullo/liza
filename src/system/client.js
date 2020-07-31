@@ -42,7 +42,11 @@ module.exports = {
   cmatch: (program, client) => {
     const matcher = field.FieldClassMatcher(program.whens);
     const visibility = new CmatchVisibility(client);
-    const resetter = new FieldResetter(client, program.clearNaFields);
+    const resetter = new FieldResetter(
+      client,
+      program.clearNaFields,
+      program.naFieldValue
+    );
 
     return new Cmatch(matcher, program, client, visibility, resetter);
   },
