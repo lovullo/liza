@@ -489,6 +489,11 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
    * @param data - bucket diff
    */
   private _updateAnswerFieldData(data: any): void {
+    // return if step is not active
+    if (!this._active) {
+      return;
+    }
+
     // we only care if the data we're watching has been
     // changed
     for (var name in data) {
