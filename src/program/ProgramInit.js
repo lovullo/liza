@@ -65,9 +65,9 @@ module.exports = Class('ProgramInit', {
 
       while (i--) {
         const field = program.groupExclusiveFields[group][i];
-        const default_value = program.clearNaFields
-          ? program.naFieldValue
-          : defaults[field];
+        const has_predicate = program.whens[field] !== undefined;
+        const na = has_predicate && program.clearNaFields;
+        const init_value = na ? program.naFieldValue : defaults[field];
 
         // generated questions with no types should never be part of
         // the bucket
@@ -83,7 +83,7 @@ module.exports = Class('ProgramInit', {
 
         // If no document data, initialize with default value
         if (data[field] === undefined) {
-          data[field] = [default_value];
+          data[field] = [init_value];
         }
 
         // If min rows on the group is greater than the data
@@ -97,7 +97,7 @@ module.exports = Class('ProgramInit', {
           let index = data[field].length;
 
           while (index < groups[group].min) {
-            data[field][index] = default_value;
+            data[field][index] = init_value;
             index++;
           }
         }

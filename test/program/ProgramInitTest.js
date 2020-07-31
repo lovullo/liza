@@ -189,6 +189,53 @@ describe('ProgramInit', () => {
       },
     },
     {
+      label: 'resets NA fields on init',
+      defaults: {foo: 'init'},
+      meta: {
+        groups: {
+          Something: {
+            min: 2,
+          },
+        },
+        qtypes: {
+          foo: {type: 'text'},
+        },
+      },
+      groupExclusiveFields: {
+        Something: ['foo'],
+      },
+      doc_data: {},
+      expected: {
+        foo: ['', ''],
+      },
+      clearNaFields: true,
+      naFieldValue: '',
+    },
+    {
+      label: 'does not reset applicable fields on init',
+      defaults: {foo: 'init'},
+      whens: {},
+      meta: {
+        groups: {
+          Something: {
+            min: 2,
+          },
+        },
+        qtypes: {
+          foo: {type: 'text'},
+        },
+      },
+      groupExclusiveFields: {
+        Something: ['foo'],
+      },
+      doc_data: {},
+      expected: {
+        foo: ['init', 'init'],
+      },
+      clearNaFields: true,
+      naFieldValue: '',
+    },
+    {
       label: 'fix missing bucket data values',
       defaults: {foo: 'init'},
       meta: {
@@ -227,7 +274,18 @@ describe('ProgramInit', () => {
       expected: {},
     },
   ].forEach(
-    ({label, doc_data, id, defaults, meta, groupExclusiveFields, expected}) => {
+    ({
+      label,
+      doc_data,
+      id,
+      defaults,
+      meta,
+      groupExclusiveFields,
+      expected,
+      clearNaFields,
+      naFieldValue,
+      whens,
+    }) => {
       it(label, () => {
         const sut = Sut(null);
 
@@ -236,7 +294,9 @@ describe('ProgramInit', () => {
           defaults: defaults,
           meta: meta,
           groupExclusiveFields: groupExclusiveFields,
-          whens: defaults,
+          whens: whens ? whens : defaults,
+          clearNaFields,
+          naFieldValue,
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(
