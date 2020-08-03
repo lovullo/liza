@@ -46,7 +46,7 @@ describe('ui.GeneralStepUi', function () {
         .withExactArgs(orig_data)
         .returns(fmt_data);
 
-      createSut(
+      const sut = createSut(
         formatter,
         createElementStyler(function (name: any, value: any) {
           // by the time the answer data makes its way to the
@@ -58,7 +58,9 @@ describe('ui.GeneralStepUi', function () {
           mock_fmt.verify();
           done();
         })
-      ).answerDataUpdate(orig_data);
+      );
+      sut.setActive(true);
+      sut.answerDataUpdate(orig_data);
     });
 
     [
@@ -141,7 +143,7 @@ describe('ui.GeneralStepUi', function () {
             get_group_call_count++;
             return group;
           };
-
+          sut.setActive(true);
           sut.answerDataUpdate(data);
           async_flag = true;
         });
