@@ -84,4 +84,9 @@ export declare class Client {
    * Whether there is a current save event
    */
   isSaving(): boolean;
+
+  /**
+   * Whether there is a navigation event in progress
+   */
+  isNavigating(): boolean;
 }

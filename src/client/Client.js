@@ -215,6 +215,12 @@ module.exports = Class('Client').extend(EventEmitter, {
   'private _saveEvent': undefined,
 
   /**
+   * Current navigation event
+   * @type {boolean}
+   */
+  'private _is_navigating': false,
+
+  /**
    * UI styler controller
    * @type {UiStyler}
    */
@@ -1016,6 +1022,7 @@ module.exports = Class('Client').extend(EventEmitter, {
           url = client._quote.getId() + '/step/' + step_id + '/visit';
 
         client._quote.setCurrentStepId(step_id);
+        client._is_navigating = false;
 
         // run any visit hooks
         client._quote.visitData(function (bucket) {
@@ -1032,6 +1039,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         });
       })
       .on('preRenderStep', function (step, $content) {
+        client._is_navigating = true;
         client.elementStyler.setContext($content);
       });
   },
@@ -1564,6 +1572,15 @@ module.exports = Class('Client').extend(EventEmitter, {
    */
   'public isSaving': function () {
     return this._saveEvent !== undefined;
+  },
+
+  /**
+   * Whether there is a navigation event in progress
+   *
+   * @return {boolean}
+   */
+  'public isNavigating': function () {
+    return !!this._is_navigating;
   },
 
   'public abortSave': function () {
@@ -2176,6 +2193,7 @@ module.exports = Class('Client').extend(EventEmitter, {
 
     hooks.push(
       this._factory.createQuoteStagingHook(
+        this,
         this.program,
         this._quote.getId(),
         this.dataProxy
