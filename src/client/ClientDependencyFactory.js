@@ -195,8 +195,9 @@ module.exports = Class('ClientDependencyFactory', {
 
   createQuotePreStagingHook: createQuotePreStagingHook,
 
-  createQuoteStagingHook: function (program, quote_id, proxy) {
+  createQuoteStagingHook: function (client, program, quote_id, proxy) {
     return createQuoteStagingHook(
+      client,
       program,
       this.createDataBucketTransport(quote_id + '/autosave', proxy, false)
     );
