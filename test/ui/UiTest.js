@@ -54,6 +54,36 @@ describe('Ui', () => {
     expect(sut.isSaving()).to.be.false;
     expect(is_saving_calls).to.equal(1);
   });
+
+  it('stepSave calls save hooks', () => {
+    const step = createMockStepUi();
+
+    const sut = Sut.extend({
+      'override __construct': function (options) {},
+      'override hideErrors': function () {},
+    })();
+
+    let hook_one_called = false;
+    let hook_two_called = false;
+
+    // set a save hook
+    sut.saveStep(function () {
+      hook_one_called = true;
+    });
+    sut.saveStep(function () {
+      hook_two_called = true;
+    });
+
+    sut.saveStep(
+      step,
+      function () {},
+      function () {},
+      true
+    );
+
+    expect(hook_one_called).to.true;
+    expect(hook_two_called).to.true;
+  });
 });
 
 function createMockStepUi() {
