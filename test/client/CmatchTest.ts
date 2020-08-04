@@ -1,7 +1,7 @@
 /**
  * Test case for Cmatch
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -19,33 +19,39 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import {ClientQuote} from '../../src/client/quote/ClientQuote';
+import {Client} from '../../src/client/Client';
+import {CmatchVisibility} from '../../src/client/CmatchVisibility';
+import {DataApiResult} from '../../src/dapi/DataApi';
+import {ExclusiveFields, Step} from '../../src/step/Step';
+import {FieldClassMatcher} from '../../src/field/FieldClassMatcher';
+import {FieldResetter} from '../../src/client/FieldResetter';
+import {GroupUi} from '../../src/ui/group/GroupUi';
+import {PositiveInteger} from '../../src/numeric';
+import {StagingBucket} from '../../src/bucket/StagingBucket';
+import {StepUi} from '../../src/ui/step/StepUi';
+import {expect} from 'chai';
 import {
   Cmatch as Sut,
   CmatchData,
   VisibilityQueue,
 } from '../../src/client/Cmatch';
-
-// const { event }  = require( '../../' ).client;
-import {expect} from 'chai';
-
-import {ClientQuote, Data} from '../../src/client/quote/ClientQuote';
-import {StagingBucket} from '../../src/bucket/StagingBucket';
+import {
+  createStubClientQuote,
+  createStubUi,
+  createStubClient,
+  createStubProgram,
+} from './CommonResources';
 import {
   DataDiff,
   DataValidator,
   ValidationFailure,
 } from '../../src/validate/DataValidator';
-import {FieldClassMatcher} from '../../src/field/FieldClassMatcher';
-import {ClassificationResult, Program} from '../../src/program/Program';
-import {DataApiResult} from '../../src/dapi/DataApi';
-import {Client} from '../../src/client/Client';
-import {Nav} from '../../src/client/nav/Nav';
-import {ElementStyler} from '../../src/ui/ElementStyler';
-import {Ui} from '../../src/ui/Ui';
-import {StepUi} from '../../src/ui/step/StepUi';
-import {ExclusiveFields, Step} from '../../src/step/Step';
-import {GroupUi} from '../../src/ui/group/GroupUi';
-import {PositiveInteger} from '../../src/numeric';
+
+const sinon = require('sinon');
+
+type FieldKey = 'shown_field' | 'hidden_field';
+type FieldObject = {[key in FieldKey]: any};
 
 // these tests aren't terribly effective right now
 describe('Cmatch', () => {
@@ -94,12 +100,6 @@ describe('Cmatch', () => {
     expect(sut.markShowHide('foo', {}, [], [])).to.deep.equal({});
   });
 
-  it('handleClassMatch throws error if step is undefined', () => {
-    const {sut} = createStubs();
-
-    expect(() => sut.handleClassMatch({}, false)).to.throw(TypeError);
-  });
-
   it('does not affect marking of other fields', () => {
     const barval = {};
     const visq = {bar: barval};
@@ -114,88 +114,6 @@ describe('Cmatch', () => {
     );
 
     expect(results.bar).to.equal(barval);
-  });
-
-  it('handleClassMatch triggers dapi for every visible queued element', () => {
-    const field_names = {
-      foo: true,
-      bar: true,
-      baz: true,
-    };
-
-    const cmatch: CmatchData = {
-      foo: {all: true, any: true, indexes: [0]},
-      baz: {all: true, any: true, indexes: [0]},
-    };
-
-    const step_ui = createStubStepUi(field_names);
-
-    const {data_validator, quote, program, sut} = createStubs(cmatch, step_ui);
-
-    let given: string[] = [];
-    let dapi_call_count = 0;
-
-    program.dapi = (
-      _step_id: PositiveInteger,
-      field: string,
-      _bucket: StagingBucket,
-      _diff: Record<string, any>,
-      _cmatch: CmatchData,
-      _callback: (() => void) | null
-    ) => {
-      given.push(field);
-      ++dapi_call_count;
-      return <DataApiResult>{};
-    };
-
-    sut.hookClassifier(data_validator);
-    quote.emit('classify');
-
-    expect(dapi_call_count).to.equal(2);
-    expect(given).to.deep.equal(['foo', 'baz']);
-  });
-
-  [
-    {
-      label: 'handleClassMatch handles only current indexes in bucket',
-      cur_data: ['bar'],
-      cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
-      expected: {foo: {all: true, any: true, indexes: [1]}},
-    },
-    {
-      label:
-        'handleClassMatch handles indexes requested when bucket and cmatch index counts are equal',
-      cur_data: ['bar', 'baz'],
-      cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
-      expected: {foo: {all: true, any: true, indexes: [1, 1]}},
-    },
-    {
-      label:
-        'handleClassMatch handles indexes requested when bucket values exist',
-      cur_data: ['bar', 'baz', 'foo'],
-      cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
-      expected: {foo: {all: true, any: true, indexes: [1, 1]}},
-    },
-  ].forEach(({label, cur_data, cmatch, expected}) => {
-    it(label, done => {
-      const step_ui = createStubStepUi({foo: true});
-      const {sut, client, quote} = createStubs({}, step_ui);
-
-      let get_data_call_count = 0;
-      quote.getDataByName = (_field: string) => {
-        ++get_data_call_count;
-        return cur_data;
-      };
-
-      client.handleEvent = (_event_id: string, _data: any) => {
-        expect(get_data_call_count).to.equal(1);
-        expect(sut.getMatches()).to.deep.equal(expected);
-        done();
-        return client;
-      };
-
-      sut.handleClassMatch(cmatch);
-    });
   });
 
   it('getCmatchFields returns only fields with cmatch data', () => {
@@ -245,45 +163,232 @@ describe('Cmatch', () => {
     sut.hookClassifier(data_validator);
     quote.emit('classify');
   });
+
+  describe('handleClassMatch', () => {
+    it('throws error if step is undefined', () => {
+      const {sut} = createStubs();
+
+      expect(() => sut.handleClassMatch({}, false)).to.throw(TypeError);
+    });
+
+    it('triggers dapi for every visible queued element', () => {
+      const field_names = {
+        foo: true,
+        bar: true,
+        baz: true,
+      };
+
+      const cmatch: CmatchData = {
+        foo: {all: true, any: true, indexes: [0]},
+        baz: {all: true, any: true, indexes: [0]},
+      };
+
+      const step_ui = createStubStepUi(field_names);
+
+      const {data_validator, quote, program, sut} = createStubs(
+        cmatch,
+        step_ui
+      );
+
+      let given: string[] = [];
+      let dapi_call_count = 0;
+
+      program.dapi = (
+        _step_id: PositiveInteger,
+        field: string,
+        _bucket: StagingBucket,
+        _diff: Record<string, any>,
+        _cmatch: CmatchData,
+        _callback: (() => void) | null
+      ) => {
+        given.push(field);
+        ++dapi_call_count;
+        return <DataApiResult>{};
+      };
+
+      sut.hookClassifier(data_validator);
+      quote.emit('classify');
+
+      expect(dapi_call_count).to.equal(2);
+      expect(given).to.deep.equal(['foo', 'baz']);
+    });
+
+    [
+      {
+        label: 'handles only current indexes in bucket',
+        cur_data: ['bar'],
+        cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
+        expected: {foo: {all: true, any: true, indexes: [1]}},
+      },
+      {
+        label:
+          'handles indexes requested when bucket and cmatch index counts are equal',
+        cur_data: ['bar', 'baz'],
+        cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
+        expected: {foo: {all: true, any: true, indexes: [1, 1]}},
+      },
+      {
+        label: 'handles indexes requested when bucket values exist',
+        cur_data: ['bar', 'baz', 'foo'],
+        cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
+        expected: {foo: {all: true, any: true, indexes: [1, 1]}},
+      },
+    ].forEach(({label, cur_data, cmatch, expected}) => {
+      it(label, done => {
+        const step_ui = createStubStepUi({foo: true});
+        const {sut, client, quote} = createStubs({}, step_ui);
+
+        let get_data_call_count = 0;
+        quote.getDataByName = (_field: string) => {
+          ++get_data_call_count;
+          return cur_data;
+        };
+
+        client.handleEvent = (_event_id: string, _data: any) => {
+          expect(get_data_call_count).to.equal(1);
+          expect(sut.getMatches()).to.deep.equal(expected);
+          done();
+          return client;
+        };
+
+        sut.handleClassMatch(cmatch);
+      });
+    });
+
+    [
+      {
+        label: "clear a field's value when a new index is automatically hidden",
+        bucket: {
+          foo: ['1', 'default'],
+        },
+        cmatch: {foo: {all: true, any: true, indexes: [1, 0]}},
+        expected: [
+          // show events
+          {
+            foo: {},
+          },
+          // hide events
+          {
+            foo: {1: ''},
+          },
+        ],
+      },
+      {
+        label: "restores a field's default value when it is shown",
+        bucket: {
+          foo: ['1', ''],
+        },
+        cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
+        expected: [
+          // show events
+          {
+            foo: {1: 'default'},
+          },
+          // hide events
+          {
+            foo: {},
+          },
+        ],
+      },
+    ].forEach(({label, bucket, cmatch, expected}) => {
+      it(label, () => {
+        const bucket_saves: any[] = [];
+
+        const step_ui = createStubStepUi({foo: true});
+        const {sut, quote, program} = createStubs({}, step_ui);
+        program.clearNaFields = true;
+
+        quote.setData = data => {
+          const output: {[key: string]: any} = {foo: {}};
+
+          for (let i in data.foo) {
+            output.foo[i] = data.foo[i];
+          }
+
+          bucket_saves.push(output);
+
+          return <ClientQuote>{};
+        };
+
+        quote.getDataByName = (key: string): any => {
+          if (key === 'foo') {
+            return bucket.foo;
+          }
+        };
+
+        sut.handleClassMatch(cmatch, true);
+
+        expect(bucket_saves).to.deep.equal(expected);
+      });
+    });
+  });
+
+  describe('clearCmatchFields', () => {
+    it('clear only invisible fields', () => {
+      const data = {
+        shown_field: ['foo'],
+        hidden_field: ['foo'],
+      };
+
+      const expected = {
+        shown_field: ['foo'],
+        hidden_field: ['default'],
+      };
+
+      const fields = {
+        shown_field: true,
+        hidden_field: true,
+      };
+
+      const cmatch = {};
+      const step_ui = createStubStepUi(fields);
+
+      const {sut, quote, visibility} = createStubs(cmatch, step_ui, {
+        program: {
+          defaults: {
+            shown_field: 'default',
+            hidden_field: 'default',
+          },
+        },
+      });
+
+      sinon.stub(quote, 'setData').callsFake((new_data: FieldObject) => {
+        if (new_data.shown_field) {
+          data.shown_field = new_data.shown_field;
+        }
+
+        if (new_data.hidden_field) {
+          data.hidden_field = new_data.hidden_field;
+        }
+      });
+
+      sinon.stub(quote, 'getDataByName').callsFake(() => {
+        return ['foo'];
+      });
+
+      sinon.stub(visibility, 'getBlueprints').callsFake(() => {
+        return [
+          {
+            name: 'shown_field',
+            cname: '--vis-shown-field',
+            show: [0],
+            hide: [],
+          },
+          {
+            name: 'hidden_field',
+            cname: '--vis-hidden-field',
+            show: [],
+            hide: [0],
+          },
+        ];
+      });
+
+      sut.clearCmatchFields();
+
+      expect(data).to.deep.equal(expected);
+    });
+  });
 });
-
-function createStubClientQuote() {
-  const callbacks: any = {};
-
-  const quote = {
-    setClassifier(_known_fields: any, _classifier: any): ClientQuote {
-      return <ClientQuote>(<unknown>this);
-    },
-
-    getDataByName(_name: string): Record<string, any> {
-      return {};
-    },
-
-    visitData(visitor: (bucket: StagingBucket) => void): void {
-      visitor(<StagingBucket>{});
-    },
-
-    setData(_data: Data): ClientQuote {
-      return <ClientQuote>(<unknown>this);
-    },
-
-    on(name: string, callback: any): void {
-      callbacks[name] = callback;
-    },
-
-    emit(name: string) {
-      const data = Array.prototype.slice.call(arguments, 1);
-
-      callbacks[name].apply(null, data);
-    },
-
-    autosave(_: any) {
-      return this;
-    },
-  };
-
-  return quote;
-}
 
 function createStubDataValidator() {
   return new (class implements DataValidator {
@@ -304,37 +409,6 @@ function createStubClassMatcher(cmatch: CmatchData) {
       return this;
     }
   })();
-}
-
-function createStubProgram() {
-  return <Program>{
-    getId: () => '1',
-    ineligibleLockCount: 0,
-    cretain: {},
-    apis: {},
-    internal: {},
-    autosave: false,
-    meta: {
-      arefs: {},
-      fields: {},
-      groups: {},
-      qdata: {},
-      qtypes: {},
-    },
-    mapis: {},
-    rateSteps: [],
-    dapi: () => <DataApiResult>{},
-    initQuote: () => {},
-    getClassifierKnownFields: () => <ClassificationResult>{},
-    classify: () => <ClassificationResult>{},
-  };
-}
-
-function createStubUi(step: StepUi | null) {
-  return <Ui>(<unknown>{
-    setCmatch: () => {},
-    getCurrentStep: () => step,
-  });
 }
 
 function createStubStepUi(field_names: ExclusiveFields) {
@@ -370,29 +444,19 @@ function createStubStepUi(field_names: ExclusiveFields) {
   return step_ui;
 }
 
-function createStubClient(quote: ClientQuote, ui: Ui) {
-  return <Client>(<unknown>{
-    program: <Program>{},
-    nav: <Nav>{
-      getCurrentStepId: () => <PositiveInteger>0,
-    },
-    elementStyler: <ElementStyler>{},
-    getUi: () => <Ui>ui,
-    getQuote: () => <ClientQuote>quote,
-    handleError: (_e: Error) => {},
-    handleEvent: () => <Client>{},
-    validateChange: (_: any) => {},
-    isSaving: () => false,
-  });
-}
-
-function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
+function createStubs(
+  cmatch: CmatchData = {},
+  step: StepUi | null = null,
+  overrides: any = {}
+) {
   const data_validator = createStubDataValidator();
   const quote = createStubClientQuote();
-  const program = createStubProgram();
+  const program = createStubProgram(overrides.program ?? {});
   const class_matcher = createStubClassMatcher(cmatch);
   const ui = createStubUi(step);
-  const client = createStubClient(<ClientQuote>(<unknown>quote), ui);
+  const client = createStubClient(<ClientQuote>(<unknown>quote), ui, program);
+  const visibility = createStubVisibility(client);
+  const resetter = createStubFieldResetter(client);
 
   const sut = new (class extends Sut {
     public markShowHide(
@@ -407,15 +471,35 @@ function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
     public handleClassMatch(cmatch: CmatchData, force?: boolean): void {
       super.handleClassMatch(cmatch, force);
     }
-  })(class_matcher, program, client);
+  })(class_matcher, program, client, visibility, resetter);
 
   return {
-    sut: sut,
-    data_validator: data_validator,
-    quote: quote,
-    ui: ui,
-    client: client,
-    program: program,
-    class_matcher: class_matcher,
+    sut,
+    data_validator,
+    quote,
+    ui,
+    client,
+    program,
+    class_matcher,
+    visibility,
+    resetter,
   };
+}
+
+function createStubFieldResetter(client: Client) {
+  const element_styler = {
+    getDefault(_field: string): string {
+      return 'default';
+    },
+  };
+
+  sinon.stub(client, 'elementStyler').get(() => {
+    return element_styler;
+  });
+
+  return new (class extends FieldResetter {})(client);
+}
+
+function createStubVisibility(client: Client) {
+  return new (class extends CmatchVisibility {})(client);
 }

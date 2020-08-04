@@ -19,10 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {StagingBucket} from '../bucket/StagingBucket';
-import {PositiveInteger} from '../numeric';
 import {CmatchData} from '../client/Cmatch';
 import {DataApiResult} from '../dapi/DataApi';
+import {Data} from '../client/quote/ClientQuote';
+import {PositiveInteger} from '../numeric';
+import {StagingBucket} from '../bucket/StagingBucket';
 
 export type DataApiDefinitions = any;
 export type ClassificationResult = {[index: string]: any};
@@ -33,13 +34,24 @@ export type AnswerRefs = Record<string, string>;
 export declare abstract class Program {
   readonly ineligibleLockCount: number;
 
+  clearNaFields: boolean;
+
+  naFieldValue: string;
+
   cretain: ClassificationRetain;
+
+  /**
+   * Default field values
+   */
+  defaults: {[field: string]: any};
 
   apis: DataApiDefinitions;
 
   internal: Record<string, boolean>;
 
   autosave: boolean;
+
+  whens: Data;
 
   meta: {
     arefs: AnswerRefs;
