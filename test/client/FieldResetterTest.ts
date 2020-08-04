@@ -27,6 +27,7 @@ import {
   createStubClient,
   createStubUi,
   createStubClientQuote,
+  createStubProgram,
 } from './CommonResources';
 
 const sinon = require('sinon');
@@ -75,6 +76,7 @@ describe('FieldResetter', () => {
 const getClient = (step: StepUi | null = null) => {
   const quote = createStubClientQuote();
   const ui = createStubUi(step);
+  const program = createStubProgram({defaults: {some_field: 'default'}});
 
-  return createStubClient(<ClientQuote>(<unknown>quote), ui);
+  return createStubClient(<ClientQuote>(<unknown>quote), ui, program);
 };

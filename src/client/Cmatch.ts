@@ -308,7 +308,7 @@ export class Cmatch {
       if (this._program.clearNaFields && show.length) {
         shown[field] = [];
 
-        const default_value = this._client.elementStyler.getDefault(field);
+        const default_value = this._client.program.defaults[field] || '';
         const current_value = this._client.getQuote().getDataByName(field);
 
         for (const index of show) {

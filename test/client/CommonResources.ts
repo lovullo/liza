@@ -18,20 +18,25 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {Client} from '../../src/client/Client';
 import {ClientQuote} from '../../src/client/quote/ClientQuote';
+import {Client} from '../../src/client/Client';
+import {DataApiResult} from '../../src/dapi/DataApi';
 import {Data} from '../../src/client/quote/ClientQuote';
 import {ElementStyler} from '../../src/ui/ElementStyler';
 import {Nav} from '../../src/client/nav/Nav';
 import {PositiveInteger} from '../../src/numeric';
-import {Program} from '../../src/program/Program';
+import {Program, ClassificationResult} from '../../src/program/Program';
 import {StagingBucket} from '../../src/bucket/StagingBucket';
 import {StepUi} from '../../src/ui/step/StepUi';
 import {Ui} from '../../src/ui/Ui';
 
-export function createStubClient(quote: ClientQuote, ui: Ui) {
+export function createStubClient(
+  quote: ClientQuote,
+  ui: Ui,
+  program: Program = <Program>{}
+) {
   return <Client>(<unknown>{
-    program: <Program>{},
+    program: program,
     nav: <Nav>{
       getCurrentStepId: () => <PositiveInteger>0,
     },
@@ -92,4 +97,34 @@ export function createStubUi(step: StepUi | null) {
     setCmatch: () => {},
     getCurrentStep: () => step,
   });
+}
+
+export function createStubProgram(overrides: any = {}) {
+  return <Program>{
+    clearNaFields: false,
+    naFieldValue: '',
+    getId: () => '1',
+    ineligibleLockCount: 0,
+    cretain: {},
+    defaults: overrides.defaults ?? {
+      foo: 'default',
+    },
+    apis: {},
+    whens: {},
+    internal: {},
+    autosave: false,
+    meta: {
+      arefs: {},
+      fields: {},
+      groups: {},
+      qdata: {},
+      qtypes: {},
+    },
+    mapis: {},
+    rateSteps: [],
+    dapi: () => <DataApiResult>{},
+    initQuote: () => {},
+    getClassifierKnownFields: () => <ClassificationResult>{},
+    classify: () => <ClassificationResult>{},
+  };
 }

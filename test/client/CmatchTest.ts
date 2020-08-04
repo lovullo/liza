@@ -19,7 +19,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {ClassificationResult, Program} from '../../src/program/Program';
 import {ClientQuote} from '../../src/client/quote/ClientQuote';
 import {Client} from '../../src/client/Client';
 import {CmatchVisibility} from '../../src/client/CmatchVisibility';
@@ -41,6 +40,7 @@ import {
   createStubClientQuote,
   createStubUi,
   createStubClient,
+  createStubProgram,
 } from './CommonResources';
 import {
   DataDiff,
@@ -343,7 +343,14 @@ describe('Cmatch', () => {
       const cmatch = {};
       const step_ui = createStubStepUi(fields);
 
-      const {sut, quote, visibility} = createStubs(cmatch, step_ui);
+      const {sut, quote, visibility} = createStubs(cmatch, step_ui, {
+        program: {
+          defaults: {
+            shown_field: 'default',
+            hidden_field: 'default',
+          },
+        },
+      });
 
       sinon.stub(quote, 'setData').callsFake((new_data: FieldObject) => {
         if (new_data.shown_field) {
@@ -404,33 +411,6 @@ function createStubClassMatcher(cmatch: CmatchData) {
   })();
 }
 
-function createStubProgram() {
-  return <Program>{
-    clearNaFields: false,
-    naFieldValue: '',
-    getId: () => '1',
-    ineligibleLockCount: 0,
-    cretain: {},
-    apis: {},
-    whens: {},
-    internal: {},
-    autosave: false,
-    meta: {
-      arefs: {},
-      fields: {},
-      groups: {},
-      qdata: {},
-      qtypes: {},
-    },
-    mapis: {},
-    rateSteps: [],
-    dapi: () => <DataApiResult>{},
-    initQuote: () => {},
-    getClassifierKnownFields: () => <ClassificationResult>{},
-    classify: () => <ClassificationResult>{},
-  };
-}
-
 function createStubStepUi(field_names: ExclusiveFields) {
   const step = <Step>{
     getExclusiveFieldNames: () => field_names,
@@ -464,13 +444,17 @@ function createStubStepUi(field_names: ExclusiveFields) {
   return step_ui;
 }
 
-function createStubs(cmatch: CmatchData = {}, step: StepUi | null = null) {
+function createStubs(
+  cmatch: CmatchData = {},
+  step: StepUi | null = null,
+  overrides: any = {}
+) {
   const data_validator = createStubDataValidator();
   const quote = createStubClientQuote();
-  const program = createStubProgram();
+  const program = createStubProgram(overrides.program ?? {});
   const class_matcher = createStubClassMatcher(cmatch);
   const ui = createStubUi(step);
-  const client = createStubClient(<ClientQuote>(<unknown>quote), ui);
+  const client = createStubClient(<ClientQuote>(<unknown>quote), ui, program);
   const visibility = createStubVisibility(client);
   const resetter = createStubFieldResetter(client);
 

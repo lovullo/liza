@@ -244,6 +244,7 @@ function createStubQuote(metadata: Record<string, any>) {
     getId: () => '1',
     ineligibleLockCount: 0,
     cretain: {},
+    defaults: {},
     apis: {},
     internal: {},
     autosave: false,

@@ -81,6 +81,6 @@ export class FieldResetter {
   private _getValue(field: string): string {
     return this._hasSharedDefault
       ? this._defaultValue
-      : this._client.elementStyler.getDefault(field);
+      : this._client.program.defaults[field] || '';
   }
 }

@@ -40,6 +40,11 @@ export declare abstract class Program {
 
   cretain: ClassificationRetain;
 
+  /**
+   * Default field values
+   */
+  defaults: {[field: string]: any};
+
   apis: DataApiDefinitions;
 
   internal: Record<string, boolean>;
