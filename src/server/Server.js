@@ -367,7 +367,10 @@ module.exports = Class('Server').extend(EventEmitter, {
           .setBound(quote_data.boundInd || false)
           .needsImport(quote_data.importDirty || false)
           .setCurrentStepId(
-            quote_data.currentStepId || quote_program.getFirstStepId()
+            Math.max(
+              quote_data.currentStepId || 0,
+              quote_program.getFirstStepId()
+            )
           )
           .setTopVisitedStepId(
             quote_data.topVisitedStepId || quote_program.getFirstStepId()
