@@ -194,12 +194,15 @@ export class GroupContext {
    * Remove the last index from the field context cache
    *
    * @param fields - exclusive field names of group
+   * @param index - index to remove
    */
-  removeIndex(fields: string[]): void {
+  removeIndex(fields: string[], index: PositiveInteger): void {
     for (let i = 0; i < fields.length; i++) {
       let field = fields[i];
-
-      if (this._field_context_cache[field] === undefined) {
+      if (
+        this._field_context_cache[field] === undefined ||
+        this._field_context_cache[field][index] === undefined
+      ) {
         continue;
       }
 
