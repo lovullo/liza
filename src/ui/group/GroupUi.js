@@ -583,7 +583,7 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
       cached !== undefined && cached.pop();
     }
 
-    this.context.removeIndex(fields);
+    this.context.removeIndex(fields, index);
 
     this._indexCount--;
     this._recalcFieldCount(-1, index);

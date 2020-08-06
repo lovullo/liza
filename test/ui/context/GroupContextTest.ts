@@ -680,8 +680,8 @@ describe('GroupContext', () => {
     expect(show_is_called).to.be.false;
   });
 
-  it('removeIndex removes last index from ContextCache', () => {
-    const fields = ['foo', 'bar'];
+  it('removeIndex removes specific index from fields in ContextCache', () => {
+    const fields = ['foo', 'bar', 'single'];
 
     let get_clone_called_num_times = 0;
 
@@ -694,6 +694,7 @@ describe('GroupContext', () => {
         getFieldContextStub('bar', false),
         getFieldContextStub('bar', false),
       ],
+      single: [getFieldContextStub('single', false)],
     };
 
     const parser = getContextParserStub();
@@ -705,6 +706,10 @@ describe('GroupContext', () => {
       createStore: (_: any, __: any, ___: any) => {
         return store;
       },
+    };
+
+    stubs['single'][0].isAttached = () => {
+      return true;
     };
 
     stubs['foo'][1].show = (_: any, __: any) => {};
@@ -728,17 +733,23 @@ describe('GroupContext', () => {
     const sut = new Sut(parser, factory);
     sut.init(fields, fields, dummy_content);
 
+    sut.createFieldCache();
+
     // Simulate index 1 elements being added to ContextCache
     sut.show('foo', <PositiveInteger>1, dummy_content);
     sut.show('bar', <PositiveInteger>1, dummy_content);
 
-    sut.removeIndex(fields);
+    sut.removeIndex(fields, <PositiveInteger>1);
 
     // now that index is removed, attach the content back
     // which will re-add them to the ContextCache
     sut.show('foo', <PositiveInteger>1, dummy_content);
     sut.show('bar', <PositiveInteger>1, dummy_content);
 
+    // Ensure "single" field was not removed from cache after removeIndex called
+    const single_attached = sut.isFieldAttached('single', <PositiveInteger>0);
+
+    expect(single_attached).to.be.true;
     expect(get_clone_called_num_times).to.equal(4);
   });
 
