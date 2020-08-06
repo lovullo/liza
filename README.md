@@ -1,6 +1,6 @@
 # Liza Data Collection Framework
 <!--
-  Copyright (C) 2010-2019 R-T Specialty, LLC.
+  Copyright (C) 2010-2020 R-T Specialty, LLC.
 
   This file is part of liza.
 
@@ -42,6 +42,13 @@ If `configure` is not available, see the section "Configuring" above.
   $ npm install   # install js dependencies
   $ make          # build
   $ make check    # run code checks
+```
+
+## Additional Make Targets
+
+```
+  $ make format   # run auto-format with prettier
+  $ make fix      # attempt to auto-fix linting errors
 ```
 
 
