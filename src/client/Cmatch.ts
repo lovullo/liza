@@ -247,6 +247,8 @@ export class Cmatch {
         vis = cfield.indexes,
         cur = (_self._cmatch[field] || {}).indexes || [];
 
+      const retain = this._program.cretain[field] === true;
+
       // this should really only ever be the case for __classes
       if (!vis) {
         continue;
@@ -293,7 +295,7 @@ export class Cmatch {
        * hidden on a class match. This is considered an initialization for the
        * field at the new index.
        */
-      if (this._program.clearNaFields && hide.length) {
+      if (!retain && this._program.clearNaFields && hide.length) {
         hidden[field] = [];
 
         for (const index of hide) {

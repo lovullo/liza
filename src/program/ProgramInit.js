@@ -66,7 +66,8 @@ module.exports = Class('ProgramInit', {
       while (i--) {
         const field = program.groupExclusiveFields[group][i];
         const has_predicate = program.whens[field] !== undefined;
-        const na = has_predicate && program.clearNaFields;
+        const retain = program.cretain[field] === true;
+        const na = !retain && has_predicate && program.clearNaFields;
         const init_value = na ? program.naFieldValue : defaults[field];
 
         // generated questions with no types should never be part of

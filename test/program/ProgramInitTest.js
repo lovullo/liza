@@ -236,6 +236,30 @@ describe('ProgramInit', () => {
       naFieldValue: '',
     },
     {
+      label: 'does not reset retained fields on init',
+      defaults: {foo: 'init'},
+      cretain: {foo: true},
+      meta: {
+        groups: {
+          Something: {
+            min: 2,
+          },
+        },
+        qtypes: {
+          foo: {type: 'text'},
+        },
+      },
+      groupExclusiveFields: {
+        Something: ['foo'],
+      },
+      doc_data: {},
+      expected: {
+        foo: ['init', 'init'],
+      },
+      clearNaFields: true,
+      naFieldValue: '',
+    },
+    {
       label: 'fix missing bucket data values',
       defaults: {foo: 'init'},
       meta: {
@@ -285,6 +309,7 @@ describe('ProgramInit', () => {
       clearNaFields,
       naFieldValue,
       whens,
+      cretain,
     }) => {
       it(label, () => {
         const sut = Sut(null);
@@ -297,6 +322,7 @@ describe('ProgramInit', () => {
           whens: whens ? whens : defaults,
           clearNaFields,
           naFieldValue,
+          cretain: cretain ? cretain : {},
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(
