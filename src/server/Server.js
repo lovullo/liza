@@ -801,6 +801,8 @@ module.exports = Class('Server').extend(EventEmitter, {
       this.sendResponse(request, quote, {}, [
         {action: 'gostep', id: program.getFirstStepId()},
       ]);
+
+      return;
     }
 
     // are they permitted to navigate to this step?
