@@ -367,7 +367,10 @@ module.exports = Class('Server').extend(EventEmitter, {
           .setBound(quote_data.boundInd || false)
           .needsImport(quote_data.importDirty || false)
           .setCurrentStepId(
-            quote_data.currentStepId || quote_program.getFirstStepId()
+            Math.max(
+              quote_data.currentStepId || 0,
+              quote_program.getFirstStepId()
+            )
           )
           .setTopVisitedStepId(
             quote_data.topVisitedStepId || quote_program.getFirstStepId()
@@ -798,6 +801,8 @@ module.exports = Class('Server').extend(EventEmitter, {
       this.sendResponse(request, quote, {}, [
         {action: 'gostep', id: program.getFirstStepId()},
       ]);
+
+      return;
     }
 
     // are they permitted to navigate to this step?
@@ -1306,28 +1311,14 @@ module.exports = Class('Server').extend(EventEmitter, {
         // encrypt bucket
         var bucket = quote.getBucket();
         server._getBucketCipher(program).encrypt(bucket, function () {
-          // as a precaution to prevent navigation burps, update the
-          // step if it's greater than the previous
-          //
-          // TODO: it is currently possible to save data from a future step
-          // (either from autosave or step save), determine the best way to
-          // prevent this from happening
-          if (step_id > quote.getTopVisitedStepId()) {
-            quote.setCurrentStepId(step_id);
-          }
-          if (!autosave && step_id > quote.getTopSavedStepId()) {
-            // only updated by saveQuoteState
+          if (!autosave) {
             quote.setTopSavedStepId(step_id);
-            server.dao.saveQuoteState(quote);
           }
-          if (step_id <= quote.getTopSavedStepId()) {
-            // data has been saved on an earlier step, force them back
-            if (!autosave) {
-              quote.setTopSavedStepId(step_id);
-            }
-            quote.setTopVisitedStepId(step_id);
-            server.dao.saveQuoteState(quote);
-          }
+
+          // set current and top visited steps
+          quote.setCurrentStepId(step_id);
+          quote.setTopVisitedStepId(step_id);
+          server.dao.saveQuoteState(quote);
 
           // only reset published indicator on a step save
           const force_publish = !autosave;
@@ -1337,13 +1328,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             // quote was saved successfully
             function () {
               if (autosave) {
-                server._handlePostSubmitEvent(
-                  request,
-                  quote,
-                  step_id,
-                  program,
-                  'autosave'
-                );
+                server.sendResponse(request, quote, {}, {});
               } else {
                 server._postSubmit(request, quote, step_id, program);
               }
@@ -1487,12 +1472,6 @@ module.exports = Class('Server').extend(EventEmitter, {
       // Handle this case only to avoid logging errors
       case 'rate':
         break;
-
-      // autosave event will respond with a kickBack action to prevent
-      // navigation to higher steps; this forces the user to save the step
-      case 'autosave':
-        mergeAndFinish();
-        return;
 
       default:
         server.logger.log(
