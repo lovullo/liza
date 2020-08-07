@@ -193,21 +193,40 @@ export class GroupContext {
   /**
    * Remove the last index from the field context cache
    *
+   * Or clear cache for fields at certain indexes
+   * if it does not appear on all indexes
+   *
    * @param fields - exclusive field names of group
-   * @param index - index to remove
+   * @param index - index being removed
+   * @param index_count - count of indexes in group
    */
-  removeIndex(fields: string[], index: PositiveInteger): void {
+  removeIndex(
+    fields: string[],
+    index: PositiveInteger,
+    index_count: PositiveInteger
+  ): void {
     for (let i = 0; i < fields.length; i++) {
       let field = fields[i];
-      if (
-        this._field_context_cache[field] === undefined ||
-        this._field_context_cache[field][index] === undefined
-      ) {
+      let field_cache = this._field_context_cache[field];
+      if (field_cache === undefined) {
         continue;
       }
 
-      // Remove the last index
-      this._field_context_cache[field].pop();
+      let field_cache_non_null = field_cache.filter(field => field !== null);
+
+      if (field_cache_non_null.length === index_count) {
+        field_cache.pop();
+      } else {
+        // Some cmatch fields might not appear on all indexes
+        // They need to be recreated when show is called
+        // for the index being removed and above
+        for (let k = index; k < field_cache.length; k++) {
+          if (field_cache[k] !== undefined) {
+            field_cache[k].hide();
+            delete field_cache[k];
+          }
+        }
+      }
     }
   }
 

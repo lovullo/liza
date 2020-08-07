@@ -583,8 +583,6 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
       cached !== undefined && cached.pop();
     }
 
-    this.context.removeIndex(fields, index);
-
     this._indexCount--;
     this._recalcFieldCount(-1, index);
 
@@ -684,6 +682,9 @@ module.exports = Class('GroupUi').extend(EventEmitter, {
     index = index === undefined ? this.getCurrentIndex() : +index;
 
     this.emit(this.__self.$('EVENT_INDEX_REMOVE'), index);
+
+    var fields = this.group.getExclusiveFieldNames();
+    this.context.removeIndex(fields, index, this.getCurrentIndexCount());
 
     return this;
   },

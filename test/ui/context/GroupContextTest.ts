@@ -739,7 +739,7 @@ describe('GroupContext', () => {
     sut.show('foo', <PositiveInteger>1, dummy_content);
     sut.show('bar', <PositiveInteger>1, dummy_content);
 
-    sut.removeIndex(fields, <PositiveInteger>1);
+    sut.removeIndex(fields, <PositiveInteger>1, <PositiveInteger>2);
 
     // now that index is removed, attach the content back
     // which will re-add them to the ContextCache
@@ -751,6 +751,76 @@ describe('GroupContext', () => {
 
     expect(single_attached).to.be.true;
     expect(get_clone_called_num_times).to.equal(4);
+  });
+
+  it('removeIndex clears cache of field at certain indexes that do not appear on all indexes', () => {
+    const fields = ['foo', 'bar'];
+
+    let stubs = <ContextCache>{
+      foo: [
+        getFieldContextStub('foo1', false),
+        getFieldContextStub('foo2', false),
+        getFieldContextStub('foo3', false),
+      ],
+      bar: [
+        null,
+        getFieldContextStub('bar2', false),
+        getFieldContextStub('bar3', false),
+      ],
+    };
+
+    const parser = getContextParserStub();
+    const store = getFieldContextStoreStub();
+    const factory = <FieldContextFactory>{
+      create: (field: string, index: PositiveInteger, ___: any, ____: any) => {
+        return stubs[field][index];
+      },
+      createStore: (_: any, __: any, ___: any) => {
+        return store;
+      },
+    };
+
+    let hide_call_count = 0;
+    let content_clone_call_count = 0;
+
+    stubs['bar'][2].hide = () => {
+      hide_call_count++;
+    };
+
+    stubs['bar'][1].hide = () => {
+      hide_call_count++;
+    };
+
+    store.getContentClone = (_: any) => {
+      content_clone_call_count++;
+      return <ContextContent>{};
+    };
+
+    const dummy_content = document.createElement('dl');
+    const sut = new Sut(parser, factory);
+    sut.init(fields, fields, dummy_content);
+
+    sut.createFieldCache();
+
+    // Simulate index 1 elements being added to ContextCache
+    // Note - bar is not added to ContextCache at this index
+    sut.show('foo', <PositiveInteger>1, dummy_content);
+
+    // Simulate index 2 elements being added to ContextCache
+    sut.show('foo', <PositiveInteger>2, dummy_content);
+    sut.show('bar', <PositiveInteger>2, dummy_content);
+
+    // Remove index 1 where bar field does not exist in ContextCache
+    sut.removeIndex(fields, <PositiveInteger>1, <PositiveInteger>3);
+
+    // Now that bar is cleared from cache, call hide
+    sut.hide('bar', <PositiveInteger>1);
+
+    // Now call show which will call clone since cache was cleared
+    sut.show('bar', <PositiveInteger>1, dummy_content);
+
+    expect(hide_call_count).to.equal(1);
+    expect(content_clone_call_count).to.equal(4);
   });
 
   [
