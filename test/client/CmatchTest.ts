@@ -293,6 +293,26 @@ describe('Cmatch', () => {
           },
         ],
       },
+
+      {
+        label:
+          'does not clear a field that has no default when index is automatically hidden',
+        bucket: {
+          foo: ['1', 'default'],
+        },
+        defaults: {},
+        cmatch: {foo: {all: true, any: true, indexes: [1, 0]}},
+        expected: [
+          // show events
+          {
+            foo: {},
+          },
+          // hide events
+          {
+            foo: {},
+          },
+        ],
+      },
       {
         label: "restores a field's default value when it is shown",
         bucket: {
@@ -310,7 +330,7 @@ describe('Cmatch', () => {
           },
         ],
       },
-    ].forEach(({label, bucket, cmatch, expected, cretain}) => {
+    ].forEach(({label, bucket, cmatch, expected, cretain, defaults}) => {
       it(label, () => {
         const bucket_saves: any[] = [];
 
@@ -318,6 +338,7 @@ describe('Cmatch', () => {
         const {sut, quote, program} = createStubs({}, step_ui);
         program.clearNaFields = true;
         program.cretain = cretain ?? {};
+        program.defaults = defaults ?? program.defaults;
 
         quote.setData = data => {
           const output: {[key: string]: any} = {foo: {}};

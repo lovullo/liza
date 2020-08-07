@@ -294,8 +294,19 @@ export class Cmatch {
        * When we clear N/A fields, ensure that their value is reset if they are
        * hidden on a class match. This is considered an initialization for the
        * field at the new index.
+       *
+       * We want to avoid resetting when the value ought to be retained or when
+       * there is no recorded default. This is because a lack of a default value
+       * removes the risk of custom default values persisting.
        */
-      if (!retain && this._program.clearNaFields && hide.length) {
+      const has_default = this._client.program.defaults[field] !== undefined;
+
+      if (
+        !retain &&
+        has_default &&
+        this._program.clearNaFields &&
+        hide.length
+      ) {
         hidden[field] = [];
 
         for (const index of hide) {
@@ -318,6 +329,7 @@ export class Cmatch {
           if (current_value[index] !== this._program.naFieldValue) {
             continue;
           }
+
           shown[field][index] = default_value;
         }
       }
