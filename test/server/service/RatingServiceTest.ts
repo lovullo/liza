@@ -963,7 +963,7 @@ function getStubs(rate_data?: any) {
     isInternal: () => false,
   };
 
-  const quote = <ServerSideQuote>{
+  const quote = <ServerSideQuote>(<unknown>{
     getProgramId: () => program_id,
     getProgram: () => program,
     getId: () => <QuoteId>0,
@@ -997,7 +997,7 @@ function getStubs(rate_data?: any) {
     },
     setInitialRatedDate: () => quote,
     getExpirationDate: () => 123,
-  };
+  });
 
   const ts_ctor = () => {
     return <UnixTimestamp>2592001;

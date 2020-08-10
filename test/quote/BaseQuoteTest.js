@@ -63,6 +63,11 @@ describe('BaseQuote', () => {
         value: 'name',
       },
       {
+        property: 'userName',
+        default: '',
+        value: 'foo@bar.com',
+      },
+      {
         property: 'imported',
         default: false,
         value: true,

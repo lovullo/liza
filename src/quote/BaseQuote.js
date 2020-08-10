@@ -110,6 +110,12 @@ module.exports = Class('BaseQuote')
     'private _agentName': '',
 
     /**
+     * Username of user accessing the quote
+     * @type {string}
+     */
+    'private _userName': '',
+
+    /**
      * Whether the quote has been imported
      * @type {boolean}
      */
@@ -396,6 +402,27 @@ module.exports = Class('BaseQuote')
      */
     'public getAgentName': function () {
       return this._agentName;
+    },
+
+    /**
+     * Sets username of the user who is accessing this quote
+     *
+     * @param {string} username
+     *
+     * @return {Quote} self
+     */
+    'public setUserName': function (username) {
+      this._userName = '' + username;
+      return this;
+    },
+
+    /**
+     * Returns the username of the user who is accessing this quote
+     *
+     * @return {string} username
+     */
+    'public getUserName': function () {
+      return this._userName;
     },
 
     /**

@@ -156,4 +156,18 @@ export declare class BaseQuote implements Quote {
    * @return quote's expiration date
    */
   getExpirationDate(): number;
+
+  /**
+   * Sets username of the user who is accessing this quote
+   *
+   * @param {string} username
+   */
+  setUserName(username: string): this;
+
+  /**
+   * Returns the username of the user who is accessing this quote
+   *
+   * @return {string} username
+   */
+  getUserName(): string;
 }
