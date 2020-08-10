@@ -311,6 +311,7 @@ module.exports = Class('Server').extend(EventEmitter, {
       quote_id = quote.getId(),
       session = request.getSession(),
       agent_id = session.agentId(),
+      username = session.userName(),
       agent_name = session.agentName();
 
     // get the data for this quote
@@ -358,6 +359,7 @@ module.exports = Class('Server').extend(EventEmitter, {
         quote
           .setData(default_bucket)
           .setMetadata(quote_data.meta || {})
+          .setUserName(username)
           .setAgentId(quote_data.agentId || agent_id)
           .setAgentName(quote_data.agentName || agent_name)
           .setAgentEntityId(quote_data.agentEntityId || '')
@@ -418,7 +420,6 @@ module.exports = Class('Server').extend(EventEmitter, {
             boundInd: quote.isBound() ? 1 : 0,
             importDirty: 0,
             syncInd: 0,
-            boundInd: 0,
             notifyInd: 0,
             syncDate: 0,
             lastPremDate: 0,
@@ -429,6 +430,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             explicitLockStepId: quote.getExplicitLockStep(),
           });
 
+          quote.setMetadata({created_by_username: [username]});
           server.dao.saveQuoteMeta(quote);
         }
 

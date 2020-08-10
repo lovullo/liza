@@ -305,6 +305,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
 
     // meta will eventually take over for much of the above data
     save_data['meta.liza_timestamp_initial_rated'] = [quote.getRatedDate()];
+    save_data['meta.last_updated_by_username'] = [quote.getUserName()];
 
     // save the stack so we can track this call via the oplog
     save_data._stack = new Error().stack;

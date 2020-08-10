@@ -39,11 +39,13 @@ describe('MongoServerDao', () => {
     describe('with no save data or push data', () => {
       it('saves initial rated individually', done => {
         const expected = 123321;
+        const expected_last_updated_by = 'foo@foo.com';
         const quote = createStubQuote({});
 
         quote.getRatedDate = () => {
           return <UnixTimestamp>expected;
         };
+        quote.getUserName = () => expected_last_updated_by;
 
         const sut = new Sut(
           createMockDb(
@@ -52,6 +54,10 @@ describe('MongoServerDao', () => {
               expect(
                 data.$set['meta.liza_timestamp_initial_rated']
               ).to.deep.equal([expected]);
+
+              expect(data.$set['meta.last_updated_by_username']).to.deep.equal([
+                expected_last_updated_by,
+              ]);
 
               expect(data.$push).to.equal(undefined);
 
@@ -276,6 +282,7 @@ function createStubQuote(metadata: Record<string, any>) {
     getId: () => <QuoteId>123,
     getProgramVersion: () => 'Foo',
     getLastPremiumDate: () => <UnixTimestamp>0,
+    getUserName: () => 'foo@foo.com',
     getRatedDate: () => <UnixTimestamp>0,
     getExplicitLockReason: () => '',
     getExplicitLockStep: () => <PositiveInteger>1,
