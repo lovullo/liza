@@ -116,6 +116,18 @@ module.exports = Class('BaseQuote')
     'private _userName': '',
 
     /**
+     * Username of user who last updated the quote
+     * @type {string}
+     */
+    'private _lastUpdatedByUserName': '',
+
+    /**
+     * Username of user who created the quote
+     * @type {string}
+     */
+    'private _createdByUserName': '',
+
+    /**
      * Whether the quote has been imported
      * @type {boolean}
      */
@@ -423,6 +435,48 @@ module.exports = Class('BaseQuote')
      */
     'public getUserName': function () {
       return this._userName;
+    },
+
+    /**
+     * Sets the username of the user who created this quote
+     *
+     * @param {string} username
+     *
+     * @return {Quote} self
+     */
+    'public setCreatedByUserName': function (username) {
+      this._createdByUserName = '' + username;
+      return this;
+    },
+
+    /**
+     * Returns the username of the user who created this quote
+     *
+     * @return {string} username
+     */
+    'public getCreatedByUserName': function () {
+      return this._createdByUserName;
+    },
+
+    /**
+     * Sets the username of the user who last updated this quote
+     *
+     * @param {string} username
+     *
+     * @return {Quote} self
+     */
+    'public setLastUpdatedByUserName': function (username) {
+      this._lastUpdatedByUserName = '' + username;
+      return this;
+    },
+
+    /**
+     * Returns the username of the user who last updated this quote
+     *
+     * @return {string} username
+     */
+    'public getLastUpdatedByUserName': function () {
+      return this._lastUpdatedByUserName;
     },
 
     /**

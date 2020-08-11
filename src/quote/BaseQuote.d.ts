@@ -170,4 +170,32 @@ export declare class BaseQuote implements Quote {
    * @return {string} username
    */
   getUserName(): string;
+
+  /**
+   * Sets the username of the user who created this quote
+   *
+   * @param {string} username
+   */
+  setCreatedByUserName(username: string): this;
+
+  /**
+   * Returns the username of the user who created this quote
+   *
+   * @return {string} username
+   */
+  getCreatedByUserName(): string;
+
+  /**
+   * Sets the username of the user who last updated this quote
+   *
+   * @param {string} username
+   */
+  setLastUpdatedByUserName(username: string): this;
+
+  /**
+   * Returns the username of the user who last updated this quote
+   *
+   * @return {string} username
+   */
+  getLastUpdatedByUserName(): string;
 }

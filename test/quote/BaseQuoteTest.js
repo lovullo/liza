@@ -68,6 +68,16 @@ describe('BaseQuote', () => {
         value: 'foo@bar.com',
       },
       {
+        property: 'createdByUserName',
+        default: '',
+        value: 'bar@baz.com',
+      },
+      {
+        property: 'lastUpdatedByUserName',
+        default: '',
+        value: 'baz@qux.com',
+      },
+      {
         property: 'imported',
         default: false,
         value: true,
