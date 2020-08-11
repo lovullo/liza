@@ -1517,9 +1517,7 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     for (var field in program.kbclear) {
       var data = quote.getDataByName(field),
-        val = program.clearNaFields
-          ? program.naFieldValue
-          : program.defaults[field] || '';
+        val = program.defaults[field] || '';
 
       for (var i in data) {
         data[i] = val;

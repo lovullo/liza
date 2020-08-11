@@ -23,10 +23,7 @@
 
 'use strict';
 
-const {CmatchVisibility} = require('../client/CmatchVisibility');
 const {Cmatch} = require('../client/Cmatch');
-const {FieldResetter} = require('../client/FieldResetter');
-
 const field = require('../field');
 const store = require('../store');
 
@@ -39,17 +36,8 @@ const store = require('../store');
  * This is incomplete; it will be added to as code is ported to liza.
  */
 module.exports = {
-  cmatch: (program, client) => {
-    const matcher = field.FieldClassMatcher(program.whens);
-    const visibility = new CmatchVisibility(client);
-    const resetter = new FieldResetter(
-      client,
-      program.clearNaFields,
-      program.naFieldValue
-    );
-
-    return new Cmatch(matcher, program, client, visibility, resetter);
-  },
+  cmatch: (program, client) =>
+    new Cmatch(field.FieldClassMatcher(program.whens), program, client),
 
   data: {
     /**

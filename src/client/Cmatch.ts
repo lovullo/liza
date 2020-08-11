@@ -26,13 +26,11 @@
  * as this is one of the core systems and is both complicated and complex.
  */
 
+import {FieldClassMatcher} from '../field/FieldClassMatcher';
+import {Program} from '../program/Program';
 import {Client} from './Client';
 import {DataValidator} from '../validate/DataValidator';
-import {FieldClassMatcher} from '../field/FieldClassMatcher';
-import {FieldResetter} from './FieldResetter';
 import {PositiveInteger} from '../numeric';
-import {Program} from '../program/Program';
-import {VisibilityBlueprint, CmatchVisibility} from './CmatchVisibility';
 
 export type ClassData = {
   [index: string]: {
@@ -67,18 +65,14 @@ export class Cmatch {
    *
    * This relies on too many objects; see header.
    *
-   * @param _classMatcher  - class/field matcher
-   * @param _program       - active program
-   * @param _client        - active client
-   * @param _visibility    - determines show hide logic from class visibility
-   * @param _fieldResetter - determines field values when reset
+   * @param _classMatcher - class/field matcher
+   * @param _program      - active program
+   * @param _client       - active client
    */
   constructor(
     private readonly _classMatcher: FieldClassMatcher,
     private readonly _program: Program,
-    private readonly _client: Client,
-    private readonly _visibility: CmatchVisibility,
-    private readonly _fieldResetter: FieldResetter
+    private readonly _client: Client
   ) {}
 
   private _cmatchVisFromUi(field: string, all: boolean): boolean[] {
@@ -133,7 +127,6 @@ export class Cmatch {
         _self._classMatcher.match(classes, function (cmatch) {
           // it's important that we do this here so that everything
           // that uses the cmatch data will consistently benefit
-
           _self._postProcessCmatch(cmatch);
 
           // if we're not on a current step, defer
@@ -222,11 +215,6 @@ export class Cmatch {
 
     let fields = cur_step.getStep().getExclusiveFieldNames();
 
-    // Prepare to keep track of any fields that show/hide in this process and
-    // update the bucket if necessary
-    const shown: {[index: string]: any} = {};
-    const hidden: {[index: string]: any} = {};
-
     let visq: VisibilityQueue = {};
 
     for (var field in cmatch) {
@@ -282,43 +270,10 @@ export class Cmatch {
         if (!force && vis[i] === cur[i]) {
           continue;
         }
-
         (vis[i] ? show : hide).push(<PositiveInteger>i);
       }
 
       this.markShowHide(field, visq, show, hide);
-
-      /**
-       * When we clear N/A fields, ensure that their value is reset if they are
-       * hidden on a class match. This is considered an initialization for the
-       * field at the new index.
-       */
-      if (this._program.clearNaFields && hide.length) {
-        hidden[field] = [];
-
-        for (const index of hide) {
-          hidden[field][index] = this._program.naFieldValue;
-        }
-      }
-
-      /**
-       * When we clear N/A fields, ensure that their default value is restored
-       * if they become visible
-       */
-      if (this._program.clearNaFields && show.length) {
-        shown[field] = [];
-
-        const default_value = this._client.program.defaults[field] || '';
-        const current_value = this._client.getQuote().getDataByName(field);
-
-        for (const index of show) {
-          // only update value on show when it has been reset previously
-          if (current_value[index] !== this._program.naFieldValue) {
-            continue;
-          }
-          shown[field][index] = default_value;
-        }
-      }
     }
 
     // it's important to do this before showing/hiding fields, since
@@ -339,9 +294,6 @@ export class Cmatch {
 
       this._dapiTrigger(field);
     });
-
-    this._client.getQuote().setData(shown);
-    this._client.getQuote().setData(hidden);
   }
 
   /**
@@ -399,9 +351,6 @@ export class Cmatch {
     });
   }
 
-  /**
-   * Facilitate detection of field visibility and reset those which are hidden
-   */
   clearCmatchFields(): void {
     var step = this._client.getUi().getCurrentStep(),
       program = this._program;
@@ -410,16 +359,6 @@ export class Cmatch {
     if (!step) {
       return;
     }
-
-    const legend = Object.keys(program.whens).map(name => {
-      return {name, cname: program.whens[name][0]};
-    });
-
-    this._visibility
-      .getBlueprints(legend)
-      .forEach((bp: VisibilityBlueprint) => {
-        this.markShowHide(bp.name, {}, bp.show, bp.hide);
-      });
 
     let reset: CmatchData = {};
 
@@ -451,12 +390,36 @@ export class Cmatch {
     }
 
     // batch reset (limit the number of times events are kicked off)
-    const reset_data = this._fieldResetter.reset(reset);
-
-    this._client.getQuote().setData(reset_data);
+    this._resetFields(reset);
 
     // we've done our deed; reset it for the next time around
     this._cmatchHidden = {};
+  }
+
+  private _resetFields(fields: CmatchData): void {
+    const quote = this._client.getQuote();
+    const update: {[index: string]: any} = {};
+
+    for (let field in fields) {
+      let cur = fields[field],
+        cdata = quote.getDataByName(field),
+        val = this._client.elementStyler.getDefault(field);
+
+      let data = [];
+      for (var i in cur) {
+        var index = cur[i];
+
+        if (cdata[index] === val) {
+          continue;
+        }
+
+        data[index] = val;
+      }
+
+      update[field] = data;
+    }
+
+    quote.setData(update);
   }
 
   /**

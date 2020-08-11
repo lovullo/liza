@@ -87,18 +87,6 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
   groupFields: {},
 
   /**
-   * Whether non-applicable fields should be reset
-   * @type {boolean}
-   */
-  clearNaFields: false,
-
-  /**
-   * Default value that non-applicable fields will reset to
-   * @type {string}
-   */
-  naFieldValue: '',
-
-  /**
    * API descriptions
    * @type {Object}
    */
