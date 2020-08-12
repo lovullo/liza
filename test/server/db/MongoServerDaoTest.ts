@@ -22,7 +22,12 @@
 'use strict';
 
 import {MongoServerDao as Sut} from '../../../src/server/db/MongoServerDao';
-import {MongoSelector, MongoUpdate, MongoDb} from 'mongodb';
+import {
+  MongoSelector,
+  MongoUpdate,
+  MongoDb,
+  MongoQueryUpdateOptions,
+} from 'mongodb';
 import {expect, use as chai_use} from 'chai';
 import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
 import {PositiveInteger} from '../../../src/numeric';
@@ -39,11 +44,13 @@ describe('MongoServerDao', () => {
     describe('with no save data or push data', () => {
       it('saves initial rated individually', done => {
         const expected = 123321;
+        const expected_last_updated_by = 'foo@foo.com';
         const quote = createStubQuote({});
 
         quote.getRatedDate = () => {
           return <UnixTimestamp>expected;
         };
+        quote.getUserName = () => expected_last_updated_by;
 
         const sut = new Sut(
           createMockDb(
@@ -52,6 +59,10 @@ describe('MongoServerDao', () => {
               expect(
                 data.$set['meta.liza_timestamp_initial_rated']
               ).to.deep.equal([expected]);
+
+              expect(data.$set['meta.last_updated_by_username']).to.deep.equal([
+                expected_last_updated_by,
+              ]);
 
               expect(data.$push).to.equal(undefined);
 
@@ -204,6 +215,62 @@ describe('MongoServerDao', () => {
       });
     });
   });
+
+  describe('#saveQuoteMeta', () => {
+    [
+      {
+        label: 'Merges existing meta data when new meta is not provided',
+        new_meta: undefined,
+        existing_meta: {old: ['meta data']},
+        expected: {'meta.old': ['meta data']},
+      },
+      {
+        label: 'Merges new meta data if provided',
+        new_meta: {foo: ['bar']},
+        existing_meta: {this: ['is', 'ignored']},
+        expected: {'meta.foo': ['bar']},
+      },
+      {
+        label: 'Merges all indexes of the new meta data',
+        new_meta: {foo: ['bar', 'baz', 'qux']},
+        existing_meta: {},
+        expected: {'meta.foo': ['bar', 'baz', 'qux']},
+      },
+    ].forEach(({label, new_meta, existing_meta, expected}) => {
+      it(label, done => {
+        const quote = createStubQuote(existing_meta);
+        const expected_options = <MongoQueryUpdateOptions>{some: 'options'};
+        const sut = new Sut(
+          createMockDb(
+            // update
+            (
+              _selector: MongoSelector,
+              data: MongoUpdate,
+              options: MongoQueryUpdateOptions
+            ) => {
+              expect(data.$set).to.deep.equal(expected);
+              expect(options).to.equal(expected_options);
+              done();
+            }
+          ),
+          'test',
+          () => {
+            return <UnixTimestamp>123;
+          }
+        );
+
+        sut.init(() =>
+          sut.saveQuoteMeta(
+            quote,
+            new_meta,
+            undefined,
+            undefined,
+            expected_options
+          )
+        );
+      });
+    });
+  });
 });
 
 function createMockDb(on_update: any): MongoDb {
@@ -276,6 +343,7 @@ function createStubQuote(metadata: Record<string, any>) {
     getId: () => <QuoteId>123,
     getProgramVersion: () => 'Foo',
     getLastPremiumDate: () => <UnixTimestamp>0,
+    getUserName: () => 'foo@foo.com',
     getRatedDate: () => <UnixTimestamp>0,
     getExplicitLockReason: () => '',
     getExplicitLockStep: () => <PositiveInteger>1,

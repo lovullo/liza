@@ -134,12 +134,22 @@ module.exports = Class('ClientQuote')
     'virtual protected initQuote': function (quote, data) {
       var _self = this;
 
+      const created_by =
+        !!data.meta && !!data.meta.created_by_username
+          ? data.meta.created_by_username[0]
+          : '';
+      const lastupdated_by =
+        !!data.meta && !!data.meta.last_updated_by_username
+          ? data.meta.last_updated_by_username[0]
+          : '';
       return quote
         .setData(data.data || {})
         .setCurrentStepId(data.currentStepId || 0)
         .setTopVisitedStepId(data.topVisitedStepId || 0)
         .setAgentId(data.agentId || 0)
         .setAgentName(data.agentName || '')
+        .setCreatedByUserName(created_by)
+        .setLastUpdatedByUserName(lastupdated_by)
         .setAgentEntityId(data.agentEntityId || '')
         .setStartDate(data.startDate || 0)
         .setInitialRatedDate(data.initialRatedDate || 0)
@@ -599,6 +609,20 @@ module.exports = Class('ClientQuote')
      * @return {string} agent name
      */
     'public proxy getAgentName': '_quote',
+
+    /**
+     * Returns the username of the user who created this quote
+     *
+     * @return {string} username
+     */
+    'public proxy getCreatedByUserName': '_quote',
+
+    /**
+     * Returns the username of the user who last updated this quote
+     *
+     * @return {string} username
+     */
+    'public proxy getLastUpdatedByUserName': '_quote',
 
     /**
      * Returns the entity id of the agent that owns the quote

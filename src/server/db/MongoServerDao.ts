@@ -305,6 +305,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
 
     // meta will eventually take over for much of the above data
     save_data['meta.liza_timestamp_initial_rated'] = [quote.getRatedDate()];
+    save_data['meta.last_updated_by_username'] = [quote.getUserName()];
 
     // save the stack so we can track this call via the oplog
     save_data._stack = new Error().stack;
@@ -526,12 +527,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
 
     new_meta = new_meta || quote.getMetabucket().getData();
 
-    for (var key in new_meta) {
-      var meta = new_meta[key];
+    for (const key in new_meta) {
+      const meta = new_meta[key];
 
-      for (var i in meta) {
-        update['meta.' + key + '.' + i] = new_meta[key][i];
+      const arr = [];
+      for (const i in meta) {
+        arr.push(new_meta[key][i]);
       }
+      update['meta.' + key] = arr;
     }
 
     this.mergeData(quote, update, success, failure, options);

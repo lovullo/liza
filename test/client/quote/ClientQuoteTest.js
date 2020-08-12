@@ -28,7 +28,7 @@ const {ClientQuote: Sut} = require('../../../').client.quote;
 const {QuoteDataBucket} = require('../../../').bucket;
 
 describe('ClientQuote', () => {
-  it('Getters retreive the correct data', () => {
+  it('Getters retrieve the correct data', () => {
     const base_quote = BaseQuote(123, QuoteDataBucket());
     const start_date = 12345;
     const agent_id = 90000;
@@ -36,6 +36,8 @@ describe('ClientQuote', () => {
     const agent_entity_id = 12434300;
     const initial_rated_date = 1531507748;
     const last_prem_date = 1531508748;
+    const created_by = 'foo@foo';
+    const last_updated_by = 'bar@bar';
 
     const quote = Sut(
       base_quote,
@@ -46,6 +48,10 @@ describe('ClientQuote', () => {
         agentEntityId: agent_entity_id,
         initialRatedDate: initial_rated_date,
         lastPremDate: last_prem_date,
+        meta: {
+          created_by_username: [created_by],
+          last_updated_by_username: [last_updated_by],
+        },
       },
       bucket => bucket
     );
@@ -56,6 +62,8 @@ describe('ClientQuote', () => {
     expect(quote.getAgentEntityId()).to.equal(agent_entity_id);
     expect(quote.getInitialRatedDate()).to.equal(initial_rated_date);
     expect(quote.getLastPremiumDate()).to.equal(last_prem_date);
+    expect(quote.getCreatedByUserName()).to.equal(created_by);
+    expect(quote.getLastUpdatedByUserName()).to.equal(last_updated_by);
   });
 
   [
@@ -257,6 +265,12 @@ function createMockBaseQuote(bucket) {
       return quote;
     },
     setLastPremiumDate: _ => {
+      return quote;
+    },
+    setCreatedByUserName: _ => {
+      return quote;
+    },
+    setLastUpdatedByUserName: _ => {
       return quote;
     },
     setImported: _ => {
