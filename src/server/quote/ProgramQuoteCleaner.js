@@ -117,7 +117,7 @@ module.exports = Class('ProgramQuoteCleaner', {
         const is_applicable = this._isApplicable(class_data, group_index, i);
 
         data[i] =
-          !is_applicable && this._program.clearNaFields
+          !is_applicable && this._program.hasResetableField(field)
             ? this._program.naFieldValue
             : field_default;
       }

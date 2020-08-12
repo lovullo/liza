@@ -272,6 +272,7 @@ describe('Cmatch', () => {
             foo: {1: ''},
           },
         ],
+        hasResetableField: true,
       },
 
       {
@@ -330,39 +331,52 @@ describe('Cmatch', () => {
           },
         ],
       },
-    ].forEach(({label, bucket, cmatch, expected, cretain, defaults}) => {
-      it(label, () => {
-        const bucket_saves: any[] = [];
+    ].forEach(
+      ({
+        label,
+        bucket,
+        cmatch,
+        expected,
+        cretain,
+        defaults,
+        hasResetableField,
+      }) => {
+        it(label, () => {
+          const bucket_saves: any[] = [];
 
-        const step_ui = createStubStepUi({foo: true});
-        const {sut, quote, program} = createStubs({}, step_ui);
-        program.clearNaFields = true;
-        program.cretain = cretain ?? {};
-        program.defaults = defaults ?? program.defaults;
+          const step_ui = createStubStepUi({foo: true});
+          const {sut, quote, program} = createStubs({}, step_ui);
+          program.clearNaFields = true;
+          program.cretain = cretain ?? {};
+          program.defaults = defaults ?? program.defaults;
+          program.hasResetableField = () => {
+            return hasResetableField ?? false;
+          };
 
-        quote.setData = data => {
-          const output: {[key: string]: any} = {foo: {}};
+          quote.setData = data => {
+            const output: {[key: string]: any} = {foo: {}};
 
-          for (let i in data.foo) {
-            output.foo[i] = data.foo[i];
-          }
+            for (let i in data.foo) {
+              output.foo[i] = data.foo[i];
+            }
 
-          bucket_saves.push(output);
+            bucket_saves.push(output);
 
-          return <ClientQuote>{};
-        };
+            return <ClientQuote>{};
+          };
 
-        quote.getDataByName = (key: string): any => {
-          if (key === 'foo') {
-            return bucket.foo;
-          }
-        };
+          quote.getDataByName = (key: string): any => {
+            if (key === 'foo') {
+              return bucket.foo;
+            }
+          };
 
-        sut.handleClassMatch(cmatch, true);
+          sut.handleClassMatch(cmatch, true);
 
-        expect(bucket_saves).to.deep.equal(expected);
-      });
-    });
+          expect(bucket_saves).to.deep.equal(expected);
+        });
+      }
+    );
   });
 
   describe('clearCmatchFields', () => {

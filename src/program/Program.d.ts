@@ -92,4 +92,9 @@ export declare abstract class Program {
    * Classify the given bucket data
    */
   classify(data: Record<string, any>): ClassificationResult;
+
+  /**
+   * Determine if a field is resetable
+   */
+  hasResetableField(field: string): boolean;
 }

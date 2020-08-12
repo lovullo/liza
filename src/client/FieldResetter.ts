@@ -28,15 +28,9 @@ import {CmatchData} from './Cmatch';
  */
 export class FieldResetter {
   /**
-   * @param _client           - main client instance
-   * @param _hasSharedDefault - if all fields share the same default
-   * @param _defaultValue     - default value for all fields
+   * @param _client - main client instance
    */
-  constructor(
-    private _client: Client,
-    private _hasSharedDefault: boolean = false,
-    private _defaultValue: string = ''
-  ) {}
+  constructor(private _client: Client) {}
 
   /**
    * Return fields with their reset values based on the field names input
@@ -79,8 +73,8 @@ export class FieldResetter {
    * @return the default value of the field
    */
   private _getValue(field: string): string {
-    return this._hasSharedDefault
-      ? this._defaultValue
+    return this._client.program.hasResetableField(field)
+      ? this._client.program.naFieldValue
       : this._client.program.defaults[field] || '';
   }
 }

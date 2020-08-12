@@ -1,7 +1,7 @@
 /**
  * Tests ProgramInit
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -210,6 +210,7 @@ describe('ProgramInit', () => {
       },
       clearNaFields: true,
       naFieldValue: '',
+      hasResetableField: () => true,
     },
     {
       label: 'does not reset applicable fields on init',
@@ -310,6 +311,7 @@ describe('ProgramInit', () => {
       naFieldValue,
       whens,
       cretain,
+      hasResetableField,
     }) => {
       it(label, () => {
         const sut = Sut(null);
@@ -323,6 +325,8 @@ describe('ProgramInit', () => {
           clearNaFields,
           naFieldValue,
           cretain: cretain ? cretain : {},
+          hasResetableField: () =>
+            hasResetableField ? hasResetableField() : false,
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(

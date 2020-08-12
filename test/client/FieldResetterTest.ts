@@ -34,19 +34,13 @@ const sinon = require('sinon');
 
 describe('FieldResetter', () => {
   it('reset fields to empty string by default', () => {
-    const sut = new Sut(getClient(), true);
+    const {client, program} = getClient();
+    const sut = new Sut(client);
+
+    program.hasResetableField = () => true;
 
     const data = {some_field: ['0']};
     const expected = {some_field: ['']};
-
-    expect(sut.reset(data)).to.deep.equal(expected);
-  });
-
-  it('reset fields to custom value', () => {
-    const sut = new Sut(getClient(), true, 'fake_default');
-
-    const data = {some_field: ['0']};
-    const expected = {some_field: ['fake_default']};
 
     expect(sut.reset(data)).to.deep.equal(expected);
   });
@@ -58,7 +52,7 @@ describe('FieldResetter', () => {
       },
     };
 
-    const client = getClient();
+    const {client} = getClient();
 
     sinon.stub(client, 'elementStyler').get(() => {
       return element_styler;
@@ -78,5 +72,8 @@ const getClient = (step: StepUi | null = null) => {
   const ui = createStubUi(step);
   const program = createStubProgram({defaults: {some_field: 'default'}});
 
-  return createStubClient(<ClientQuote>(<unknown>quote), ui, program);
+  return {
+    client: createStubClient(<ClientQuote>(<unknown>quote), ui, program),
+    program,
+  };
 };

@@ -127,5 +127,6 @@ export function createStubProgram(overrides: any = {}) {
     initQuote: () => {},
     getClassifierKnownFields: () => <ClassificationResult>{},
     classify: () => <ClassificationResult>{},
+    hasResetableField: () => false,
   };
 }

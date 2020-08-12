@@ -1533,7 +1533,7 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     for (var field in program.kbclear) {
       var data = quote.getDataByName(field),
-        val = program.clearNaFields
+        val = program.hasResetableField(field)
           ? program.naFieldValue
           : program.defaults[field] || '';
 

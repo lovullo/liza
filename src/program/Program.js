@@ -594,4 +594,23 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
   'public getFirstStepId': function () {
     return this.firstStepId;
   },
+
+  /**
+   * Determine if a field is resetable
+   *
+   * A field is considered resetable when its value is not retain, it relies on
+   * a predicate, has a default, and a clear NA fields flag is set on the
+   * program
+   *
+   * @param {string} field - field name
+   *
+   * @return boolean - if the field is NA
+   */
+  'public hasResetableField': function (field) {
+    const retain = this.cretain[field] === true;
+    const has_predicate = this.whens[field] !== undefined;
+    const has_default = this.defaults[field] !== undefined;
+
+    return !retain && has_predicate && has_default && this.clearNaFields;
+  },
 });

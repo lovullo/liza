@@ -1,7 +1,7 @@
 /**
  * Tests ProgramQuoteCleaner
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -86,6 +86,7 @@ describe('ProgramQuoteCleaner', () => {
           field11: ['--vis-field11'],
           field12: ['--vis-field12'],
         };
+        program.hasResetableField = () => false;
 
         const updates = {};
 
@@ -302,6 +303,8 @@ describe('ProgramQuoteCleaner', () => {
           field11: ['--vis-field11'],
           field12: ['--vis-field12'],
         };
+
+        program.hasResetableField = () => true;
 
         program.classify = () => test.classify;
 

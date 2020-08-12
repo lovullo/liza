@@ -1,7 +1,7 @@
 /**
  * Tests Program
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -59,6 +59,52 @@ describe('Program#postSubmit', () => {
     expect(sut.postSubmit(kb_step_id, {}, callback)).to.be.true;
     expect(callback_called).to.be.true;
     done();
+  });
+});
+
+describe('Program#hasResetableField', () => {
+  [
+    {
+      label: 'detects a resetable field',
+      result: true,
+      clearNaFields: true,
+    },
+    {
+      label: 'does not detect a field with a retained value',
+      result: false,
+      retain: {foo: true},
+      clearNaFields: true,
+    },
+    {
+      label: 'does not a detect a field without a predicate',
+      result: false,
+      whens: {},
+      clearNaFields: true,
+    },
+    {
+      label: 'does not a detect a field without a default',
+      result: false,
+      defaults: {},
+      clearNaFields: true,
+    },
+    {
+      label: 'does not a detect a field when clearNaField is disabled',
+      result: false,
+      clearNaFields: false,
+    },
+  ].forEach(({label, result, retain, whens, defaults, clearNaFields}) => {
+    it(label, () => {
+      const sut = getSut([0, 1]);
+
+      sut.cretain = retain || {};
+      sut.whens = whens || {foo: '--vis-foo'};
+      sut.defaults = defaults || {foo: '0'};
+      sut.clearNaFields = clearNaFields;
+
+      const resetable = sut.hasResetableField('foo');
+
+      expect(resetable).to.be[result];
+    });
   });
 });
 

@@ -247,8 +247,6 @@ export class Cmatch {
         vis = cfield.indexes,
         cur = (_self._cmatch[field] || {}).indexes || [];
 
-      const retain = this._program.cretain[field] === true;
-
       // this should really only ever be the case for __classes
       if (!vis) {
         continue;
@@ -299,14 +297,7 @@ export class Cmatch {
        * there is no recorded default. This is because a lack of a default value
        * removes the risk of custom default values persisting.
        */
-      const has_default = this._client.program.defaults[field] !== undefined;
-
-      if (
-        !retain &&
-        has_default &&
-        this._program.clearNaFields &&
-        hide.length
-      ) {
+      if (this._program.hasResetableField(field) && hide.length) {
         hidden[field] = [];
 
         for (const index of hide) {
