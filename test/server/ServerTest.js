@@ -378,10 +378,8 @@ describe('Server#initQuote', () => {
       expect(save_quote_is_called).to.be.true;
 
       // set meta occurs twice on new quote
-      expect(set_meta_data_calls).to.be.equal(2);
+      expect(set_meta_data_calls).to.be.equal(1);
       expect(set_meta_data[0]).to.deep.equal({});
-      expect(set_meta_data[1]).to.deep.equal({created_by_username: [username]});
-
       expect(save_quote_meta_is_called).to.be.true;
       done();
     };

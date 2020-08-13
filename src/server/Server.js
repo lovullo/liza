@@ -430,7 +430,6 @@ module.exports = Class('Server').extend(EventEmitter, {
             explicitLockStepId: quote.getExplicitLockStep(),
           });
 
-          quote.setMetadata({created_by_username: [username]});
           server.dao.saveQuoteMeta(quote);
         }
 
