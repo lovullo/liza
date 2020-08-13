@@ -1097,7 +1097,7 @@ module.exports = Class('Server').extend(EventEmitter, {
     }
 
     // are they getting too far ahead of themselves?
-    if (step_id > quote.getTopSavedStepId() + 1) {
+    if (step_id > quote.getTopSavedStepId() + 1 && !autosave) {
       // knock back to next step that they're able to save
       var tostep_id = quote.getTopSavedStepId() + 1;
 

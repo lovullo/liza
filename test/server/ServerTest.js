@@ -148,6 +148,86 @@ describe('Server#sendStep', () => {
   );
 });
 
+describe('Server#handlePost', () => {
+  it('Prevents step save when not next immediate step', done => {
+    // attempt to post on a step 2 steps ahead - not ok!
+    const step_to_post = 4;
+    const current_step = 2;
+    const top_saved_step = 2;
+    const top_visited_step = 2;
+    const expected_kick_back = 3;
+
+    const quote = createMockQuote(
+      current_step,
+      top_saved_step,
+      top_visited_step
+    );
+    const program = createMockProgram();
+    const session = createMockSession();
+    const request = createMockRequest(session);
+    const response = createMockResponse();
+    const autosave = false;
+    const sut = getSut(response);
+
+    let get_post_data_called = false;
+    request.getPostData = () => {
+      get_post_data_called = true;
+    };
+
+    const expected_error_action = [
+      {action: 'gostep', id: expected_kick_back, title: 'Go Back'},
+    ];
+    response.error = (message, action, __) => {
+      expect(get_post_data_called).to.be.false;
+      expect(action).to.deep.equal(expected_error_action);
+      expect(message).to.contain(
+        'Unable to save step: you have not yet reached'
+      );
+      done();
+    };
+
+    sut.handlePost(step_to_post, request, quote, program, session, autosave);
+  });
+
+  it('Allows autosave when not next immediate step', done => {
+    const step_to_post = 4;
+    const current_step = 2;
+    const top_saved_step = 2;
+    const top_visited_step = 2;
+
+    const quote = createMockQuote(
+      current_step,
+      top_saved_step,
+      top_visited_step
+    );
+    const program = createMockProgram();
+    const session = createMockSession();
+    const request = createMockRequest(session);
+    const response = createMockResponse();
+    const autosave = true;
+    const sut = getSut(response);
+
+    let error_is_sent = false;
+    response.error = (message, action, __) => {
+      error_is_sent = true;
+      // no errors are expected
+      expect(message).to.be.equal(undefined);
+      done();
+    };
+
+    // TODO: assert on actual saves which requires a lot more mocking
+    //  (BucketCipher is directly instantiated in Sut)
+    let get_post_data_called = false;
+    request.getPostData = () => {
+      expect(error_is_sent).to.be.false;
+      done();
+    };
+
+    sut.handlePost(step_to_post, request, quote, program, session, autosave);
+    expect(get_post_data_called).to.be.true;
+  });
+});
+
 describe('Server#initQuote', () => {
   it('Gets existing quote data from db then sets defaults', done => {
     let response = createMockResponse();
@@ -439,7 +519,7 @@ function createMockQuote(
     getTopSavedStepId: () => saved_step_id || 0,
     getTopVisitedStepId: () => visited_step_id || 0,
     refreshData: () => {},
-    isLocked: () => {},
+    isLocked: () => false,
     getId: () => quote_id || '111111',
     getStartDate: () => '',
     getProgramId: () => program_id || '',
@@ -466,6 +546,7 @@ function createMockRequest(session) {
   return {
     end: () => {},
     getSession: () => session,
+    getPostData: () => {},
   };
 }
 
