@@ -44,13 +44,13 @@ describe('MongoServerDao', () => {
     describe('with no save data or push data', () => {
       it('saves initial rated individually', done => {
         const expected = 123321;
-        const expected_last_updated_by = 'foo@foo.com';
+        const expected_username = 'foo@foo.com';
         const quote = createStubQuote({});
 
         quote.getRatedDate = () => {
           return <UnixTimestamp>expected;
         };
-        quote.getUserName = () => expected_last_updated_by;
+        quote.getUserName = () => expected_username;
 
         const sut = new Sut(
           createMockDb(
@@ -61,8 +61,12 @@ describe('MongoServerDao', () => {
               ).to.deep.equal([expected]);
 
               expect(data.$set['meta.last_updated_by_username']).to.deep.equal([
-                expected_last_updated_by,
+                expected_username,
               ]);
+
+              expect(
+                data.$setOnInsert['meta.created_by_username']
+              ).to.deep.equal([expected_username]);
 
               expect(data.$push).to.equal(undefined);
 

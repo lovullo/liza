@@ -310,11 +310,14 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     // save the stack so we can track this call via the oplog
     save_data._stack = new Error().stack;
 
+    // only set created by on initial document insert
+    const insert_only = {'meta.created_by_username': [quote.getUserName()]};
+
     // do not push empty objects
     const document =
       !push_data || !Object.keys(push_data).length
-        ? {$set: save_data}
-        : {$set: save_data, $push: push_data};
+        ? {$set: save_data, $setOnInsert: insert_only}
+        : {$set: save_data, $setOnInsert: insert_only, $push: push_data};
 
     // update the quote data if it already exists (same id), otherwise
     // insert it
