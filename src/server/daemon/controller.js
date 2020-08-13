@@ -427,7 +427,7 @@ function doRoute(program, request, data, resolve, reject) {
 
       default:
         // send the requested step to the client
-        acquireReadLock(quote_id, request, function () {
+        acquireRwLock(quote_id, request, function () {
           handleRequest(function (quote) {
             server.sendStep(request, quote, program, step_id, session);
           });
