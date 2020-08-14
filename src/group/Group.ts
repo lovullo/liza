@@ -84,6 +84,11 @@ export class Group {
   private _isInternal: boolean = false;
 
   /**
+   * A list of when conditions for the group
+   */
+  private _when_field: string = '';
+
+  /**
    * Gets or sets the maximum numbers of rows that may appear in the group
    *
    * @param max - max maximum number of rows
@@ -242,5 +247,24 @@ export class Group {
 
   public getIndexFieldName(): string {
     return this._indexFieldName;
+  }
+
+  /**
+   * Sets the when field name
+   *
+   * @param when - the visibility classification for the group
+   */
+  public setWhenFieldName(when: string): this {
+    this._when_field = when;
+    return this;
+  }
+
+  /**
+   * Get the when field name
+   *
+   * @return the when field name
+   */
+  public getWhenFieldName(): string {
+    return this._when_field;
   }
 }
