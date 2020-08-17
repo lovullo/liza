@@ -57,7 +57,7 @@ export class FieldContextStore {
   /**
    * Field values by index
    */
-  private _field_values: string[] = [];
+  private _field_values: Array<string | undefined> = [];
 
   /**
    * Field options by index
@@ -170,7 +170,7 @@ export class FieldContextStore {
    * @param index - index of field
    * @param value - value to set
    */
-  setValueByIndex(index: PositiveInteger, value: string): void {
+  setValueByIndex(index: PositiveInteger, value?: string): void {
     this._field_values[index] = value;
   }
 

@@ -22,12 +22,13 @@
 
 'use strict';
 
-const Sut = require('../../').group.Group;
 const expect = require('chai').expect;
+
+import {Group as Sut} from '../../src/group/Group';
 
 describe('Group', () => {
   it('#setInternal sets internal flag', () => {
-    const sut = Sut();
+    const sut = new Sut();
     expect(sut.isInternal()).to.be.false;
     sut.setInternal(true);
     expect(sut.isInternal()).to.be.true;

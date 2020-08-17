@@ -20,8 +20,12 @@
  */
 
 const expect = require('chai').expect,
-  sinon = require('sinon'),
-  Sut = require('../../../src/ui/group/GroupStateManager').GroupStateManager;
+  sinon = require('sinon');
+
+import {
+  GroupStateManager as Sut,
+  GroupState,
+} from '../../../src/ui/group/GroupStateManager';
 
 before(function () {
   this.jsdom = require('jsdom-global')();
@@ -57,7 +61,7 @@ describe('ui.group.GroupStateManager', () => {
 
       sut.processDataAttributes(elem);
 
-      expect(sut.observes('pending')).to.be.true;
+      expect(sut.observes(<GroupState>'pending')).to.be.true;
     });
 
     it('detects when the state manager does not observe an invalid state', () => {
@@ -68,7 +72,7 @@ describe('ui.group.GroupStateManager', () => {
 
       sut.processDataAttributes(elem);
 
-      expect(sut.observes('foo')).to.be.false;
+      expect(sut.observes(<GroupState>'foo')).to.be.false;
     });
   });
 
@@ -83,7 +87,7 @@ describe('ui.group.GroupStateManager', () => {
 
       bucket.getDataByName = () => [0];
 
-      expect(sut.is('pending', bucket)).to.be.false;
+      expect(sut.is(<GroupState>'pending', bucket)).to.be.false;
     });
 
     it('detects a pending state', () => {
@@ -96,7 +100,7 @@ describe('ui.group.GroupStateManager', () => {
 
       bucket.getDataByName = () => [1];
 
-      expect(sut.is('pending', bucket)).to.be.true;
+      expect(sut.is(<GroupState>'pending', bucket)).to.be.true;
     });
 
     it('detects a multi-variate pending state', () => {
@@ -117,7 +121,7 @@ describe('ui.group.GroupStateManager', () => {
         return bucket_values[key];
       };
 
-      expect(sut.is('pending', bucket)).to.be.true;
+      expect(sut.is(<GroupState>'pending', bucket)).to.be.true;
     });
   });
 
@@ -132,7 +136,7 @@ describe('ui.group.GroupStateManager', () => {
 
       bucket.getDataByName = () => [0];
 
-      expect(sut.is('disabled', bucket)).to.be.false;
+      expect(sut.is(<GroupState>'disabled', bucket)).to.be.false;
     });
 
     it('detects a disabled state', () => {
@@ -145,7 +149,7 @@ describe('ui.group.GroupStateManager', () => {
 
       bucket.getDataByName = () => [1];
 
-      expect(sut.is('disabled', bucket)).to.be.true;
+      expect(sut.is(<GroupState>'disabled', bucket)).to.be.true;
     });
   });
 });

@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", no-undef: "off", eqeqeq: "off", no-extra-boolean-cast: "off" */
+/* eslint @typescript-eslint/no-this-alias: "off", no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", no-undef: "off", eqeqeq: "off", no-extra-boolean-cast: "off" */
 /**
  * Group table UI
  *
@@ -26,8 +26,11 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {PositiveInteger} from '../../numeric';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+
+declare type jQuery = any;
 
 /**
  * Represents a table group
@@ -35,20 +38,17 @@ var Class = require('easejs').Class,
  * This class extends from the generic Group class.  It contains logic to
  * support table groups, allowing for the adding and removal of rows.
  */
-module.exports = Class('TableGroupUi').extend(GroupUi, {
+export class TableGroupUi extends GroupUi {
   /**
    * Stores the base row to be duplicated for table groups
-   * @type {jQuery}
    */
-  $baseRow: null,
+  $baseRow: jQuery = null;
 
   /**
    * Template method used to process the group content to prepare it for
    * display and retrieve common data
-   *
-   * @return void
    */
-  'override protected processContent': function (quote) {
+  protected processContent(quote: ClientQuote): void {
     // determine if we should lock this group down
     if (this.$content.find('table').hasClass('locked')) {
       this.group.locked(true);
@@ -57,14 +57,12 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     this._processTables();
     this._attachAddRowHandlers();
     this.watchFirstElement(this.$baseRow, quote);
-  },
+  }
 
   /**
    * Attaches the add row event handlers so new rows are added on click
-   *
-   * @return void
    */
-  _attachAddRowHandlers: function () {
+  public _attachAddRowHandlers(): void {
     // reference to ourself for use in the closure
     var _self = this;
 
@@ -80,7 +78,7 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
       // initialize a new index
       _self.initIndex();
     });
-  },
+  }
 
   /**
    * Processes tables, preparing them for row duplication
@@ -92,10 +90,8 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
    * This was chosen over simply duplicating and clearing out the first row
    * because we (a) have a clean slate and (b) Dojo does not work well if you
    * duplicate dijit HTML.
-   *
-   * @return void
    */
-  _processTables: function () {
+  public _processTables(): void {
     // reference to ourself for use in the closure
     var groupui = this;
 
@@ -105,73 +101,75 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     }
 
     // remove the first row of the group tables
-    this.$content.find('.groupTable > tbody > tr:first').each(function (i) {
-      // remove the row and store it in memory as the base row, which
-      // will be used for duplication (adding new rows)
-      //
-      // NOTE: detach() must be used rather than remove(), because
-      // remove() also removes any data attached to the element
-      groupui.$baseRow = $(this).detach();
-    });
-  },
+    this.$content
+      .find('.groupTable > tbody > tr:first')
+      .each(function (_: number, elem: any) {
+        // remove the row and store it in memory as the base row, which
+        // will be used for duplication (adding new rows)
+        //
+        // NOTE: detach() must be used rather than remove(), because
+        // remove() also removes any data attached to the element
+        groupui.$baseRow = $(elem).detach();
+      });
+  }
 
   /**
    * Returns the table associated with the given group id
    *
-   * @return jQuery group table
+   * @return group table
    */
-  _getTable: function () {
+  public _getTable(): jQuery {
     return this.$content.find('table.groupTable');
-  },
+  }
 
   /**
    * Returns the row of the group table for the specified group and row id
    *
-   * @param Integer row_id id of the row to retrieve
+   * @param row_id - id of the row to retrieve
    *
-   * @return jQuery group table row
+   * @return group table row
    */
-  _getTableRow: function (row_id) {
+  public _getTableRow(row_id: number): jQuery {
     row_id = +row_id;
 
     return this._getTable().find(
       'tbody > tr[id=' + this._genTableRowId(row_id) + ']'
     );
-  },
+  }
 
-  'private _getLastTableRow': function () {
+  private _getLastTableRow(): jQuery {
     return this._getTableRow(this.getCurrentIndex());
-  },
+  }
 
   /**
    * Generates the id to be used for the group table row
    *
    * This id lets us find the row for styling and removal.
    *
-   * @param Integer row_id id of the row
+   * @param row_id - id of the row
    *
-   * @return String row id for the table row
+   * @return row id for the table row
    */
-  _genTableRowId: function (row_id) {
+  public _genTableRowId(row_id: number): string {
     row_id = +row_id;
     return this.getGroupId() + '_row_' + row_id;
-  },
+  }
 
   /**
    * Returns the element used to add rows to the table
    *
-   * @return jQuery add row element
+   * @return add row element
    */
-  _getAddRowButton: function () {
+  public _getAddRowButton(): jQuery {
     return this.$content.find('.addrow:first');
-  },
+  }
 
   /**
    * Adds a row to a group that supports rows
    *
    * @return Step self to allow for method chaining
    */
-  addRow: function () {
+  public addRow(): this {
     var $group_table = this._getTable();
     var row_count = $group_table.find('tbody > tr').length;
     var max = this.group.maxRows();
@@ -189,7 +187,7 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     }
 
     // duplicate the base row
-    $row_new = $row_base.clone(true);
+    var $row_new = $row_base.clone(true);
 
     // increment row ids
     var new_index = this._incRow($row_new);
@@ -219,7 +217,7 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     this.postAddRow($row_new, $row_new.index());
 
     return this;
-  },
+  }
 
   /**
    * Increments the index of the elements in the row
@@ -228,11 +226,11 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
    *   - name: foo[i]
    *   - id:   foo_i
    *
-   * @param jQuery $row  row to increment
+   * @param $row - row to increment
    *
-   * @return Integer the new index
+   * @return the new index
    */
-  _incRow: function ($row) {
+  public _incRow($row: jQuery): PositiveInteger {
     var new_index = this.getCurrentIndex();
     var row = $row[0];
 
@@ -242,55 +240,49 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     // properly name the elements to prevent id conflicts
     this.setElementIdIndexes(row.getElementsByTagName('*'), new_index);
 
-    return new_index;
-  },
+    return <PositiveInteger>new_index;
+  }
 
   /**
    * Applies UI transformations to a row
    *
-   * @param Integer row_id id of the row to be styled
+   * @param row_id - id of the row to be styled
    *
    * @return Step self to allow for method chaining
    */
-  'private _applyStyle': function (row_id) {
+  private _applyStyle(row_id: PositiveInteger): this {
     // style only the specified row
     this.styler.apply(this._getTableRow(row_id));
 
     return this;
-  },
+  }
 
   /**
    * Moves the delete row table cell to the end of the row
    * after group fields are re-attached
    *
-   * @param Integer row_id id of the row to be styled
-   *
-   * @return void
+   * @param row_id - id of the row to be styled
    */
-  'private _postStyleDelRow': function (row_id) {
+  private _postStyleDelRow(row_id: PositiveInteger): void {
     if (this.getDomPerfFlag() === true) {
       const row = this.fieldContentParent[row_id];
       const del = row.querySelector('td.delrow');
 
       if (!!del) {
         // Move delete to end of row
-        del.parentNode.appendChild(del);
+        del?.parentNode?.appendChild(del);
       }
     }
-  },
+  }
 
   /**
    * Removes the specified row from a group
    *
    * @return Step self to allow for method chaining
    */
-  removeRow: function () {
+  public removeRow(): this {
     // get parent table and row count
-    var $group_table = this._getTable(),
-      $row = this._getLastTableRow(),
-      row_index = $row.index(),
-      row_count = $group_table.find('tbody > tr').length,
-      group = this;
+    var $row = this._getLastTableRow();
 
     // cleared so they can be restyled later)
     this.styler.remove($row);
@@ -300,43 +292,43 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     this._getAddRowButton().show();
 
     return this;
-  },
+  }
 
-  'override protected addIndex': function (index) {
+  protected addIndex(index: number): this {
     // increment id before doing our own stuff
-    this.__super(index);
+    super.addIndex(index);
     this.addRow();
 
     return this;
-  },
+  }
 
-  'override public removeIndex': function (index) {
+  public removeIndex(index: number): this {
     // remove our stuff before decrementing our id
     this.removeRow();
-    this.__super(index);
+    super.removeIndex(index);
 
     return this;
-  },
+  }
 
   /**
    * Returns all elements that are a part of the column at the given index
    *
-   * @param Integer index column position (0-based)
+   * @param index - column position (0-based)
    *
-   * @return jQuery collection of matched elements
+   * @return collection of matched elements
    */
-  _getColumnElements: function (index) {
-    index = +index;
+  public _getColumnElements(index: PositiveInteger): jQuery {
+    index = <PositiveInteger>+index;
 
     return this._getTable().find(
       'thead th:nth(' + index + '), ' + 'tr > td:nth-child(' + (index + 1) + ')'
     );
-  },
+  }
 
-  'override protected doHideField': function (field, index) {
+  protected doHideField(field: string, index: number): void {
     if (this.getDomPerfFlag() === true) {
       // Ensures FieldContext is created for this field
-      this.__super(field, index);
+      super.doHideField(field, index);
     }
 
     var $element = this.getElementByName(field, index),
@@ -347,12 +339,12 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     $element.hide();
 
     this._checkColumnVis(field, cindex);
-  },
+  }
 
-  'override protected doShowField': function (field, index) {
+  protected doShowField(field: string, index: PositiveInteger): void {
     if (this.getDomPerfFlag() === true) {
       // Ensures FieldContext is created for this field
-      this.__super(field, index);
+      super.doShowField(field, index);
     }
 
     var $element = this.getElementByName(field, index),
@@ -365,9 +357,9 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     this._postStyleDelRow(index);
 
     this._checkColumnVis(field, cindex);
-  },
+  }
 
-  'private _checkColumnVis': function (field, cindex) {
+  private _checkColumnVis(field: string, cindex: PositiveInteger) {
     var $e = this._getColumnElements(cindex);
 
     if (this.isFieldVisible(field)) {
@@ -375,16 +367,14 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     } else {
       $e.stop(true, true).slideUp(500);
     }
-  },
+  }
 
   /**
    * Shows/hides add/remove row buttons
    *
-   * @param {boolean} value whether to hide (default: true)
-   *
-   * @return {TableGroupUi} self
+   * @param value - whether to hide (default: true)
    */
-  hideAddRemove: function (value) {
+  public hideAddRemove(value: boolean): this {
     if (value === true) {
       this._getAddRowButton().hide();
       this.$content.find('.delrow').hide();
@@ -394,14 +384,14 @@ module.exports = Class('TableGroupUi').extend(GroupUi, {
     }
 
     return this;
-  },
+  }
 
   /**
    * Returns the number of rows currently in the table
    *
-   * @return {number}
+   * @return the number of rows currently in the table
    */
-  'public getRowCount': function () {
+  public getRowCount(): number {
     return this.getCurrentIndexCount();
-  },
-});
+  }
+}

@@ -31,7 +31,7 @@ import {
 /**
  * The only type of group this collection may contain
  */
-const REQUIRED_GROUP_TYPE = require('../group/GridGroupUi');
+const REQUIRED_GROUP_TYPE = GridGroupUi;
 
 /**
  * HTML section tag
@@ -125,7 +125,15 @@ export class GridCollection implements Collection {
    * @return the number of columns
    */
   private _getColumnCount() {
-    const unique = (type: string, i: number, children: string[]) => {
+    const unique = (
+      type: string | null,
+      i: number,
+      children: Array<string | null>
+    ) => {
+      if (type === null) {
+        type = '';
+      }
+
       return children.indexOf(type) === i;
     };
 
@@ -331,7 +339,7 @@ export class GridCollection implements Collection {
       const group = groups[id];
       const is_child_id = group_ids.indexOf(id) > -1;
 
-      if (is_child_id && group.isA(REQUIRED_GROUP_TYPE)) {
+      if (is_child_id && group instanceof REQUIRED_GROUP_TYPE) {
         this._groups.push(<GridGroupUi>group);
       }
     }

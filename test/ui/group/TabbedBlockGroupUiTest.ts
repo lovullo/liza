@@ -19,17 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 //Object.defineProperty(exports, "__esModule", { value: true });
-var Sut = require('../../..').ui.group.TabbedBlockGroupUi,
-  BaseQuote = require('../../..').quote.BaseQuote,
+const BaseQuote = require('../../..').quote.BaseQuote,
   ClientQuote = require('../../..').client.quote.ClientQuote,
   chai = require('chai'),
   expect = chai.expect,
   sinon = require('sinon'),
-  sinonChai = require('sinon-chai'),
-  jsdom = require('jsdom-global')(),
-  Class = require('easejs').Class;
+  sinonChai = require('sinon-chai');
 
 chai.use(sinonChai);
+
+import {TabbedBlockGroupUi as Sut} from '../../../src/ui/group/TabbedBlockGroupUi';
+import {Group} from '../../../src/group/Group';
+import {ElementStyler} from '../../../src/ui/ElementStyler';
+import {GroupContext} from '../../../src/ui/context/GroupContext';
+import {GroupStateManager} from '../../../src/ui/group/GroupStateManager';
+import {FieldStyler} from '../../../src/ui/context/styler/FieldStyler';
 
 describe('ui.group.TabbedGroupUi', () => {
   describe('#visit', function () {
@@ -73,6 +77,7 @@ describe('ui.group.TabbedGroupUi', () => {
         ],
       },
     ].forEach(({tabs}) => {
+      const jsdom = require('jsdom-global')();
       const quote = createQuote();
       const content = createContent(tabs);
       const sut = createSut(content.content, content.jquery, tabs.length);
@@ -82,13 +87,15 @@ describe('ui.group.TabbedGroupUi', () => {
 
       // Assert: 'inactive' class has been removed from the selected tab
       const spies = content.spies;
-      for (i = 0; i < tabs.length; i++) {
+      for (let i = 0; i < tabs.length; i++) {
         if (tabs[i].selected) {
           expect(spies.remove[i]).to.have.been.calledOnce;
         } else {
           expect(spies.remove[i]).to.have.callCount(0);
         }
       }
+
+      jsdom();
     });
   });
 });
@@ -96,18 +103,18 @@ describe('ui.group.TabbedGroupUi', () => {
 /**
  * Mock elements within the DOM
  *
- * @param {array} tabs      information about how to render the tabs
+ * @param tabs - information about how to render the tabs
  */
-function createContent(tabs) {
+function createContent(tabs: any[]) {
   // Create spies to monitor method calls
-  const spies = {
+  const spies = <Record<string, any[]>>{
     remove: [],
   };
 
   // Mock list of individual tabs
   const tabList = [];
   let tab;
-  for (i = 0; i < tabs.length; i++) {
+  for (let i = 0; i < tabs.length; i++) {
     tab = {
       classList: {
         contains: sinon.stub(),
@@ -130,6 +137,7 @@ function createContent(tabs) {
       contains: sinon.stub().returns(false),
     },
     getElementsByClassName: sinon.stub().returns([]),
+    hasClass: sinon.stub().returns(false),
   };
   box.querySelector.withArgs('li').returns({
     parentElement: {
@@ -154,8 +162,10 @@ function createContent(tabs) {
     },
   });
 
-  const tabbedBlock = [box];
-  tabbedBlock.hasClass = sinon.stub().returns(false);
+  const tabbedBlock = {
+    0: box,
+    hasClass: (_: any) => false,
+  };
 
   // Mock object used to search content
   const $content = {
@@ -171,6 +181,7 @@ function createContent(tabs) {
   // Create stubs for content and jquery
   const content = {
     getAttribute: sinon.stub().returns('attribute'),
+    getElementsByClassName: sinon.stub().returns([]),
   };
 
   const jquery = sinon.stub();
@@ -186,8 +197,8 @@ function createContent(tabs) {
  *
  * @return {Sut}
  */
-function createSut(content, jquery, tabCount) {
-  const group = {
+function createSut(content: any, jquery: any, tabCount: number) {
+  const group = <Group>{
     getExclusiveFieldNames: sinon.stub().returns([]),
     getExclusiveCmatchFieldNames: sinon.stub().returns([]),
     isInternal: sinon.stub().returns(false),
@@ -196,34 +207,35 @@ function createSut(content, jquery, tabCount) {
     minRows: sinon.stub().returns(0),
     maxRows: sinon.stub().returns(1),
     getUserFieldNames: sinon.stub().returns([]),
+    getWhenFieldName: sinon.stub().returns(''),
   };
 
-  const context = {
+  const context = <GroupContext>(<unknown>{
     init: function () {},
-  };
+  });
 
-  const styler = {apply: sinon.stub()};
+  const styler = <ElementStyler>{apply: sinon.stub()};
 
   const feature_flag = {
-    isEnabled: _ => {
+    isEnabled: (_: any) => {
       return false;
     },
   };
 
-  const manager = {
+  const manager = <GroupStateManager>{
     is: sinon.stub(),
     observes: sinon.stub(),
     processDataAttributes: sinon.stub(),
   };
 
-  const sut = Sut(
+  const sut = new Sut(
     group,
     content,
     styler,
     jquery,
     context,
     {},
-    null,
+    <FieldStyler>(<unknown>null),
     feature_flag,
     manager
   );
@@ -249,6 +261,8 @@ function createQuote() {
 
   const staging_callback = sinon.stub().returns(bucket);
   const quote = new BaseQuote(1, bucket);
+
+  quote.visitData = (cb: any) => cb(bucket);
 
   return new ClientQuote(quote, {}, staging_callback);
 }

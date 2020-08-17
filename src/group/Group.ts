@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off" */
+/* eslint @typescript-eslint/no-inferrable-types: "off", no-var: "off" */
 /**
  * Group of fields
  *
@@ -21,163 +21,149 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require('easejs').Class;
+import {PositiveInteger} from '../numeric';
 
 /**
  * Group of fields
  */
-module.exports = Class('Group', {
+export class Group {
   /**
    * Maximum number of rows permitted
    *
    * Must be 0 by default (not 1) to ensure we are unbounded by default.
-   *
-   * @type {number}
    */
-  'private _maxRows': 0,
+  private _maxRows: number = 0;
 
   /**
    * Minimum number of rows permitted
-   * @type {number}
    */
-  'private _minRows': 1,
+  private _minRows: number = 1;
 
   /**
    * Whether the group is preventing from adding/removing rows
-   * @type {boolean}
    */
-  'private _locked': false,
+  private _locked: boolean = false;
 
   /**
    * Stores names of fields available in the group (includes linked)
-   * @type {Array.<string>}
    */
-  'private _fields': [],
+  private _fields: string[] = [];
 
   /**
    * Stores names of fields available exclusively in the group (no linked)
-   * @type {Array.<string>}
    */
-  'private _exclusiveFields': [],
+  private _exclusiveFields: string[] = [];
 
   /**
    * Hashed exclusive fields for quick lookup
    * @type {Object}
    */
-  'private _exclusiveHash': {},
+  private _exclusiveHash: any = {};
 
   /**
    * Stores names of cmatch fields available exclusively in the group (no linked)
-   * @type {Array.<string>}
    */
-  'private _exclusiveCmatchFields': [],
+  private _exclusiveCmatchFields: string[] = [];
 
   /**
    * Names of fields that are visible to the user
    *
    * For example: excludes external fields, but includes display.
-   *
-   * @type {Array.<string>}
    */
-  'private _userFields': [],
+  private _userFields: string[] = [];
 
   /**
    * The id of the field that will determine the number of indexes in the
    * group
-   *
-   * @type {string}
    */
-  'private _indexFieldName': '',
+  private _indexFieldName: string = '';
 
   /**
    * If the group should display internal fields
-   *
-   * @type {boolean}
    */
-  'private _isInternal': false,
+  private _isInternal: boolean = false;
+
+  /**
+   * A list of when conditions for the group
+   */
+  private _when_field: string = '';
 
   /**
    * Gets or sets the maximum numbers of rows that may appear in the group
    *
-   * @param Integer max maximum number of rows
+   * @param max - max maximum number of rows
    *
-   * @return Group|Boolean self if settings, otherwise min rows value
+   * @return the man rows value
    */
-  maxRows: function (max) {
+  public maxRows(max?: PositiveInteger): number {
     if (max !== undefined) {
       this._maxRows = +max;
-      return this;
+      return this._maxRows;
     }
 
     return this._maxRows;
-  },
+  }
 
   /**
    * Gets or sets the minimum numbers of rows that may appear in the group
    *
-   * @param Integer min minimum number of rows
+   * @param min - minimum number of rows
    *
-   * @return Group|Boolean self if setting, otherwise the min row value
+   * @return the min rows value
    */
-  minRows: function (min) {
+  public minRows(min?: number): number {
     if (min !== undefined) {
       this._minRows = +min;
-      return this;
+      return this._minRows;
     }
 
     return this._minRows;
-  },
+  }
 
   /**
    * Gets or sets the locked status of a group
    *
    * When a group is locked, rows/groups cannot be removed
    *
-   * @param Boolean locked whether the group should be locked
+   * @param locked - whether the group should be locked
    *
    * @return Group|Boolean self if setting, otherwise locked status
    */
-  locked: function (locked) {
+  public locked(locked?: boolean): this | boolean {
     if (locked !== undefined) {
       this._locked = !!locked;
       return this;
     }
 
     return this._locked;
-  },
+  }
 
   /**
    * Set names of fields available in the group
    *
-   * @param {Array.<string>} fields field names
-   *
-   * @return {undefined}
+   * @param fields - field names
    */
-  'public setFieldNames': function (fields) {
+  public setFieldNames(fields: string[]) {
     // store copy of the fields to ensure that modifying the array that was
     // passed in does not modify our values
     this._fields = fields.slice(0);
 
     return this;
-  },
+  }
 
   /**
    * Returns the group field names
-   *
-   * @return {Array.<string>}
    */
-  'public getFieldNames': function () {
+  public getFieldNames(): string[] {
     return this._fields;
-  },
+  }
 
   /**
    * Set names of fields available in the group (no linked)
    *
-   * @param {Array.<string>} fields field names
-   *
-   * @return {undefined}
+   * @param fields - field names
    */
-  'public setExclusiveFieldNames': function (fields) {
+  public setExclusiveFieldNames(fields: string[]) {
     // store copy of the fields to ensure that modifying the array that was
     // passed in does not modify our values
     this._exclusiveFields = fields.slice(0);
@@ -189,87 +175,96 @@ module.exports = Class('Group', {
     }
 
     return this;
-  },
+  }
 
   /**
    * Returns the group field names (no linked)
-   *
-   * @return {Array.<string>}
    */
-  'public getExclusiveFieldNames': function () {
+  public getExclusiveFieldNames(): string[] {
     return this._exclusiveFields;
-  },
+  }
 
   /**
    * Set names of cmatch fields available in the group (no linked)
    *
-   * @param {Array.<string>} fields field names
-   *
-   * @return {Group} self
+   * @param fields - field names
    */
-  'public setExclusiveCmatchFieldNames': function (fields) {
+  public setExclusiveCmatchFieldNames(fields: string[]) {
     this._exclusiveCmatchFields = fields.slice(0);
 
     return this;
-  },
+  }
 
   /**
    * Returns the cmatch fields available in the group
-   *
-   * @return {Array.<string>}
    */
-  'public getExclusiveCmatchFieldNames': function () {
+  public getExclusiveCmatchFieldNames(): string[] {
     return this._exclusiveCmatchFields;
-  },
+  }
 
-  'public setUserFieldNames': function (fields) {
+  public setUserFieldNames(fields: string[]) {
     this._userFields = fields.slice(0);
     return this;
-  },
+  }
 
-  'public getUserFieldNames': function () {
+  public getUserFieldNames(): string[] {
     return this._userFields;
-  },
+  }
 
   /**
    * Set flag to display internal fields
    *
-   * @param {boolean} internal internal flag
-   *
-   * @return {Group} self
+   * @param internal - internal flag
    */
-  'public setInternal': function (internal) {
+  public setInternal(internal: boolean) {
     this._isInternal = !!internal;
 
     return this;
-  },
+  }
 
   /**
    * Get flag to display internal fields
-   *
-   * @return {boolean}
    */
-  'public isInternal': function () {
+  public isInternal(): boolean {
     return this._isInternal;
-  },
+  }
 
   /**
    * Returns whether the group contains the given field
    *
-   * @param {string} field name of field
+   * @param field - name of field
    *
-   * @return {boolean} true if exclusively contains field, otherwise false
+   * @return true if exclusively contains field, otherwise false
    */
-  'public hasExclusiveField': function (field) {
+  public hasExclusiveField(field: string): boolean {
     return !!this._exclusiveHash[field];
-  },
+  }
 
-  'public setIndexFieldName': function (name) {
+  public setIndexFieldName(name: string) {
     this._indexFieldName = '' + name;
     return this;
-  },
+  }
 
-  'public getIndexFieldName': function () {
+  public getIndexFieldName(): string {
     return this._indexFieldName;
-  },
-});
+  }
+
+  /**
+   * Sets the when field name
+   *
+   * @param when - the visibility classification for the group
+   */
+  public setWhenFieldName(when: string): this {
+    this._when_field = when;
+    return this;
+  }
+
+  /**
+   * Get the when field name
+   *
+   * @return the when field name
+   */
+  public getWhenFieldName(): string {
+    return this._when_field;
+  }
+}

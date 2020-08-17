@@ -21,6 +21,7 @@
 
 import {StagingBucket} from '../bucket/StagingBucket';
 import {PositiveInteger} from '../numeric';
+import {Data} from '../client/quote/ClientQuote';
 import {CmatchData} from '../client/Cmatch';
 import {DataApiResult} from '../dapi/DataApi';
 
@@ -40,6 +41,10 @@ export declare abstract class Program {
   internal: Record<string, boolean>;
 
   autosave: boolean;
+
+  whens: Data;
+
+  groupWhens: Record<string, string>;
 
   meta: {
     arefs: AnswerRefs;

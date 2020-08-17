@@ -1,7 +1,7 @@
 /**
- * Group
+ * Flat UI group with accordion display
  *
- *  Copyright (C) 2010-2020 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -19,6 +19,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export declare class Group {
-  public isInternal(): boolean;
+import {StackedGroupUi} from './StackedGroupUi';
+
+declare type jQuery = any;
+
+/**
+ * Collapsable stacked group
+ */
+export class AccordionGroupUi extends StackedGroupUi {
+  /**
+   * Make stack body collapsable when header is clicked
+   *
+   * @param $dl   - definition list for group
+   * @param index - index to make clickable
+   */
+  protected postAddRow($dl: jQuery, index: number): this {
+    const header = $dl[0].firstElementChild;
+
+    header.addEventListener('click', () => {
+      header.parentElement.classList.toggle('liza-collapsed');
+    });
+
+    return super.postAddRow($dl, index);
+  }
 }

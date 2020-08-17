@@ -136,4 +136,71 @@ export declare class ElementStyler {
     disable?: boolean,
     $context?: any
   ): this;
+
+  setOptions(
+    name: string,
+    index: number,
+    options: any[],
+    val?: string,
+    $context?: any
+  ): void | this;
+
+  /**
+   * Sets element value given a name and index
+   *
+   * @param name         - element name
+   * @param index        - index to set
+   * @param value        - value to set
+   * @param change_event - whether to trigger change event
+   * @param $context     - optional DOM element context
+   */
+  setValueByName(
+    name: string,
+    index: number,
+    value: string,
+    change_event: boolean,
+    $context: any
+  ): this;
+
+  isAField(name: string): boolean;
+
+  /**
+   * Retrieve elements by the given name and optional index
+   *
+   * This allows for a simple mapping from bucket to UI.
+   *
+   * If multiple elements exist for a group of elements (e.g. radios), the
+   * first element in the group will be returned.
+   *
+   * @param name     - element name (question name)
+   * @param index    - index of element to retrieve (bucket index)
+   * @param filter   - filter to apply to widgets
+   * @param $context - filtering context
+   *
+   * @return matches
+   */
+  getElementByName(
+    name: string,
+    index: number,
+    filter: string | undefined,
+    $context: any
+  ): any;
+
+  /**
+   * Applies the style to all DOM elements that are descendants of content
+   *
+   * @param content - parent element containing elements to style
+   */
+  apply(content: any): this;
+
+  /**
+   * Removes the element identified by the given id from the DOM
+   *
+   * This will ensure that styled elements are also removed from memory, so
+   * that the same id can later be styled if it is readded.
+   *
+   * If the element is not styled, this method will fall back on jQuery to
+   * attempt to locate and remove it.
+   */
+  remove(id: any): this;
 }

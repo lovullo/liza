@@ -1237,7 +1237,8 @@ module.exports = Class('Client').extend(EventEmitter, {
       .setExclusiveFieldNames(exclusive_fields)
       .setExclusiveCmatchFieldNames(cmatch_fields)
       .setInternal(this._isInternal)
-      .setUserFieldNames(this.program.groupUserFields[id] || []);
+      .setUserFieldNames(this.program.groupUserFields[id] || [])
+      .setWhenFieldName(this.program.groupWhens[id] || '');
 
     // do we have any data on this group?
     if (data) {

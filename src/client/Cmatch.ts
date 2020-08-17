@@ -379,7 +379,7 @@ export class Cmatch {
       let indexes = [];
       for (let i in data) {
         // we do *not* want to reset fields that have been removed
-        if (cur[i] === undefined) {
+        if (cur[<any>i] === undefined) {
           break;
         }
 

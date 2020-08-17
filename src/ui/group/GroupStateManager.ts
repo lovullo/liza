@@ -30,7 +30,7 @@
  *
  * Disabled - A disabled state represents that the group is not active.
  */
-enum GroupState {
+export enum GroupState {
   Pending = 'pending',
   Disabled = 'disabled',
 }

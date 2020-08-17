@@ -43,6 +43,7 @@ export const createContent = (visible: boolean = false) => {
     getAttribute: sinon.stub().returns('foo'),
     classList: createClassList(visible),
     addEventListener: sinon.stub(),
+    getElementsByClassName: sinon.stub().returns([]),
   };
 };
 
@@ -75,7 +76,8 @@ export const createGroup = (
   field_name: any,
   fields: any[] = [],
   cmatch_fields: any[] = [],
-  is_internal: boolean = true
+  is_internal: boolean = true,
+  when_name: string = ''
 ) => {
   return {
     getIndexFieldName: sinon.stub().returns(field_name),
@@ -83,11 +85,13 @@ export const createGroup = (
     getExclusiveFieldNames: sinon.stub().returns(fields),
     getExclusiveCmatchFieldNames: sinon.stub().returns(cmatch_fields),
     isInternal: sinon.stub().returns(is_internal),
+    getWhenFieldName: sinon.stub().returns(when_name),
   };
 };
 
 export const createJqueryContent = () => {
   return {
+    show: sinon.stub(),
     hide: sinon.stub(),
     find: sinon.stub().returns({live: sinon.stub()}),
     0: getDomElement(),
@@ -170,7 +174,7 @@ export const createSut = (Sut: any, input: any = {}) => {
   const styler = input.styler ?? null;
   const state_manager = input.state_manager ?? createStateManager();
 
-  return Sut(
+  return new Sut(
     group,
     content,
     styler,

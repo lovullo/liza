@@ -196,8 +196,8 @@ export class GroupContext {
    * Or clear cache for fields at certain indexes
    * if it does not appear on all indexes
    *
-   * @param fields - exclusive field names of group
-   * @param index - index being removed
+   * @param fields      - exclusive field names of group
+   * @param index       - index being removed
    * @param index_count - count of indexes in group
    */
   removeIndex(
@@ -289,7 +289,7 @@ export class GroupContext {
     field_name: string,
     index: PositiveInteger,
     options: FieldOptions,
-    val: string
+    val?: string
   ): void {
     if (this.isFieldAttached(field_name, index)) {
       const field_context = this._fromCache(field_name, index);

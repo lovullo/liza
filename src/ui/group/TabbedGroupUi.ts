@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", eqeqeq: "off", no-unused-vars: "off", no-undef: "off", prefer-arrow-callback: "off" */
+/* eslint @typescript-eslint/no-inferrable-types: "off", @typescript-eslint/no-this-alias: "off", no-var: "off", eqeqeq: "off", no-unused-vars: "off", no-undef: "off", prefer-arrow-callback: "off" */
 /**
  * Group tabbed UI
  *
@@ -26,8 +26,11 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+import {PositiveInteger} from '../../numeric';
+
+declare type jQuery = any;
 
 /**
  * Represents a tabbed group
@@ -35,32 +38,27 @@ var Class = require('easejs').Class,
  * This class extends from the generic Group class.  It contains logic to
  * support tabbed groups, allowing for the adding and removal of tabs.
  */
-module.exports = Class('TabbedGroupUi').extend(GroupUi, {
+export class TabbedGroupUi extends GroupUi {
   /**
    * Stores the base title for each new tab
-   * @type {string}
    */
-  $baseTabTitle: '',
+  $baseTabTitle: string = '';
 
   /**
    * Stores the base tab content to be duplicated for tabbed groups
-   * @type {jQuery}
    */
-  $baseTabContent: null,
+  $baseTabContent: jQuery = null;
 
   /**
    * Index of the currently selected tab
-   * @type {number}
    */
-  'private _selectedIndex': 0,
+  private _selectedIndex: number = 0;
 
   /**
    * Template method used to process the group content to prepare it for
    * display
-   *
-   * @return void
    */
-  'override protected processContent': function (quote) {
+  protected processContent(quote: ClientQuote): void {
     // determine if we should lock this group down
     if (this.$content.find('div.groupTabs').hasClass('locked')) {
       this.group.locked(true);
@@ -69,7 +67,7 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._processTabs();
     this._attachAddTabHandlers();
     this.watchFirstElement(this.$baseTabContent, quote);
-  },
+  }
 
   /**
    * Initializes the tabs
@@ -77,10 +75,8 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
    * This method will locate the area of HTML that should be tabbed and
    * initialize it. The content of the first tab will be removed and stored in
    * memory for duplication.
-   *
-   * @return void
    */
-  _processTabs: function () {
+  public _processTabs(): void {
     var group = this;
     var $container = this._getTabContainer();
 
@@ -95,8 +91,6 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     // remove() to ensure the data remains)
     this.$baseTabContent = $container.find('div:first');
 
-    const baseTabContent = this.$baseTabContent[0];
-
     this.$baseTabContent.detach();
 
     // transform into tabbed div
@@ -108,12 +102,12 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
           : '') +
         '</li>',
 
-      select: function (_, event) {
+      select: function (_: any, event: any) {
         group._selectedIndex = event.index;
       },
 
       add: function () {
-        var $this = $(this);
+        var $this: any = $(this);
 
         // if this is our max, hide the button
         if ($this.tabs('length') == group.group.maxRows()) {
@@ -125,28 +119,28 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
 
         // remove tabs when the remove button is clicked (for whatever
         // reason, live() stopped working, so here we are...)
-        $container.find('span.ui-icon-close:last').click(function () {
-          var index = $container.find('li').index($(this).parent());
+        $container.find('span.ui-icon-close:last').click(function (e: any) {
+          var index = $container.find('li').index($(e.target).parent());
 
           group.destroyIndex(index);
         });
       },
 
       remove: function () {
+        var $this: any = $(this);
+
         // should we re-show the add button?
-        if ($(this).tabs('length') == group.group.maxRows() - 1) {
+        if ($this.tabs('length') == group.group.maxRows() - 1) {
           group._getAddButton().show();
         }
       },
     });
-  },
+  }
 
   /**
    * Attaches click event handlers to add tab elements
-   *
-   * @return void
    */
-  _attachAddTabHandlers: function () {
+  public _attachAddTabHandlers(): void {
     // reference to ourself for use in the closure
     var group = this;
 
@@ -161,31 +155,29 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._getAddButton().click(function () {
       group.initIndex();
     });
-  },
+  }
 
   /**
    * Returns the element containing the tabs
    *
    * @return jQuery element containing the tabs
    */
-  _getTabContainer: function () {
+  public _getTabContainer(): jQuery {
     return this.$content.find('.groupTabs');
-  },
+  }
 
-  _getAddButton: function () {
+  _getAddButton(): jQuery {
     return this.$content.find('.addTab:first');
-  },
+  }
 
-  'private _getTabTitleIndex': function () {
+  private _getTabTitleIndex(): number {
     return this.getCurrentIndexCount();
-  },
+  }
 
   /**
    * Adds a tab
-   *
-   * @return TabbedGroup self to allow for method chaining
    */
-  addTab: function () {
+  public addTab(): this {
     var $container = this._getTabContainer();
 
     var $content = this.$baseTabContent.clone(true);
@@ -204,7 +196,10 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this.fieldContentParent[index] = content.querySelector('dl');
 
     if (this.getDomPerfFlag() === true) {
-      this.context.addIndex(index, this.fieldContentParent[index]);
+      this.context.addIndex(
+        <PositiveInteger>index,
+        this.fieldContentParent[index]
+      );
     }
 
     // append the content
@@ -221,14 +216,12 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this.postAddRow($content, index);
 
     return this;
-  },
+  }
 
   /**
    * Removes a tab
-   *
-   * @return TabbedGroup self to allow for method chaining
    */
-  removeTab: function () {
+  public removeTab(): this {
     // we can simply remove the last tab since the bucket will re-order
     // itself and update each of the previous tabs
     var index = this.getCurrentIndex();
@@ -241,50 +234,48 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     $container.tabs('remove', index);
 
     return this;
-  },
+  }
 
-  'private _getTabContent': function (index) {
+  private _getTabContent(index: number): jQuery {
     return this._getTabContainer().find('div.ui-tabs-panel:nth(' + index + ')');
-  },
+  }
 
-  'override protected postPreEmptyBucketFirst': function () {
+  protected postPreEmptyBucketFirst(): this {
     // select the first tab
     this._getTabContainer().tabs('select', 0);
     return this;
-  },
+  }
 
-  'override protected addIndex': function (index) {
+  protected addIndex(index: number): this {
     // increment id before doing our own stuff
-    this.__super(index);
+    super.addIndex(index);
     this.addTab();
 
     return this;
-  },
+  }
 
-  'override public removeIndex': function (index) {
+  public removeIndex(index: number): this {
     // decrement after we do our own stuff
     this.removeTab();
-    this.__super(index);
+    super.removeIndex(index);
 
     return this;
-  },
+  }
 
   /**
    * Display the requested field
    *
    * The field is not given focus; it is simply brought to the foreground.
    *
-   * @param {string} field_name name of field to display
-   * @param {number} i          index of field
-   *
-   * @return {TabbedGroupUi} self
+   * @param field_name - name of field to display
+   * @param i          - index of field
    */
-  'override public displayField': function (field, i) {
+  public displayField(field: string, i: number): this {
     var $element = this.styler.getWidgetByName(field, i);
 
     // if we were unable to locate it, then don't worry about it
     if ($element.length == 0) {
-      return;
+      return this;
     }
 
     // get the index of the tab that this element is on
@@ -295,16 +286,14 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     this._getTabContainer().tabs('select', index);
 
     return this;
-  },
+  }
 
   /**
    * Shows/hides add/remove row buttons
    *
-   * @param {boolean} value whether to hide (default: true)
-   *
-   * @return {TabbedGroupUi} self
+   * @param value - whether to hide (default: true)
    */
-  hideAddRemove: function (value) {
+  public hideAddRemove(value: boolean): void {
     if (value === true) {
       this._getTabContainer().find('.ui-icon-close').hide();
       this._getAddButton().hide();
@@ -312,14 +301,14 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
       this._getTabContainer().find('.ui-icon-close').show();
       this._getAddButton().show();
     }
-  },
+  }
 
-  isOnVisibleTab: function (field, index) {
+  public isOnVisibleTab(_field: string, index: number): boolean {
     // fast check
     return +index === this._selectedIndex;
-  },
+  }
 
-  'override protected doHideField': function (field, index, force) {
+  protected doHideField(field: string, index: number, force?: boolean): void {
     var _self = this;
 
     // if we're not on the active tab, then we can defer this request until
@@ -332,10 +321,10 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
       return;
     }
 
-    this.__super(field, index);
-  },
+    super.doHideField(field, index);
+  }
 
-  'override protected doShowField': function (field, index, force) {
+  protected doShowField(field: string, index: number, force?: boolean): void {
     var _self = this;
 
     // if we're not on the active tab, then we can defer this request until
@@ -348,10 +337,10 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
       return;
     }
 
-    this.__super(field, index);
-  },
+    super.doShowField(field, index);
+  }
 
-  'override public getContentByIndex': function (name, index) {
+  public getContentByIndex(_name: string, index: number): jQuery {
     // get the tab that this index should be on and set a property to notify
     // the caller that no index check should be performed (since there is
     // only one)
@@ -359,5 +348,5 @@ module.exports = Class('TabbedGroupUi').extend(GroupUi, {
     $content.singleIndex = true;
 
     return $content;
-  },
-});
+  }
+}

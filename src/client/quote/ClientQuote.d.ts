@@ -45,7 +45,7 @@ export declare class ClientQuote extends BaseQuote {
   /**
    * Returns data from the quote
    */
-  getDataByName(name: string): Data;
+  getDataByName(name: string): any[];
 
   /**
    * Visits staging data
@@ -90,4 +90,19 @@ export declare class ClientQuote extends BaseQuote {
    * @return top visited step id
    */
   getTopVisitedStepId(): PositiveInteger;
+
+  /**
+   * Hooks classify event and immediately triggers the continuation with the
+   * last classification data, if any
+   *
+   * Useful if the classification event has already been kicked off, but the
+   * data is needed (prevents race conditions).
+   *
+   * We provide this method rather than a getter to enforce encapsulation (we
+   * won't consider it violated here since event handlers normally have access
+   * to that data anyway)---this signifies intent.
+   *
+   * @param {function(Object)} c continuation
+   */
+  onClassifyAndNow(c: any): this;
 }

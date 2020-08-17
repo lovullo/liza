@@ -19,13 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Group = require('../../../src/ui/group/GridGroupUi');
 const sinon = require('sinon');
 const jsdom = require('jsdom');
 const {JSDOM} = jsdom;
 const dom = new JSDOM('<!DOCTYPE html>');
 
 import {AncestorAwareStyler} from '../../../src/ui/styler/AncestorAwareStyler';
+import {GridGroupUi as Group} from '../../../src/ui/group/GridGroupUi';
 import {
   GridCollection as Sut,
   GroupList,
@@ -642,7 +642,7 @@ const convertToGroupList = (groups: GroupUi[]): GroupList => {
   let group_list: GroupList = {};
 
   groups.forEach((group: GroupUi) => {
-    group_list[group.getGroupId()] = group;
+    group_list['' + group.getGroupId()] = group;
   });
 
   return group_list;

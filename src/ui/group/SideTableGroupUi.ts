@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", no-undef: "off", prefer-arrow-callback: "off" */
+/* eslint @typescript-eslint/no-inferrable-types: "off", no-var: "off", no-undef: "off", prefer-arrow-callback: "off" */
 /**
  * Group side-formatted table UI
  *
@@ -26,8 +26,11 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  GroupUi = require('./GroupUi');
+import {GroupUi} from './GroupUi';
+import {PositiveInteger} from '../../numeric';
+import {ClientQuote} from '../../client/quote/ClientQuote';
+
+declare type jQuery = any;
 
 /**
  * Represents a side-formatted table group
@@ -35,62 +38,55 @@ var Class = require('easejs').Class,
  * This class extends from the generic Group class.  It contains logic to
  * support tabbed groups, allowing for the adding and removal of tabs.
  */
-module.exports = Class('SideTableGroupUi').extend(GroupUi, {
+export class SideTableGroupUi extends GroupUi {
   /**
    * Percentage width of the left column
-   * @type {number}
    */
-  'private const WIDTH_COL_LEFT_PERCENT': 30,
+  private readonly WIDTH_COL_LEFT_PERCENT: number = 30;
 
   /**
    * Stores the base title for each new tab
-   * @type {string}
    */
-  $baseHeadColumn: null,
+  $baseHeadColumn: jQuery = null;
 
   /**
    * Stores the base tab content to be duplicated for tabbed groups
-   * @type {jQuery}
    */
-  $baseBodyColumn: null,
+  $baseBodyColumn: jQuery = null;
 
   /**
    * Table element
-   * @type {jQuery}
    */
-  $table: null,
+  $table: jQuery = null;
 
   /**
    * Number of subcolumns within each column
-   * @type {number}
    */
-  subcolCount: 1,
+  subcolCount: number = 1;
 
   /**
    * Template method used to process the group content to prepare it for
    * display
-   *
-   * @return void
    */
-  'override protected processContent': function () {
+  protected processContent(_quote?: ClientQuote): void {
     // determine if we should lock this group down
     if (this.$content.find('.groupTable').hasClass('locked')) {
       this.group.locked(true);
     }
 
     this._processTable();
-  },
+  }
 
   /**
    * This group does not support multiple indexes
    *
-   * @return {boolean}
+   * @return false
    */
-  'protected override supportsMultipleIndex': function () {
+  protected supportsMultipleIndex(): boolean {
     return false;
-  },
+  }
 
-  _processTable: function () {
+  public _processTable(): void {
     this.$table = this._getTable();
 
     // important: do this before we begin detaching things
@@ -107,13 +103,15 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
       .find('td:not( .groupTableSide )')
       .detach();
 
-    this.subcolCount = +$(this.$baseHeadColumn[0]).attr('colspan');
+    this.subcolCount = +(<string>(
+      $((this.$baseHeadColumn || [])[0])?.attr('colspan')
+    ));
 
     // if the group is locked, there will be no adding of rows
     if (this.group.locked()) {
       this.$content.find('.addrow').remove();
     }
-  },
+  }
 
   /**
    * Calculates column widths
@@ -126,14 +124,12 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
    * perfectly aligned with any other table of N columns.
    *
    * See FS#7916 and FS#7917.
-   *
-   * @return {undefined}
    */
-  'private _calcColumnWidths': function () {
+  private _calcColumnWidths(): void {
     // the left column will take up a consistent amount of width and the
     // remainder of the width (in percent) will be allocated to the
     // remaining columns
-    var left = this.__self.$('WIDTH_COL_LEFT_PERCENT'),
+    var left = this.WIDTH_COL_LEFT_PERCENT,
       remain = 100 - left,
       $cols = this.$content.find('tr:nth(1) > th'),
       count = $cols.length,
@@ -143,13 +139,13 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
     this.$content.find('tr:first > th:first').attr('width', left + '%');
 
     $cols.attr('width', width + '%');
-  },
+  }
 
-  _getTable: function () {
+  public _getTable(): any {
     return this.$content.find('table.groupTable');
-  },
+  }
 
-  addColumn: function () {
+  public addColumn(): this {
     var $col_head = this.$baseHeadColumn.clone(true),
       $col_body = this.$baseBodyColumn.clone(true),
       col_head = $col_head[0],
@@ -163,7 +159,7 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
     this.setElementIdIndexes(col_body.getElementsByTagName('*'), index);
 
     // add the column headings
-    $col_head.each(function (i, th) {
+    $col_head.each(function (i: number, th: any) {
       var $th = $(th);
 
       // the first cell goes in the first header row and all others go in
@@ -183,7 +179,7 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
 
     // add the column body cells
     var subcol_count = this.subcolCount;
-    $col_body.each(function (i, $td) {
+    $col_body.each(function (i: number, $td: any) {
       $tbody.find('tr:nth(' + Math.floor(i / subcol_count) + ')').append($td);
     });
 
@@ -194,21 +190,22 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
     this.fieldContentParent[index] = col_body;
 
     if (this.getDomPerfFlag() === true) {
-      this.context.addIndex(index, this.fieldContentParent[index]);
+      this.context.addIndex(
+        <PositiveInteger>index,
+        this.fieldContentParent[index]
+      );
     }
 
     // raise event
     this.postAddRow($col_head, index).postAddRow($col_body, index);
 
     return this;
-  },
+  }
 
   /**
    * Removes a column from the table
-   *
-   * @return {SideTableGroupUi} self
    */
-  removeColumn: function () {
+  public removeColumn(): this {
     // remove the last column
     var index = this.getCurrentIndex();
 
@@ -225,9 +222,9 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
     $subcols.remove();
 
     return this;
-  },
+  }
 
-  _getSubColumns: function (index) {
+  public _getSubColumns(index: number): any {
     // calculate the positions of the sub-columns
     var start = index * this.subcolCount + 1,
       end = start + this.subcolCount;
@@ -250,21 +247,21 @@ module.exports = Class('SideTableGroupUi').extend(GroupUi, {
     }
 
     return this.$table.find(selector);
-  },
+  }
 
-  'override protected addIndex': function (index) {
+  protected addIndex(index: number): this {
     // increment id before doing our own stuff
-    this.__super(index);
+    super.addIndex(index);
     this.addColumn();
 
     return this;
-  },
+  }
 
-  'override public removeIndex': function (index) {
+  public removeIndex(index: number): this {
     // remove our stuff before decrementing our id
     this.removeColumn();
-    this.__super(index);
+    super.removeIndex(index);
 
     return this;
-  },
-});
+  }
+}

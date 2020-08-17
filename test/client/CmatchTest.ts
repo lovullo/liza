@@ -312,6 +312,8 @@ function createStubProgram() {
     ineligibleLockCount: 0,
     cretain: {},
     apis: {},
+    whens: {},
+    groupWhens: {},
     internal: {},
     autosave: false,
     meta: {

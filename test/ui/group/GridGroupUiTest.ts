@@ -19,10 +19,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Sut = require('../../../src/ui/group/GridGroupUi');
-const sinon = require('sinon');
+const expect = require('chai').expect,
+  sinon = require('sinon');
 
-import {expect} from 'chai';
+import {GridGroupUi as Sut} from '../../../src/ui/group/GridGroupUi';
 import {
   createSut,
   createQuote,

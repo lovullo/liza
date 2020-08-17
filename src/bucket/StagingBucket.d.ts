@@ -21,13 +21,14 @@
 
 import {PositiveInteger} from '../numeric';
 import {EventEmitter} from 'events';
+import {QuoteDataBucket} from './QuoteDataBucket';
 
 export type StagingBucketConstructor = (bucket: StagingBucket) => StagingBucket;
 
 /**
  * Stages and merges values into underlying key/value store
  */
-export declare class StagingBucket extends EventEmitter {
+export declare class StagingBucket extends QuoteDataBucket {
   /**
    * Analgous to setValues(), but immediately commits the changes
    *
@@ -125,7 +126,7 @@ export declare class StagingBucket extends EventEmitter {
    *
    * @return data for the field, or empty array if none
    */
-  getDataByName(name: string): Record<string, any>;
+  getDataByName(name: string): any[];
 
   /**
    * Returns original bucket data by name, even if there is data staged atop
