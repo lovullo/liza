@@ -464,7 +464,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
         {
           limit: <PositiveInteger>1,
           fields: {
-            'meta.liza_timestamp_rate_request': 1,
+            'meta.liza_timestamp_initial_rated': 1,
             lastPremDate: 1,
           },
         },
@@ -489,12 +489,12 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
               return;
             }
 
-            const rate_request = meta.liza_timestamp_rate_request;
+            const initial_rated = meta.liza_timestamp_initial_rated;
 
             if (
-              !rate_request ||
-              rate_request.length === 0 ||
-              +rate_request[0] === 0
+              !initial_rated ||
+              initial_rated.length === 0 ||
+              +initial_rated[0] === 0
             ) {
               reject(new Error('No prior rate for quote ' + quote.getId()));
               return;
