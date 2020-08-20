@@ -213,6 +213,8 @@ export class Cmatch {
     var _self = this,
       quote = this._client.getQuote();
 
+    const class_data = this._client.getQuote().getLastClassify();
+
     // oh dear god...(Demeter, specifically..)
     let cur_step = this._client.getUi().getCurrentStep();
 
@@ -297,10 +299,16 @@ export class Cmatch {
        * there is no recorded default. This is because a lack of a default value
        * removes the risk of custom default values persisting.
        */
-      if (this._program.hasResetableField(field) && hide.length) {
+      if (this._program.clearNaFields && hide.length) {
         hidden[field] = [];
 
         for (const index of hide) {
+          const na = this._program.hasNaField(field, class_data, index);
+
+          if (!na) {
+            continue;
+          }
+
           hidden[field][index] = this._program.naFieldValue;
         }
       }

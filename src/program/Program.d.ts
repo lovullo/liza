@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {CmatchData} from '../client/Cmatch';
+import {CmatchData, ClassData} from '../client/Cmatch';
 import {DataApiResult} from '../dapi/DataApi';
 import {Data} from '../client/quote/ClientQuote';
 import {PositiveInteger} from '../numeric';
@@ -94,7 +94,7 @@ export declare abstract class Program {
   classify(data: Record<string, any>): ClassificationResult;
 
   /**
-   * Determine if a field is resetable
+   * Determine if a field is clearable
    */
-  hasResetableField(field: string): boolean;
+  hasNaField(field: string, classes: ClassData, index: number): boolean;
 }

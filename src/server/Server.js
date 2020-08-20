@@ -339,7 +339,10 @@ module.exports = Class('Server').extend(EventEmitter, {
             // we're good
             server
               ._getDefaultBucket(program, quote_data)
-              .then(default_bucket => init_finish(program, default_bucket));
+              .then(default_bucket => init_finish(program, default_bucket))
+              .then(() => {
+                program.processNaFields(quote);
+              });
           });
         });
       } else {
@@ -1531,13 +1534,17 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _kbclear': function (program, quote) {
     var set = {};
 
-    for (var field in program.kbclear) {
-      var data = quote.getDataByName(field),
-        val = program.hasResetableField(field)
-          ? program.naFieldValue
-          : program.defaults[field] || '';
+    const class_data = program.classify(quote.getBucket().getData());
 
-      for (var i in data) {
+    for (var field in program.kbclear) {
+      const data = quote.getDataByName(field);
+
+      for (const i in data) {
+        val =
+          program.clearNaFields && program.hasNaField(field, class_data, i)
+            ? program.naFieldValue
+            : program.defaults[field] || '';
+
         data[i] = val;
       }
 

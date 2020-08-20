@@ -189,30 +189,6 @@ describe('ProgramInit', () => {
       },
     },
     {
-      label: 'resets NA fields on init',
-      defaults: {foo: 'init'},
-      meta: {
-        groups: {
-          Something: {
-            min: 2,
-          },
-        },
-        qtypes: {
-          foo: {type: 'text'},
-        },
-      },
-      groupExclusiveFields: {
-        Something: ['foo'],
-      },
-      doc_data: {},
-      expected: {
-        foo: ['', ''],
-      },
-      clearNaFields: true,
-      naFieldValue: '',
-      hasResetableField: () => true,
-    },
-    {
       label: 'does not reset applicable fields on init',
       defaults: {foo: 'init'},
       whens: {},
@@ -311,7 +287,7 @@ describe('ProgramInit', () => {
       naFieldValue,
       whens,
       cretain,
-      hasResetableField,
+      hasNaField,
     }) => {
       it(label, () => {
         const sut = Sut(null);
@@ -325,8 +301,7 @@ describe('ProgramInit', () => {
           clearNaFields,
           naFieldValue,
           cretain: cretain ? cretain : {},
-          hasResetableField: () =>
-            hasResetableField ? hasResetableField() : false,
+          hasNaField: () => (hasNaField ? hasNaField() : false),
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(

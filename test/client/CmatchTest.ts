@@ -272,7 +272,7 @@ describe('Cmatch', () => {
             foo: {1: ''},
           },
         ],
-        hasResetableField: true,
+        hasNaField: true,
       },
 
       {
@@ -332,15 +332,7 @@ describe('Cmatch', () => {
         ],
       },
     ].forEach(
-      ({
-        label,
-        bucket,
-        cmatch,
-        expected,
-        cretain,
-        defaults,
-        hasResetableField,
-      }) => {
+      ({label, bucket, cmatch, expected, cretain, defaults, hasNaField}) => {
         it(label, () => {
           const bucket_saves: any[] = [];
 
@@ -349,8 +341,8 @@ describe('Cmatch', () => {
           program.clearNaFields = true;
           program.cretain = cretain ?? {};
           program.defaults = defaults ?? program.defaults;
-          program.hasResetableField = () => {
-            return hasResetableField ?? false;
+          program.hasNaField = () => {
+            return hasNaField ?? false;
           };
 
           quote.setData = data => {

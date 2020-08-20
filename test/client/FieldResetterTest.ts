@@ -37,7 +37,7 @@ describe('FieldResetter', () => {
     const {client, program} = getClient();
     const sut = new Sut(client);
 
-    program.hasResetableField = () => true;
+    program.hasNaField = () => true;
 
     const data = {some_field: ['0']};
     const expected = {some_field: ['']};

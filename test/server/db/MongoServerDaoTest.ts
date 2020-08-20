@@ -273,7 +273,7 @@ function createStubQuote(metadata: Record<string, any>) {
     initQuote: () => {},
     getClassifierKnownFields: () => <ClassificationResult>{},
     classify: () => <ClassificationResult>{},
-    hasResetableField: () => false,
+    hasNaField: () => false,
   };
 
   const quote = <ServerSideQuote>(<unknown>{

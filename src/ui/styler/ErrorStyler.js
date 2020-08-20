@@ -61,6 +61,8 @@ module.exports = Class('ErrorStyler')
               var msg =
                 msgset[index] || _self._msgs[name] || 'Field is invalid';
 
+              console.log({failures});
+
               _self.onFieldError(context.getFieldByName(name, index), msg);
             }
           }

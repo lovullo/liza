@@ -86,7 +86,7 @@ describe('ProgramQuoteCleaner', () => {
           field11: ['--vis-field11'],
           field12: ['--vis-field12'],
         };
-        program.hasResetableField = () => false;
+        program.hasNaField = () => false;
 
         const updates = {};
 
@@ -235,6 +235,8 @@ describe('ProgramQuoteCleaner', () => {
           '--vis-field11': {is: true, indexes: [1, 1, 1]},
           '--vis-field12': {is: true, indexes: [1, 1]},
         },
+
+        hasNaField: () => false,
       },
       {
         label: 'applies default values when visible as matrix',
@@ -287,6 +289,8 @@ describe('ProgramQuoteCleaner', () => {
             ],
           },
         },
+
+        hasNaField: () => false,
       },
     ].forEach(test =>
       it(test.label, done => {
@@ -304,7 +308,7 @@ describe('ProgramQuoteCleaner', () => {
           field12: ['--vis-field12'],
         };
 
-        program.hasResetableField = () => true;
+        program.hasNaField = test.hasNaField ? test.hasNaField : () => true;
 
         program.classify = () => test.classify;
 

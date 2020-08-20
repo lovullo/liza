@@ -62,12 +62,66 @@ describe('Program#postSubmit', () => {
   });
 });
 
-describe('Program#hasResetableField', () => {
+describe('Program#hasNaField', () => {
   [
     {
-      label: 'detects a resetable field',
+      label: 'detects a NA field when it is missing a "when" classification',
       result: true,
       clearNaFields: true,
+      is: false,
+      whens: {},
+    },
+    {
+      label: 'does not detect a NA field via applicable scalar',
+      result: false,
+      clearNaFields: true,
+      indexes: 1,
+      is: true,
+    },
+    {
+      label: 'detects a NA field via NA scalar',
+      result: true,
+      clearNaFields: true,
+      indexes: 0,
+      is: false,
+    },
+    {
+      label: 'does not detect a NA field via applicable vector index',
+      result: false,
+      clearNaFields: true,
+      index: 0,
+      indexes: [1, 0],
+      is: true,
+    },
+    {
+      label: 'detects a NA field via NA vector index',
+      result: true,
+      clearNaFields: true,
+      index: 1,
+      indexes: [1, 0],
+      is: true,
+    },
+    {
+      label: 'does not detect a NA field via applicable matrix index',
+      result: false,
+      clearNaFields: true,
+      index: 0,
+      indexes: [
+        [1, 0],
+        [0, 0],
+      ],
+      is: true,
+    },
+    {
+      label: 'detects a NA field via matrix NA index',
+      result: true,
+      clearNaFields: true,
+      index: 1,
+      indexes: [
+        [1, 0],
+        [0, 0],
+      ],
+      is: true,
     },
     {
       label: 'does not detect a field with a retained value',
@@ -76,36 +130,42 @@ describe('Program#hasResetableField', () => {
       clearNaFields: true,
     },
     {
-      label: 'does not a detect a field without a predicate',
-      result: false,
-      whens: {},
-      clearNaFields: true,
-    },
-    {
       label: 'does not a detect a field without a default',
       result: false,
       defaults: {},
       clearNaFields: true,
     },
-    {
-      label: 'does not a detect a field when clearNaField is disabled',
-      result: false,
-      clearNaFields: false,
-    },
-  ].forEach(({label, result, retain, whens, defaults, clearNaFields}) => {
-    it(label, () => {
-      const sut = getSut([0, 1]);
+  ].forEach(
+    ({
+      label,
+      result,
+      retain,
+      whens,
+      defaults,
+      clearNaFields,
+      index,
+      indexes,
+      is,
+    }) => {
+      it(label, () => {
+        const sut = getSut([0, 1]);
 
-      sut.cretain = retain || {};
-      sut.whens = whens || {foo: '--vis-foo'};
-      sut.defaults = defaults || {foo: '0'};
-      sut.clearNaFields = clearNaFields;
+        index = index || 0;
+        indexes = indexes || 0;
 
-      const resetable = sut.hasResetableField('foo');
+        sut.cretain = retain || {};
+        sut.whens = whens || {foo: ['--vis-foo']};
+        sut.defaults = defaults || {foo: '0'};
+        sut.clearNaFields = clearNaFields;
 
-      expect(resetable).to.be[result];
-    });
-  });
+        const classes = {'--vis-foo': {is, indexes}};
+
+        const resetable = sut.hasNaField('foo', classes, index);
+
+        expect(resetable).to.be[result];
+      });
+    }
+  );
 });
 
 function getSut(step_data) {

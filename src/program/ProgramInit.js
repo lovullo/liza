@@ -66,9 +66,7 @@ module.exports = Class('ProgramInit', {
       while (i--) {
         const field = program.groupExclusiveFields[group][i];
 
-        const init_value = program.hasResetableField(field)
-          ? program.naFieldValue
-          : defaults[field];
+        const init_value = defaults[field];
 
         // generated questions with no types should never be part of
         // the bucket

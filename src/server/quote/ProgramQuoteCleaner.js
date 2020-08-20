@@ -114,10 +114,9 @@ module.exports = Class('ProgramQuoteCleaner', {
       const group_index = this._program.groupIndexField[group_id];
 
       for (var i = flen; i < length; i++) {
-        const is_applicable = this._isApplicable(class_data, group_index, i);
-
         data[i] =
-          !is_applicable && this._program.hasResetableField(field)
+          this._program.clearNaFields &&
+          this._program.hasNaField(group_index, class_data, i)
             ? this._program.naFieldValue
             : field_default;
       }
@@ -126,42 +125,6 @@ module.exports = Class('ProgramQuoteCleaner', {
     });
 
     quote.setData(update);
-  },
-
-  /**
-   * Determine if a field is applicable based on its visibility
-   *
-   * The field parameter can be any field. However, in the context of this class
-   * it is most likely the program's index field since it is the leader and
-   * drives change.
-   *
-   * @param {Object} classes - classification visibility data
-   * @param {string} field   - field name
-   * @param {number} index   - relevant visibility index
-   *
-   * @return {boolean} if the field is applicable at a given index
-   */
-  'private _isApplicable'(classes, field, index) {
-    const vis_class = (this._program.whens[field] || [])[0];
-
-    if (!classes[vis_class]) {
-      return false;
-    }
-
-    const indexes = classes[vis_class].indexes;
-
-    if (indexes === undefined) {
-      return false;
-    }
-
-    // Assume visibility data are vector/matrix
-    const index_vis = indexes[index];
-
-    return Array.isArray(index_vis)
-      ? // matrix
-        index_vis.some(v => +v === 1)
-      : // vector
-        +index_vis === 1 || false;
   },
 
   /**

@@ -45,17 +45,18 @@ export class FieldResetter {
 
     for (const field in fields) {
       const cur = fields[field],
-        cdata = quote.getDataByName(field),
-        val = this._getValue(field);
+        cdata = quote.getDataByName(field);
 
       const data = [];
 
       for (const i in cur) {
         const index = cur[i];
+        const val = this._getValue(field, index);
 
         if (cdata[index] === val) {
           continue;
         }
+
         data[index] = val;
       }
 
@@ -69,11 +70,16 @@ export class FieldResetter {
    * Get the default value for a field by its name
    *
    * @param field - name of the field
+   * @param index - field index to consider
    *
    * @return the default value of the field
    */
-  private _getValue(field: string): string {
-    return this._client.program.hasResetableField(field)
+  private _getValue(field: string, index: number): string {
+    return this._client.program.hasNaField(
+      field,
+      this._client.getQuote().getLastClassify(),
+      index
+    )
       ? this._client.program.naFieldValue
       : this._client.program.defaults[field] || '';
   }
