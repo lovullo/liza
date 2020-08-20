@@ -168,11 +168,6 @@ export class GroupUi extends EventEmitter {
   protected jquery: jQuery = null;
 
   /**
-   * Whether or not we will determine visibility with classifications
-   */
-  protected _use_vis_class: boolean = true;
-
-  /**
    * Initializes GroupUi
    *
    * @todo remove root (DOM) context, and na field styler!
@@ -238,10 +233,6 @@ export class GroupUi extends EventEmitter {
 
     // get the number of unique fields in the group
     this._rawFieldCount = this.group.getUserFieldNames().length;
-
-    if (this.group.getWhenFieldName() === '') {
-      this._use_vis_class = false;
-    }
 
     this._bindClasses(quote);
 
@@ -708,12 +699,6 @@ export class GroupUi extends EventEmitter {
           self.content.classList.remove(css_class);
         }
       }
-
-      if (self._use_vis_class) {
-        classes[self.group.getWhenFieldName()]?.is === true
-          ? self.show()
-          : self.hide();
-      }
     });
   }
 
@@ -951,19 +936,11 @@ export class GroupUi extends EventEmitter {
   }
 
   protected onAllFieldsHidden(): void {
-    if (this._use_vis_class) {
-      return;
-    }
-
     // default action is to hide self
     this.hide();
   }
 
   protected onFieldsVisible(): void {
-    if (this._use_vis_class) {
-      return;
-    }
-
     // default action is to show self
     this.show();
   }

@@ -313,7 +313,6 @@ function createStubProgram() {
     cretain: {},
     apis: {},
     whens: {},
-    groupWhens: {},
     internal: {},
     autosave: false,
     meta: {

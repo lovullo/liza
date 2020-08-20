@@ -28,7 +28,6 @@ import {
   createGroup,
   createQuote,
   createContext,
-  createJqueryContent,
 } from './CommonResources';
 
 describe('ui.group.GroupUi', () => {
@@ -209,63 +208,4 @@ describe('ui.group.GroupUi', () => {
       });
     }
   );
-
-  [
-    {
-      label: 'if "when" classification is true, show the group',
-      when_name: 'foo',
-      classes: {
-        foo: {is: true},
-      },
-      shown: true,
-    },
-    {
-      label: 'if "when" classification is false, do not show the group',
-      when_name: 'foo',
-      classes: {
-        foo: {is: false},
-      },
-      shown: false,
-    },
-    {
-      label: 'if "when" classification does not exist, do not show the group',
-      when_name: 'foo',
-      classes: {
-        bar: {is: false},
-      },
-      shown: false,
-    },
-  ].forEach(({label, when_name, classes, shown}) => {
-    it(label, () => {
-      let shown_actual = null;
-
-      const group = createGroup('foo', [], [], false, when_name);
-      const content = createJqueryContent();
-      const quote = createQuote();
-      const sut = createSut(Sut, {
-        $content: content,
-        group: group,
-      });
-
-      content.show = () => {
-        shown_actual = true;
-      };
-
-      content.hide = () => {
-        shown_actual = false;
-      };
-
-      let classify_cb = (_: any) => {};
-
-      quote.onClassifyAndNow = (cb: any) => {
-        classify_cb = cb;
-      };
-
-      sut.init(quote);
-
-      classify_cb(classes);
-
-      expect(shown_actual).to.equal(shown);
-    });
-  });
 });

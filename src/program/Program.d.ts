@@ -44,8 +44,6 @@ export declare abstract class Program {
 
   whens: Data;
 
-  groupWhens: Record<string, string>;
-
   meta: {
     arefs: AnswerRefs;
     fields: Record<string, any>;
