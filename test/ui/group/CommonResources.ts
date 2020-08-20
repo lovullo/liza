@@ -76,7 +76,8 @@ export const createGroup = (
   field_name: any,
   fields: any[] = [],
   cmatch_fields: any[] = [],
-  is_internal: boolean = true
+  is_internal: boolean = true,
+  when_name: string = ''
 ) => {
   return {
     getIndexFieldName: sinon.stub().returns(field_name),
@@ -84,6 +85,7 @@ export const createGroup = (
     getExclusiveFieldNames: sinon.stub().returns(fields),
     getExclusiveCmatchFieldNames: sinon.stub().returns(cmatch_fields),
     isInternal: sinon.stub().returns(is_internal),
+    getWhenFieldName: sinon.stub().returns(when_name),
   };
 };
 

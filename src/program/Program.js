@@ -87,6 +87,12 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
   groupFields: {},
 
   /**
+   * Classifications for group visibility
+   * @type {Object.<string,string}
+   */
+  groupWhens: {},
+
+  /**
    * API descriptions
    * @type {Object}
    */
