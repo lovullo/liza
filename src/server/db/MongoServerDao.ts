@@ -530,14 +530,12 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
 
     new_meta = new_meta || quote.getMetabucket().getData();
 
-    for (const key in new_meta) {
-      const meta = new_meta[key];
+    for (var key in new_meta) {
+      var meta = new_meta[key];
 
-      const arr = [];
-      for (const i in meta) {
-        arr.push(new_meta[key][i]);
+      for (var i in meta) {
+        update['meta.' + key + '.' + i] = new_meta[key][i];
       }
-      update['meta.' + key] = arr;
     }
 
     this.mergeData(quote, update, success, failure, options);

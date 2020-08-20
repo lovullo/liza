@@ -22,12 +22,7 @@
 'use strict';
 
 import {MongoServerDao as Sut} from '../../../src/server/db/MongoServerDao';
-import {
-  MongoSelector,
-  MongoUpdate,
-  MongoDb,
-  MongoQueryUpdateOptions,
-} from 'mongodb';
+import {MongoSelector, MongoUpdate, MongoDb} from 'mongodb';
 import {expect, use as chai_use} from 'chai';
 import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
 import {PositiveInteger} from '../../../src/numeric';
@@ -214,62 +209,6 @@ describe('MongoServerDao', () => {
             () => {},
             undefined,
             push_data
-          )
-        );
-      });
-    });
-  });
-
-  describe('#saveQuoteMeta', () => {
-    [
-      {
-        label: 'Merges existing meta data when new meta is not provided',
-        new_meta: undefined,
-        existing_meta: {old: ['meta data']},
-        expected: {'meta.old': ['meta data']},
-      },
-      {
-        label: 'Merges new meta data if provided',
-        new_meta: {foo: ['bar']},
-        existing_meta: {this: ['is', 'ignored']},
-        expected: {'meta.foo': ['bar']},
-      },
-      {
-        label: 'Merges all indexes of the new meta data',
-        new_meta: {foo: ['bar', 'baz', 'qux']},
-        existing_meta: {},
-        expected: {'meta.foo': ['bar', 'baz', 'qux']},
-      },
-    ].forEach(({label, new_meta, existing_meta, expected}) => {
-      it(label, done => {
-        const quote = createStubQuote(existing_meta);
-        const expected_options = <MongoQueryUpdateOptions>{some: 'options'};
-        const sut = new Sut(
-          createMockDb(
-            // update
-            (
-              _selector: MongoSelector,
-              data: MongoUpdate,
-              options: MongoQueryUpdateOptions
-            ) => {
-              expect(data.$set).to.deep.equal(expected);
-              expect(options).to.equal(expected_options);
-              done();
-            }
-          ),
-          'test',
-          () => {
-            return <UnixTimestamp>123;
-          }
-        );
-
-        sut.init(() =>
-          sut.saveQuoteMeta(
-            quote,
-            new_meta,
-            undefined,
-            undefined,
-            expected_options
           )
         );
       });
