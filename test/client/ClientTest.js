@@ -34,6 +34,18 @@ describe('nav#preStepChange hook', () => {
   [
     {
       label:
+        'Allow navigation w/no save when navigating backwards w/autosave on dirty quote',
+      step_id: 2,
+      current_step_id: 3,
+      autosave: true,
+      force: false,
+      dirty: true,
+      expected_event_to_abort: false,
+      expected_to_dosave: false,
+      expected_to_show_dialog: false,
+    },
+    {
+      label:
         'Force save (no dialog) dirty quote when navigating forward w/autosave',
       step_id: 3,
       current_step_id: 2,

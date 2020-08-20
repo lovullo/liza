@@ -1703,9 +1703,14 @@ module.exports = Class('Client').extend(EventEmitter, {
 
         // if the current step is not dirty or the quote has been
         // locked, just let them through
+        const autosave_backwards =
+          client.program.autosave && event.stepId < event.currentStepId;
+
         if (
           !(
-            client._quote.isLocked() || step_id < quote.getExplicitLockStep()
+            autosave_backwards ||
+            client._quote.isLocked() ||
+            step_id < quote.getExplicitLockStep()
           ) &&
           quote.isDirty() &&
           !event.force
