@@ -68,6 +68,11 @@ export declare class ClientQuote extends BaseQuote {
   autosave(transport: QuoteTransport, callback?: any): this;
 
   /**
+   * Invalidate any pending autosaves
+   */
+  invalidateAutosave(): void;
+
+  /**
    * Returns whether the quote is locked from modifications
    *
    * @return true if locked, otherwise false

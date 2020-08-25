@@ -413,8 +413,7 @@ module.exports = Class('ClientQuote')
       var _self = this,
         old_store = {};
 
-      // void any pending autosave
-      this._autosave_id++;
+      this.invalidateAutosave();
 
       this._doSave(transport, function (data) {
         // re-populate the previously staged values on error; otherwise,
@@ -450,7 +449,7 @@ module.exports = Class('ClientQuote')
      */
     'public autosave': function (transport, callback) {
       var _self = this,
-        id = ++this._autosave_id;
+        id = this._autosave_id;
 
       this._doSave(transport, function (data) {
         if (!data.hasError && _self._autosave_id === id) {
@@ -464,6 +463,13 @@ module.exports = Class('ClientQuote')
       });
 
       return this;
+    },
+
+    /**
+     * Invalidate any pending autosaves
+     */
+    'public invalidateAutosave': function () {
+      this._autosave_id++;
     },
 
     /**
