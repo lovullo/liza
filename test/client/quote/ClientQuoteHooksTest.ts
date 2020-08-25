@@ -148,6 +148,7 @@ function createStubClientQuote(diff: any = {}) {
     on: (_: any, cb: any) => cb(diff),
     autosave: (_: any) => {},
     isLocked: () => false,
+    invalidateAutosave: () => false,
   });
 }
 
