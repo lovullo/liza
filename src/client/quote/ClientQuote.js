@@ -765,6 +765,15 @@ module.exports = Class('ClientQuote')
       return this._forceUnlock ? 0 : this._quote.getExplicitLockStep();
     },
 
+    /**
+     * Get the last set of classification data
+     *
+     * @return {Object}
+     */
+    'public getLastClassify': function () {
+      return this._lastClassify;
+    },
+
     'public needsImport': function (set) {
       if (set !== undefined) {
         return this._quote.needsImport(set);
