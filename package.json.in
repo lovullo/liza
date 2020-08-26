@@ -52,7 +52,7 @@
     "sinon":                   ">=1.17.4",
     "sinon-chai":              ">=3.5.0",
     "es6-promise":             "~3",
-    "jsdom":                   "16.2.1",
+    "jsdom":                   "16.4.0",
     "jsdom-global":            "3.0.2",
     "@types/amqplib":          "0.5.13",
     "nyc":                     "15.0.0",
