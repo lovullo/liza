@@ -261,6 +261,7 @@ describe('Cmatch', () => {
         bucket: {
           foo: ['1', 'default'],
         },
+        previous_cmatch: {foo: {all: true, any: true, indexes: [1]}},
         cmatch: {foo: {all: true, any: true, indexes: [1, 0]}},
         expected: [
           // show events
@@ -332,7 +333,16 @@ describe('Cmatch', () => {
         ],
       },
     ].forEach(
-      ({label, bucket, cmatch, expected, cretain, defaults, hasNaField}) => {
+      ({
+        label,
+        bucket,
+        previous_cmatch,
+        cmatch,
+        expected,
+        cretain,
+        defaults,
+        hasNaField,
+      }) => {
         it(label, () => {
           const bucket_saves: any[] = [];
 
@@ -363,9 +373,16 @@ describe('Cmatch', () => {
             }
           };
 
+          sut.handleClassMatch(previous_cmatch || {}, true);
           sut.handleClassMatch(cmatch, true);
 
-          expect(bucket_saves).to.deep.equal(expected);
+          const finished = new Promise((resolve, _reject) => {
+            setTimeout(() => {
+              resolve(bucket_saves);
+            }, 0);
+          });
+
+          expect(finished).to.eventually.deep.equal(expected);
         });
       }
     );

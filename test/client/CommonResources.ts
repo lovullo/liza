@@ -128,5 +128,6 @@ export function createStubProgram(overrides: any = {}) {
     getClassifierKnownFields: () => <ClassificationResult>{},
     classify: () => <ClassificationResult>{},
     hasNaField: () => false,
+    hasKnownType: () => true,
   };
 }

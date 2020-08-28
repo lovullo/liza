@@ -72,6 +72,8 @@ describe('ProgramQuoteCleaner', () => {
           field22: [, , ''],
           field32: [, ''],
         },
+
+        hasKnownType: name => name !== 'unknown_ignore_me',
       },
     ].forEach(test =>
       it(test.label, done => {
@@ -87,6 +89,9 @@ describe('ProgramQuoteCleaner', () => {
           field12: ['--vis-field12'],
         };
         program.hasNaField = () => false;
+        program.hasKnownType = test.hasKnownType
+          ? test.hasKnownType
+          : () => true;
 
         const updates = {};
 
@@ -309,6 +314,7 @@ describe('ProgramQuoteCleaner', () => {
         };
 
         program.hasNaField = test.hasNaField ? test.hasNaField : () => true;
+        program.hasKnownType = () => true;
 
         program.classify = () => test.classify;
 

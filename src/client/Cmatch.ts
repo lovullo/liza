@@ -299,13 +299,20 @@ export class Cmatch {
        * there is no recorded default. This is because a lack of a default value
        * removes the risk of custom default values persisting.
        */
-      if (this._program.clearNaFields && hide.length) {
+      if (
+        this._program.hasKnownType(field) &&
+        this._program.clearNaFields &&
+        hide.length
+      ) {
         hidden[field] = [];
 
         for (const index of hide) {
+          const is_new_index =
+            this._cmatch[field] !== undefined &&
+            this._cmatch[field].indexes[index] === undefined;
           const na = this._program.hasNaField(field, class_data, index);
 
-          if (!na) {
+          if (!na || !is_new_index) {
             continue;
           }
 
@@ -317,7 +324,11 @@ export class Cmatch {
        * When we clear N/A fields, ensure that their default value is restored
        * if they become visible
        */
-      if (this._program.clearNaFields && show.length) {
+      if (
+        this._program.hasKnownType(field) &&
+        this._program.clearNaFields &&
+        show.length
+      ) {
         shown[field] = [];
 
         const default_value = this._client.program.defaults[field] || '';
@@ -353,8 +364,11 @@ export class Cmatch {
       this._dapiTrigger(field);
     });
 
-    this._client.getQuote().setData(shown);
-    this._client.getQuote().setData(hidden);
+    // Queue the setting of data into a task instead of running immediately
+    setTimeout(() => {
+      this._client.getQuote().setData(shown);
+      this._client.getQuote().setData(hidden);
+    }, 0);
   }
 
   /**

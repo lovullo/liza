@@ -268,6 +268,7 @@ describe('ProgramInit', () => {
           foo: {type: 'undefined'},
         },
       },
+      hasKnownType: () => false,
       groupExclusiveFields: {
         Something: ['foo'],
       },
@@ -288,6 +289,7 @@ describe('ProgramInit', () => {
       whens,
       cretain,
       hasNaField,
+      hasKnownType,
     }) => {
       it(label, () => {
         const sut = Sut(null);
@@ -302,6 +304,7 @@ describe('ProgramInit', () => {
           naFieldValue,
           cretain: cretain ? cretain : {},
           hasNaField: () => (hasNaField ? hasNaField() : false),
+          hasKnownType: hasKnownType ? hasKnownType : () => true,
         };
 
         return expect(sut.init(program, doc_data)).to.eventually.deep.equal(

@@ -685,4 +685,28 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
 
     quote.setData(updated);
   },
+
+  /**
+   * Determine whether question QTYPE is known
+   *
+   * This assumes that the type is known unless QTYPE.type is
+   * "undefined".  Ancient versions (pre-"liza") represented QTYPE as a
+   * string rather than an object.
+   *
+   * @param {string} name - field name to find qtype validity for
+   *
+   * @return {boolean} whether type is known
+   */
+  'public hasKnownType'(name) {
+    const qtype = this.meta.qtypes[name];
+
+    if (!qtype) {
+      return false;
+    }
+
+    // this was a string in ancient versions (pre-"liza")
+    const type = typeof qtype === 'object' ? qtype.type : qtype;
+
+    return typeof type === 'string' && type !== 'undefined';
+  },
 });

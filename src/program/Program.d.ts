@@ -97,4 +97,9 @@ export declare abstract class Program {
    * Determine if a field is clearable
    */
   hasNaField(field: string, classes: ClassData, index: number): boolean;
+
+  /**
+   * Determine whether question QTYPE is known
+   */
+  hasKnownType(name: string): boolean;
 }
