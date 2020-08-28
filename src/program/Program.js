@@ -599,7 +599,7 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
    * Determine if a field is not applicable for a given index
    *
    * A field is considered not applicable when its value is not retained,
-   * it has a default, has a NA classification, and a clear NA fields flag is
+   * it has a default, has a NA classification, and a "clearNaFields" flag is
    * set on the program. Scalar-based fields don't require an index to be
    * specified.
    *

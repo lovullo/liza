@@ -48,6 +48,10 @@ interface IndexVisibility {
   hide: PositiveInteger[];
 }
 
+/**
+ * Simply combine the shapes of VisibilityLegend and IndexVisibility into a new
+ * type.
+ */
 export interface VisibilityBlueprint
   extends VisibilityLegend,
     IndexVisibility {}

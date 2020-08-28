@@ -110,12 +110,11 @@ module.exports = Class('ProgramQuoteCleaner', {
 
       const data = [];
       const field_default = this._program.defaults[field] || '';
-      const group_index = this._program.groupIndexField[group_id];
 
       for (var i = flen; i < length; i++) {
         data[i] =
           this._program.clearNaFields &&
-          this._program.hasNaField(group_index, class_data, i)
+          this._program.hasNaField(field, class_data, i)
             ? this._program.naFieldValue
             : field_default;
       }

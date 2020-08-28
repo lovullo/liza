@@ -30,14 +30,13 @@ import {
   createStubProgram,
 } from './CommonResources';
 
-const sinon = require('sinon');
-
 describe('FieldResetter', () => {
   it('reset fields to empty string by default', () => {
     const {client, program} = getClient();
     const sut = new Sut(client);
 
     program.hasNaField = () => true;
+    program.clearNaFields = true;
 
     const data = {some_field: ['0']};
     const expected = {some_field: ['']};
@@ -45,19 +44,21 @@ describe('FieldResetter', () => {
     expect(sut.reset(data)).to.deep.equal(expected);
   });
 
+  it("don't reset fields to empty string by default when clearNaFields is disabled", () => {
+    const {client, program} = getClient();
+    const sut = new Sut(client);
+
+    program.hasNaField = () => true;
+    program.clearNaFields = false;
+
+    const data = {some_field: ['0']};
+    const expected = {some_field: ['default']};
+
+    expect(sut.reset(data)).to.deep.equal(expected);
+  });
+
   it('reset fields to their own default value', () => {
-    const element_styler = {
-      getDefault(_field: string): string {
-        return 'default';
-      },
-    };
-
     const {client} = getClient();
-
-    sinon.stub(client, 'elementStyler').get(() => {
-      return element_styler;
-    });
-
     const sut = new Sut(client);
 
     const data = {some_field: ['0']};

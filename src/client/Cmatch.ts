@@ -133,7 +133,6 @@ export class Cmatch {
         _self._classMatcher.match(classes, function (cmatch) {
           // it's important that we do this here so that everything
           // that uses the cmatch data will consistently benefit
-
           _self._postProcessCmatch(cmatch);
 
           // if we're not on a current step, defer
@@ -291,13 +290,9 @@ export class Cmatch {
       this.markShowHide(field, visq, show, hide);
 
       /**
-       * When we clear N/A fields, ensure that their value is reset if they are
-       * hidden on a class match. This is considered an initialization for the
-       * field at the new index.
-       *
-       * We want to avoid resetting when the value ought to be retained or when
-       * there is no recorded default. This is because a lack of a default value
-       * removes the risk of custom default values persisting.
+       * When we clear N/A fields, ensure that their value is reset when a new
+       * index is added if they are hidden on a class match. This is considered
+       * an initialization for the field at the new index.
        */
       if (
         this._program.hasKnownType(field) &&
@@ -322,7 +317,7 @@ export class Cmatch {
 
       /**
        * When we clear N/A fields, ensure that their default value is restored
-       * if they become visible
+       * if they become visible.
        */
       if (
         this._program.hasKnownType(field) &&

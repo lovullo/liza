@@ -75,11 +75,12 @@ export class FieldResetter {
    * @return the default value of the field
    */
   private _getValue(field: string, index: number): string {
-    return this._client.program.hasNaField(
-      field,
-      this._client.getQuote().getLastClassify(),
-      index
-    )
+    return this._client.program.clearNaFields &&
+      this._client.program.hasNaField(
+        field,
+        this._client.getQuote().getLastClassify(),
+        index
+      )
       ? this._client.program.naFieldValue
       : this._client.program.defaults[field] || '';
   }

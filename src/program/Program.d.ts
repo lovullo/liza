@@ -94,7 +94,7 @@ export declare abstract class Program {
   classify(data: Record<string, any>): ClassificationResult;
 
   /**
-   * Determine if a field is clearable
+   * Determine if a field is applicable
    */
   hasNaField(field: string, classes: ClassData, index: number): boolean;
 
