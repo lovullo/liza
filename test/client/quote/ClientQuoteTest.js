@@ -164,7 +164,7 @@ describe('ClientQuote', () => {
     });
   });
 
-  it('autosave commit is superceded by more recent call', done => {
+  it('autosave commit is superceded when invalidate is called', () => {
     let commit_call_count = 0;
 
     const bucket = createMockBucket();
@@ -178,22 +178,66 @@ describe('ClientQuote', () => {
 
     const sut = Sut(base_quote, {}, bucket => bucket);
 
-    let transport_send_called = false;
-
     transport.send = (_, cb) => {
-      if (transport_send_called === false) {
-        transport_send_called = true;
-
-        sut.autosave(transport, () => {
-          expect(commit_call_count).to.equal(1);
-          done();
-        });
-      }
+      sut.invalidateAutosave();
 
       cb('', data);
     };
 
     sut.autosave(transport);
+    expect(commit_call_count).to.equal(0);
+  });
+
+  it('autosave does not continue if there is a pending autosave', () => {
+    const bucket = createMockBucket();
+    const base_quote = createMockBaseQuote(bucket);
+    const data = {foo: 'bar'};
+    const transport = createMockTransport(data);
+
+    let send_call_count = 0;
+
+    const sut = Sut(base_quote, {}, bucket => bucket);
+
+    let send_cb = () => {};
+
+    transport.send = (_, cb) => {
+      send_call_count++;
+
+      send_cb = cb;
+    };
+
+    sut.autosave(transport);
+    sut.autosave(transport);
+
+    send_cb('', data);
+
+    expect(send_call_count).to.equal(1);
+  });
+
+  it('subsequent autosave can happen if previous autosave completed', () => {
+    const bucket = createMockBucket();
+    const base_quote = createMockBaseQuote(bucket);
+    const data = {foo: 'bar'};
+    const transport = createMockTransport(data);
+
+    let send_call_count = 0;
+
+    const sut = Sut(base_quote, {}, bucket => bucket);
+
+    let send_cb = () => {};
+
+    transport.send = (_, cb) => {
+      send_call_count++;
+
+      send_cb = cb;
+    };
+
+    sut.autosave(transport);
+
+    send_cb('', data);
+
+    sut.autosave(transport);
+    expect(send_call_count).to.equal(2);
   });
 
   it('autosave commit is superceded by a step save', done => {
@@ -232,6 +276,7 @@ function createMockBucket(bucket_dirty = false) {
   return {
     on: _ => {},
     isDirty: () => !!bucket_dirty,
+    commit: () => {},
   };
 }
 
