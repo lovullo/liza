@@ -339,9 +339,9 @@ module.exports = Class('Server').extend(EventEmitter, {
             // we're good
             server
               ._getDefaultBucket(program, quote_data)
-              .then(default_bucket => init_finish(program, default_bucket))
-              .then(() => {
-                program.processNaFields(quote);
+              .then(default_bucket => {
+                program.processNaFields(default_bucket);
+                init_finish(program, default_bucket);
               });
           });
         });

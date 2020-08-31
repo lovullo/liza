@@ -22,150 +22,184 @@
 'use strict';
 
 const chai = require('chai');
+const program = require('../../src/test/program');
+const {resolve} = require('path');
 const expect = chai.expect;
 const Program = require('../../src/program/Program').Program;
 
-describe('Program#postSubmit', () => {
-  it('returns false when step is invalid', done => {
-    // setup 2 steps
-    const sut = getSut([0, 1]);
+describe('Program', _ => {
+  describe('#postSubmit', () => {
+    it('returns false when step is invalid', done => {
+      // setup 2 steps
+      const sut = getSut([0, 1]);
 
-    // call with invalid step #3
-    expect(sut.postSubmit(3, {}, {})).to.be.false;
-    done();
+      // call with invalid step #3
+      expect(sut.postSubmit(3, {}, {})).to.be.false;
+      done();
+    });
+
+    it('returns false when step is manage type', done => {
+      // setup 2 steps
+      const sut = getSut([0, 1]);
+
+      // call with manage step #1
+      expect(sut.postSubmit(1, {}, {})).to.be.false;
+      done();
+    });
+
+    it('kicks back when valid step', done => {
+      // setup 2 steps
+      const sut = getSut([0, 1, 2]);
+      const kb_step_id = 2;
+      let callback_called = false;
+
+      const callback = (event, quote_id, value) => {
+        expect(event).to.equal('kickBack');
+        expect(value).to.equal(kb_step_id);
+        callback_called = true;
+      };
+
+      expect(sut.postSubmit(kb_step_id, {}, callback)).to.be.true;
+      expect(callback_called).to.be.true;
+      done();
+    });
   });
 
-  it('returns false when step is manage type', done => {
-    // setup 2 steps
-    const sut = getSut([0, 1]);
+  describe('#hasNaField', () => {
+    [
+      {
+        label:
+          'does not detect a NA field when it is missing a "when" classification',
+        result: false,
+        clearNaFields: true,
+        is: false,
+        whens: {},
+      },
+      {
+        label: 'does not detect a NA field via applicable scalar',
+        result: false,
+        clearNaFields: true,
+        indexes: 1,
+        is: true,
+      },
+      {
+        label: 'detects a NA field via NA scalar',
+        result: true,
+        clearNaFields: true,
+        indexes: 0,
+        is: false,
+      },
+      {
+        label: 'does not detect a NA field via applicable vector index',
+        result: false,
+        clearNaFields: true,
+        index: 0,
+        indexes: [1, 0],
+        is: true,
+      },
+      {
+        label: 'detects a NA field via NA vector index',
+        result: true,
+        clearNaFields: true,
+        index: 1,
+        indexes: [1, 0],
+        is: true,
+      },
+      {
+        label: 'does not detect a NA field via applicable matrix index',
+        result: false,
+        clearNaFields: true,
+        index: 0,
+        indexes: [
+          [1, 0],
+          [0, 0],
+        ],
+        is: true,
+      },
+      {
+        label: 'detects a NA field via matrix NA index',
+        result: true,
+        clearNaFields: true,
+        index: 1,
+        indexes: [
+          [1, 0],
+          [0, 0],
+        ],
+        is: true,
+      },
+      {
+        label: 'does not detect a field with a retained value',
+        result: false,
+        retain: {foo: true},
+        clearNaFields: true,
+      },
+      {
+        label: 'does not a detect a field without a default',
+        result: false,
+        defaults: {},
+        clearNaFields: true,
+      },
+    ].forEach(
+      ({
+        label,
+        result,
+        retain,
+        whens,
+        defaults,
+        clearNaFields,
+        index,
+        indexes,
+        is,
+      }) => {
+        it(label, () => {
+          const sut = getSut([0, 1]);
 
-    // call with manage step #1
-    expect(sut.postSubmit(1, {}, {})).to.be.false;
-    done();
+          index = index || 0;
+          indexes = indexes || 0;
+
+          sut.cretain = retain || {};
+          sut.whens = whens || {foo: ['--vis-foo']};
+          sut.defaults = defaults || {foo: '0'};
+          sut.clearNaFields = clearNaFields;
+
+          const classes = {'--vis-foo': {is, indexes}};
+
+          const resetable = sut.hasNaField('foo', classes, index);
+
+          expect(resetable).to.be[result];
+        });
+      }
+    );
   });
 
-  it('kicks back when valid step', done => {
-    // setup 2 steps
-    const sut = getSut([0, 1, 2]);
-    const kb_step_id = 2;
-    let callback_called = false;
-
-    const callback = (event, quote_id, value) => {
-      expect(event).to.equal('kickBack');
-      expect(value).to.equal(kb_step_id);
-      callback_called = true;
-    };
-
-    expect(sut.postSubmit(kb_step_id, {}, callback)).to.be.true;
-    expect(callback_called).to.be.true;
-    done();
-  });
-});
-
-describe('Program#hasNaField', () => {
-  [
-    {
-      label: 'detects a NA field when it is missing a "when" classification',
-      result: true,
-      clearNaFields: true,
-      is: false,
-      whens: {},
-    },
-    {
-      label: 'does not detect a NA field via applicable scalar',
-      result: false,
-      clearNaFields: true,
-      indexes: 1,
-      is: true,
-    },
-    {
-      label: 'detects a NA field via NA scalar',
-      result: true,
-      clearNaFields: true,
-      indexes: 0,
-      is: false,
-    },
-    {
-      label: 'does not detect a NA field via applicable vector index',
-      result: false,
-      clearNaFields: true,
-      index: 0,
-      indexes: [1, 0],
-      is: true,
-    },
-    {
-      label: 'detects a NA field via NA vector index',
-      result: true,
-      clearNaFields: true,
-      index: 1,
-      indexes: [1, 0],
-      is: true,
-    },
-    {
-      label: 'does not detect a NA field via applicable matrix index',
-      result: false,
-      clearNaFields: true,
-      index: 0,
-      indexes: [
-        [1, 0],
-        [0, 0],
-      ],
-      is: true,
-    },
-    {
-      label: 'detects a NA field via matrix NA index',
-      result: true,
-      clearNaFields: true,
-      index: 1,
-      indexes: [
-        [1, 0],
-        [0, 0],
-      ],
-      is: true,
-    },
-    {
-      label: 'does not detect a field with a retained value',
-      result: false,
-      retain: {foo: true},
-      clearNaFields: true,
-    },
-    {
-      label: 'does not a detect a field without a default',
-      result: false,
-      defaults: {},
-      clearNaFields: true,
-    },
-  ].forEach(
-    ({
-      label,
-      result,
-      retain,
-      whens,
-      defaults,
-      clearNaFields,
-      index,
-      indexes,
-      is,
-    }) => {
-      it(label, () => {
+  describe('#processNaFields', () => {
+    [
+      {
+        label: 'has no effect when clearNaFields is disabled',
+        clearNaFields: false,
+        input: {na: 'default', not_na: 'default'},
+        output: {na: 'default', not_na: 'default'},
+      },
+      {
+        label: 'process non-applicable fields',
+        clearNaFields: true,
+        input: {na: ['default'], not_na: ['default']},
+        output: {na: [''], not_na: ['default']},
+      },
+    ].forEach(({label, clearNaFields, input, output}) => {
+      it(label, done => {
         const sut = getSut([0, 1]);
 
-        index = index || 0;
-        indexes = indexes || 0;
-
-        sut.cretain = retain || {};
-        sut.whens = whens || {foo: ['--vis-foo']};
-        sut.defaults = defaults || {foo: '0'};
         sut.clearNaFields = clearNaFields;
+        sut.hasNaField = field => field === 'na';
+        sut.classify = _ => {};
+        sut.processNaFields(input);
 
-        const classes = {'--vis-foo': {is, indexes}};
-
-        const resetable = sut.hasNaField('foo', classes, index);
-
-        expect(resetable).to.be[result];
+        expect(output).to.deep.equal(input);
+        done();
       });
-    }
-  );
+    });
+  });
 });
 
 function getSut(step_data) {

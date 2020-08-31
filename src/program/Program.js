@@ -623,9 +623,9 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
       ? this.whens[field][0]
       : undefined;
 
-    // Can't determine applicability so it is automatically considered NA
+    // If no "when" consideration, assume it is always applicable
     if (!when) {
-      return true;
+      return false;
     }
 
     const class_data = classes[when];
@@ -653,19 +653,19 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
    * This is intended to be called once after the program has initialized the
    * bucket. Since this operation relies on knowing the applicability of a field
    * through its --vis classification, we need a fully formed bucket in order to
-   * invoke the classifier and determine applicability.
+   * invoke the classifier and determine applicability. This modifies the bucket
+   * in place
    *
-   * @param {object} bucket  - bucket
+   * @param {object} data - bucket data
    */
-  'public processNaFields': function (quote) {
+  'public processNaFields': function (data) {
     if (!this.clearNaFields) {
       return;
     }
 
-    const data = quote.getBucket().getData();
     const class_data = this.classify(data);
 
-    const updated = Object.keys(data).reduce((update, field) => {
+    Object.keys(data).forEach(field => {
       for (const i in data[field]) {
         const na = this.hasNaField(field, class_data, i);
 
@@ -673,17 +673,9 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
           continue;
         }
 
-        if (update[field] === undefined) {
-          update[field] = [];
-        }
-
-        update[field][i] = this.naFieldValue;
+        data[field][i] = this.naFieldValue;
       }
-
-      return update;
-    }, {});
-
-    quote.setData(updated);
+    });
   },
 
   /**
