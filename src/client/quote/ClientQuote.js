@@ -111,6 +111,11 @@ module.exports = Class('ClientQuote')
     'private _autosave_id': 0,
 
     /**
+     * Whether we are currently autosaving
+     */
+    'private _is_autosaving': false,
+
+    /**
      * Initializes component with the given quote
      *
      * @param {Quote}  quote quote to augment
@@ -414,6 +419,7 @@ module.exports = Class('ClientQuote')
         old_store = {};
 
       this.invalidateAutosave();
+      this._is_autosaving = false;
 
       this._doSave(transport, function (data) {
         // re-populate the previously staged values on error; otherwise,
@@ -448,14 +454,24 @@ module.exports = Class('ClientQuote')
      * @return {ClientQuote} self
      */
     'public autosave': function (transport, callback) {
+      this.invalidateAutosave();
+
       var _self = this,
         id = this._autosave_id;
+
+      if (this._is_autosaving) {
+        return;
+      }
+
+      this._is_autosaving = true;
 
       this._doSave(transport, function (data) {
         if (!data.hasError && _self._autosave_id === id) {
           _self._dirty = true;
           _self._staging.commit();
         }
+
+        _self._is_autosaving = false;
 
         if (typeof callback === 'function') {
           callback.apply(null, arguments);
