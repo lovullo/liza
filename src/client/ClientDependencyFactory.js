@@ -51,6 +51,7 @@ var Step = require('../step/Step'),
   ValidStateMonitor = require('../validate/ValidStateMonitor'),
   Failure = require('../validate/Failure'),
   Field = require('../field/BucketField'),
+  FieldClassMatcher = require('../field/FieldClassMatcher'),
   XhttpQuoteTransport = require('./transport/XhttpQuoteTransport'),
   JqueryHttpDataProxy = require('./proxy/JqueryHttpDataProxy'),
   XhttpQuoteStagingTransport = require('./transport/XhttpQuoteStagingTransport'),
@@ -88,6 +89,8 @@ const {
 const {
   WidthAncestorAwareStyler,
 } = require('../ui/styler/WidthAncestorAwareStyler');
+
+const {Cmatch} = require('../client/Cmatch');
 const {GridCollection} = require('../ui/step/GridCollection');
 const {ContextParser} = require('../ui/context/ContextParser');
 const {DelegateEventHandler} = require('./event/DelegateEventHandler');
@@ -155,6 +158,10 @@ module.exports = Class('ClientDependencyFactory', {
 
   createDataApiManager: function () {
     return DataApiManager(DataApiFactory());
+  },
+
+  createCmatch: function (program, client) {
+    return new Cmatch(FieldClassMatcher(program.whens), program, client);
   },
 
   createProgram: function (id, dapi_manager) {
