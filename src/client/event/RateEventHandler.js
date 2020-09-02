@@ -99,7 +99,7 @@ module.exports = Class('RateEventHandler')
       // A value of -1 indicates that we do not want to see the rating dialog
       const hide_dialog = +data.value === -1;
 
-      const step_id = data.step_id || quote.getCurrentStepId();
+      const step_id = data.stepId || quote.getCurrentStepId();
 
       // Allow a rate on a non-rate step only if we are on a beforeLoad event
       const rate_on_step =
