@@ -168,16 +168,23 @@ exports.init = function (logger, enc_service, conf, env) {
                   program,
                   request,
                   function (quote) {
-                    rating_service
-                      .request(request.getSession(), quote, '', true)
-                      .then(() => {
+                    dao
+                      .ensurePriorRate(quote)
+                      .then(_ => {
+                        rating_service
+                          .request(request.getSession(), quote, '', true)
+                          .then(() => {
+                            free();
+                            resolve();
+                          });
+                      })
+                      .catch(e => {
                         free();
-                        resolve();
+                        reject(e);
                       });
                   },
                   function (error) {
                     free();
-
                     reject(error);
                   }
                 );

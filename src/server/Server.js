@@ -1255,7 +1255,6 @@ module.exports = Class('Server').extend(EventEmitter, {
             );
           });
         })
-        .then(quote => this.dao.ensurePriorRate(quote))
         .then(quote => this._postDapi(quote.getId(), request, program))
         .catch(e => {
           if (
