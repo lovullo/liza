@@ -25,7 +25,6 @@ const Class = require('easejs').Class;
 const EventEmitter = require('../events').EventEmitter;
 const DomFieldNotFoundError = require('../ui/field/DomFieldNotFoundError');
 const UnknownEventError = require('./event/UnknownEventError');
-const system = require('../system/client');
 
 /**
  * Controller for the program client
@@ -262,6 +261,24 @@ module.exports = Class('Client').extend(EventEmitter, {
   'private _defaultId': 'default',
 
   /**
+   * jQuery Object
+   * @type {jQuery}
+   */
+  'private _jquery': null,
+
+  /**
+   * DOM
+   * @type {Document}
+   */
+  'private _document': null,
+
+  /**
+   * Window object
+   * @type {window}
+   */
+  'private _window': null,
+
+  /**
    * Instantiates all the necessary objects and initializes the UI.
    *
    * The DEFAULT_ID represents whatever default program should be used in
@@ -271,13 +288,26 @@ module.exports = Class('Client').extend(EventEmitter, {
    * @param {jQuery}                 $body      client body
    * @param {ClientDependencyFactor} factory    dependency factory
    * @param {string}                 default_id default program id
+   * @param {jQeury}                _jquery     (optional)
+   * @param {Document}              _document   (optional)
+   * @param {window}                _window     (optional)
    *
    * @return undefined
    */
-  __construct: function ($body, factory, default_id) {
+  __construct: function (
+    $body,
+    factory,
+    default_id,
+    _jquery,
+    _document,
+    _window
+  ) {
     this._factory = factory;
     this.$body = $body;
-    this.elementStyler = factory.createElementStyler(jQuery);
+    this._jquery = _jquery || jQuery;
+    this._document = _document || document;
+    this._window = _window || window;
+    this.elementStyler = factory.createElementStyler(this._jquery);
     this.$navBar = this.$body.find('ul.step-nav');
 
     this._defaultId = default_id || 'default';
@@ -313,6 +343,7 @@ module.exports = Class('Client').extend(EventEmitter, {
    */
   _init: function () {
     var client = this;
+    var $ = this._jquery;
 
     // create the widget selector for jQuery
     $.extend($.expr[':'], {
@@ -321,7 +352,7 @@ module.exports = Class('Client').extend(EventEmitter, {
     });
 
     // used to communicate with the server
-    this.dataProxy = this._createDataProxy(jQuery);
+    this.dataProxy = this._createDataProxy(this._jquery);
 
     this.uiDialog = this._factory.createUiDialog();
     this.programId = this._getProgramId();
@@ -354,10 +385,10 @@ module.exports = Class('Client').extend(EventEmitter, {
       this._dataValidator,
       this.elementStyler,
       this.dataProxy,
-      jQuery
+      this._jquery
     );
 
-    this._cmatch = system.cmatch(this.program, this.__inst);
+    this._cmatch = this._factory.createCmatch(this.program, this.__inst);
 
     this._validatorFormatter = this._factory.createValidatorFormatter(
       this.program.meta.qtypes
@@ -432,7 +463,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         client._currentStepId = step_id;
 
         // scroll to the top of the page
-        window.scrollTo(0, 0);
+        client._window.scrollTo(0, 0);
       })
       .on('unload', function (event) {
         if (!client.ui.getCurrentStep()) {
@@ -689,7 +720,7 @@ module.exports = Class('Client').extend(EventEmitter, {
    */
   _getProgramId: function () {
     // grab out of the url
-    var data = window.location.href.match(/\/quote\/([a-z0-9-]+)\//i);
+    var data = this._window.location.href.match(/\/quote\/([a-z0-9-]+)\//i);
 
     return data === null ? this._defaultId : data[1];
   },
@@ -872,7 +903,8 @@ module.exports = Class('Client').extend(EventEmitter, {
         break;
 
       case 'setProgram':
-        document.location.href = '/quote/' + action.id + '/#' + action.quoteId;
+        this._document.location.href =
+          '/quote/' + action.id + '/#' + action.quoteId;
         break;
 
       case 'lock':
@@ -933,13 +965,13 @@ module.exports = Class('Client').extend(EventEmitter, {
       notifyBar: this._factory.createNotifyBar($rater_content),
 
       uiStyler: this._createUiStyler($error_box),
-      navBar: this._factory.createUiNavBar(jQuery, this.$navBar),
+      navBar: this._factory.createUiNavBar(this._jquery, this.$navBar),
 
       dataValidator: this._dataValidator,
 
       rootContext: (root_context = this._factory.createRootDomContext(
         // root html node
-        document.childNodes[document.childNodes.length - 1],
+        this._document.childNodes[this._document.childNodes.length - 1],
 
         this._factory.createDomFieldFactory(this.elementStyler)
       )),
@@ -1626,7 +1658,7 @@ module.exports = Class('Client').extend(EventEmitter, {
   ) {
     return this._factory.createDataBucketTransport(
       this._quote.getId() + '/step/' + step_id + '/post',
-      this._createDataProxy(jQuery, prohibit_abort),
+      this._createDataProxy(this._jquery, prohibit_abort),
       concluding_save
     );
   },
@@ -1671,9 +1703,14 @@ module.exports = Class('Client').extend(EventEmitter, {
 
         // if the current step is not dirty or the quote has been
         // locked, just let them through
+        const autosave_backwards =
+          client.program.autosave && event.stepId < event.currentStepId;
+
         if (
           !(
-            client._quote.isLocked() || step_id < quote.getExplicitLockStep()
+            autosave_backwards ||
+            client._quote.isLocked() ||
+            step_id < quote.getExplicitLockStep()
           ) &&
           quote.isDirty() &&
           !event.force
@@ -1720,7 +1757,7 @@ module.exports = Class('Client').extend(EventEmitter, {
       // if this is the last step and the user is trying to go further,
       // we'll be doing the import
       if (
-        this.isLastStep(event.currentStepId) &&
+        client.nav.isLastStep(event.currentStepId) &&
         event.stepId > event.currentStepId
       ) {
         // don't allow navigation
