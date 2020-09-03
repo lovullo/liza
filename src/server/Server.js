@@ -1302,6 +1302,22 @@ module.exports = Class('Server').extend(EventEmitter, {
       server.dao.saveQuoteMeta(quote, meta);
     }
 
+    let save_data = undefined;
+
+    // If this is a concluding save and we are going to import, clear any
+    // rates that are currently pending
+    if (rdelta_data.concluding_save === true) {
+      save_data = {};
+
+      const quote_data = quote.getBucket().getData();
+
+      Object.keys(quote_data).forEach(
+        key => (save_data['data.' + key] = quote_data[key])
+      );
+
+      save_data['ratedata.__rate_pending'] = [0];
+    }
+
     server.quoteFill(
       quote,
       step_id,
@@ -1346,7 +1362,7 @@ module.exports = Class('Server').extend(EventEmitter, {
 
               c && c(false);
             },
-            undefined,
+            save_data,
             rdelta_data,
             force_publish
           );
