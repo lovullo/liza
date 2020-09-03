@@ -40,6 +40,7 @@ describe('nav#preStepChange hook', () => {
       autosave: true,
       force: false,
       dirty: true,
+      expected_clear_failures: true,
       expected_event_to_abort: false,
       expected_to_dosave: false,
       expected_to_show_dialog: false,
@@ -52,6 +53,7 @@ describe('nav#preStepChange hook', () => {
       autosave: true,
       force: false,
       dirty: true,
+      expected_clear_failures: false,
       expected_event_to_abort: true,
       expected_to_dosave: true,
       expected_to_show_dialog: false,
@@ -64,6 +66,7 @@ describe('nav#preStepChange hook', () => {
       autosave: false,
       force: false,
       dirty: true,
+      expected_clear_failures: false,
       expected_event_to_abort: true,
       expected_to_dosave: false,
       expected_to_show_dialog: true,
@@ -76,6 +79,7 @@ describe('nav#preStepChange hook', () => {
       autosave: false,
       force: false,
       dirty: true,
+      expected_clear_failures: false,
       expected_event_to_abort: true,
       expected_to_dosave: false,
       expected_to_show_dialog: true,
@@ -87,6 +91,7 @@ describe('nav#preStepChange hook', () => {
       autosave: false,
       force: false,
       dirty: false,
+      expected_clear_failures: false,
       expected_event_to_abort: false,
       expected_to_dosave: false,
       expected_to_show_dialog: false,
@@ -99,6 +104,7 @@ describe('nav#preStepChange hook', () => {
       autosave,
       force,
       dirty,
+      expected_clear_failures,
       expected_event_to_abort,
       expected_to_dosave,
       expected_to_show_dialog,
@@ -112,6 +118,11 @@ describe('nav#preStepChange hook', () => {
         let shows_dialog = false;
         ui_dialog.showDirtyDialog = () => {
           shows_dialog = true;
+        };
+
+        let clears_failures = false;
+        data_validator.clearFailures = () => {
+          clears_failures = true;
         };
 
         let is_saved = false;
@@ -139,6 +150,7 @@ describe('nav#preStepChange hook', () => {
         nav.emit('preStepChange', event);
 
         expect(is_saved).to.deep.equal(expected_to_dosave);
+        expect(clears_failures).to.deep.equal(expected_clear_failures);
         expect(event.abort).to.deep.equal(expected_event_to_abort);
         expect(shows_dialog).to.deep.equal(expected_to_show_dialog);
         done();

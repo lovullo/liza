@@ -1752,6 +1752,11 @@ module.exports = Class('Client').extend(EventEmitter, {
 
           return;
         }
+
+        // clear any failures if user is navigating backwards via top nav
+        if (autosave_backwards) {
+          client._dataValidator.clearFailures();
+        }
       }
 
       // if this is the last step and the user is trying to go further,
