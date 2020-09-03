@@ -172,7 +172,12 @@ exports.init = function (logger, enc_service, conf, env) {
                       .ensurePriorRate(quote)
                       .then(_ => {
                         rating_service
-                          .request(request.getSession(), quote, '', true)
+                          .request(
+                            request.getSession(),
+                            quote,
+                            '',
+                            !quote.isLocked()
+                          )
                           .then(() => {
                             free();
                             resolve();
