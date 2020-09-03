@@ -1306,7 +1306,7 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     // If this is a concluding save and we are going to import, clear any
     // rates that are currently pending
-    if (rdelta_data.concluding_save === true) {
+    if (rdelta_data && rdelta_data.concluding_save === true) {
       save_data = {};
 
       const quote_data = quote.getBucket().getData();
