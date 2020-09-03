@@ -91,6 +91,8 @@ const {
 } = require('../ui/styler/WidthAncestorAwareStyler');
 
 const {Cmatch} = require('../client/Cmatch');
+const {CmatchVisibility} = require('../client/CmatchVisibility');
+const {FieldResetter} = require('../client/FieldResetter');
 const {GridCollection} = require('../ui/step/GridCollection');
 const {ContextParser} = require('../ui/context/ContextParser');
 const {DelegateEventHandler} = require('./event/DelegateEventHandler');
@@ -161,7 +163,10 @@ module.exports = Class('ClientDependencyFactory', {
   },
 
   createCmatch: function (program, client) {
-    return new Cmatch(FieldClassMatcher(program.whens), program, client);
+    const matcher = FieldClassMatcher(program.whens);
+    const visibility = new CmatchVisibility(client);
+    const resetter = new FieldResetter(client);
+    return new Cmatch(matcher, program, client, visibility, resetter);
   },
 
   createProgram: function (id, dapi_manager) {
