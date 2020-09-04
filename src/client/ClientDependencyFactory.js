@@ -1,9 +1,7 @@
-/* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", no-unused-vars: "off", no-undef: "off", node/no-missing-require: "off", prefer-arrow-callback: "off" */
 /**
  * Factory for Client dependencies
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -32,7 +30,7 @@
  * time.
  */
 
-var Step = require('../step/Step'),
+const Step = require('../step/Step'),
   StepUiBuilder = require('../ui/step/StepUiBuilder'),
   Ui = require('../ui/Ui'),
   UiStyler = require('../ui/UiStyler'),
@@ -43,7 +41,6 @@ var Step = require('../step/Step'),
   BaseQuote = require('../quote/BaseQuote'),
   ClientQuote = require('./quote/ClientQuote'),
   QuoteDataBucket = require('../bucket/QuoteDataBucket'),
-  StagingBucket = require('../bucket/StagingBucket'),
   StagingBucketAutoDiscard = require('../bucket/StagingBucketAutoDiscard'),
   DelayedStagingBucket = require('../bucket/DelayedStagingBucket'),
   standardValidator = require('../validate/standardBucketValidator'),
@@ -64,21 +61,20 @@ var Step = require('../step/Step'),
   Sidebar = require('../ui/sidebar/Sidebar'),
   DataApiFactory = require('../dapi/DataApiFactory'),
   DataApiManager = require('../dapi/DataApiManager'),
-  DataApiMediator = require('./dapi/DataApiMediator');
-
-(RootDomContext = require('../ui/context/RootDomContext')),
-  (DomFieldFactory = require('../ui/field/DomFieldFactory')),
-  (StepErrorStyler = require('../ui/styler/StepErrorStyler')),
-  (SidebarErrorStyler = require('../ui/styler/SidebarErrorStyler')),
-  (ErrorFieldStyler = require('../ui/styler/ErrorFieldStyler')),
-  (NaFieldStyler = require('../ui/styler/NaFieldStyler')),
-  (diffStore = require('liza/system/client').data.diffStore),
-  (FieldVisibilityEventHandler = require('./event/FieldVisibilityEventHandler')),
-  (IndvRateEventHandler = require('./event/IndvRateEventHandler')),
-  (RateEventHandler = require('./event/RateEventHandler')),
-  (StatusEventHandler = require('./event/StatusEventHandler')),
-  (ValueSetEventHandler = require('./event/ValueSetEventHandler')),
-  (Cvv2DialogEventHandler = require('./event/Cvv2DialogEventHandler'));
+  DataApiMediator = require('./dapi/DataApiMediator'),
+  RootDomContext = require('../ui/context/RootDomContext'),
+  DomFieldFactory = require('../ui/field/DomFieldFactory'),
+  StepErrorStyler = require('../ui/styler/StepErrorStyler'),
+  SidebarErrorStyler = require('../ui/styler/SidebarErrorStyler'),
+  ErrorFieldStyler = require('../ui/styler/ErrorFieldStyler'),
+  NaFieldStyler = require('../ui/styler/NaFieldStyler'),
+  diffStore = require('../system/client').data.diffStore,
+  FieldVisibilityEventHandler = require('./event/FieldVisibilityEventHandler'),
+  IndvRateEventHandler = require('./event/IndvRateEventHandler'),
+  RateEventHandler = require('./event/RateEventHandler'),
+  StatusEventHandler = require('./event/StatusEventHandler'),
+  ValueSetEventHandler = require('./event/ValueSetEventHandler'),
+  Cvv2DialogEventHandler = require('./event/Cvv2DialogEventHandler');
 
 const {
   ExpandAncestorAwareStyler,
@@ -103,7 +99,6 @@ const {WindowFeatureFlag} = require('../system/flags/WindowFeatureFlag');
 const {GeneralStepUi} = require('../ui/step/GeneralStepUi');
 const {FieldContextFactory} = require('../ui/context/FieldContextFactory');
 const {FieldStylerFactory} = require('../ui/context/styler/FieldStylerFactory');
-const {GroupUi} = require('../ui/group/GroupUi');
 const {Group} = require('../group/Group');
 const {AccordionGroupUi} = require('../ui/group/AccordionGroupUi');
 const {FlatGroupUi} = require('../ui/group/FlatGroupUi');
@@ -193,13 +188,11 @@ module.exports = Class('ClientDependencyFactory', {
   },
 
   createQuote: function (quote_id, data) {
-    var _self = this;
-
     return ClientQuote(
       BaseQuote(quote_id, this.createDataBucket()),
       data,
-      function (bucket) {
-        return _self.createStagingBucket(bucket);
+      bucket => {
+        return this.createStagingBucket(bucket);
       }
     );
   },
@@ -235,7 +228,7 @@ module.exports = Class('ClientDependencyFactory', {
     );
   },
 
-  createFieldValidator: function (field_map) {
+  createFieldValidator: function () {
     return ValidStateMonitor();
   },
 
@@ -261,7 +254,7 @@ module.exports = Class('ClientDependencyFactory', {
   createUi: Ui,
 
   createUiDialog: function () {
-    return UiDialog(jQuery, function () {
+    return UiDialog(jQuery, () => {
       return JqueryDialog(jQuery);
     });
   },
@@ -314,7 +307,7 @@ module.exports = Class('ClientDependencyFactory', {
     arefs
   ) {
     // default
-    var obj = FlatGroupUi;
+    let obj = FlatGroupUi;
 
     if (content.classList.contains('table')) {
       obj = TableGroupUi;
@@ -361,7 +354,7 @@ module.exports = Class('ClientDependencyFactory', {
    */
   createCollection: function (content, groups) {
     const collection_type = content.getAttribute('data-collection-type');
-    var collection;
+    let collection;
 
     switch (collection_type) {
       case 'grid':
