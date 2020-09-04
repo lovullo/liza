@@ -789,27 +789,6 @@ export class GroupUi extends EventEmitter {
   }
 
   /**
-   * Retrieve field elements for show/hide operations
-   *
-   * If the field is a child of another field, then only the element
-   * associated with it will be selected; otherwise, the parent container
-   * of the field (which may be multiple elements) will be returned.
-   *
-   * @param field - field name
-   * @param index - field index
-   *
-   * @return field elements
-   */
-  protected getFieldElements(field: string, index: number): any {
-    var $element = this.getElementByName(field, index),
-      is_sub = $element.parent().hasClass('widget');
-
-    return !is_sub && $element.parents('dd').length
-      ? $element.parents('dd').prev('dt').andSelf()
-      : $element;
-  }
-
-  /**
    * Hides the field based on field name and index
    *
    * @param field - field name
