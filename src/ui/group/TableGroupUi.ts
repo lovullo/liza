@@ -345,7 +345,7 @@ export class TableGroupUi extends GroupUi {
       this._getColumnHeader(field)?.classList.add('hidden');
     }
 
-    var $element = this.getElementByName(field, index),
+    var $element = this._getElementByName(field, index),
       $parent = $element.parents('td'),
       cindex = $parent.index();
 
@@ -362,7 +362,7 @@ export class TableGroupUi extends GroupUi {
       this._getColumnHeader(field)?.classList.remove('hidden');
     }
 
-    var $element = this.getElementByName(field, index),
+    var $element = this._getElementByName(field, index),
       $parent = $element.parents('td'),
       cindex = $parent.index();
 
@@ -408,5 +408,27 @@ export class TableGroupUi extends GroupUi {
    */
   public getRowCount(): number {
     return this.getCurrentIndexCount();
+  }
+
+  /**
+   * Return the given element within the group (if it exists)
+   *
+   * This has the performance benefit of searching *only* within the group
+   * rather than scanning the entire DOM (or a much larger subset)
+   *
+   * @param name   - element name (question name)
+   * @param index  - index of element to retrieve (bucket index)
+   * @param filter - filter to apply to widgets
+   */
+  private _getElementByName(name: string, index: number, filter?: string): any {
+    if (!this.isAField(name)) {
+      return this.$content.find('#' + name + ':nth(' + index + ')');
+    }
+
+    // find the element within the group (by setting the search
+    // context to the group, we can speed up the system on large
+    // steps be avoiding scanning the DOM for the entire step
+    // content)
+    return this.styler.getElementByName(name, index, filter, this.$content);
   }
 }
