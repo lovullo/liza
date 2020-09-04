@@ -325,10 +325,24 @@ export class TableGroupUi extends GroupUi {
     );
   }
 
+  /**
+   * Returns the table header for a given field
+   *
+   * @param field - field to find the column header for
+   *
+   * @return the column header associated with the given field
+   */
+  private _getColumnHeader(field: string): Element | null {
+    const table: HTMLElement = this._getTable()[0];
+
+    return table.querySelector('th[id^=qhead_' + field + ']');
+  }
+
   protected doHideField(field: string, index: number): void {
     if (this.getDomPerfFlag() === true) {
       // Ensures FieldContext is created for this field
       super.doHideField(field, index);
+      this._getColumnHeader(field)?.classList.add('hidden');
     }
 
     var $element = this.getElementByName(field, index),
@@ -345,6 +359,7 @@ export class TableGroupUi extends GroupUi {
     if (this.getDomPerfFlag() === true) {
       // Ensures FieldContext is created for this field
       super.doShowField(field, index);
+      this._getColumnHeader(field)?.classList.remove('hidden');
     }
 
     var $element = this.getElementByName(field, index),
