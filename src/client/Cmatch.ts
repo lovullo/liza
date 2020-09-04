@@ -47,6 +47,9 @@ export type VisibilityQueue = {
   };
 };
 
+type VisibilityFieldUpdate = {[field_index: number]: any};
+type VisibilityBucketUpdate = {[bucket_field: string]: VisibilityFieldUpdate};
+
 /**
  * Handles classification matching
  */
@@ -209,8 +212,6 @@ export class Cmatch {
 
     const quote = this._client.getQuote();
 
-    const class_data = this._client.getQuote().getLastClassify();
-
     // oh dear god...(Demeter, specifically..)
     const cur_step = this._client.getUi().getCurrentStep();
 
@@ -222,9 +223,8 @@ export class Cmatch {
 
     // Prepare to keep track of any fields that show/hide in this process and
     // update the bucket if necessary
-    const shown: {[index: string]: any} = {};
-    const hidden: {[index: string]: any} = {};
-
+    const shown: VisibilityBucketUpdate = {};
+    const hidden: VisibilityBucketUpdate = {};
     const visq: VisibilityQueue = {};
 
     for (const field in cmatch) {
@@ -287,55 +287,13 @@ export class Cmatch {
 
       this.markShowHide(field, visq, show, hide);
 
-      /**
-       * When we clear N/A fields, ensure that their value is reset when a new
-       * index is added if they are hidden on a class match. This is considered
-       * an initialization for the field at the new index.
-       */
-      if (
-        this._program.hasKnownType(field) &&
-        this._program.clearNaFields &&
-        hide.length
-      ) {
-        hidden[field] = [];
+      const {indexes_shown, indexes_hidden} = this._getVisibilityUpdates(
+        field,
+        {show, hide}
+      );
 
-        for (const index of hide) {
-          const is_new_index =
-            this._cmatch[field] !== undefined &&
-            this._cmatch[field].indexes[index] === undefined;
-          const na = this._program.hasNaField(field, class_data, index);
-
-          if (!na || !is_new_index) {
-            continue;
-          }
-
-          hidden[field][index] = this._program.naFieldValue;
-        }
-      }
-
-      /**
-       * When we clear N/A fields, ensure that their default value is restored
-       * if they become visible.
-       */
-      if (
-        this._program.hasKnownType(field) &&
-        this._program.clearNaFields &&
-        show.length
-      ) {
-        shown[field] = [];
-
-        const default_value = this._client.program.defaults[field] || '';
-        const current_value = this._client.getQuote().getDataByName(field);
-
-        for (const index of show) {
-          // only update value on show when it has been reset previously
-          if (current_value[index] !== this._program.naFieldValue) {
-            continue;
-          }
-
-          shown[field][index] = default_value;
-        }
-      }
+      shown[field] = indexes_shown;
+      hidden[field] = indexes_hidden;
     }
 
     // it's important to do this before showing/hiding fields, since
@@ -362,6 +320,76 @@ export class Cmatch {
       this._client.getQuote().setData(shown);
       this._client.getQuote().setData(hidden);
     }, 0);
+  }
+
+  /**
+   * Provide updated data for fields/indexes that have changed visibility
+   *
+   * @param field      - field name
+   * @param visibility - indexes that have changed visibility
+   *
+   * @return updated bucket values for the field at various indexes
+   */
+  private _getVisibilityUpdates(
+    field: string,
+    visibility: {show: PositiveInteger[]; hide: PositiveInteger[]}
+  ): {
+    indexes_shown: VisibilityFieldUpdate;
+    indexes_hidden: VisibilityFieldUpdate;
+  } {
+    const {show, hide} = visibility;
+    const indexes_shown = [];
+    const indexes_hidden = [];
+
+    const class_data = this._client.getQuote().getLastClassify();
+
+    /**
+     * When we clear N/A fields, ensure that their value is reset when a new
+     * index is added if they are hidden on a class match. This is considered
+     * an initialization for the field at the new index.
+     */
+    if (
+      this._program.hasKnownType(field) &&
+      this._program.clearNaFields &&
+      hide.length
+    ) {
+      for (const index of hide) {
+        const is_new_index =
+          this._cmatch[field] !== undefined &&
+          this._cmatch[field].indexes[index] === undefined;
+        const na = this._program.hasNaField(field, class_data, index);
+
+        if (!na || !is_new_index) {
+          continue;
+        }
+
+        indexes_hidden[index] = this._program.naFieldValue;
+      }
+    }
+
+    /**
+     * When we clear N/A fields, ensure that their default value is restored
+     * if they become visible.
+     */
+    if (
+      this._program.hasKnownType(field) &&
+      this._program.clearNaFields &&
+      show.length
+    ) {
+      const default_value = this._client.program.defaults[field] || '';
+      const current_value = this._client.getQuote().getDataByName(field);
+
+      for (const index of show) {
+        // only update value on show when it has been reset previously
+        if (current_value[index] !== this._program.naFieldValue) {
+          continue;
+        }
+
+        indexes_shown[index] = default_value;
+      }
+    }
+
+    return {indexes_shown, indexes_hidden};
   }
 
   /**
