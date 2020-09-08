@@ -789,27 +789,6 @@ export class GroupUi extends EventEmitter {
   }
 
   /**
-   * Retrieve field elements for show/hide operations
-   *
-   * If the field is a child of another field, then only the element
-   * associated with it will be selected; otherwise, the parent container
-   * of the field (which may be multiple elements) will be returned.
-   *
-   * @param field - field name
-   * @param index - field index
-   *
-   * @return field elements
-   */
-  protected getFieldElements(field: string, index: number): any {
-    var $element = this.getElementByName(field, index),
-      is_sub = $element.parent().hasClass('widget');
-
-    return !is_sub && $element.parents('dd').length
-      ? $element.parents('dd').prev('dt').andSelf()
-      : $element;
-  }
-
-  /**
    * Hides the field based on field name and index
    *
    * @param field - field name
@@ -1004,29 +983,6 @@ export class GroupUi extends EventEmitter {
 
   public visit(): this {
     return this;
-  }
-
-  /**
-   * Return the given element within the group (if it exists)
-   *
-   * This has the performance benefit of searching *only* within the group
-   * rather than scanning the entire DOM (or a much larger subset)
-   *
-   * @param name   - element name (question name)
-   * @param index  - index of element to retrieve (bucket index)
-   * @param filter - filter to apply to widgets
-   */
-  public getElementByName(name: string, index: number, filter?: string): any {
-    // TODO: move me.
-    if (!this.isAField(name)) {
-      return this.$content.find('#' + name + ':nth(' + index + ')');
-    }
-
-    // find the element within the group (by setting the search
-    // context to the group, we can speed up the system on large
-    // steps be avoiding scanning the DOM for the entire step
-    // content)
-    return this.styler.getElementByName(name, index, filter, this.$content);
   }
 
   /**
