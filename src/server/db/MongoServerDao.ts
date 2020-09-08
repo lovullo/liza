@@ -326,7 +326,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
       document,
 
       // create record if it does not yet exist
-      {upsert: true},
+      {upsert: true, j: true},
 
       // on complete
       function (err, _docs) {
