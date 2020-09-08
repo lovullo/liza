@@ -1,9 +1,7 @@
-/* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", @typescript-eslint/no-this-alias: "off", prefer-spread: "off", prefer-rest-params: "off", prefer-arrow-callback: "off", block-scoped-var: "off", prefer-const: "off" */
 /**
  * Liza classification match (cmatch) handling
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework
  *
@@ -26,11 +24,13 @@
  * as this is one of the core systems and is both complicated and complex.
  */
 
-import {FieldClassMatcher} from '../field/FieldClassMatcher';
-import {Program} from '../program/Program';
 import {Client} from './Client';
 import {DataValidator} from '../validate/DataValidator';
+import {FieldClassMatcher} from '../field/FieldClassMatcher';
+import {FieldResetter} from './FieldResetter';
 import {PositiveInteger} from '../numeric';
+import {Program} from '../program/Program';
+import {VisibilityBlueprint, CmatchVisibility} from './CmatchVisibility';
 
 export type ClassData = {
   [index: string]: {
@@ -46,6 +46,9 @@ export type VisibilityQueue = {
     [index: string]: PositiveInteger[];
   };
 };
+
+type VisibilityFieldUpdate = {[field_index: number]: any};
+type VisibilityBucketUpdate = {[bucket_field: string]: VisibilityFieldUpdate};
 
 /**
  * Handles classification matching
@@ -65,30 +68,34 @@ export class Cmatch {
    *
    * This relies on too many objects; see header.
    *
-   * @param _classMatcher - class/field matcher
-   * @param _program      - active program
-   * @param _client       - active client
+   * @param _classMatcher  - class/field matcher
+   * @param _program       - active program
+   * @param _client        - active client
+   * @param _visibility    - determines show hide logic from class visibility
+   * @param _fieldResetter - determines field values when reset
    */
   constructor(
     private readonly _classMatcher: FieldClassMatcher,
     private readonly _program: Program,
-    private readonly _client: Client
+    private readonly _client: Client,
+    private readonly _visibility: CmatchVisibility,
+    private readonly _fieldResetter: FieldResetter
   ) {}
 
   private _cmatchVisFromUi(field: string, all: boolean): boolean[] {
-    var step = this._client.getUi().getCurrentStep();
+    const step = this._client.getUi().getCurrentStep();
 
     if (!step) {
       return [];
     }
 
-    var group = step.getElementGroup(field);
+    const group = step.getElementGroup(field);
     if (!group) {
       return [];
     }
 
-    var i = group.getCurrentIndexCount(),
-      ret = [];
+    let i = group.getCurrentIndexCount();
+    const ret = [];
 
     while (i--) {
       ret.push(all);
@@ -98,23 +105,23 @@ export class Cmatch {
   }
 
   hookClassifier(data_validator: DataValidator): void {
-    var _self = this,
-      program = this._program;
-
     // clear/initialize cmatches
     this._cmatch = {};
 
-    var cmatchprot = false;
+    let cmatchprot = false;
 
     // set classifier
     this._client
       .getQuote()
-      .setClassifier(program.getClassifierKnownFields(), function () {
-        return program.classify.apply(program, <any>arguments);
-      })
-      .on('classify', function (classes) {
+      .setClassifier(
+        this._program.getClassifierKnownFields(),
+        (args: {[key: string]: any}) => {
+          return this._program.classify(args);
+        }
+      )
+      .on('classify', classes => {
         if (cmatchprot === true) {
-          _self._client.handleError(Error('cmatch recursion'));
+          this._client.handleError(Error('cmatch recursion'));
         }
 
         cmatchprot = true;
@@ -122,21 +129,21 @@ export class Cmatch {
         // handle field fixes
         data_validator
           .validate(undefined, classes)
-          .catch((e: Error) => _self._client.handleError(e));
+          .catch((e: Error) => this._client.handleError(e));
 
-        _self._classMatcher.match(classes, function (cmatch) {
+        this._classMatcher.match(classes, cmatch => {
           // it's important that we do this here so that everything
           // that uses the cmatch data will consistently benefit
-          _self._postProcessCmatch(cmatch);
+          this._postProcessCmatch(cmatch);
 
           // if we're not on a current step, defer
-          if (!_self._client.getUi().getCurrentStep()) {
-            _self._cmatch = cmatch;
+          if (!this._client.getUi().getCurrentStep()) {
+            this._cmatch = cmatch;
             cmatchprot = false;
             return;
           }
 
-          _self.handleClassMatch(cmatch);
+          this.handleClassMatch(cmatch);
           cmatchprot = false;
         });
       });
@@ -145,16 +152,16 @@ export class Cmatch {
   private _postProcessCmatch(cmatch: CmatchData): CmatchData {
     // for any matches that are scalars (they will have no indexes), loop
     // through each field and set the index to the value of 'all'
-    for (var field in cmatch) {
+    for (const field in cmatch) {
       if (field === '__classes') {
         continue;
       }
 
-      var cfield = cmatch[field];
+      const cfield = cmatch[field];
 
       if (cfield.indexes.length === 0) {
-        var data = this._client.getQuote().getDataByName(field),
-          i = data.length;
+        const data = this._client.getQuote().getDataByName(field);
+        let i = data.length;
 
         // this will do nothing if there is no data found
         while (i--) {
@@ -175,9 +182,9 @@ export class Cmatch {
       this._cmatchHidden[name] = {};
     }
 
-    var cindexes = this._cmatchHidden[name];
+    const cindexes = this._cmatchHidden[name];
 
-    for (i in indexes) {
+    for (const i in indexes) {
       if (hidden) {
         cindexes[indexes[i]] = i;
       } else {
@@ -185,8 +192,8 @@ export class Cmatch {
       }
     }
 
-    var some = false;
-    for (var i in cindexes) {
+    let some = false;
+    for (const _ in cindexes) {
       some = true;
       break;
     }
@@ -203,21 +210,24 @@ export class Cmatch {
 
     this._client.getUi().setCmatch(cmatch);
 
-    var _self = this,
-      quote = this._client.getQuote();
+    const quote = this._client.getQuote();
 
     // oh dear god...(Demeter, specifically..)
-    let cur_step = this._client.getUi().getCurrentStep();
+    const cur_step = this._client.getUi().getCurrentStep();
 
     if (cur_step === null) {
       throw TypeError('Cannot handle class match on undefined step');
     }
 
-    let fields = cur_step.getStep().getExclusiveFieldNames();
+    const fields = cur_step.getStep().getExclusiveFieldNames();
 
-    let visq: VisibilityQueue = {};
+    // Prepare to keep track of any fields that show/hide in this process and
+    // update the bucket if necessary
+    const shown: VisibilityBucketUpdate = {};
+    const hidden: VisibilityBucketUpdate = {};
+    const visq: VisibilityQueue = {};
 
-    for (var field in cmatch) {
+    for (const field in cmatch) {
       // ignore fields that are not on the current step
       if (!fields[field]) {
         continue;
@@ -225,15 +235,16 @@ export class Cmatch {
 
       // if the match is still false, then we can rest assured
       // that nothing has changed (and skip the overhead)
-      if (!force && cmatch[field] === false && _self._cmatch[field] === false) {
+      if (!force && cmatch[field] === false && this._cmatch[field] === false) {
         continue;
       }
 
-      let show: PositiveInteger[] = [],
+      const show: PositiveInteger[] = [],
         hide: PositiveInteger[] = [],
         cfield = cmatch[field],
-        vis = cfield.indexes,
-        cur = (_self._cmatch[field] || {}).indexes || [];
+        cur = (this._cmatch[field] || {}).indexes || [];
+
+      let vis = cfield.indexes;
 
       // this should really only ever be the case for __classes
       if (!vis) {
@@ -254,7 +265,7 @@ export class Cmatch {
       // undefined in the first index is a workaround for the explicit
       // setting of the length property of the bucket value when
       // indexes are removed
-      let curdata = quote.getDataByName(field),
+      const curdata = quote.getDataByName(field),
         fieldn =
           curdata.length > 0 && curdata[0] !== undefined
             ? curdata.length
@@ -270,10 +281,19 @@ export class Cmatch {
         if (!force && vis[i] === cur[i]) {
           continue;
         }
+
         (vis[i] ? show : hide).push(<PositiveInteger>i);
       }
 
       this.markShowHide(field, visq, show, hide);
+
+      const {indexes_shown, indexes_hidden} = this._getVisibilityUpdates(
+        field,
+        {show, hide}
+      );
+
+      shown[field] = indexes_shown;
+      hidden[field] = indexes_hidden;
     }
 
     // it's important to do this before showing/hiding fields, since
@@ -294,6 +314,82 @@ export class Cmatch {
 
       this._dapiTrigger(field);
     });
+
+    // Queue the setting of data into a task instead of running immediately
+    setTimeout(_ => {
+      this._client.getQuote().setData(shown);
+      this._client.getQuote().setData(hidden);
+    }, 0);
+  }
+
+  /**
+   * Provide updated data for fields/indexes that have changed visibility
+   *
+   * @param field      - field name
+   * @param visibility - indexes that have changed visibility
+   *
+   * @return updated bucket values for the field at various indexes
+   */
+  private _getVisibilityUpdates(
+    field: string,
+    visibility: {show: PositiveInteger[]; hide: PositiveInteger[]}
+  ): {
+    indexes_shown: VisibilityFieldUpdate;
+    indexes_hidden: VisibilityFieldUpdate;
+  } {
+    const {show, hide} = visibility;
+    const indexes_shown = [];
+    const indexes_hidden = [];
+
+    const class_data = this._client.getQuote().getLastClassify();
+
+    /**
+     * When we clear N/A fields, ensure that their value is reset when a new
+     * index is added if they are hidden on a class match. This is considered
+     * an initialization for the field at the new index.
+     */
+    if (
+      this._program.hasKnownType(field) &&
+      this._program.clearNaFields &&
+      hide.length
+    ) {
+      for (const index of hide) {
+        const is_new_index =
+          this._cmatch[field] !== undefined &&
+          this._cmatch[field].indexes[index] === undefined;
+        const na = this._program.hasNaField(field, class_data, index);
+
+        if (!na || !is_new_index) {
+          continue;
+        }
+
+        indexes_hidden[index] = this._program.naFieldValue;
+      }
+    }
+
+    /**
+     * When we clear N/A fields, ensure that their default value is restored
+     * if they become visible.
+     */
+    if (
+      this._program.hasKnownType(field) &&
+      this._program.clearNaFields &&
+      show.length
+    ) {
+      const default_value = this._client.program.defaults[field] || '';
+      const current_value = this._client.getQuote().getDataByName(field);
+
+      for (const index of show) {
+        // only update value on show when it has been reset previously
+        if (current_value[index] !== this._program.naFieldValue) {
+          continue;
+        }
+
+        indexes_shown[index] = default_value;
+      }
+    }
+
+    return {indexes_shown, indexes_hidden};
   }
 
   /**
@@ -351,8 +447,11 @@ export class Cmatch {
     });
   }
 
+  /**
+   * Facilitate detection of field visibility and reset those which are hidden
+   */
   clearCmatchFields(): void {
-    var step = this._client.getUi().getCurrentStep(),
+    const step = this._client.getUi().getCurrentStep(),
       program = this._program;
 
     // don't bother if we're not yet on a step
@@ -360,10 +459,20 @@ export class Cmatch {
       return;
     }
 
-    let reset: CmatchData = {};
+    const legend = Object.keys(program.whens).map(name => {
+      return {name, cname: program.whens[name][0]};
+    });
 
-    for (let name in step.getStep().getExclusiveFieldNames()) {
-      let data = this._cmatchHidden[name];
+    this._visibility
+      .getBlueprints(legend)
+      .forEach((bp: VisibilityBlueprint) => {
+        this.markShowHide(bp.name, {}, bp.show, bp.hide);
+      });
+
+    const reset: CmatchData = {};
+
+    for (const name in step.getStep().getExclusiveFieldNames()) {
+      const data = this._cmatchHidden[name];
 
       // if there is no data or we have been asked to retain this field's
       // value, then do not clear
@@ -372,12 +481,12 @@ export class Cmatch {
       }
 
       // what state is the current data in?
-      let cur = this._client.getQuote().getDataByName(name);
+      const cur = this._client.getQuote().getDataByName(name);
 
       // we could have done Array.join(',').split(','), but we're trying
       // to keep performance sane here
-      let indexes = [];
-      for (let i in data) {
+      const indexes = [];
+      for (const i in data) {
         // we do *not* want to reset fields that have been removed
         if (cur[<any>i] === undefined) {
           break;
@@ -390,36 +499,12 @@ export class Cmatch {
     }
 
     // batch reset (limit the number of times events are kicked off)
-    this._resetFields(reset);
+    const reset_data = this._fieldResetter.reset(reset);
+
+    this._client.getQuote().setData(reset_data);
 
     // we've done our deed; reset it for the next time around
     this._cmatchHidden = {};
-  }
-
-  private _resetFields(fields: CmatchData): void {
-    const quote = this._client.getQuote();
-    const update: {[index: string]: any} = {};
-
-    for (let field in fields) {
-      let cur = fields[field],
-        cdata = quote.getDataByName(field),
-        val = this._client.elementStyler.getDefault(field);
-
-      let data = [];
-      for (var i in cur) {
-        var index = cur[i];
-
-        if (cdata[index] === val) {
-          continue;
-        }
-
-        data[index] = val;
-      }
-
-      update[field] = data;
-    }
-
-    quote.setData(update);
   }
 
   /**

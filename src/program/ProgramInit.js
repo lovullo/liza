@@ -57,7 +57,7 @@ module.exports = Class('ProgramInit', {
 
     const {
       defaults = {},
-      meta: {groups = {}, qtypes = {}},
+      meta: {groups = {}},
     } = program;
 
     Object.keys(program.groupExclusiveFields).forEach(group => {
@@ -65,11 +65,12 @@ module.exports = Class('ProgramInit', {
 
       while (i--) {
         const field = program.groupExclusiveFields[group][i];
-        const default_value = defaults[field];
+
+        const init_value = defaults[field];
 
         // generated questions with no types should never be part of
         // the bucket
-        if (!this._isKnownType(qtypes[field])) {
+        if (!program.hasKnownType(field)) {
           continue;
         }
 
@@ -81,7 +82,7 @@ module.exports = Class('ProgramInit', {
 
         // If no document data, initialize with default value
         if (data[field] === undefined) {
-          data[field] = [default_value];
+          data[field] = [init_value];
         }
 
         // If min rows on the group is greater than the data
@@ -95,7 +96,7 @@ module.exports = Class('ProgramInit', {
           let index = data[field].length;
 
           while (index < groups[group].min) {
-            data[field][index] = default_value;
+            data[field][index] = init_value;
             index++;
           }
         }
@@ -103,23 +104,5 @@ module.exports = Class('ProgramInit', {
     });
 
     return Promise.resolve(data);
-  },
-
-  /**
-   * Determine whether question type QTYPE is known
-   *
-   * This assumes that the type is known unless QTYPE.type is
-   * "undefined".  Ancient versions (pre-"liza") represented QTYPE as a
-   * string rather than an object.
-   *
-   * @param {Object|string} qtype type data for question
-   *
-   * @return {boolean} whether type is known
-   */
-  'private _isKnownType'(qtype) {
-    // this was a string in ancient versions (pre-"liza")
-    const type = typeof qtype === 'object' ? qtype.type : qtype;
-
-    return typeof type === 'string' && type !== 'undefined';
   },
 });

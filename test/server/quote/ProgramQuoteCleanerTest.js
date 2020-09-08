@@ -1,7 +1,7 @@
 /**
  * Tests ProgramQuoteCleaner
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -72,6 +72,8 @@ describe('ProgramQuoteCleaner', () => {
           field22: [, , ''],
           field32: [, ''],
         },
+
+        hasKnownType: name => name !== 'unknown_ignore_me',
       },
     ].forEach(test =>
       it(test.label, done => {
@@ -82,6 +84,245 @@ describe('ProgramQuoteCleaner', () => {
         program.groupIndexField = test.group_index;
         program.groupExclusiveFields = test.exclusive;
         program.meta.qtypes = test.qtypes;
+        program.whens = {
+          field11: ['--vis-field11'],
+          field12: ['--vis-field12'],
+        };
+        program.hasNaField = () => false;
+        program.hasKnownType = test.hasKnownType
+          ? test.hasKnownType
+          : () => true;
+
+        const updates = {};
+
+        quote.setData = given =>
+          Object.keys(given).forEach(k => (updates[k] = given[k]));
+
+        Sut(program).clean(quote, err => {
+          expect(err).to.deep.equal(null);
+          expect(updates).to.deep.equal(test.expected);
+
+          done();
+        });
+      })
+    );
+  });
+
+  describe('_fixGroup', () => {
+    [
+      {
+        label: 'clears NA fields when vector',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , ''],
+        },
+
+        bucket: {
+          field11: [1, 1, 0],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {is: true, indexes: [1, 1, 0]},
+          '--vis-field12': {is: true, indexes: [1, 1]},
+        },
+      },
+
+      {
+        label: 'clears NA fields when matrix',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , ''],
+        },
+
+        bucket: {
+          field11: [1, 1, 0],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+              [0, 0, 0],
+            ],
+          },
+          '--vis-field12': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+            ],
+          },
+        },
+      },
+      {
+        label: 'applies default values when visible as vector',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , '12default'],
+        },
+
+        bucket: {
+          field11: [1, 1, 1],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {is: true, indexes: [1, 1, 1]},
+          '--vis-field12': {is: true, indexes: [1, 1]},
+        },
+
+        hasNaField: () => false,
+      },
+      {
+        label: 'applies default values when visible as matrix',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , '12default'],
+        },
+
+        bucket: {
+          field11: [1, 1, 1],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+              [0, 1, 0],
+            ],
+          },
+          '--vis-field12': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+            ],
+          },
+        },
+
+        hasNaField: () => false,
+      },
+    ].forEach(test =>
+      it(test.label, done => {
+        const quote = createStubQuote(test.existing, {});
+        const program = createStubProgram({});
+
+        program.defaults = test.defaults;
+        program.groupIndexField = test.group_index;
+        program.groupExclusiveFields = test.exclusive;
+        program.meta.qtypes = test.qtypes;
+        program.clearNaFields = true;
+        program.naFieldValue = '';
+        program.whens = {
+          field11: ['--vis-field11'],
+          field12: ['--vis-field12'],
+        };
+
+        program.hasNaField = test.hasNaField ? test.hasNaField : () => true;
+        program.hasKnownType = () => true;
+
+        program.classify = () => test.classify;
+
+        quote.getBucket = () => ({
+          getData() {
+            return test.bucket;
+          },
+        });
 
         const updates = {};
 
@@ -148,6 +389,11 @@ function createStubQuote(data, metadata) {
         );
       },
     }),
+    getBucket: () => ({
+      getData() {
+        return {};
+      },
+    }),
   };
 }
 
@@ -156,5 +402,6 @@ function createStubProgram(meta_fields) {
     getId: () => 'foo',
     meta: {fields: meta_fields},
     defaults: {},
+    classify: () => ({}),
   };
 }

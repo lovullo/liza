@@ -92,6 +92,18 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
    */
   groupWhens: {},
 
+  /*
+   * Whether non-applicable fields should be reset
+   * @type {boolean}
+   */
+  clearNaFields: false,
+
+  /**
+   * Default value that non-applicable fields will reset to
+   * @type {string}
+   */
+  naFieldValue: '',
+
   /**
    * API descriptions
    * @type {Object}
@@ -581,5 +593,112 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
 
   'public getFirstStepId': function () {
     return this.firstStepId;
+  },
+
+  /**
+   * Determine if a field is not applicable for a given index
+   *
+   * A field is considered not applicable when its value is not retained,
+   * it has a default, has a NA classification, and a "clearNaFields" flag is
+   * set on the program. Scalar-based fields don't require an index to be
+   * specified.
+   *
+   * @param {string} field   - field name
+   * @param {object} classes - classification data
+   * @param {number} index   - index
+   *
+   * @return {boolean} if the field at a given index is NA
+   */
+  'public hasNaField': function (field, classes, index) {
+    index = index || 0;
+
+    const retain = this.cretain[field] === true;
+    const has_default = this.defaults[field] !== undefined;
+
+    if (retain || !has_default) {
+      return false;
+    }
+
+    const when = Array.isArray(this.whens[field])
+      ? this.whens[field][0]
+      : undefined;
+
+    // If no "when" consideration, assume it is always applicable
+    if (!when) {
+      return false;
+    }
+
+    const class_data = classes[when];
+
+    if (!class_data || !class_data.is) {
+      return true;
+    }
+
+    const indexes = Array.isArray(class_data.indexes)
+      ? class_data.indexes
+      : [class_data.indexes];
+
+    const index_applicability = indexes[index];
+
+    return Array.isArray(index_applicability)
+      ? // matrix
+        !index_applicability.some(v => +v === 1)
+      : // scalar / vector
+        +index_applicability === 0;
+  },
+
+  /**
+   * Clear NA fields in the bucket
+   *
+   * This is intended to be called once after the program has initialized the
+   * bucket. Since this operation relies on knowing the applicability of a field
+   * through its --vis classification, we need a fully formed bucket in order to
+   * invoke the classifier and determine applicability. This modifies the bucket
+   * in place
+   *
+   * @param {object} data - bucket data
+   */
+  'public processNaFields': function (data) {
+    if (!this.clearNaFields) {
+      return;
+    }
+
+    const class_data = this.classify(data);
+
+    Object.keys(data).forEach(field => {
+      for (const i in data[field]) {
+        const na = this.hasNaField(field, class_data, i);
+
+        if (!na) {
+          continue;
+        }
+
+        data[field][i] = this.naFieldValue;
+      }
+    });
+  },
+
+  /**
+   * Determine whether question QTYPE is known
+   *
+   * This assumes that the type is known unless QTYPE.type is
+   * "undefined".  Ancient versions (pre-"liza") represented QTYPE as a
+   * string rather than an object.
+   *
+   * @param {string} name - field name to find qtype validity for
+   *
+   * @return {boolean} whether type is known
+   */
+  'public hasKnownType'(name) {
+    const qtype = this.meta.qtypes[name];
+
+    if (!qtype) {
+      return false;
+    }
+
+    // this was a string in ancient versions (pre-"liza")
+    const type = typeof qtype === 'object' ? qtype.type : qtype;
+
+    return typeof type === 'string' && type !== 'undefined';
   },
 });

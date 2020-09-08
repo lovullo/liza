@@ -249,9 +249,12 @@ function createMockDb(on_update: any): MongoDb {
 
 function createStubQuote(metadata: Record<string, any>) {
   const program = <Program>{
+    clearNaFields: false,
+    naFieldValue: '',
     getId: () => '1',
     ineligibleLockCount: 0,
     cretain: {},
+    defaults: {},
     apis: {},
     internal: {},
     autosave: false,
@@ -270,6 +273,8 @@ function createStubQuote(metadata: Record<string, any>) {
     initQuote: () => {},
     getClassifierKnownFields: () => <ClassificationResult>{},
     classify: () => <ClassificationResult>{},
+    hasNaField: () => false,
+    hasKnownType: () => true,
   };
 
   const quote = <ServerSideQuote>(<unknown>{

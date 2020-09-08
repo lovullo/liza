@@ -3,7 +3,7 @@
 /**
  * Client system
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of liza.
  *
@@ -23,7 +23,10 @@
 
 'use strict';
 
+const {CmatchVisibility} = require('../client/CmatchVisibility');
 const {Cmatch} = require('../client/Cmatch');
+const {FieldResetter} = require('../client/FieldResetter');
+
 const field = require('../field');
 const store = require('../store');
 
@@ -36,8 +39,13 @@ const store = require('../store');
  * This is incomplete; it will be added to as code is ported to liza.
  */
 module.exports = {
-  cmatch: (program, client) =>
-    new Cmatch(field.FieldClassMatcher(program.whens), program, client),
+  cmatch: (program, client) => {
+    const matcher = field.FieldClassMatcher(program.whens);
+    const visibility = new CmatchVisibility(client);
+    const resetter = new FieldResetter(client);
+
+    return new Cmatch(matcher, program, client, visibility, resetter);
+  },
 
   data: {
     /**

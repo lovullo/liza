@@ -332,7 +332,8 @@ describe('Server#initQuote', () => {
     sut.initQuote(quote, program, request, callback);
   });
 
-  it('Defaults data on new quote and saves quote meta', done => {
+  it('Defaults data on new quote and saves quote meta', function (done) {
+    this.timeout(0);
     let response = createMockResponse();
     let dao = createMockDao();
 
@@ -592,6 +593,7 @@ function createMockProgram(first_step_id, program_ver) {
       {id: 'Step5', type: ''},
       {id: 'Step6', type: ''},
     ],
+    processNaFields: () => {},
   };
 }
 

@@ -19,11 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {StagingBucket} from '../bucket/StagingBucket';
-import {PositiveInteger} from '../numeric';
-import {Data} from '../client/quote/ClientQuote';
-import {CmatchData} from '../client/Cmatch';
+import {CmatchData, ClassData} from '../client/Cmatch';
 import {DataApiResult} from '../dapi/DataApi';
+import {Data} from '../client/quote/ClientQuote';
+import {PositiveInteger} from '../numeric';
+import {StagingBucket} from '../bucket/StagingBucket';
 
 export type DataApiDefinitions = any;
 export type ClassificationResult = {[index: string]: any};
@@ -34,7 +34,16 @@ export type AnswerRefs = Record<string, string>;
 export declare abstract class Program {
   readonly ineligibleLockCount: number;
 
+  clearNaFields: boolean;
+
+  naFieldValue: string;
+
   cretain: ClassificationRetain;
+
+  /**
+   * Default field values
+   */
+  defaults: {[field: string]: any};
 
   apis: DataApiDefinitions;
 
@@ -83,4 +92,14 @@ export declare abstract class Program {
    * Classify the given bucket data
    */
   classify(data: Record<string, any>): ClassificationResult;
+
+  /**
+   * Determine if a field is applicable
+   */
+  hasNaField(field: string, classes: ClassData, index: number): boolean;
+
+  /**
+   * Determine whether question QTYPE is known
+   */
+  hasKnownType(name: string): boolean;
 }
