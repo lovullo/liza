@@ -54,9 +54,11 @@ module.exports = Class('ProgramQuoteCleaner', {
       return;
     }
 
+    const class_data = this._program.classify(quote.getBucket().getData());
+
     // correct group indexes
     Object.keys(this._program.groupIndexField || {}).forEach(group_id =>
-      this._fixGroup(group_id, quote)
+      this._fixGroup(group_id, quote, class_data)
     );
 
     this._fixMeta(quote);
@@ -75,12 +77,13 @@ module.exports = Class('ProgramQuoteCleaner', {
    * since that risks data loss.  Instead, field length should be
    * validated on save.
    *
-   * @param {string} group_id group identifier
-   * @param {Quote}  quote    target quote
+   * @param {string}    group_id   group identifier
+   * @param {Quote}     quote      target quote
+   * @param {ClassData} class_data classification data
    *
    * @return {undefined} data are set on QUOTE
    */
-  'private _fixGroup'(group_id, quote) {
+  'private _fixGroup'(group_id, quote, class_data) {
     const length = +this._getGroupLength(group_id, quote);
 
     // if we cannot accurately determine the length then it's too
@@ -93,7 +96,6 @@ module.exports = Class('ProgramQuoteCleaner', {
 
     const update = {};
     const group_fields = this._program.groupExclusiveFields[group_id];
-    const class_data = this._program.classify(quote.getBucket().getData());
 
     group_fields.forEach(field => {
       const flen = (quote.getDataByName(field) || []).length;
