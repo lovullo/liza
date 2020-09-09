@@ -53,7 +53,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  debug(msg: string | object, context?: object): void {
+  debug(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.info(this._format(LogLevel.DEBUG, msg, context));
   }
 
@@ -63,7 +66,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  info(msg: string | object, context?: object): void {
+  info(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.info(this._format(LogLevel.INFO, msg, context));
   }
 
@@ -73,7 +79,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  notice(msg: string | object, context?: object): void {
+  notice(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.log(this._format(LogLevel.NOTICE, msg, context));
   }
 
@@ -83,7 +92,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  warning(msg: string | object, context?: object): void {
+  warning(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.warn(this._format(LogLevel.WARNING, msg, context));
   }
 
@@ -93,7 +105,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  error(msg: string | object, context?: object): void {
+  error(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.error(this._format(LogLevel.ERROR, msg, context));
   }
 
@@ -103,7 +118,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  critical(msg: string | object, context?: object): void {
+  critical(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.error(this._format(LogLevel.CRITICAL, msg, context));
   }
 
@@ -113,7 +131,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  alert(msg: string | object, context?: object): void {
+  alert(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.error(this._format(LogLevel.ALERT, msg, context));
   }
 
@@ -123,7 +144,10 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  emergency(msg: string | object, context?: object): void {
+  emergency(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.error(this._format(LogLevel.EMERGENCY, msg, context));
   }
 
@@ -133,23 +157,27 @@ export class StandardLogger implements PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  log(level: LogLevel, msg: string | object, context?: object): void {
+  log(
+    level: LogLevel,
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void {
     this._console.error(this._format(level, msg, context));
   }
 
   /**
-   * Get structured log object
+   * Get structured log Record<string, unknown>
    *
-   * @param msg   - the string or object to log
+   * @param msg   - the string or Record<string, unknown> to log
    * @param level - the log level
    * @param context - additional message context
    *
-   * @returns a structured logging object
+   * @returns a structured logging Record<string, unknown>
    */
   private _format(
     level: LogLevel,
-    msg: string | object,
-    context: object = {}
+    msg: string | Record<string, unknown>,
+    context: Record<string, unknown> = {}
   ): string {
     let str: string;
 

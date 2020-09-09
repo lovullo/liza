@@ -71,7 +71,7 @@ export declare class QuoteDataBucket extends EventEmitter {
    *
    * @param callback - function to call for each value in the bucket
    */
-  each(callback: (val: any, key: string) => {}): this;
+  each(callback: (val: any, key: string) => any): this;
 
   /**
    * Calls a function for each each of the values in the bucket matching the
@@ -80,7 +80,7 @@ export declare class QuoteDataBucket extends EventEmitter {
    * @param pred - predicate
    * @param c    - function to call for each value in the bucket
    */
-  filter(pred: (key: string) => {}, _c: (val: any, key: string) => void): this;
+  filter(pred: (key: string) => any, _c: (val: any, key: string) => void): this;
 
   /**
    * Returns the data for the requested field

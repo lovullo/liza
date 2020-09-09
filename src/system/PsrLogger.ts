@@ -50,7 +50,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  debug(msg: string | object, context?: object): void;
+  debug(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -58,7 +61,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  info(msg: string | object, context?: object): void;
+  info(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -66,7 +72,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  notice(msg: string | object, context?: object): void;
+  notice(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -74,7 +83,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  warning(msg: string | object, context?: object): void;
+  warning(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -82,7 +94,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  error(msg: string | object, context?: object): void;
+  error(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -90,7 +105,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  critical(msg: string | object, context?: object): void;
+  critical(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -98,7 +116,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  alert(msg: string | object, context?: object): void;
+  alert(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log at a debug level
@@ -106,7 +127,10 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  emergency(msg: string | object, context?: object): void;
+  emergency(
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 
   /**
    * Log a message
@@ -114,5 +138,9 @@ export interface PsrLogger {
    * @param msg     - the message to log
    * @param context - additional message context
    */
-  log(level: LogLevel, msg: string | object, context?: object): void;
+  log(
+    level: LogLevel,
+    msg: string | Record<string, unknown>,
+    context?: Record<string, unknown>
+  ): void;
 }

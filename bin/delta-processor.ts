@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-process-exit: "off" */
+/* eslint no-process-exit: "off", @typescript-eslint/no-var-requires: "off" */
 /**
  * Start the Liza delta processor
  *

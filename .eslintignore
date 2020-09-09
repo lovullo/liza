@@ -1,1 +1,9 @@
 test/*
+
+# TODO: eslint failed to parse these as of 2020-09-09
+src/server/request/DataProcessor.ts
+src/system/DeltaProcessor.ts
+src/system/MetricsCollector.ts
+src/types/mongodb.d.ts
+src/version.d.ts
+
