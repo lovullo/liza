@@ -84,6 +84,7 @@ export function createMongoDB(conf: MongoDbConfig): MongoDb {
   var db = new MongoDb('program', dbServers, {
     native_parser: false,
     safe: false,
+    w: 'majority',
   });
   return db;
 }
