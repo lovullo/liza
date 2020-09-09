@@ -30,8 +30,7 @@
  * time.
  */
 
-const Step = require('../step/Step'),
-  StepUiBuilder = require('../ui/step/StepUiBuilder'),
+const StepUiBuilder = require('../ui/step/StepUiBuilder'),
   Ui = require('../ui/Ui'),
   UiStyler = require('../ui/UiStyler'),
   UiNotifyBar = require('../ui/UiNotifyBar'),
@@ -110,6 +109,8 @@ const {SideTableGroupUi} = require('../ui/group/SideTableGroupUi');
 const {CollapseTableGroupUi} = require('../ui/group/CollapseTableGroupUi');
 const {GridGroupUi} = require('../ui/group/GridGroupUi');
 const {GroupStateManager} = require('../ui/group/GroupStateManager');
+const {Step} = require('../step/Step');
+const {multiSort} = require('../sort/MultiSort');
 const {
   createQuotePreStagingHook,
   createQuoteStagingHook,
@@ -269,7 +270,9 @@ module.exports = Class('ClientDependencyFactory', {
   createSidebarErrorStyler: SidebarErrorStyler,
   createRootDomContext: RootDomContext,
 
-  createStep: Step,
+  createStep: (id, quote) => {
+    return new Step(id, quote, multiSort);
+  },
 
   createStepUi: function (
     step,

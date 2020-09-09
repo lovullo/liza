@@ -1,5 +1,3 @@
-/* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", prefer-arrow-callback: "off", no-unused-vars: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * Step abstraction
  *
@@ -27,156 +25,155 @@
  * @end needsLove
  */
 
-var Class = require('easejs').Class,
-  EventEmitter = require('../events').EventEmitter,
-  // XXX: tightly coupled
-  MultiSort = require('../sort/MultiSort');
+import {ClientQuote} from '../client/quote/ClientQuote';
+import {CmatchData} from '../client/Cmatch';
+import {QuoteDataBucket} from '../bucket/QuoteDataBucket';
+import {MultiSort} from '../sort/MultiSort';
+
+const EventEmitter = require('events').EventEmitter;
+
+export type ExclusiveFields = Record<string, boolean>;
 
 /**
  * Represents a single step to be displayed in the UI
  */
-module.exports = Class('Step').extend(EventEmitter, {
+export class Step extends EventEmitter {
   /**
    * Called when quote is changed
-   * @type {string}
    */
-  'const EVENT_QUOTE_UPDATE': 'updateQuote',
+  readonly EVENT_QUOTE_UPDATE: string = 'updateQuote';
 
   /**
    * Step identifier
-   * @type {number}
    */
-  'private _id': 0,
+  private _id = 0;
 
   /**
    * Data bucket to store the raw data for submission
-   * @type {StepDataBucket}
    */
-  'private _bucket': null,
+  private _bucket: QuoteDataBucket | null = null;
 
   /**
    * Fields contained exclusively on the step (no linked)
-   * @type {Object}
    */
-  'private _exclusiveFields': {},
+  private _exclusiveFields: ExclusiveFields = {};
 
   /**
    * Fields that must contain a value
-   * @type {Object}
    */
-  'private _requiredFields': {},
+  private _requiredFields: Record<string, boolean> = {};
 
   /**
    * Whether all fields on the step contain valid data
-   * @type {boolean}
    */
-  'private _valid': true,
+  private _valid = true;
 
   /**
    * Explanation of what made the step valid/invalid, if applicable
    *
    * This is useful for error messages
-   *
-   * @type {string}
    */
-  'private _validCause': '',
+  private _validCause = '';
 
   /**
    * Sorted group sets
-   * @type {Object}
    */
-  'private _sortedGroups': {},
+  private _sortedGroups: Record<any, any> = {};
 
   /**
    * Initializes step
    *
-   * @param {number}      id    step identifier
-   * @param {ClientQuote} quote quote to contain step data
-   *
-   * @return {undefined}
+   * @param id         - step identifier
+   * @param quote      - quote to contain step data
+   * @param _multisort - a sorting function
    */
-  'public __construct': function (id, quote) {
-    var _self = this;
+  constructor(
+    id: number,
+    quote: ClientQuote,
+    private readonly _multi_sort: MultiSort
+  ) {
+    super();
 
     this._id = +id;
 
     // TODO: this is temporary; do not pass bucket, pass quote
-    quote.visitData(function (bucket) {
-      _self._bucket = bucket;
+    quote.visitData((bucket: QuoteDataBucket) => {
+      this._bucket = bucket;
     });
-  },
+  }
 
   /**
    * Returns the numeric step identifier
    *
-   * @return Integer step identifier
+   * @return step identifier
    */
-  'public getId': function () {
+  getId(): number {
     return this._id;
-  },
+  }
 
   /**
    * Return the bucket associated with this step
    *
    * XXX: Remove me; breaks encapsulation.
    *
-   * @return {Bucket} bucket associated with step
+   * @return bucket associated with step
    */
-  'public getBucket': function () {
+  getBucket(): QuoteDataBucket | null {
     return this._bucket;
-  },
+  }
 
   /**
    * Set whether or not the data on the step is valid
    *
-   * @param {boolean} valid whether the step contains only valid data
-   *
-   * @return {Step} self
+   * @param valid - whether the step contains only valid data
+   * @param cause - Explanation of what made the step valid/invalid
    */
-  'public setValid': function (valid, cause) {
+  setValid(valid: boolean, cause: string): this {
     this._valid = !!valid;
     this._validCause = cause;
 
     return this;
-  },
+  }
 
   /**
    * Returns whether all the elements in the step contain valid data
    *
-   * @return Boolean true if all elements are valid, otherwise false
+   * @param cmatch - cmatch data
+   *
+   * @return true if all elements are valid, otherwise false
    */
-  'public isValid': function (cmatch) {
+  isValid(cmatch: CmatchData): boolean {
     if (!cmatch) {
       throw Error('Missing cmatch data');
     }
 
     return this._valid && this.getNextRequired(cmatch) === null;
-  },
+  }
 
-  'public getValidCause': function () {
+  getValidCause(): string {
     return this._validCause;
-  },
+  }
 
   /**
    * Retrieve the next required value that is empty
    *
    * Aborts on first missing required field with its name and index.
    *
-   * @param {Object} cmatch cmatch data
+   * @param cmatch - cmatch data
    *
-   * @return {!Array.<string, number>} first missing required field
+   * @return first missing required field
    */
-  'public getNextRequired': function (cmatch) {
+  getNextRequired(cmatch: CmatchData): string[] | null {
     cmatch = cmatch || {};
 
     // check to ensure that each required field has a value in the bucket
-    for (var name in this._requiredFields) {
-      var data = this._bucket.getDataByName(name),
+    for (const name in this._requiredFields) {
+      const data = this._bucket?.getDataByName(name),
         cdata = cmatch[name];
 
       // a non-empty string indicates that the data is missing (absense of
       // an index has no significance)
-      for (var i in data) {
+      for (const i in data) {
         // any falsy value will be considered empty (note that !"0" ===
         // false, so this will work)
         if (!data[i] && data[i] !== 0) {
@@ -189,100 +186,87 @@ module.exports = Class('Step').extend(EventEmitter, {
 
     // all required fields have values
     return null;
-  },
+  }
 
   /**
-   * Sets a new bucket to be used for data storage and retrieval
+   * Sets a new quote to be used for data storage and retrieval
    *
-   * @param {QuoteDataBucket} bucket new bucket
-   *
-   * @return {Step} self
+   * @param quote - new quote
    */
-  'public updateQuote': function (quote) {
-    // todo: Temporary
-    var _self = this,
-      bucket = null;
-    quote.visitData(function (quote_bucket) {
-      bucket = quote_bucket;
+  updateQuote(quote: ClientQuote): this {
+    quote.visitData((quote_bucket: QuoteDataBucket) => {
+      this._bucket = quote_bucket;
     });
 
-    _self._bucket = bucket;
-    _self.emit(this.__self.$('EVENT_QUOTE_UPDATE'));
+    this.emit(this.__self.$('EVENT_QUOTE_UPDATE'));
     return this;
-  },
+  }
 
   /**
    * Adds field names exclusively contained on this step (no linked)
    *
-   * @param {Array.<string>} fields field names
-   *
-   * @return {StepUi} self
+   * @param fields - field names
    */
-  'public addExclusiveFieldNames': function (fields) {
-    var i = fields.length;
+  addExclusiveFieldNames(fields: string[]): this {
+    let i = fields.length;
     while (i--) {
       this._exclusiveFields[fields[i]] = true;
     }
 
     return this;
-  },
+  }
 
   /**
    * Retrieve list of field names (no linked)
    *
-   * @return {Object.<string>} field names
+   * @return field names
    */
-  'public getExclusiveFieldNames': function () {
+  getExclusiveFieldNames(): ExclusiveFields {
     return this._exclusiveFields;
-  },
+  }
 
   /**
    * Set names of fields that must contain a value
    *
-   * @param {Object} required required field names
-   *
-   * @return {StepUi} self
+   * @param required - required field names
    */
-  'public setRequiredFieldNames': function (required) {
+  setRequiredFieldNames(required: Record<string, boolean>): this {
     this._requiredFields = required;
     return this;
-  },
+  }
 
-  'public setSortedGroupSets': function (sets) {
+  setSortedGroupSets(sets: Record<any, any>) {
     this._sortedGroups = sets;
     return this;
-  },
+  }
 
-  'public eachSortedGroupSet': function (c) {
-    var sets = {};
-    var data = [];
-
-    for (var id in this._sortedGroups) {
+  eachSortedGroupSet(c: (arr: any[]) => void) {
+    for (const id in this._sortedGroups) {
       // call continuation with each sorted set containing the group ids
       c(this._processSortedGroup(this._sortedGroups[id]));
     }
-  },
+  }
 
-  'private _processSortedGroup': function (group_data) {
-    var data = [];
+  private _processSortedGroup(group_data: any): any[] {
+    const data = [];
 
-    for (var i in group_data) {
-      var cur = group_data[i],
+    for (const i in group_data) {
+      const cur = group_data[i],
         name = cur[0],
         fields = cur[1];
 
       // get data for each of the fields
-      var fdata = [];
-      for (var i in fields) {
-        fdata.push(this._bucket.getDataByName(fields[i]));
+      const fdata = [];
+      for (const j in fields) {
+        fdata.push(this._bucket?.getDataByName(fields[j]));
       }
 
       data.push([name, fdata]);
     }
 
-    var toint = [0, 0, 1];
-    function pred(i, a, b) {
-      var vala = a[1][i][0],
+    const toint = [0, 0, 1];
+    function pred(i: string, a: any, b: any) {
+      let vala = a[1][i][0],
         valb = b[1][i][0];
 
       // convert to numeric if it makes sense to do so (otherwise, we may
@@ -303,25 +287,25 @@ module.exports = Class('Step').extend(EventEmitter, {
     }
 
     // generate predicates
-    var preds = [];
-    for (var i in group_data[0][1]) {
+    const preds = [];
+    for (const i in group_data[0][1]) {
       (function (i) {
-        preds.push(function (a, b) {
+        preds.push((a: any, b: any) => {
           return pred(i, a, b);
         });
       })(i);
     }
 
     // sort the data
-    var sorted = MultiSort().sort(data, preds);
+    const sorted = this._multi_sort(data, preds);
 
     // return the group names
-    var ret = [];
-    for (var i in sorted) {
+    const ret = [];
+    for (const i in sorted) {
       // add name
       ret.push(sorted[i][0]);
     }
 
     return ret;
-  },
-});
+  }
+}
