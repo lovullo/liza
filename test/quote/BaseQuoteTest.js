@@ -405,8 +405,64 @@ describe('BaseQuote', () => {
         currentDate: 10540800,
         expired: false,
       },
+      {
+        description: 'renewalExpiration 90 days after start',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['10540800'],
+        },
+        startDate: 86400,
+        expirationDate: 7862400,
+        currentDate: 7862400,
+        expired: false,
+      },
+      {
+        description: 'renewalExpiration 91 days after start',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['10540800'],
+        },
+        startDate: 86400,
+        expirationDate: 7862400,
+        currentDate: 7948800,
+        expired: true,
+      },
+      {
+        description:
+          'renewalExpiration expires after only 11 days after start, day after the eff date',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['950400'],
+        },
+        startDate: 86400,
+        expirationDate: 950400,
+        currentDate: 1036800,
+        expired: true,
+      },
     ].forEach(testCase => {
-      const quote = BaseQuote(123, {});
+      let bucket_data = testCase.bucketData;
+      if (bucket_data === undefined) {
+        bucket_data = {
+          renewal_quote: ['0'],
+        };
+      }
+      const bucket = createStubBucket(bucket_data);
+      const quote = BaseQuote(123, bucket);
       const description = 'Expiration is correct for ' + testCase.description;
       const start_date = testCase.startDate;
       const initial_rated_date = testCase.initialRatedDate;
@@ -442,4 +498,13 @@ function createStubProgram(lockTimeout) {
   let stubProgram = Util.stubProgram(Program)();
   stubProgram.lockTimeout = lockTimeout || {};
   return stubProgram;
+}
+
+function createStubBucket(metadata) {
+  return {
+    getDataByName: name => metadata[name],
+    getData() {
+      return metadata;
+    },
+  };
 }

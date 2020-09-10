@@ -292,7 +292,8 @@ module.exports = Class('BaseQuote')
      * @return {number} quote's initial rated date
      */
     'public getExpirationDate': function () {
-      var post_rate = this._initialRatedDate > 0;
+      const post_rate = this._initialRatedDate > 0;
+      const renewal_quote = this.getDataByName('renewal_quote');
 
       // Don't attempt to calculate expiration date if expiration is not defined
       if (
@@ -306,14 +307,27 @@ module.exports = Class('BaseQuote')
         return Infinity;
       }
 
-      var reference_date = post_rate ? this._initialRatedDate : this._startDate;
-      var expiration_period = post_rate
+      let reference_date = post_rate ? this._initialRatedDate : this._startDate;
+      let expiration_period = post_rate
         ? this._program.lockTimeout.postRateExpiration
         : this._program.lockTimeout.preRateExpiration;
 
+      if (renewal_quote && renewal_quote[0] === '1') {
+        reference_date = this._startDate;
+        expiration_period = this._program.lockTimeout.renewalExpiration;
+      }
+
       // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
-      var expiration_date = new Date(reference_date * 1000);
+      const expiration_date = new Date(reference_date * 1000);
       expiration_date.setDate(expiration_date.getDate() + +expiration_period);
+
+      if (renewal_quote[0] === '1') {
+        const eff_date_ts = this.getDataByName('eff_date_timestamp');
+        if (eff_date_ts) {
+          const alt_exp_date = +eff_date_ts[0] * 1000;
+          return Math.min(alt_exp_date, expiration_date.getTime());
+        }
+      }
 
       return expiration_date.getTime();
     },
