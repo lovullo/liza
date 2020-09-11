@@ -380,8 +380,13 @@ export class Cmatch {
       const current_value = this._client.getQuote().getDataByName(field);
 
       for (const index of show) {
-        // only update value on show when it has been reset previously
+        // Only update value on show when it has been reset previously
         if (current_value[index] !== this._program.naFieldValue) {
+          continue;
+        }
+
+        // No need to update if the bucket is already up to date
+        if (current_value[index] === default_value) {
           continue;
         }
 

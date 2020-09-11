@@ -332,6 +332,24 @@ describe('Cmatch', () => {
           },
         ],
       },
+      {
+        label:
+          "does not restore a field's default value that already exists in the bucket when it is shown",
+        bucket: {
+          foo: ['1', 'default'],
+        },
+        cmatch: {foo: {all: true, any: true, indexes: [1, 1]}},
+        expected: [
+          // show events
+          {
+            foo: {},
+          },
+          // hide events
+          {
+            foo: {},
+          },
+        ],
+      },
     ].forEach(
       ({
         label,
