@@ -289,7 +289,7 @@ module.exports = Class('BaseQuote')
     /**
      * Returns the quote's expiration date
      *
-     * @return {number} quote's initial rated date
+     * @return {number} quote's expiration date
      */
     'public getExpirationDate': function () {
       const post_rate = this._initialRatedDate > 0;
@@ -362,6 +362,7 @@ module.exports = Class('BaseQuote')
       // Use Date.setDate to accommodate leap seconds, leap years, DST, etc.
       var expiration_date = new Date(expiration_timestamp);
       expiration_date.setDate(expiration_date.getDate() + +grace_period);
+      expiration_date.setUTCHours(23, 59, 59, 0);
 
       // Multiply current_date to get ms
       return current_date * 1000 > expiration_date.getTime();
