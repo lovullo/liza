@@ -317,10 +317,10 @@ describe('BaseQuote', () => {
           preRateExpiration: 90,
           postRateExpiration: 30,
         },
-        startDate: 86400,
-        initialRatedDate: 172800,
-        expirationDate: 2764800,
-        currentDate: 5356800,
+        startDate: 86400, //  01/02/1970 @ 12:00am
+        initialRatedDate: 208800, //  01/03/1970 @ 10:00am
+        expirationDate: 2800800, //  02/02/1970 @ 10:00pm
+        currentDate: 5356800, //  03/04/1970 @ 12:00am
         expired: true,
       },
       {
@@ -329,9 +329,9 @@ describe('BaseQuote', () => {
           preRateExpiration: 90,
           postRateExpiration: 30,
         },
-        startDate: 86400,
-        expirationDate: 7862400,
-        currentDate: 7948800,
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 7894800, //  04/02/1970 @ 9:00pm
+        currentDate: 7948800, //  04/03/1970 @ 12:00am
         expired: true,
       },
       {
@@ -405,8 +405,99 @@ describe('BaseQuote', () => {
         currentDate: 10540800,
         expired: false,
       },
+      {
+        description: 'renewalExpiration does not expire on day 90 after start',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['10540800'],
+        },
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 7894800, //  04/02/1970 @ 9:00am
+        currentDate: 7912800, //  04/02/1970 @ 2:00pm
+        expired: false,
+      },
+      {
+        description: 'renewalExpiration will expire 91 days after start',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['10540800'],
+        },
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 7894800, //  04/02/1970 @ 9:00am
+        currentDate: 7948800, //  04/03/1970 @ 12:00am
+        expired: true,
+      },
+      {
+        description:
+          'renewalExpiration expires after only 11 days after start, day after the eff date',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['950400'],
+        },
+        startDate: 86400,
+        expirationDate: 950400,
+        currentDate: 1036800,
+        expired: true,
+      },
+      {
+        description:
+          'renewalExpiration will not expire 93 days after start (with grace period)',
+        lockTimeout: {
+          preRateExpiration: 90,
+          preRateGracePeriod: 5,
+          postRateExpiration: 30,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+        },
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 7894800, //  04/02/1970 @ 9:00am
+        currentDate: 8154000, //  04/05/1970 @ 12:00am
+        expired: false,
+      },
+      {
+        description:
+          'renewalExpiration will not expire 2 days after effective date (with pre rate grace period)',
+        lockTimeout: {
+          preRateExpiration: 90,
+          postRateExpiration: 30,
+          preRateGracePeriod: 5,
+          renewalExpiration: 90,
+        },
+        bucketData: {
+          renewal_quote: ['1'],
+          eff_date_timestamp: ['824400'], //  01/10/1970 @ 1:00pm
+        },
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 824400, //  01/10/1970 @ 1:00pm
+        currentDate: 1000800, //  01/12/1970 @ 2:00pm
+        expired: false,
+      },
     ].forEach(testCase => {
-      const quote = BaseQuote(123, {});
+      let bucket_data = testCase.bucketData;
+      if (bucket_data === undefined) {
+        bucket_data = {
+          renewal_quote: ['0'],
+        };
+      }
+      const bucket = createStubBucket(bucket_data);
+      const quote = BaseQuote(123, bucket);
       const description = 'Expiration is correct for ' + testCase.description;
       const start_date = testCase.startDate;
       const initial_rated_date = testCase.initialRatedDate;
@@ -442,4 +533,13 @@ function createStubProgram(lockTimeout) {
   let stubProgram = Util.stubProgram(Program)();
   stubProgram.lockTimeout = lockTimeout || {};
   return stubProgram;
+}
+
+function createStubBucket(metadata) {
+  return {
+    getDataByName: name => metadata[name],
+    getData() {
+      return metadata;
+    },
+  };
 }
