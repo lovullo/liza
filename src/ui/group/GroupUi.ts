@@ -239,9 +239,9 @@ export class GroupUi extends EventEmitter {
     // get the number of unique fields in the group
     this._rawFieldCount = this.group.getUserFieldNames().length;
 
-    // if (this.group.getWhenFieldName() === '') {
-    this._use_vis_class = false;
-    // }
+    if (this.group.getWhenFieldName() === '') {
+      this._use_vis_class = false;
+    }
 
     this._bindClasses(quote);
 
