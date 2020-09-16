@@ -374,7 +374,7 @@ exports.keyValue = function (data, value) {
     }
 
     // return requested index
-    return item[index];
+    return item[index] !== undefined ? item[index] : '';
   });
 };
 
