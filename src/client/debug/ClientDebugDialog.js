@@ -240,12 +240,9 @@ module.exports = Class('ClientDebugDialog').extend(EventEmitter, {
       )
       .append(
         $('<div>').append(
-          $('<button>')
-            .text('Copy Quote')
-            .click(() => {
-              window.location.href =
-                '/quote/copy/' + _self._client.getQuote().getId();
-            })
+          $(
+            '<a href=' + '/quote/copy/' + _self._client.getQuote().getId() + '>'
+          ).append($('<button>').text('Copy Quote'))
         )
       );
   },
