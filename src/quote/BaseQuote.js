@@ -321,7 +321,7 @@ module.exports = Class('BaseQuote')
       const expiration_date = new Date(reference_date * 1000);
       expiration_date.setDate(expiration_date.getDate() + +expiration_period);
 
-      if (renewal_quote[0] === '1') {
+      if (renewal_quote && renewal_quote[0] === '1') {
         const eff_date_ts = this.getDataByName('eff_date_timestamp');
         if (eff_date_ts) {
           const alt_exp_date = +eff_date_ts[0] * 1000;

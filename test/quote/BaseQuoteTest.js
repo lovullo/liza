@@ -489,6 +489,20 @@ describe('BaseQuote', () => {
         currentDate: 1000800, //  01/12/1970 @ 2:00pm
         expired: false,
       },
+      {
+        description:
+          'quote expires even if if renewal_quote does not exist in bucket',
+        lockTimeout: {
+          preRateExpiration: 90,
+        },
+        bucketData: {
+          eff_date_timestamp: ['824400'], //  01/10/1970 @ 1:00pm
+        },
+        startDate: 118800, //  01/02/1970 @ 9:00am
+        expirationDate: 7894800, //  04/02/1970 @ 9:00am
+        currentDate: 7981200, //  04/03/1970 @ 9:00am
+        expired: true,
+      },
     ].forEach(testCase => {
       let bucket_data = testCase.bucketData;
       if (bucket_data === undefined) {
