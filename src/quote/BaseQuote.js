@@ -439,7 +439,7 @@ module.exports = Class('BaseQuote')
      * @return {Quote} self
      */
     'public setUserName': function (username) {
-      this._userName = '' + username;
+      this._userName = '' + (username || '');
       return this;
     },
 
@@ -460,7 +460,7 @@ module.exports = Class('BaseQuote')
      * @return {Quote} self
      */
     'public setCreatedByUserName': function (username) {
-      this._createdByUserName = '' + username;
+      this._createdByUserName = '' + (username || '');
       return this;
     },
 
@@ -481,7 +481,7 @@ module.exports = Class('BaseQuote')
      * @return {Quote} self
      */
     'public setLastUpdatedByUserName': function (username) {
-      this._lastUpdatedByUserName = '' + username;
+      this._lastUpdatedByUserName = '' + (username || '');
       return this;
     },
 
