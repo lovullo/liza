@@ -28,7 +28,8 @@ SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 			 tools autogen.sh README.md $(path_test) \
 			 bin/server bin/server.js tsconfig.json \
-			 bin/delta-processor bin/delta-processor.js
+			 bin/delta-processor bin/delta-processor.js \
+			 bin/dullahan bin/dullahan.js
 
 .PHONY: FORCE todo
 
