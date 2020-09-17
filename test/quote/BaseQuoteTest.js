@@ -65,12 +65,30 @@ describe('BaseQuote', () => {
       {
         property: 'userName',
         default: '',
+        value: undefined,
+        expected: '',
+      },
+      {
+        property: 'userName',
+        default: '',
         value: 'foo@bar.com',
       },
       {
         property: 'createdByUserName',
         default: '',
+        value: undefined,
+        expected: '',
+      },
+      {
+        property: 'createdByUserName',
+        default: '',
         value: 'bar@baz.com',
+      },
+      {
+        property: 'lastUpdatedByUserName',
+        default: '',
+        value: undefined,
+        expected: '',
       },
       {
         property: 'lastUpdatedByUserName',
@@ -118,7 +136,11 @@ describe('BaseQuote', () => {
       it(property + ' can be mutated and accessed', () => {
         expect(quote[getter].call(quote)).to.equal(testCase.default);
         quote[setter].call(quote, testCase.value);
-        expect(quote[getter].call(quote)).to.equal(testCase.value);
+        const expected =
+          typeof testCase.expected !== 'undefined'
+            ? testCase.expected
+            : testCase.value;
+        expect(quote[getter].call(quote)).to.equal(expected);
       });
     });
   });

@@ -36,6 +36,47 @@ chai_use(require('chai-as-promised'));
 
 describe('MongoServerDao', () => {
   describe('#saveQuote', () => {
+    [
+      {
+        label:
+          'will not unset last updated by user when session data is unavailable',
+        username: '',
+        expected_set_username: undefined,
+      },
+      {
+        label: 'will set last updated by user when session data is available',
+        username: 'foo',
+        expected_set_username: ['foo'],
+      },
+    ].forEach(({label, username, expected_set_username}) => {
+      it(label, done => {
+        const quote = createStubQuote({});
+        quote.getUserName = () => username;
+
+        const sut = new Sut(
+          createMockDb(
+            // update
+            (_selector: MongoSelector, data: MongoUpdate) => {
+              expect(data.$set['meta.last_updated_by_username']).to.deep.equal(
+                expected_set_username
+              );
+              done();
+            }
+          ),
+          'test',
+          () => <UnixTimestamp>123
+        );
+
+        sut.init(() =>
+          sut.saveQuote(
+            quote,
+            () => {},
+            () => {}
+          )
+        );
+      });
+    });
+
     describe('with no save data or push data', () => {
       it('saves initial rated individually', done => {
         const expected = 123321;
@@ -54,10 +95,6 @@ describe('MongoServerDao', () => {
               expect(
                 data.$set['meta.liza_timestamp_initial_rated']
               ).to.deep.equal([expected]);
-
-              expect(data.$set['meta.last_updated_by_username']).to.deep.equal([
-                expected_username,
-              ]);
 
               expect(
                 data.$setOnInsert['meta.created_by_username']
