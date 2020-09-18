@@ -24,8 +24,6 @@ path_test = $(top_builddir)/test
 namespaces=$(shell find src -type d)
 nsindex=$(addsuffix /index.js, $(namespaces))
 
-tsout = tsconfig.tsbuildinfo
-
 SUBDIRS = doc
 EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 			 tools autogen.sh README.md $(path_test) \
@@ -40,11 +38,12 @@ dist-hook: check
 
 # used to force typescript compilation (it handles its own incremental
 # compilation and dependency discovery)
-$(tsout): FORCE $(path_src)/.gitignore $(path_test)/.gitignore
+.PHONY: tsc
+tsc: FORCE $(path_src)/.gitignore $(path_test)/.gitignore
 	node_modules/.bin/tsc
 
 modindex: $(nsindex)
-%/index.js: FORCE $(tsout)
+%/index.js: FORCE tsc
 	./tools/gen-index "$*" > "$@"
 
 # ignore compiled JS files (this can be removed once all files are TS)
@@ -76,23 +75,23 @@ check-ts-out:
 	    done
 
 .PHONY: check-lint
-check-lint: .eslinttmp $(tsout)
+check-lint: .eslinttmp tsc
 	npx eslint --quiet --ignore-path .eslinttmp --ext .js,.ts .
 
 .PHONY: check-format
-check-format: .prettiertmp $(tsout)
+check-format: .prettiertmp tsc
 	npx prettier --ignore-path .prettiertmp --check "./**/*.[j,t]s"
 
 .PHONY: fix fmt fix-lint format
 fix: fix-lint fmt
 fmt: format
-fix-lint: .eslinttmp $(tsout)
+fix-lint: .eslinttmp tsc
 	npx eslint --ignore-path .eslinttmp --ext .js,.ts . --fix
-format: .prettiertmp $(tsout)
+format: .prettiertmp tsc
 	npx prettier --ignore-path .prettiertmp --write './**/*.[j,t]s'
 
 .PHONY: test
-test: $(tsout)
+test: tsc
 	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
 		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
 		      --require $(path_test)/pre.js \

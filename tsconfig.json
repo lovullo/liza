@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "incremental": true,
     "inlineSourceMap": true,
     "lib": [ "es6", "dom" ],
     "module": "commonjs",
