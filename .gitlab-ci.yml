@@ -1,5 +1,11 @@
 image: $BUILD_IMAGE
 
+include:
+    - project: 'devops/shared-pipelines'
+      file: '/jobs-common.yml'
+    - project: 'devops/shared-pipelines'
+      file: '/variables-public-deployment.yml'
+
 stages:
     - build
     - deploy
@@ -16,8 +22,9 @@ build:
         - make check
     artifacts:
         paths:
-            - doc/
-            - coverage/
+            - "$CI_PROJECT_DIR"
+        exclude:
+            - "$CI_PROJECT_DIR/.git"
         expire_in: 30 min
 
 pages:
@@ -33,4 +40,53 @@ pages:
         expire_in: 30 min
     only:
         - tags
+
+.dullahan:
+    image: $CI_REGISTRY/devops/docker-rater-ci/image
+    needs: ["build"]
+    before_script:
+        - eval $(ssh-agent -s)
+        - ssh-add <(echo "$SSH_PRIVATE_KEY")
+
+dullahan:deploy_prod:
+    extends: [.dullahan]
+    stage: deploy
+    script:
+        - cp $ENV_FILE .env.dullahan
+        - for server in $PUBLIC_PROD_QUOTE1804_SERVERS; do
+            ssh deploy@$server "mkdir -p /home/deploy/dullahan-prod";
+            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-prod;
+            done;
+    environment:
+        name: production
+    only:
+        - tags
+
+dullahan:deploy_demo:
+    extends: [.dullahan]
+    stage: deploy
+    script:
+        - cp $ENV_FILE .env.dullahan
+        - for server in $PUBLIC_DEMO_QUOTE1804_SERVERS; do
+            ssh deploy@$server "mkdir -p /home/deploy/dullahan-demo";
+            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-demo;
+            done;
+    environment:
+        name: demo
+    only:
+        - tags
+
+dullahan:deploy_test:
+    extends: [.dullahan]
+    stage: deploy
+    script:
+        - cp $ENV_FILE .env.dullahan
+        - for server in $PUBLIC_TEST_QUOTE1804_SERVERS; do
+            ssh deploy@$server "mkdir -p /home/deploy/dullahan-test";
+            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-test;
+            done;
+    environment:
+        name: test
+    only:
+        - test
 

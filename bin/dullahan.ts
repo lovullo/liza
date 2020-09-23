@@ -29,15 +29,19 @@ import {IndicationController} from '../src/dullahan/controllers/IndicationContro
 import {Router} from '../src/system/network/Router';
 import {StandardLogger} from '../src/system/StandardLogger';
 
-dotenv.config({path: '..'});
+dotenv.config({path: '../.env.dullahan'});
 
 const app = express();
-const env = process.env.NODE_ENV || 'local';
-const port = process.env.DULLAHAN_PORT;
+const env = process.env.NODE_ENV;
+const port = process.env.NODE_PORT;
 const service = 'dullahan';
 
+if (!env) {
+  throw new Error('Unable to determine env.');
+}
+
 if (!port) {
-  throw new Error('Unable to read port from .env');
+  throw new Error('Unable to read port from env.');
 }
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -78,5 +82,5 @@ route.post('/indication', IndicationController, 'handle');
 
 // Start the Express server
 app.listen(port, () =>
-  console.log(`Dullahan started at http://localhost:${port}\n.`)
+  logger.info(`Dullahan started at http://localhost:${port}.`)
 );
