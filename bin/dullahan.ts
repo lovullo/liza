@@ -29,7 +29,7 @@ import {IndicationController} from '../src/dullahan/controllers/IndicationContro
 import {Router} from '../src/system/network/Router';
 import {StandardLogger} from '../src/system/StandardLogger';
 
-dotenv.config({path: '../.env.dullahan'});
+dotenv.config();
 
 const app = express();
 const env = process.env.NODE_ENV;

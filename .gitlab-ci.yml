@@ -52,7 +52,7 @@ dullahan:deploy_prod:
     extends: [.dullahan]
     stage: deploy
     script:
-        - cp $ENV_FILE .env.dullahan
+        - cp $ENV_FILE .env
         - for server in $PUBLIC_PROD_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-prod";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-prod;
@@ -66,7 +66,7 @@ dullahan:deploy_demo:
     extends: [.dullahan]
     stage: deploy
     script:
-        - cp $ENV_FILE .env.dullahan
+        - cp $ENV_FILE .env
         - for server in $PUBLIC_DEMO_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-demo";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-demo;
@@ -80,7 +80,7 @@ dullahan:deploy_test:
     extends: [.dullahan]
     stage: deploy
     script:
-        - cp $ENV_FILE .env.dullahan
+        - cp $ENV_FILE .env
         - for server in $PUBLIC_TEST_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-test";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-test;
