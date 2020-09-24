@@ -27,6 +27,7 @@ import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
 import {IndicationController} from '../src/dullahan/controllers/IndicationController';
 import {Router} from '../src/system/network/Router';
+import {createConsole} from '../src/system/ConsoleFactory';
 import {StandardLogger} from '../src/system/StandardLogger';
 import * as promBundle from 'express-prom-bundle';
 
@@ -36,6 +37,7 @@ const app = express();
 const env = process.env.NODE_ENV;
 const port = process.env.NODE_PORT;
 const service = 'dullahan';
+const log_console = createConsole(process.env.LOG_PATH_DEBUG);
 
 if (!env) {
   throw new Error('Unable to determine env.');
@@ -54,7 +56,7 @@ app.use(metricsMiddleware);
 const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 const emitter = new EventEmitter();
 const http_client = new HttpClient();
-const logger = new StandardLogger(console, ts_ctor, env, service);
+const logger = new StandardLogger(log_console, ts_ctor, env, service);
 
 new EventMediator(logger, emitter);
 

@@ -36,3 +36,5 @@ node_modules
 bin/*.js
 tsconfig.tsbuildinfo
 
+debug.log
+
