@@ -45,14 +45,23 @@ module.exports = Class('NavStyler', {
   /**
    * Initializes NavStyler
    *
-   * @param jQuery $nav_element list element representing the navigation bar
-   * @param Nav    nav          nav object that styling is based on
+   * @param jQuery $nav_element         list element representing the navigation bar
+   * @param jQuery $section_nav_element list element representing the navigation bar
+   * @param Nav    nav                  nav object that styling is based on
    *
    * @return {undefined}
    */
-  __construct: function ($nav_element, nav) {
+  __construct: function ($nav_element, $section_nav_element, nav) {
     this.$navElement = $nav_element;
+    this.$section_nav_element = $section_nav_element;
     this.nav = nav;
+
+    // all classes are initially hidden until initialized
+    this.$navElement[0].classList.remove('hidden');
+
+    if (this.nav.hasSubsteps()) {
+      this.$section_nav_element[0].classList.remove('hidden');
+    }
 
     // highlight the step when it changes
     var styler = this;
@@ -94,6 +103,14 @@ module.exports = Class('NavStyler', {
       // explicitly set the class to what we want (no add, remove, etc
       // because that'll get too complicated to keep track of)
       $(this).attr('class', nav._getStepClass(cur_step, step_id));
+    });
+
+    this.$section_nav_element.find('li').each(function () {
+      const section_id = $(this).attr('data-section-id');
+
+      // explicitly set the class to what we want (no add, remove, etc
+      // because that'll get too complicated to keep track of)
+      $(this).attr('class', nav._getSectionClass(step_id, section_id));
     });
 
     return this;
@@ -160,10 +177,45 @@ module.exports = Class('NavStyler', {
       step_class += ' locked';
     }
 
-    if (!this.nav.stepIsVisible(step_id)) {
+    if (
+      !this.nav.stepIsVisible(step_id) ||
+      (this.nav.hasSubsteps() &&
+        !this.nav.stepWithinSection(step_id, this.nav.getCurrentSectionId()))
+    ) {
       step_class += ' hidden';
     }
 
     return step_class + ' ' + this._origClasses[step_id];
+  },
+
+  /**
+   * Determines what class to apply to each of the section elements
+   *
+   * @param {number} step_id    id of the currently selected step
+   * @param {number} section_id id of step to get the class for
+   *
+   * @return String class to apply to step element
+   */
+  _getSectionClass: function (step_id, section_id) {
+    section_class = '';
+
+    if (this.nav.stepWithinSection(step_id, section_id)) {
+      section_class = 'sectionCurrent';
+    }
+
+    // if the quote is locked and this is not the last step, mark it as
+    // locked
+    if (
+      (this._quoteLocked && step_id !== last) ||
+      step_id < this.nav.getMinStepId()
+    ) {
+      section_class += ' locked';
+    }
+
+    if (!this.nav.sectionIsVisible(section_id)) {
+      section_class += ' hidden';
+    }
+
+    return section_class;
   },
 });

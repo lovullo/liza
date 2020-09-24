@@ -309,6 +309,7 @@ module.exports = Class('Client').extend(EventEmitter, {
     this._window = _window || window;
     this.elementStyler = factory.createElementStyler(this._jquery);
     this.$navBar = this.$body.find('ul.step-nav');
+    this.$navBarSection = this.$body.find('ul.section-nav');
 
     this._defaultId = default_id || 'default';
 
@@ -958,14 +959,22 @@ module.exports = Class('Client').extend(EventEmitter, {
       content: this.$body,
       styler: this.elementStyler,
       nav: nav,
-      navStyler: this._factory.createNavStyler(this.$navBar, nav),
+      navStyler: this._factory.createNavStyler(
+        this.$navBar,
+        this.$navBarSection,
+        nav
+      ),
       errorBox: errbox,
       sidebar: this._createSidebar($sidebar, this.elementStyler),
       dialog: this.uiDialog,
       notifyBar: this._factory.createNotifyBar($rater_content),
 
       uiStyler: this._createUiStyler($error_box),
-      navBar: this._factory.createUiNavBar(this._jquery, this.$navBar),
+      navBar: this._factory.createUiNavBar(
+        this._jquery,
+        this.$navBar,
+        this.$navBarSection
+      ),
 
       dataValidator: this._dataValidator,
 

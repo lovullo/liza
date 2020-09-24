@@ -72,6 +72,12 @@ module.exports = Class('Nav').extend(EventEmitter, {
   'private _currentStepId': 0,
 
   /**
+   * Stores the last section id
+   * @type {string}
+   */
+  'private _lastSectionId': '',
+
+  /**
    * Id of the max visited step
    * @type {number}
    */
@@ -113,6 +119,12 @@ module.exports = Class('Nav').extend(EventEmitter, {
   'private _classes': {},
 
   /**
+   * Whether we have substeps
+   * @type {boolean}
+   */
+  'private _has_substeps': false,
+
+  /**
    * Initializes navigation
    *
    * This will initialize the navigation bar hooks to permit navigation and
@@ -129,6 +141,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
 
     this._program = program;
     this._stepData = program.steps;
+    this._has_substeps = !!program.substeps;
 
     this.setStepCount(this._stepData.length - 1);
 
@@ -238,6 +251,8 @@ module.exports = Class('Nav').extend(EventEmitter, {
         }
 
         nav._currentStepId = step_id;
+        nav._lastSectionId = nav._stepData[step_id].section || '';
+
         if (step_id > nav._topVisitedStepId) {
           nav._topVisitedStepId = step_id;
         }
@@ -411,6 +426,15 @@ module.exports = Class('Nav').extend(EventEmitter, {
   },
 
   /**
+   * Returns the id of the current section
+   *
+   * @return String id of the current section
+   */
+  getCurrentSectionId: function () {
+    return this._lastSectionId;
+  },
+
+  /**
    * Check whether a step id is valid as a next step
    *
    * @param {number} step_id The step id to check
@@ -440,6 +464,18 @@ module.exports = Class('Nav').extend(EventEmitter, {
    */
   stepIsVisible(step_id) {
     return this._program.isStepVisible(this._classes, step_id);
+  },
+
+  /**
+   * Check whether a section is visible
+   *
+   * @param {string} section_id the section id to check
+   *
+   * @return {boolean} true if at least one step in a section is visible
+   */
+  sectionIsVisible: function (section_id) {
+    const first_step = this.getFirstVisibleSectionStep(section_id);
+    return first_step !== undefined;
   },
 
   /**
@@ -510,5 +546,51 @@ module.exports = Class('Nav').extend(EventEmitter, {
 
   'public getMinStepId': function () {
     return this._minStepId;
+  },
+
+  /**
+   * Determine whether a step is within a section
+   *
+   * @param {number} step_id the step to check
+   * @param {string} section_id the section to check
+   *
+   * @return {boolean} true if a step is within a section
+   */
+  stepWithinSection: function (step_id, section_id) {
+    const step = this._stepData[step_id];
+
+    if (!step || !step.section) {
+      return false;
+    }
+
+    return step.section === section_id;
+  },
+
+  /**
+   * Check whether the nav has substeps
+   *
+   * @return true if the nav has substeps
+   */
+  hasSubsteps: function () {
+    return this._has_substeps;
+  },
+
+  /**
+   * Get the earliest visible step for a section
+   *
+   * @param {string} section_id the section to check
+   *
+   * @return {number} The earliest visible step or undefined if not found
+   */
+  getFirstVisibleSectionStep: function (section_id) {
+    for (let i = 1; i < this._stepData.length; i++) {
+      const step = this._stepData[i];
+
+      if (this.stepIsVisible(i) && step.section === section_id) {
+        return i;
+      }
+    }
+
+    return undefined;
   },
 });
