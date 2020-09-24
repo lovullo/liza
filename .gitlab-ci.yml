@@ -56,6 +56,7 @@ dullahan:deploy_prod:
         - for server in $PUBLIC_PROD_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-prod";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-prod;
+            ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-prod.service";
             done;
     environment:
         name: production
@@ -70,6 +71,7 @@ dullahan:deploy_demo:
         - for server in $PUBLIC_DEMO_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-demo";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-demo;
+            ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-demo.service";
             done;
     environment:
         name: demo
@@ -84,6 +86,7 @@ dullahan:deploy_test:
         - for server in $PUBLIC_TEST_QUOTE1804_SERVERS; do
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-test";
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-test;
+            ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-test.service";
             done;
     environment:
         name: test
