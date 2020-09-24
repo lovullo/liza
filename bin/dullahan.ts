@@ -28,6 +28,7 @@ import {HttpClient} from '../src/system/network/HttpClient';
 import {IndicationController} from '../src/dullahan/controllers/IndicationController';
 import {Router} from '../src/system/network/Router';
 import {StandardLogger} from '../src/system/StandardLogger';
+import * as promBundle from 'express-prom-bundle';
 
 dotenv.config();
 
@@ -44,8 +45,11 @@ if (!port) {
   throw new Error('Unable to read port from env.');
 }
 
+const metricsMiddleware = promBundle({includePath: true});
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
+app.use(metricsMiddleware);
 
 const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 const emitter = new EventEmitter();
