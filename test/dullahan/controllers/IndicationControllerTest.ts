@@ -43,18 +43,38 @@ describe('IndicationController', () => {
 
     it('calls webhook when a valid request is processsed', () => {
       const http_client = createHttpClient();
+      const given = 'https://some.websitethatdoesnotexist.joe';
 
-      sinon
-        .stub(http_client, 'post')
-        .callsFake((_url, _payload, _options) => Promise.resolve(<Response>{}));
+      sinon.stub(http_client, 'post').callsFake((url, _payload, _options) => {
+        expect(url).to.be.equal(given);
+        return Promise.resolve(<Response>{});
+      });
 
       const sut = createSut({http_client});
       const req = mockReq({});
       const res = mockRes({});
 
-      req.body = {
-        webhook: 'https://some.websitethatdoesnotexist.joe',
-      };
+      req.query.callback = given;
+
+      sut.handle(req, res);
+
+      expect(res.status.withArgs(202).callCount).to.equal(1);
+    });
+
+    it('decodes and calls webhook when a valid request is processsed', () => {
+      const http_client = createHttpClient();
+      const given = 'https%3A%2F%2Fsome.websitethatdoesnotexist.joe';
+
+      sinon.stub(http_client, 'post').callsFake((url, _payload, _options) => {
+        expect(url).to.be.equal('https://some.websitethatdoesnotexist.joe');
+        return Promise.resolve(<Response>{});
+      });
+
+      const sut = createSut({http_client});
+      const req = mockReq({});
+      const res = mockRes({});
+
+      req.query.callback = given;
 
       sut.handle(req, res);
 

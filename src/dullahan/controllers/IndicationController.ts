@@ -41,8 +41,10 @@ export class IndicationController {
    * @param response - response object
    */
   public handle(request: express.Request, response: express.Response) {
-    // This is probably not how the webhook will be sent
-    const {webhook} = request.body;
+    let webhook = '';
+    if (request.query && request.query.callback) {
+      webhook = decodeURIComponent((<any>request.query).callback);
+    }
 
     try {
       this._http.validateUrl(webhook);
