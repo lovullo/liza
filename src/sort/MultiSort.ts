@@ -1,5 +1,4 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off" */
 /**
  * Sorting with multiple criteria
  *
@@ -66,7 +65,7 @@ export function multiSort(data: any[], preds: compareFn[]): any[] {
     return data;
   }
 
-  var sorted = data.slice(),
+  const sorted = data.slice(),
     pred = preds[0],
     next_preds = preds.slice(1);
 
@@ -86,11 +85,11 @@ export function multiSort(data: any[], preds: compareFn[]): any[] {
  * Recursively sorts sorted results by grouping similar elements
  */
 function multiSubSort(sorted: any, pred: compareFn, next_preds: compareFn[]) {
-  var i = 0,
-    len = sorted.length;
+  let i = 0;
+  const len = sorted.length;
 
-  var result = [],
-    cur = [sorted[0]];
+  const result = [];
+  let cur = [sorted[0]];
 
   // note that this increment is intentional---at the bottom of this loop,
   // we push the current element into the current group. Therefore, this
@@ -104,9 +103,9 @@ function multiSubSort(sorted: any, pred: compareFn, next_preds: compareFn[]) {
     // the current group of elements before continuing
     if (i === len || pred(sorted[i - 1], sorted[i]) !== 0) {
       // the element is different; sub-sort
-      var sub = cur.length > 1 ? multiSort(cur, next_preds) : cur;
+      const sub = cur.length > 1 ? multiSort(cur, next_preds) : cur;
 
-      for (var j in sub) {
+      for (const j in sub) {
         result.push(sub[j]);
       }
 
