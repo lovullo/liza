@@ -1,0 +1,14 @@
+_format_version: "1.1"
+_info:
+  select_tags:
+    - dullahan
+services:
+  - name: dullahan
+    url: http://localhost:6047/
+    routes:
+      - name: dullahan-root
+        strip_path: true
+        path_handling: v0
+        paths:
+          - /
+

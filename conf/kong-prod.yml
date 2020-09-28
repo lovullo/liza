@@ -1,0 +1,21 @@
+_format_version: "1.1"
+_info:
+  select_tags:
+    - dullahan
+upstreams:
+  - name: 'dullahan.service'
+    algorithm: 'round-robin'
+    targets:
+      - { target: 't-dc02quote01.rsgcorp.local:6045', weight: 50 }
+      - { target: 't-dc02quote02.rsgcorp.local:6045', weight: 50 }
+services:
+  - name: dullahan
+    host: 'dullahan.service'
+    routes:
+      - name: dullahan-root
+        hosts:
+          - 'dullahan.api.ryansg.dev'
+        strip_path: true
+        path_handling: v0
+        paths:
+          - /
