@@ -200,6 +200,214 @@ describe('Program', _ => {
       });
     });
   });
+
+  describe('#getNextVisibleStep', () => {
+    [
+      {
+        label: 'next immediate step is visible',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+        },
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 1,
+        expected: 2,
+      },
+      {
+        label: 'step whens are not defined will return next step',
+        whens: undefined,
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 1,
+        expected: 2,
+      },
+      {
+        label: 'next step is not visible',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+          baq: '--visstep-baq',
+        },
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: false},
+          '--visstep-baq': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}, {id: 'baq'}],
+        step_id: 2,
+        expected: 4,
+      },
+      {
+        label: 'no remaining steps are visible returns undefined',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+        },
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: false},
+          '--visstep-baz': {is: false},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 1,
+        expected: undefined,
+      },
+    ].forEach(({label, whens, class_data, steps, step_id, expected}) => {
+      it(label, done => {
+        const sut = getSut([0, 1]);
+        sut.stepWhens = whens;
+        sut.steps = steps;
+
+        expect(sut.getNextVisibleStep(class_data, step_id)).to.equal(expected);
+        done();
+      });
+    });
+  });
+
+  describe('#getPreviousVisibleStep', () => {
+    [
+      {
+        label: 'previous immediate step is visible',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+        },
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 3,
+        expected: 2,
+      },
+      {
+        label: 'step whens are not defined will return previous step',
+        whens: undefined,
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 3,
+        expected: 2,
+      },
+      {
+        label: 'previous step is not visible, go to step before it',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+          baq: '--visstep-baq',
+        },
+        class_data: {
+          '--visstep-foo': {is: true},
+          '--visstep-bar': {is: true},
+          '--visstep-baz': {is: false},
+          '--visstep-baq': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}, {id: 'baq'}],
+        step_id: 4,
+        expected: 2,
+      },
+      {
+        label: 'no previous steps are visible returns undefined',
+        whens: {
+          foo: '--visstep-foo',
+          bar: '--visstep-bar',
+          baz: '--visstep-baz',
+        },
+        class_data: {
+          '--visstep-foo': {is: false},
+          '--visstep-bar': {is: false},
+          '--visstep-baz': {is: true},
+        },
+        steps: [null, {id: 'foo'}, {id: 'bar'}, {id: 'baz'}],
+        step_id: 1,
+        expected: undefined,
+      },
+    ].forEach(({label, whens, class_data, steps, step_id, expected}) => {
+      it(label, done => {
+        const sut = getSut([0, 1]);
+        sut.stepWhens = whens;
+        sut.steps = steps;
+
+        expect(sut.getPreviousVisibleStep(class_data, step_id)).to.equal(
+          expected
+        );
+        done();
+      });
+    });
+  });
+
+  describe('#isStepVisible', () => {
+    [
+      {
+        label: 'step is visible when step classification is true',
+        whens: {info: '--visstep-info'},
+        class_data: {'--visstep-info': {is: true, indexes: 0}},
+        step_id: 1,
+        expected: true,
+      },
+      {
+        label: 'first step is always visible',
+        whens: {info: '--visstep-info'},
+        class_data: {'--visstep-info': {is: false, indexes: 0}},
+        step_id: 1,
+        expected: true,
+      },
+      {
+        label: 'unknown step is not visible',
+        whens: {info: '--visstep-info'},
+        class_data: [{'--visstep-info': {is: true, indexes: 0}}],
+        step_id: 99,
+        expected: false,
+      },
+      {
+        label: 'step is visible when step classification is missing',
+        whens: {foo: '--visstep-info'},
+        class_data: [],
+        step_id: 1,
+        expected: true,
+      },
+      {
+        label: 'step is visible when no step id is defined',
+        whens: undefined,
+        class_data: [],
+        step_id: 2,
+        expected: true,
+      },
+    ].forEach(({label, whens, class_data, step_id, expected}) => {
+      it(label, done => {
+        const sut = getSut([0, 1]);
+        sut.stepWhens = whens;
+        sut.steps = [
+          null,
+          {id: 'info', title: 'Information', type: ''},
+          {title: 'Mystery Step', type: ''},
+        ];
+
+        const given = sut.isStepVisible(class_data, step_id);
+        expect(given).to.equal(expected);
+        done();
+      });
+    });
+  });
 });
 
 function getSut(step_data) {

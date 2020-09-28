@@ -792,7 +792,7 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
    *
    * @return id of element, or empty string
    */
-  getFirstInvalidField(cmatch: any): Array<string | number | boolean> {
+  getFirstInvalidField(cmatch: any): Array<string | number | boolean> | null {
     var $element = this.$content.find(
       '.invalid_field[data-field-name]:visible:first'
     );
@@ -806,7 +806,9 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
     // no invalid fields, so what about missing required fields?
     if (!name) {
       // append 'true' indiciating that this is a required field check
-      var result = this.step.getNextRequired(cmatch);
+      var result: Array<string | boolean> | null = this.step.getNextRequired(
+        cmatch
+      );
       if (result !== null) {
         result.push(true);
       }

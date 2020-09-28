@@ -433,7 +433,7 @@ function doRoute(program, request, data, resolve, reject) {
       case 'visit':
         acquireRwLock(quote_id, request, function () {
           handleRequest(function (quote) {
-            server.visitStep(step_id, request, quote);
+            server.visitStep(step_id, request, quote, program);
           });
         });
         break;

@@ -357,7 +357,7 @@ module.exports = Class('Client').extend(EventEmitter, {
     this.uiDialog = this._factory.createUiDialog();
     this.programId = this._getProgramId();
     this.program = this._createProgram();
-    this.nav = this._factory.createNav(this.program.steps);
+    this.nav = this._factory.createNav(this.program);
     this.hashNav = this._createHashNav(this.nav);
 
     this._stagingDiscard = this._factory.createStagingBucketDiscard();

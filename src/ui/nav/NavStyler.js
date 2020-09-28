@@ -160,6 +160,10 @@ module.exports = Class('NavStyler', {
       step_class += ' locked';
     }
 
+    if (!this.nav.stepIsVisible(step_id)) {
+      step_class += ' hidden';
+    }
+
     return step_class + ' ' + this._origClasses[step_id];
   },
 });

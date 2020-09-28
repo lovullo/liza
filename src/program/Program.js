@@ -701,4 +701,85 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
 
     return typeof type === 'string' && type !== 'undefined';
   },
+
+  /**
+   * Get the next visible step after the supplied step
+   *
+   * @param {Object} class_data classifications
+   * @param {number} step_id    the starting step id
+   *
+   * @return {number|undefined} The next visible step id or undefined if there
+   *                            is no next visible step
+   */
+  'public getNextVisibleStep': function (class_data, step_id) {
+    const next_visible = step_id + 1;
+
+    if (!this.stepWhens) {
+      return next_visible;
+    }
+
+    for (let i = next_visible; i < this.steps.length; i++) {
+      if (this.isStepVisible(class_data, i)) {
+        return i;
+      }
+    }
+
+    return undefined;
+  },
+
+  /**
+   * Get the previous visible step before the supplied step
+   *
+   * @param {Object} class_data classifications
+   * @param {number} step_id    the starting step id
+   *
+   * @return {number} The previous visible step id
+   */
+  'public getPreviousVisibleStep': function (class_data, step_id) {
+    const prev_visible = step_id - 1;
+    const first_step_id = this.getFirstStepId();
+
+    if (!this.stepWhens) {
+      return Math.max(first_step_id, prev_visible);
+    }
+
+    for (let i = prev_visible; i >= first_step_id; i--) {
+      if (this.isStepVisible(class_data, i)) {
+        return i;
+      }
+    }
+
+    return undefined;
+  },
+
+  /**
+   * Determine if a step is visible
+   *
+   * @param {Object} class_data classifications
+   * @param {number} step_id    of the step to get visibility for
+   *
+   * @return {boolean}
+   */
+  'public isStepVisible': function (class_data, step_id) {
+    if (this.steps[step_id] === undefined) {
+      return false;
+    }
+
+    if (
+      !this.steps[step_id].id ||
+      this.stepWhens[this.steps[step_id].id] === undefined
+    ) {
+      // no known classifications to hide this step
+      return true;
+    }
+
+    // The first step should always be visible
+    if (+step_id === +this.getFirstStepId()) {
+      return true;
+    }
+
+    const step_when = this.stepWhens[this.steps[step_id].id];
+    const step_class = class_data[step_when];
+    return step_class && step_class.is === true;
+  },
 });

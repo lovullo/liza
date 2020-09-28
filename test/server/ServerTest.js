@@ -35,6 +35,7 @@ describe('Server#sendStep', () => {
       step_id: 6,
       first_step_id: 2,
       current_step_id: 3,
+      next_visible_step_id: 5,
       visited_step_id: 4,
       saved_step_id: 3,
       internal: false,
@@ -42,21 +43,11 @@ describe('Server#sendStep', () => {
       expected_action: [{action: 'gostep', id: 4}],
     },
     {
-      label: 'Sends error when step is not defined',
-      step_id: 99,
-      first_step_id: 2,
-      current_step_id: 2,
-      visited_step_id: 3,
-      saved_step_id: 2,
-      internal: false,
-      expected_failure: true,
-      expected_action: [{action: 'gostep', id: 2}],
-    },
-    {
       label: 'Non-internal user cannot visit manage step',
       step_id: 1,
       first_step_id: 2,
       current_step_id: 2,
+      next_visible_step_id: 3,
       visited_step_id: 2,
       saved_step_id: 2,
       internal: false,
@@ -68,6 +59,7 @@ describe('Server#sendStep', () => {
       step_id: 1,
       first_step_id: 2,
       current_step_id: 2,
+      next_visible_step_id: 3,
       visited_step_id: 2,
       saved_step_id: 2,
       internal: true,
@@ -79,6 +71,7 @@ describe('Server#sendStep', () => {
       step_id: 2,
       first_step_id: 2,
       current_step_id: 3,
+      next_visible_step_id: 4,
       visited_step_id: 4,
       saved_step_id: 3,
       internal: false,
@@ -86,13 +79,26 @@ describe('Server#sendStep', () => {
       expected_action: undefined,
     },
     {
-      label:
-        'Send step when navigating to the next valid step (top visited + 1)',
-      step_id: 3,
+      label: 'Send step when navigating to the next valid step (top saved + 1)',
+      step_id: 99,
       first_step_id: 2,
       current_step_id: 2,
-      visited_step_id: 2,
+      next_visible_step_id: 3,
+      visited_step_id: 3,
       saved_step_id: 2,
+      internal: false,
+      expected_failure: true,
+      expected_action: [{action: 'gostep', id: 2}],
+    },
+    {
+      label:
+        'Send step when navigating to the next visible step (top saved + 1) skip hidden steps',
+      step_id: 5,
+      first_step_id: 2,
+      current_step_id: 3,
+      next_visible_step_id: 5,
+      visited_step_id: 3,
+      saved_step_id: 3,
       internal: false,
       expected_failure: false,
       expected_action: undefined,
@@ -103,6 +109,7 @@ describe('Server#sendStep', () => {
       step_id,
       first_step_id,
       current_step_id,
+      next_visible_step_id,
       visited_step_id,
       saved_step_id,
       internal,
@@ -139,13 +146,107 @@ describe('Server#sendStep', () => {
           saved_step_id,
           visited_step_id
         );
-        const program = createMockProgram(first_step_id);
+        const program = createMockProgram(
+          first_step_id,
+          undefined,
+          next_visible_step_id
+        );
         const session = createMockSession(internal);
         const request = createMockRequest();
+
         sut.sendStep(request, quote, program, step_id, session);
       });
     }
   );
+});
+
+describe('Server#visitStep', () => {
+  it('Valid step visit sets current step and sends response', done => {
+    const step_to_visit = 3;
+    const current_step = 2;
+    const top_saved_step = 5;
+    const top_visited_step = 5;
+    let error_is_sent = false;
+
+    const quote = createMockQuote(
+      current_step,
+      top_saved_step,
+      top_visited_step
+    );
+    const program = createMockProgram();
+    const session = createMockSession();
+    const request = createMockRequest(session);
+    const response = createMockResponse();
+    const sut = getSut(response);
+
+    // check that a response is sent to user w/no actions (do not kick back)
+    response.from = (_, __, action) => {
+      expect(error_is_sent).to.be.false;
+      expect(action).to.deep.equal(undefined);
+      expect(given_cur_step_id).to.be.equal(step_to_visit);
+      done();
+    };
+
+    program.isStepVisible = () => true;
+
+    let given_cur_step_id = undefined;
+    quote.setCurrentStepId = step_id => {
+      given_cur_step_id = step_id;
+    };
+
+    response.error = (_, action, __) => {
+      error_is_sent = true;
+    };
+
+    sut.visitStep(step_to_visit, request, quote, program);
+  });
+
+  it('Invisible step kicks user back to first step', done => {
+    const step_to_visit = 3;
+    const current_step = 2;
+    const top_saved_step = 5;
+    const top_visited_step = 5;
+    const first_step_id = 1;
+    let error_is_sent = false;
+
+    const quote = createMockQuote(
+      current_step,
+      top_saved_step,
+      top_visited_step
+    );
+    const program = createMockProgram(first_step_id);
+    const session = createMockSession();
+    const request = createMockRequest(session);
+    const response = createMockResponse();
+    const logger = createMockLogger();
+    const sut = getSut(response, undefined, undefined, logger);
+
+    // make this step invisible
+    program.isStepVisible = () => false;
+
+    let log_is_called = false;
+    logger.log = (level, message, step_id, __) => {
+      log_is_called = true;
+      expect(level).to.be.equal(logger.PRIORITY_INFO);
+      expect(step_id).to.be.equal(step_to_visit);
+      expect(message).to.contain('not applicable step');
+      expect(log_is_called).to.be.true;
+    };
+
+    // check that a response is sent to user w/kickback action
+    response.from = (_, __, action) => {
+      expect(error_is_sent).to.be.false;
+      expect(log_is_called).to.be.true;
+      expect(action).to.deep.equal([{action: 'gostep', id: first_step_id}]);
+      done();
+    };
+
+    response.error = (_, action, __) => {
+      error_is_sent = true;
+    };
+
+    sut.visitStep(step_to_visit, request, quote, program);
+  });
 });
 
 describe('Server#handlePost', () => {
@@ -153,6 +254,7 @@ describe('Server#handlePost', () => {
     // attempt to post on a step 2 steps ahead - not ok!
     const step_to_post = 4;
     const current_step = 2;
+    const next_visible_step_id = 3;
     const top_saved_step = 2;
     const top_visited_step = 2;
     const expected_kick_back = 3;
@@ -162,7 +264,7 @@ describe('Server#handlePost', () => {
       top_saved_step,
       top_visited_step
     );
-    const program = createMockProgram();
+    const program = createMockProgram(1, undefined, next_visible_step_id);
     const session = createMockSession();
     const request = createMockRequest(session);
     const response = createMockResponse();
@@ -189,43 +291,84 @@ describe('Server#handlePost', () => {
     sut.handlePost(step_to_post, request, quote, program, session, autosave);
   });
 
-  it('Allows autosave when not next immediate step', done => {
-    const step_to_post = 4;
-    const current_step = 2;
-    const top_saved_step = 2;
-    const top_visited_step = 2;
-
-    const quote = createMockQuote(
+  [
+    {
+      label: 'Allows autosave when not next immediate step',
+      autosave: true,
+      step_to_post: 4,
+      next_visible_step_id: 5,
+      current_step: 2,
+      top_saved_step: 2,
+      top_visited_step: 2,
+    },
+    {
+      label: 'Allows save when next immediate step',
+      autosave: false,
+      step_to_post: 4,
+      next_visible_step_id: 4,
+      current_step: 3,
+      top_saved_step: 3,
+      top_visited_step: 3,
+    },
+    {
+      label: 'Allows save when next immediate step is hidden',
+      autosave: false,
+      step_to_post: 5,
+      next_visible_step_id: 5,
+      current_step: 3,
+      top_saved_step: 3,
+      top_visited_step: 3,
+    },
+  ].forEach(
+    ({
+      label,
+      autosave,
+      step_to_post,
+      next_visible_step_id,
       current_step,
       top_saved_step,
-      top_visited_step
-    );
-    const program = createMockProgram();
-    const session = createMockSession();
-    const request = createMockRequest(session);
-    const response = createMockResponse();
-    const autosave = true;
-    const sut = getSut(response);
+      top_visited_step,
+    }) => {
+      it(label, done => {
+        const quote = createMockQuote(
+          current_step,
+          top_saved_step,
+          top_visited_step
+        );
+        const program = createMockProgram(1, undefined, next_visible_step_id);
+        const session = createMockSession();
+        const request = createMockRequest(session);
+        const response = createMockResponse();
+        const sut = getSut(response);
 
-    let error_is_sent = false;
-    response.error = (message, action, __) => {
-      error_is_sent = true;
-      // no errors are expected
-      expect(message).to.be.equal(undefined);
-      done();
-    };
+        let error_is_sent = false;
+        response.error = (message, action, __) => {
+          error_is_sent = true;
+          // no errors are expected
+          expect(message).to.be.equal(undefined);
+          done();
+        };
 
-    // TODO: assert on actual saves which requires a lot more mocking
-    //  (BucketCipher is directly instantiated in Sut)
-    let get_post_data_called = false;
-    request.getPostData = () => {
-      expect(error_is_sent).to.be.false;
-      done();
-    };
+        // TODO: assert on actual saves which requires a lot more mocking
+        //  (BucketCipher is directly instantiated in Sut)
+        let get_post_data_called = false;
+        request.getPostData = () => {
+          expect(error_is_sent).to.be.false;
+          done();
+        };
 
-    sut.handlePost(step_to_post, request, quote, program, session, autosave);
-    expect(get_post_data_called).to.be.true;
-  });
+        sut.handlePost(
+          step_to_post,
+          request,
+          quote,
+          program,
+          session,
+          autosave
+        );
+        expect(get_post_data_called).to.be.true;
+      });
+    }
+  );
 });
 
 describe('Server#initQuote', () => {
@@ -469,11 +612,11 @@ describe('Server#initQuote', () => {
   });
 });
 
-function getSut(response, dao, prog_init) {
+function getSut(response, dao, prog_init, logger) {
   return new Sut(
     response,
     dao || createMockDao(),
-    createMockLogger(),
+    logger || createMockLogger(),
     {},
     createMockDataProcessor(),
     prog_init || createMockProgramInit(),
@@ -526,11 +669,19 @@ function createMockQuote(
     getProgramId: () => program_id || '',
     isImported: () => false,
     isBound: () => false,
+    getBucket: () => {
+      return {getData: () => {}};
+    },
   };
 }
 
 function createMockLogger() {
   return {
+    PRIORITY_ERROR: 0,
+    PRIORITY_IMPORTANT: 1,
+    PRIORITY_DB: 2,
+    PRIORITY_INFO: 3,
+    PRIORITY_SOCKET: 4,
     debug(msg, object) {},
     info(msg, object) {},
     notice(msg, object) {},
@@ -578,11 +729,12 @@ function createMockDataProcessor() {
   return sinon.createStubInstance(DataProcessor);
 }
 
-function createMockProgram(first_step_id, program_ver) {
+function createMockProgram(first_step_id, program_ver, next_step) {
   return {
     id: () => 'foo',
     version: program_ver || '',
     getFirstStepId: () => first_step_id,
+    isStepVisible: () => false,
     steps: [
       ,
       {id: 'Manage Quote', type: 'manage'},
@@ -594,6 +746,8 @@ function createMockProgram(first_step_id, program_ver) {
       {id: 'Step6', type: ''},
     ],
     processNaFields: () => {},
+    getNextVisibleStep: () => next_step || 0,
+    classify: () => {},
   };
 }
 

@@ -27,7 +27,7 @@
 
 import {ClientQuote} from '../client/quote/ClientQuote';
 import {CmatchData} from '../client/Cmatch';
-import {QuoteDataBucket} from '../bucket/QuoteDataBucket';
+import {StagingBucket} from '../bucket/StagingBucket';
 import {MultiSort} from '../sort/MultiSort';
 
 const EventEmitter = require('events').EventEmitter;
@@ -51,7 +51,7 @@ export class Step extends EventEmitter {
   /**
    * Data bucket to store the raw data for submission
    */
-  private _bucket: QuoteDataBucket | null = null;
+  private _bucket: StagingBucket | null = null;
 
   /**
    * Fields contained exclusively on the step (no linked)
@@ -97,7 +97,7 @@ export class Step extends EventEmitter {
     this._id = +id;
 
     // TODO: this is temporary; do not pass bucket, pass quote
-    quote.visitData((bucket: QuoteDataBucket) => {
+    quote.visitData((bucket: StagingBucket) => {
       this._bucket = bucket;
     });
   }
@@ -118,8 +118,8 @@ export class Step extends EventEmitter {
    *
    * @return bucket associated with step
    */
-  getBucket(): QuoteDataBucket | null {
-    return this._bucket;
+  getBucket(): StagingBucket {
+    return <StagingBucket>this._bucket;
   }
 
   /**
@@ -176,7 +176,7 @@ export class Step extends EventEmitter {
       for (const i in data) {
         // any falsy value will be considered empty (note that !"0" ===
         // false, so this will work)
-        if (!data[i] && data[i] !== 0) {
+        if (!data[+i] && data[+i] !== 0) {
           if (!cdata || (cdata && cdata.indexes[i])) {
             return [name, i];
           }
@@ -194,7 +194,7 @@ export class Step extends EventEmitter {
    * @param quote - new quote
    */
   updateQuote(quote: ClientQuote): this {
-    quote.visitData((quote_bucket: QuoteDataBucket) => {
+    quote.visitData((quote_bucket: StagingBucket) => {
       this._bucket = quote_bucket;
     });
 
@@ -272,7 +272,7 @@ export class Step extends EventEmitter {
       // convert to numeric if it makes sense to do so (otherwise, we may
       // be comparing them as strings, which does not quite give us the
       // ordering we desire)
-      if (toint[i]) {
+      if (toint[+i]) {
         vala = +vala;
         valb = +valb;
       }

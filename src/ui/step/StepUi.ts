@@ -112,7 +112,7 @@ export interface StepUi {
    *
    * @return id of element, or empty string
    */
-  getFirstInvalidField(cmatch: any): Array<string | number | boolean>;
+  getFirstInvalidField(cmatch: any): Array<string | number | boolean> | null;
 
   /**
    * Scrolls to the element identified by the given id
