@@ -635,9 +635,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
       this._addBackNavButton(step, $buttons);
     }
 
-    if (this.nav.hasNextStep()) {
-      this._addContinueNavButton(step, $buttons);
-    }
+    this._addContinueNavButton(step, $buttons);
 
     if (this.nav.isQuoteReviewStep(step_id)) {
       this._addPrintQuoteButton(step, $buttons);
@@ -1350,6 +1348,8 @@ module.exports = Class('Ui').extend(EventEmitter, {
   },
 
   'public setCmatch': function (cmatch) {
+    this.nav.updateStepVisibility(cmatch.__classes);
+    this.redrawNav();
     this._cmatch = cmatch;
   },
 

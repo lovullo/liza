@@ -809,8 +809,17 @@ module.exports = Class('Server').extend(EventEmitter, {
       return;
     }
 
+    let top_allowed_step = program.getNextVisibleStep(
+      program.classify(quote.getBucket().getData()),
+      quote.getTopVisitedStepId()
+    );
+
+    if (!top_allowed_step) {
+      top_allowed_step = quote.getTopVisitedStepId() + 1;
+    }
+
     // are they permitted to navigate to this step?
-    if (step_id > quote.getTopVisitedStepId() + 1) {
+    if (top_allowed_step && step_id > top_allowed_step) {
       // knock them back to the next step they're able to save
       var tostep_id = quote.getTopSavedStepId() + 1;
 
@@ -953,7 +962,7 @@ module.exports = Class('Server').extend(EventEmitter, {
         // this should never happen, but in case it does, we need to
         // make sure the user isn't left hanging with no response from
         // the server; return gracefully after logging the error
-        _self.logger_log(
+        _self.logger.log(
           _self.logger.PRIORITY_ERROR,
           'Forward-validation error (%s): WEB#%s, step %s',
           program.id,
@@ -967,7 +976,27 @@ module.exports = Class('Server').extend(EventEmitter, {
     return success;
   },
 
-  visitStep: function (step_id, request, quote) {
+  visitStep: function (step_id, request, quote, program) {
+    if (
+      !program.isStepVisible(
+        program.classify(quote.getBucket().getData()),
+        +step_id
+      )
+    ) {
+      this.logger.log(
+        this.logger.PRIORITY_INFO,
+        'Attempt to visit not applicable step %s for quote: %s',
+        step_id,
+        quote.getId()
+      );
+
+      this.sendResponse(request, quote, {}, [
+        {action: 'gostep', id: program.getFirstStepId()},
+      ]);
+
+      return this;
+    }
+
     // update the quote step, if valid
     if (step_id <= quote.getTopVisitedStepId() + 1) {
       quote.setCurrentStepId(step_id);
@@ -1099,10 +1128,19 @@ module.exports = Class('Server').extend(EventEmitter, {
       return this;
     }
 
+    let top_allowed_step = program.getNextVisibleStep(
+      program.classify(quote.getBucket().getData()),
+      quote.getTopSavedStepId()
+    );
+
+    if (!top_allowed_step) {
+      top_allowed_step = quote.getTopSavedStepId() + 1;
+    }
+
     // are they getting too far ahead of themselves?
-    if (step_id > quote.getTopSavedStepId() + 1 && !autosave) {
+    if (step_id > top_allowed_step && !autosave) {
       // knock back to next step that they're able to save
-      var tostep_id = quote.getTopSavedStepId() + 1;
+      var tostep_id = top_allowed_step;
 
       this.logger.log(
         this.logger.PRIORITY_ERROR,
