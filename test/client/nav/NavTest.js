@@ -415,13 +415,16 @@ describe('Nav', () => {
     expect(sut.isQuoteReviewStep(4)).to.be.true;
   });
 
-  it('#isManageQuoteStep is determined correctly by step type', () => {
+  it('#isManageQuoteStep is determined by program', () => {
     $ = sinon.stub().returns({bind: () => {}});
 
     let program = getMockProgram(getStepData(), true);
     const sut = Sut(program);
 
+    program.isManageQuoteStep = step_id => false;
     expect(sut.isManageQuoteStep(2)).to.be.false;
+
+    program.isManageQuoteStep = step_id => true;
     expect(sut.isManageQuoteStep(1)).to.be.true;
   });
 

@@ -533,7 +533,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
    * @return {boolean} true if manage quote step, otherwise false
    */
   isManageQuoteStep: function (step_id) {
-    return this._stepData[step_id].type === 'manage' ? true : false;
+    return this._program.isManageQuoteStep(step_id);
   },
 
   'public getFirstStepId': function () {

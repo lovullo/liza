@@ -779,7 +779,7 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
       return true;
     }
 
-    if (this.steps[step_id].type === 'manage') {
+    if (this.isManageQuoteStep(step_id)) {
       return false;
     }
 
@@ -792,5 +792,17 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
     }
 
     return step_class && step_class.is === true;
+  },
+
+  /**
+   * Returns whether or not the given step is the manage quote
+   * step.
+   *
+   * @param {number} step_id
+   *
+   * @return {boolean} true if manage quote step, otherwise false
+   */
+  isManageQuoteStep: function (step_id) {
+    return this.steps[step_id].type === 'manage';
   },
 });

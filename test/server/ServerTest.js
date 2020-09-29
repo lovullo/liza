@@ -277,6 +277,9 @@ describe('Server#visitStep', () => {
       done();
     };
 
+    // we want to test the manage quote step
+    program.isManageQuoteStep = step_id => true;
+
     // manage step is not visible
     program.isStepVisible = () => false;
 
@@ -779,6 +782,7 @@ function createMockProgram(first_step_id, program_ver, next_step) {
     version: program_ver || '',
     getFirstStepId: () => first_step_id,
     isStepVisible: () => false,
+    isManageQuoteStep: () => false,
     steps: [
       ,
       {id: 'Manage Quote', type: 'manage'},

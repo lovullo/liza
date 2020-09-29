@@ -355,6 +355,16 @@ describe('Program', _ => {
     });
   });
 
+  describe('#isManageQuoteStep', () => {
+    it('is determined correctly by step type', () => {
+      const sut = getSut();
+
+      // default manage step is setup as step 1
+      expect(sut.isManageQuoteStep(2)).to.be.false;
+      expect(sut.isManageQuoteStep(1)).to.be.true;
+    });
+  });
+
   describe('#isStepVisible', () => {
     [
       {
