@@ -779,6 +779,10 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
       return true;
     }
 
+    if (this.steps[step_id].type === 'manage') {
+      return false;
+    }
+
     const step_when = this.stepWhens[this.steps[step_id].id];
     const step_class = class_data[step_when];
 

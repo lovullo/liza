@@ -977,7 +977,9 @@ module.exports = Class('Server').extend(EventEmitter, {
   },
 
   visitStep: function (step_id, request, quote, program) {
+    const type = program.steps[step_id].type;
     if (
+      type !== 'manage' &&
       !program.isStepVisible(
         program.classify(quote.getBucket().getData()),
         +step_id

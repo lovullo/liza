@@ -257,6 +257,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
           nav._topVisitedStepId = step_id;
         }
 
+        // manage quote is not a visible step but you can still navigate there
         if (!nav.stepIsVisible(step_id)) {
           step_id = nav.getPrevStepId();
         }

@@ -359,16 +359,23 @@ describe('Program', _ => {
     [
       {
         label: 'step is visible when step classification is true',
-        whens: {info: '--visstep-applicant'},
+        whens: {applicant: '--visstep-applicant'},
         class_data: {'--visstep-applicant': {is: true, indexes: 0}},
-        step_id: 2,
+        step_id: 3,
         expected: true,
       },
       {
+        label: 'step is not visible when step classification is false',
+        whens: {applicant: '--visstep-applicant'},
+        class_data: {'--visstep-applicant': {is: false, indexes: 0}},
+        step_id: 3,
+        expected: false,
+      },
+      {
         label: 'first step is always visible',
-        whens: {info: '--visstep-firststep'},
+        whens: {firststep: '--visstep-firststep'},
         class_data: {'--visstep-firststep': {is: false, indexes: 0}},
-        step_id: 1,
+        step_id: 2,
         expected: true,
       },
       {
@@ -382,14 +389,14 @@ describe('Program', _ => {
         label: 'step is visible when step classification is missing',
         whens: {foo: '--visstep-applicant'},
         class_data: [],
-        step_id: 2,
+        step_id: 3,
         expected: true,
       },
       {
         label: 'step is visible when step classification is undefined',
         whens: {applicant: '--visstep-applicant'},
         class_data: [{}],
-        step_id: 2,
+        step_id: 3,
         expected: true,
       },
       {
@@ -406,12 +413,21 @@ describe('Program', _ => {
         step_id: 2,
         expected: true,
       },
+      {
+        label: 'manage step is not visible',
+        whens: {manage: '--visstep-manage'},
+        class_data: [{'--visstep-manage': {is: true, indexes: 0}}],
+        step_id: 1,
+        expected: false,
+      },
     ].forEach(({label, whens, class_data, step_id, expected}) => {
       it(label, done => {
-        const sut = getSut([0, 1]);
+        const first_step_id = 2;
+        const sut = getSut([0, 1], first_step_id);
         sut.stepWhens = whens;
         sut.steps = [
           null,
+          {id: 'manage', title: 'Manage Quote', type: 'manage'},
           {id: 'firststep', title: 'First Step', type: ''},
           {id: 'applicant', title: 'Applicant', type: ''},
           {title: 'Mystery Step', type: ''},
@@ -425,11 +441,12 @@ describe('Program', _ => {
   });
 });
 
-function getSut(step_data) {
+function getSut(step_data, first_step_id) {
   return Program.extend({
     'override __construct': function (dapi_manager) {},
     initQuote: function (bucket, store_only) {},
     eventData: step_data,
+    firstStepId: first_step_id || 1,
     steps: [
       ,
       {id: 'Manage Quote', type: 'manage'},
