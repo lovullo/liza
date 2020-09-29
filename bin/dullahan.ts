@@ -26,6 +26,7 @@ import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
 import {IndicationController} from '../src/dullahan/controllers/IndicationController';
+import {DefaultController} from '../src/dullahan/controllers/DefaultController';
 import {Router} from '../src/system/network/Router';
 import {createConsole} from '../src/system/ConsoleFactory';
 import {StandardLogger} from '../src/system/StandardLogger';
@@ -85,6 +86,7 @@ const route = new Router(
 );
 
 route.post('/indication', IndicationController, 'handle');
+route.get('/healthcheck', DefaultController, 'handleHealthcheck');
 
 // Start the Express server
 app.listen(port, () =>
