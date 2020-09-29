@@ -60,20 +60,15 @@ export class IndicationController {
     // Send acceptance back to originator
     response.status(202).send('Request received.');
 
-    this._emitter.emit('info', {
-      message:
-        'Sent indication acceptance response back to originator. Now invoking rating.',
-    });
+    this._emitter.emit('response-sent', {http_code: 202});
 
     // TODO: Invoke rating
-
-    this._emitter.emit('info', {
-      message: `Rating completed. Calling back to webhook at ${webhook}`,
-    });
 
     // Call back to webhook when rating has completed
     this._http.post(webhook, {}).then(() => {
       // Handle response
     });
+
+    this._emitter.emit('callback-sent', {target: webhook});
   }
 }

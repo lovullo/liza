@@ -23,79 +23,34 @@ import {EventMediator as Sut} from '../../src/system/EventMediator';
 import {context} from '../../src/error/ContextError';
 import {EventEmitter} from 'events';
 import {expect} from 'chai';
-import {PsrLogger} from '../../src/system/PsrLogger';
+import {LogCode, PsrLogger} from '../../src/system/PsrLogger';
 
 describe('system.EventMediator captures and logs events', () => {
-  it('document-processed triggers log#notice', () => {
-    let method_called = false;
+  [
+    {event: 'document-processed', code: 'notice'},
+    {event: 'delta-publish', code: 'notice'},
+    {event: 'amqp-conn-warn', code: 'warning'},
+    {event: 'amqp-reconnect', code: 'warning'},
+    {event: 'request-received', code: 'notice'},
+    {event: 'response-sent', code: 'notice'},
+    {event: 'callback-sent', code: 'notice'},
+  ].forEach(({event, code}) => {
+    it(`${event} triggers log#${code}`, () => {
+      let method_called = false;
 
-    const event_id = 'document-processed';
-    const emitter = new EventEmitter();
-    const log = createMockLogger();
+      const emitter = new EventEmitter();
+      const log = createMockLogger();
 
-    log.notice = (_str: string) => {
-      method_called = true;
-    };
+      log[<LogCode>code] = (_str: string) => {
+        method_called = true;
+      };
 
-    new Sut(log, emitter);
+      new Sut(log, emitter);
 
-    emitter.emit(event_id);
+      emitter.emit(event);
 
-    expect(method_called).to.be.true;
-  });
-
-  it('delta-publish triggers log#notice', () => {
-    let method_called = false;
-
-    const event_id = 'delta-publish';
-    const emitter = new EventEmitter();
-    const log = createMockLogger();
-
-    log.notice = (_str: string) => {
-      method_called = true;
-    };
-
-    new Sut(log, emitter);
-
-    emitter.emit(event_id);
-
-    expect(method_called).to.be.true;
-  });
-
-  it('amqp-conn-warn triggers log#warning', () => {
-    let method_called = false;
-
-    const event_id = 'amqp-conn-warn';
-    const emitter = new EventEmitter();
-    const log = createMockLogger();
-
-    log.warning = (_str: string) => {
-      method_called = true;
-    };
-
-    new Sut(log, emitter);
-
-    emitter.emit(event_id);
-
-    expect(method_called).to.be.true;
-  });
-
-  it('amqp-reconnect triggers log#warning', () => {
-    let method_called = false;
-
-    const event_id = 'amqp-reconnect';
-    const emitter = new EventEmitter();
-    const log = createMockLogger();
-
-    log.warning = (_str: string) => {
-      method_called = true;
-    };
-
-    new Sut(log, emitter);
-
-    emitter.emit(event_id);
-
-    expect(method_called).to.be.true;
+      expect(method_called).to.be.true;
+    });
   });
 
   it('context and stack are retrieved from error', () => {

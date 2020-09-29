@@ -85,10 +85,10 @@ export class Router {
     this._app[request_type](
       endpoint,
       (req: express.Request, res: express.Response) => {
-        this._event_emitter.emit(
-          'info',
-          `Received request: ${request_type.toUpperCase} ${endpoint}`
-        );
+        this._event_emitter.emit('request-received', {
+          http_method: request_type.toUpperCase(),
+          path: endpoint,
+        });
 
         this._controller_factory(controller)[method](req, res);
       }
