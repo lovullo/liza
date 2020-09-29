@@ -279,7 +279,9 @@ module.exports = Class('Nav').extend(EventEmitter, {
 
     const next_step = this._program.getNextVisibleStep(this._classes, step_id);
 
-    return next_step === undefined ? this._lastStepId : next_step;
+    return next_step === undefined
+      ? Math.max(this._lastStepId, this._firstStepId)
+      : next_step;
   },
 
   /**
@@ -412,10 +414,12 @@ module.exports = Class('Nav').extend(EventEmitter, {
    * @return {boolean} Whether the provided step is a valid next step
    */
   isValidNextStep: function (step_id) {
-    const step_allowed =
-      step_id > this.getNextStepId(this._topVisitedStepId) ? false : true;
+    // We are jumping too far ahead
+    if (step_id > this.getNextStepId(this._topVisitedStepId)) {
+      return false;
+    }
 
-    return step_allowed && this.stepIsVisible(step_id);
+    return this.stepIsVisible(step_id);
   },
 
   /**
