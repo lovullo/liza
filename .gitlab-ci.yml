@@ -54,6 +54,7 @@ pages:
 dullahan:deploy_prod:
     extends: [.dullahan]
     stage: deploy
+    resource_group: "dullahan-deploy"
     script:
         - cp $ENV_FILE .env
         - for server in $PUBLIC_PROD_QUOTE1804_SERVERS; do
@@ -70,6 +71,7 @@ dullahan:deploy_prod:
 dullahan:deploy_demo:
     extends: [.dullahan]
     stage: deploy
+    resource_group: "dullahan-deploy"
     script:
         - cp $ENV_FILE .env
         - for server in $PUBLIC_DEMO_QUOTE1804_SERVERS; do
@@ -86,6 +88,7 @@ dullahan:deploy_demo:
 dullahan:deploy_test:
     extends: [.dullahan]
     stage: deploy
+    resource_group: "dullahan-deploy"
     script:
         - cp $ENV_FILE .env
         - for server in $PUBLIC_TEST_QUOTE1804_SERVERS; do
