@@ -11,12 +11,17 @@ if [ -z "$2" ]; then
 fi
 
 if [ -z "$3" ]; then
+    echo "Missing Kong select_tag configuration"
+    exit 64
+fi
+
+if [ -z "$4" ]; then
     ## this is a normal config change
     cp "$2" conf/kong.yml
 else
     ## this is deploying to a server and needs to remove from the rotation
-    grep -v "$3.*weight" "$2" > conf/kong.yml
+    grep -v "$4.*weight" "$2" > conf/kong.yml
 fi
 
-deck --state conf/kong.yml --select-tag dullahan --kong-addr "$1" sync
+deck --state conf/kong.yml --select-tag "$3" --kong-addr "$1" sync
 
