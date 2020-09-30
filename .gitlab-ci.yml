@@ -60,7 +60,7 @@ dullahan:deploy_prod:
         - for server in $PUBLIC_PROD_QUOTE1804_SERVERS; do
             bin/sync-api-gateway-config "http://${KONG_PROD_SERVERS}:8000/kong-admin" conf/kong-prod.yml dullahan "$server";
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-prod";
-            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-prod;
+            rsync -rzcPl --delete --exclude=.git/* --exclude=externals/* . deploy@$server:dullahan-prod;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-prod.service";
             sleep 10;
             curl --fail "http://$server:6045/healthcheck";
@@ -80,7 +80,7 @@ dullahan:deploy_demo:
         - for server in $PUBLIC_DEMO_QUOTE1804_SERVERS; do
             bin/sync-api-gateway-config "http://${KONG_TEST_SERVERS}:8000/kong-admin" conf/kong-demo.yml dullahan-demo "$server";
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-demo";
-            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-demo;
+            rsync -rzcPl --delete --exclude=.git/* --exclude=externals/* . deploy@$server:dullahan-demo;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-demo.service";
             sleep 10;
             curl --fail "http://$server:6046/healthcheck";
@@ -100,7 +100,7 @@ dullahan:deploy_test:
         - for server in $PUBLIC_TEST_QUOTE1804_SERVERS; do
             bin/sync-api-gateway-config "http://${KONG_TEST_SERVERS}:8000/kong-admin" conf/kong-test.yml dullahan "$server";
             ssh deploy@$server "mkdir -p /home/deploy/dullahan-test";
-            rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-test;
+            rsync -rzcPl --delete --exclude=.git/* --exclude=externals/* . deploy@$server:dullahan-test;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-test.service";
             sleep 10;
             curl --fail "http://$server:6047/healthcheck";
