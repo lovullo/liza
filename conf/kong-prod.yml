@@ -6,8 +6,8 @@ upstreams:
   - name: 'dullahan.service'
     algorithm: 'round-robin'
     targets:
-      - { target: 't-dc02quote01.rsgcorp.local:6045', weight: 50 }
-      - { target: 't-dc02quote02.rsgcorp.local:6045', weight: 50 }
+      - { target: 'dc02quote01.rsgcorp.local:6045', weight: 50 }
+      - { target: 'dc02quote02.rsgcorp.local:6045', weight: 50 }
     healthchecks:
       active:
         https_verify_certificate: false
