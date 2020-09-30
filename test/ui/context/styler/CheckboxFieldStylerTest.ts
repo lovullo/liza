@@ -86,4 +86,41 @@ describe('CheckboxFieldStyler', () => {
       });
     }
   );
+
+  it('finds legacy radios in content parent element', () => {
+    const index = <PositiveInteger>0;
+    const field_name = 'supplier';
+    const value = 'Dewey';
+
+    // Simulate the td content has a parent row
+    // where the inputs we are searching for
+    // are found in the content and a sibling in its parent
+    const parentContent = document.createElement('tr');
+
+    const content = document.createElement('td');
+    content.innerHTML =
+      '<input type="radio" value="Huey" id="q_supplier_bar_0" data-field-name="supplier">';
+
+    const content2 = document.createElement('td');
+    content2.innerHTML =
+      '<input type="radio" value="Dewey" id="q_supplier_foo_0" data-field-name="supplier">';
+
+    parentContent.appendChild(content);
+    parentContent.appendChild(content2);
+
+    const sut = new Sut(field_name, index);
+
+    sut.setValue(content, value);
+
+    // Now check the elements are the values were set
+    const elements: NodeList = parentContent.querySelectorAll(
+      '[data-field-name="' + field_name + '"]'
+    );
+
+    const radio_1 = <HTMLInputElement>elements[0];
+    const radio_2 = <HTMLInputElement>elements[1];
+
+    expect(radio_1.checked).to.equal(false);
+    expect(radio_2.checked).to.equal(true);
+  });
 });

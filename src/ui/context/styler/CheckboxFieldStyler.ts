@@ -45,11 +45,20 @@ export class CheckboxFieldStyler implements FieldStyler {
    * @param value - value to set
    */
   setValue(content: ContextContent, value: string): void {
-    const elements: NodeList = content.querySelectorAll(
+    let contentParent: ContextContent = content;
+
+    // SideTableGroupUi allows for a radio to be split across a table row
+    // TODO: Remove this logic once SideTableGroupUi is removed
+    if (content.parentElement !== null) {
+      contentParent = content.parentElement;
+    }
+
+    const elements: NodeList = contentParent.querySelectorAll(
       `[data-field-name="${this.name}"]`
     );
 
     let i = elements.length;
+
     while (i--) {
       const question = <HTMLInputElement>elements[i];
 
