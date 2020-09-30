@@ -106,7 +106,7 @@ export class PrometheusFactory {
     bucket_start: number,
     bucket_width: number,
     bucket_count: number
-  ): Histogram {
+  ): Histogram<string> {
     return new client.Histogram({
       name: name,
       help: help,
@@ -123,7 +123,7 @@ export class PrometheusFactory {
    *
    * @return the metric
    */
-  createCounter(client: any, name: string, help: string): Counter {
+  createCounter(client: any, name: string, help: string): Counter<string> {
     return new client.Counter({
       name: name,
       help: help,
@@ -139,7 +139,7 @@ export class PrometheusFactory {
    *
    * @return the metric
    */
-  createGauge(client: any, name: string, help: string): Gauge {
+  createGauge(client: any, name: string, help: string): Gauge<string> {
     return new client.Gauge({
       name: name,
       help: help,

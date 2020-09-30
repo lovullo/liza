@@ -34,23 +34,23 @@ export class MetricsCollector {
   private _gateway: Pushgateway;
 
   /** Delta processed time histogram */
-  private _process_time: Histogram;
+  private _process_time: Histogram<string>;
   private _process_time_name: string = 'liza_delta_process_time';
   private _process_time_help: string = 'Delta process time in ms';
 
   /** Delta error counter */
-  private _total_error: Counter;
+  private _total_error: Counter<string>;
   private _total_error_name: string = 'liza_delta_error';
   private _total_error_help: string = 'Total errors from delta processing';
 
   /** Delta current error gauge */
-  private _current_error: Gauge;
+  private _current_error: Gauge<string>;
   private _current_error_name: string = 'liza_delta_current_error';
   private _current_error_help: string =
     'The current number of documents in an error state';
 
   /** Delta error counter */
-  private _total_processed: Counter;
+  private _total_processed: Counter<string>;
   private _total_processed_name: string = 'liza_delta_success';
   private _total_processed_help: string = 'Total deltas successfully processed';
 
