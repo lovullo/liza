@@ -89,6 +89,21 @@ route.post('/indication', IndicationController, 'handle');
 route.get('/healthcheck', DefaultController, 'handleHealthcheck');
 
 // Start the Express server
-app.listen(port, () =>
+const server = app.listen(port, () =>
   logger.info(`Dullahan started at http://localhost:${port}.`)
 );
+
+process.on('SIGTERM', () => {
+  // events stop working here, switch to regular logger
+  logger.info('SIGTERM signal received');
+
+  server.close(() => {
+    logger.info('HTTP server closed');
+
+    // We want to use process.exit here because it is the proper way to
+    // shut down this service.
+    /* eslint-disable no-process-exit */
+    process.exit(1);
+    /* eslint-enable no-process-exit */
+  });
+});
