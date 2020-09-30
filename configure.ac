@@ -100,6 +100,8 @@ AC_CONFIG_FILES([bin/server],
                 [chmod +x bin/server])
 AC_CONFIG_FILES([bin/delta-processor],
                 [chmod +x bin/delta-processor])
+AC_CONFIG_FILES([bin/dullahan],
+                [chmod +x bin/dullahan])
 
 AC_OUTPUT
 

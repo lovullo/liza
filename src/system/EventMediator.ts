@@ -62,6 +62,18 @@ export class EventMediator {
       this._log.warning('AMQP re-connected')
     );
 
+    this._emitter.on('request-received', (ctx = {}) =>
+      this._log.notice(`Request Received`, ctx)
+    );
+
+    this._emitter.on('response-sent', (ctx = {}) =>
+      this._log.notice(`Response Sent`, ctx)
+    );
+
+    this._emitter.on('callback-sent', (ctx = {}) =>
+      this._log.notice(`Callback Sent`, ctx)
+    );
+
     this._emitter.on('error', arg => this._handleError(arg));
   }
 

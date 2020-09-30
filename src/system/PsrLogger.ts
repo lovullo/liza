@@ -32,6 +32,17 @@ export enum LogLevel {
   EMERGENCY,
 }
 
+export enum LogCode {
+  DEBUG = 'debug',
+  INFO = 'info',
+  NOTICE = 'notice',
+  WARNING = 'warning',
+  ERROR = 'error',
+  CRITICAL = 'critical',
+  ALERT = 'alert',
+  EMERGENCY = 'emergency',
+}
+
 export interface PsrLogger {
   /**
    * Log at a debug level

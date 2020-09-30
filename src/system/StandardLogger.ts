@@ -38,11 +38,13 @@ export class StandardLogger implements PsrLogger {
    * @param _console
    * @param _ts_ctor - a timestamp constructor
    * @param _env     - The environment ( dev, test, demo, live )
+   * @param _service - service that is logging
    */
   constructor(
     private readonly _console: Console,
     private readonly _ts_ctor: () => UnixTimestamp,
-    private readonly _env: string
+    private readonly _env: string,
+    private readonly _service: string = 'quote-server'
   ) {}
 
   /**
@@ -163,7 +165,7 @@ export class StandardLogger implements PsrLogger {
     const structured_log = <StructuredLog>{
       message: str,
       timestamp: tsFormatted,
-      service: 'quote-server',
+      service: this._service,
       env: this._env,
       severity: LogLevel[level],
     };

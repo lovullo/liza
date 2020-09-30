@@ -64,3 +64,19 @@ type NodeCallback<T, R = void> = (e: NullableError, result: T | null) => R;
 
 /** Nullable error */
 type NullableError = Error | null;
+
+/**
+ * Common object
+ *
+ * Common objects are keyed with strings and can hold a value of any type.
+ */
+type CommonObject = {[key: string]: any};
+
+/**
+ * Constructable
+ *
+ * An object that can create new instances of itself
+ */
+type Constructable<T> = {
+  new (...args: any): T;
+};
