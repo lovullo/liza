@@ -20,14 +20,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @needsLove
- *   - Remove reliance on jQuery.
- *   - Dependencies need to be liberated: Styler; Group.
- * @end needsLove
+ * @todo This is a deprecated group; remove once no longer used.
  */
 
 import {GroupUi} from './GroupUi';
-import {PositiveInteger} from '../../numeric';
 import {ClientQuote} from '../../client/quote/ClientQuote';
 
 declare type jQuery = any;
@@ -35,8 +31,10 @@ declare type jQuery = any;
 /**
  * Represents a side-formatted table group
  *
- * This class extends from the generic Group class.  It contains logic to
- * support tabbed groups, allowing for the adding and removal of tabs.
+ * Deprecation Notice - this group no longer supports multiple indexes.
+ * GroupUi requires a unique fieldContentParent for each index,
+ * yet the fields in this group can have different parent row elements
+ * for the same index.
  */
 export class SideTableGroupUi extends GroupUi {
   /**
@@ -45,12 +43,12 @@ export class SideTableGroupUi extends GroupUi {
   private readonly WIDTH_COL_LEFT_PERCENT: number = 30;
 
   /**
-   * Stores the base title for each new tab
+   * Stores the base title
    */
   $baseHeadColumn: jQuery = null;
 
   /**
-   * Stores the base tab content to be duplicated for tabbed groups
+   * Stores the base tab content
    */
   $baseBodyColumn: jQuery = null;
 
@@ -74,7 +72,12 @@ export class SideTableGroupUi extends GroupUi {
       this.group.locked(true);
     }
 
+    this.context.createFieldCache();
+
     this._processTable();
+
+    // this group cannot add rows
+    this.$content.find('.addrow').remove();
   }
 
   /**
@@ -89,28 +92,20 @@ export class SideTableGroupUi extends GroupUi {
   public _processTable(): void {
     this.$table = this._getTable();
 
-    // important: do this before we begin detaching things
     this._calcColumnWidths();
 
     // Any content that is not the side column is to be considered the first
-    // data column. detach() is used to ensure events and data remain.
+    // data column.
     this.$baseHeadColumn = this.$table
       .find('thead')
-      .find('th:not( .groupTableSide )')
-      .detach();
+      .find('th:not( .groupTableSide )');
     this.$baseBodyColumn = this.$table
       .find('tbody')
-      .find('td:not( .groupTableSide )')
-      .detach();
+      .find('td:not( .groupTableSide )');
 
     this.subcolCount = +(<string>(
       $((this.$baseHeadColumn || [])[0])?.attr('colspan')
     ));
-
-    // if the group is locked, there will be no adding of rows
-    if (this.group.locked()) {
-      this.$content.find('.addrow').remove();
-    }
   }
 
   /**
@@ -146,8 +141,8 @@ export class SideTableGroupUi extends GroupUi {
   }
 
   public addColumn(): this {
-    var $col_head = this.$baseHeadColumn.clone(true),
-      $col_body = this.$baseBodyColumn.clone(true),
+    var $col_head = this.$baseHeadColumn,
+      $col_body = this.$baseBodyColumn,
       col_head = $col_head[0],
       col_body = $col_body[0],
       $thead = this.$table.find('thead'),
@@ -185,16 +180,6 @@ export class SideTableGroupUi extends GroupUi {
 
     // finally, style our new elements
     this.styler.apply($col_head).apply($col_body);
-
-    // Set field content parent for this index
-    this.fieldContentParent[index] = col_body;
-
-    if (this.getDomPerfFlag() === true) {
-      this.context.addIndex(
-        <PositiveInteger>index,
-        this.fieldContentParent[index]
-      );
-    }
 
     // raise event
     this.postAddRow($col_head, index).postAddRow($col_body, index);
@@ -249,7 +234,16 @@ export class SideTableGroupUi extends GroupUi {
     return this.$table.find(selector);
   }
 
+  /**
+   * Permit adding only a single index
+   *
+   * @param index - index that has been added
+   */
   protected addIndex(index: number): this {
+    if (index > 0) {
+      return this;
+    }
+
     // increment id before doing our own stuff
     super.addIndex(index);
     this.addColumn();
@@ -257,7 +251,16 @@ export class SideTableGroupUi extends GroupUi {
     return this;
   }
 
+  /**
+   * Permit removing only the first index
+   *
+   * @param index - index that has been removed
+   */
   public removeIndex(index: number): this {
+    if (index > 0) {
+      return this;
+    }
+
     // remove our stuff before decrementing our id
     this.removeColumn();
     super.removeIndex(index);
