@@ -5,6 +5,8 @@ include:
       file: '/jobs-common.yml'
     - project: 'devops/shared-pipelines'
       file: '/variables-public-deployment.yml'
+    - project: 'devops/shared-pipelines'
+      file: '/variables-internal-deployment.yml'
 
 stages:
     - build
@@ -59,6 +61,7 @@ dullahan:deploy_prod:
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-prod;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-prod.service";
             done;
+        - bin/sync-api-gateway-config "http://${KONG_PROD_SERVERS}:8000/kong-admin" conf/kong-prod.yml
     environment:
         name: production
     only:
@@ -74,6 +77,7 @@ dullahan:deploy_demo:
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-demo;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-demo.service";
             done;
+        - bin/sync-api-gateway-config "http://${KONG_TEST_SERVERS}:8000/kong-admin" conf/kong-demo.yml
     environment:
         name: demo
     only:
@@ -89,6 +93,7 @@ dullahan:deploy_test:
             rsync -rzcPl --delete --exclude=.git/* . deploy@$server:dullahan-test;
             ssh deploy@$server "sudo systemctl restart nodejs-dullahan-server-test.service";
             done;
+        - bin/sync-api-gateway-config "http://${KONG_TEST_SERVERS}:8000/kong-admin" conf/kong-test.yml
     environment:
         name: test
     only:

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo "Missing API Gateway server"
+    exit 64
+fi
+
+if [ -z "$2" ]; then
+    echo "Missing API Gateway configuration"
+    exit 64
+fi
+
+if [ -z "$3" ]; then
+    ## this is a normal config change
+    cp "$2" conf/kong.yml
+else
+    ## this is deploying to a server and needs to remove from the rotation
+    grep -v "$3.*weight" "$2" > conf/kong.yml
+fi
+
+deck --state conf/kong.yml --select-tag dullahan --kong-addr "$1" sync
+
