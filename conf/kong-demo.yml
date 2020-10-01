@@ -36,10 +36,10 @@ upstreams:
           successes: 1
           http_statuses: [200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304, 305, 306, 307, 308]
 services:
-  - name: dullahan
+  - name: dullahan-demo
     host: 'dullahan.demo.service'
     routes:
-      - name: dullahan-root
+      - name: dullahan-demo-root
         hosts:
           - 'demo.dullahan.api.ryansg.dev'
         strip_path: true
