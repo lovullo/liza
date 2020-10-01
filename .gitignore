@@ -38,3 +38,6 @@ tsconfig.tsbuildinfo
 
 debug.log
 
+externals/*
+!externals/.gitkeep
+
