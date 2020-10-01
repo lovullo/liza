@@ -264,11 +264,19 @@ describe('Cmatch', () => {
         previous_cmatch: {foo: {all: true, any: true, indexes: [1]}},
         cmatch: {foo: {all: true, any: true, indexes: [1, 0]}},
         expected: [
-          // show events
+          // first show events
           {
             foo: {},
           },
-          // hide events
+          // first hide events
+          {
+            foo: {},
+          },
+          // second show events
+          {
+            foo: {},
+          },
+          // second hide events
           {
             foo: {1: ''},
           },
@@ -391,16 +399,19 @@ describe('Cmatch', () => {
             }
           };
 
-          sut.handleClassMatch(previous_cmatch || {}, true);
+          if (previous_cmatch) {
+            sut.handleClassMatch(previous_cmatch, true);
+          }
+
           sut.handleClassMatch(cmatch, true);
 
           const finished = new Promise((resolve, _reject) => {
             setTimeout(() => {
               resolve(bucket_saves);
-            }, 0);
+            }, 450);
           });
 
-          expect(finished).to.eventually.deep.equal(expected);
+          return expect(finished).to.eventually.deep.equal(expected);
         });
       }
     );
