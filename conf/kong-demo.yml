@@ -1,7 +1,7 @@
 _format_version: "1.1"
 _info:
   select_tags:
-    - dullahan
+    - dullahan-demo
 upstreams:
   - name: 'dullahan.service'
     algorithm: 'round-robin'
