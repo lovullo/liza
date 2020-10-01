@@ -69,7 +69,7 @@ dullahan:deploy_prod:
     environment:
         name: production
     only:
-        - tags
+        - master
 
 dullahan:deploy_demo:
     extends: [.dullahan]
@@ -89,7 +89,7 @@ dullahan:deploy_demo:
     environment:
         name: demo
     only:
-        - tags
+        - master
 
 dullahan:deploy_test:
     extends: [.dullahan]
