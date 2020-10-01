@@ -766,6 +766,7 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
     }
 
     if (
+      !this.stepWhens ||
       !this.steps[step_id].id ||
       this.stepWhens[this.steps[step_id].id] === undefined
     ) {

@@ -399,6 +399,13 @@ describe('Program', _ => {
         step_id: 3,
         expected: true,
       },
+      {
+        label: 'step is visible when no classifications are defined',
+        whens: undefined,
+        class_data: [{'--visstep-firststep': {is: true, indexes: 0}}],
+        step_id: 2,
+        expected: true,
+      },
     ].forEach(({label, whens, class_data, step_id, expected}) => {
       it(label, done => {
         const sut = getSut([0, 1]);
