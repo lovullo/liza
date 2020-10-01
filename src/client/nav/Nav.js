@@ -277,6 +277,10 @@ module.exports = Class('Nav').extend(EventEmitter, {
       step_id = this._lastStepId;
     }
 
+    if (this.isLastStep(step_id)) {
+      return this._lastStepId + 1;
+    }
+
     const next_step = this._program.getNextVisibleStep(this._classes, step_id);
 
     return next_step === undefined
@@ -417,6 +421,11 @@ module.exports = Class('Nav').extend(EventEmitter, {
     // We are jumping too far ahead
     if (step_id > this.getNextStepId(this._topVisitedStepId)) {
       return false;
+    }
+
+    // next step is valid if currently on the last step
+    if (this.isLastStep(this.getCurrentStepId())) {
+      return true;
     }
 
     return this.stepIsVisible(step_id);
