@@ -359,37 +359,44 @@ describe('Program', _ => {
     [
       {
         label: 'step is visible when step classification is true',
-        whens: {info: '--visstep-info'},
-        class_data: {'--visstep-info': {is: true, indexes: 0}},
-        step_id: 1,
+        whens: {info: '--visstep-applicant'},
+        class_data: {'--visstep-applicant': {is: true, indexes: 0}},
+        step_id: 2,
         expected: true,
       },
       {
         label: 'first step is always visible',
-        whens: {info: '--visstep-info'},
-        class_data: {'--visstep-info': {is: false, indexes: 0}},
+        whens: {info: '--visstep-firststep'},
+        class_data: {'--visstep-firststep': {is: false, indexes: 0}},
         step_id: 1,
         expected: true,
       },
       {
         label: 'unknown step is not visible',
-        whens: {info: '--visstep-info'},
-        class_data: [{'--visstep-info': {is: true, indexes: 0}}],
+        whens: {firststep: '--visstep-firststep'},
+        class_data: [{'--visstep-firststep': {is: true, indexes: 0}}],
         step_id: 99,
         expected: false,
       },
       {
         label: 'step is visible when step classification is missing',
-        whens: {foo: '--visstep-info'},
+        whens: {foo: '--visstep-applicant'},
         class_data: [],
-        step_id: 1,
+        step_id: 2,
+        expected: true,
+      },
+      {
+        label: 'step is visible when step classification is undefined',
+        whens: {applicant: '--visstep-applicant'},
+        class_data: [{}],
+        step_id: 2,
         expected: true,
       },
       {
         label: 'step is visible when no step id is defined',
         whens: undefined,
         class_data: [],
-        step_id: 2,
+        step_id: 3,
         expected: true,
       },
     ].forEach(({label, whens, class_data, step_id, expected}) => {
@@ -398,7 +405,8 @@ describe('Program', _ => {
         sut.stepWhens = whens;
         sut.steps = [
           null,
-          {id: 'info', title: 'Information', type: ''},
+          {id: 'firststep', title: 'First Step', type: ''},
+          {id: 'applicant', title: 'Applicant', type: ''},
           {title: 'Mystery Step', type: ''},
         ];
 

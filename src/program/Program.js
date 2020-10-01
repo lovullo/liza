@@ -780,6 +780,12 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
 
     const step_when = this.stepWhens[this.steps[step_id].id];
     const step_class = class_data[step_when];
+
+    // class data does not exist yet
+    if (step_class === undefined) {
+      return true;
+    }
+
     return step_class && step_class.is === true;
   },
 });
