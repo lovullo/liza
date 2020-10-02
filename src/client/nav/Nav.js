@@ -66,10 +66,10 @@ module.exports = Class('Nav').extend(EventEmitter, {
   'private _quoteId': -1,
 
   /**
-   * Stores the last step id to determine if the step has changed
+   * Stores the current step id
    * @type {number}
    */
-  'private _lastStepId': 0,
+  'private _currentStepId': 0,
 
   /**
    * Id of the max visited step
@@ -196,7 +196,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
     var nav = this;
     var event = {
       stepId: step_id,
-      currentStepId: this._lastStepId,
+      currentStepId: this._currentStepId,
 
       abort: false,
       resume: function (revalidate, callback) {
@@ -221,7 +221,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
           : orig_resume;
 
         // nothing to do if we're already on the step
-        if (cur_check && nav._lastStepId == step_id) {
+        if (cur_check && nav._currentStepId == step_id) {
           return nav;
         }
 
@@ -237,7 +237,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
           }
         }
 
-        nav._lastStepId = step_id;
+        nav._currentStepId = step_id;
         if (step_id > nav._topVisitedStepId) {
           nav._topVisitedStepId = step_id;
         }
@@ -274,17 +274,17 @@ module.exports = Class('Nav').extend(EventEmitter, {
    */
   getNextStepId: function (step_id) {
     if (step_id === undefined) {
-      step_id = this._lastStepId;
+      step_id = this._currentStepId;
     }
 
     if (this.isLastStep(step_id)) {
-      return this._lastStepId + 1;
+      return this._currentStepId + 1;
     }
 
     const next_step = this._program.getNextVisibleStep(this._classes, step_id);
 
     return next_step === undefined
-      ? Math.max(this._lastStepId, this._firstStepId)
+      ? Math.max(this._currentStepId, this._firstStepId)
       : next_step;
   },
 
@@ -297,11 +297,11 @@ module.exports = Class('Nav').extend(EventEmitter, {
   getPrevStepId: function () {
     const prev_id = this._program.getPreviousVisibleStep(
       this._classes,
-      this._lastStepId
+      this._currentStepId
     );
 
     return prev_id === undefined || !this.hasPrevStep()
-      ? this._lastStepId
+      ? this._currentStepId
       : prev_id;
   },
 
@@ -325,7 +325,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
    */
   hasPrevStep: function () {
     // this logic is bound to change in the future
-    return +this._lastStepId <= +this._firstStepId ? false : true;
+    return +this._currentStepId <= +this._firstStepId ? false : true;
   },
 
   /**
@@ -335,7 +335,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
    */
   navigateToNextStep: function () {
     // we don't know what to do if we don't know what step we're on!
-    if (this._lastStepId == 0) {
+    if (this._currentStepId == 0) {
       return;
     }
 
@@ -407,7 +407,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
    * @return Integer id of the current step
    */
   getCurrentStepId: function () {
-    return this._lastStepId;
+    return this._currentStepId;
   },
 
   /**
