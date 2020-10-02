@@ -278,7 +278,7 @@ module.exports = Class('Nav').extend(EventEmitter, {
     }
 
     if (this.isLastStep(step_id)) {
-      return this._currentStepId + 1;
+      return Math.max(this.getTopVisitedStepId(), this._currentStepId) + 1;
     }
 
     const next_step = this._program.getNextVisibleStep(this._classes, step_id);
