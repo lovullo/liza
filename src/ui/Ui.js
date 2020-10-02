@@ -517,16 +517,15 @@ module.exports = Class('Ui').extend(EventEmitter, {
       this._addNavButtons(this.currentStep);
     }
 
-    // we need to emit this before we display to the user, but *after* the
-    // steps have had the chance to initialize their elements and add them
-    // to the DOM (otherwise, selectors would fail if we are trying to
-    // manipulate the DOM further before displaying it to the user)
-    this.currentStep.preRender();
+    // we need to emit this before we display to the user so that
+    // ElementStyler has the current step content to query when
+    // fields are added or modified
     this.emit(
       this.__self.$('EVENT_PRE_RENDER_STEP'),
       this.currentStep,
       step_content
     );
+    this.currentStep.preRender();
 
     var ui = this;
 
