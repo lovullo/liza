@@ -32,6 +32,7 @@ describe('Nav', () => {
         label: 'returns next visible step if available',
         next_visible_step: 4,
         start_step: 2,
+        top_visited_step: 2,
         last_step_to_visit: undefined,
         expected_step: 4,
       },
@@ -39,6 +40,7 @@ describe('Nav', () => {
         label: 'returns last visited step there is no next visible step',
         next_visible_step: undefined,
         start_step: 4,
+        top_visited_step: 4,
         last_step_to_visit: 4,
         expected_step: 4,
       },
@@ -46,6 +48,7 @@ describe('Nav', () => {
         label: 'returns current step if there is no next visible step',
         next_visible_step: undefined,
         start_step: 4,
+        top_visited_step: 4,
         last_step_to_visit: 4,
         expected_step: 4,
       },
@@ -53,7 +56,17 @@ describe('Nav', () => {
         label: 'returns last step + 1 if on the last step',
         next_visible_step: 5,
         start_step: 5,
+        top_visited_step: 5,
         last_step_to_visit: 5,
+        expected_step: 6,
+      },
+      {
+        label:
+          'returns top visited step + 1 if on the last step and there is no current step',
+        next_visible_step: 5,
+        start_step: 5,
+        top_visited_step: 5,
+        last_step_to_visit: undefined, // first time init quote we haven't visited anything yet
         expected_step: 6,
       },
     ].forEach(
@@ -61,6 +74,7 @@ describe('Nav', () => {
         label,
         next_visible_step,
         start_step,
+        top_visited_step,
         last_step_to_visit,
         expected_step,
       }) => {
@@ -74,6 +88,8 @@ describe('Nav', () => {
           if (last_step_to_visit !== undefined) {
             sut.navigateToStep(last_step_to_visit, true);
           }
+
+          sut.setTopVisitedStepId(top_visited_step);
           expect(sut.getNextStepId(start_step)).to.equal(expected_step);
         });
       }
