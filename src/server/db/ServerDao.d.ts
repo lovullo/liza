@@ -101,13 +101,13 @@ export interface ServerDao {
   ): this;
 
   /**
-   * Ensure the quote has been rated before
+   * Ensure the quote has pending rates
    *
    * @param quote - the quote to validate
    *
    * @returns a promise with the quote
    */
-  ensurePriorRate(quote: ServerSideQuote): Promise<ServerSideQuote>;
+  ensurePendingRate(quote: ServerSideQuote): Promise<ServerSideQuote>;
 
   /**
    * Save document metadata (meta field on document)

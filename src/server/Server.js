@@ -1300,7 +1300,7 @@ module.exports = Class('Server').extend(EventEmitter, {
         .catch(e => {
           if (
             /^No prior rate/.test(e.message) ||
-            /^No rated date/.test(e.message)
+            /^No pending rates/.test(e.message)
           ) {
             this.logger.log(
               this.logger.PRIORITY_INFO,

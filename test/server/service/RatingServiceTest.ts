@@ -938,7 +938,7 @@ function getStubs(rate_data?: any) {
       return Promise.resolve(quote);
     }
 
-    ensurePriorRate(quote: ServerSideQuote): Promise<ServerSideQuote> {
+    ensurePendingRate(quote: ServerSideQuote): Promise<ServerSideQuote> {
       return Promise.resolve(quote);
     }
 
