@@ -51,6 +51,11 @@ If `configure` is not available, see the section "Configuring" above.
   $ make fix      # attempt to auto-fix linting errors
 ```
 
+## Dullahan
+
+See [`DULLAHAN-README.md`](./DULLAHAN-README.md) for more information on the
+Dullahan daemon.
+
 
 ## Documentation
 Compiled documentation for the latest release is available via our GitLab
