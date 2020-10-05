@@ -22,7 +22,10 @@
 'use strict';
 
 const chai = require('chai');
+const FieldContext = require('../../').ui.context.FieldContext;
+const Class = require('easejs').Class;
 const expect = chai.expect;
+const sinon = require('sinon');
 const Sut = require('../../').ui.Ui;
 
 describe('Ui', () => {
@@ -84,6 +87,102 @@ describe('Ui', () => {
     expect(hook_one_called).to.true;
     expect(hook_two_called).to.true;
   });
+
+  [
+    {
+      label: 'Navigates to section when clicking new section on nav bar',
+      current_section_id: 'foo',
+      clicked_section_id: 'bar',
+      first_section_step_id: 4,
+      is_step_visited: true,
+      expected_emit_calls: true,
+      expected_event: 'stepChange',
+      expected_step_id: 4,
+    },
+    {
+      label: 'Does not navigate when clicking current section on nav bar',
+      current_section_id: 'foo',
+      clicked_section_id: 'foo',
+      first_section_step_id: 4,
+      is_step_visited: true,
+      expected_emit_calls: false,
+      expected_event: undefined,
+      expected_step_id: undefined,
+    },
+    {
+      label: 'Navigates to numeric step id when step has been visited',
+      current_section_id: 'foo',
+      clicked_section_id: 2,
+      first_section_step_id: 2,
+      is_step_visited: true,
+      expected_emit_calls: true,
+      expected_event: 'stepChange',
+      expected_step_id: 2,
+    },
+    {
+      label:
+        'Does not navigates to numeric step id when step has not been visited',
+      current_section_id: 'foo',
+      clicked_section_id: 2,
+      first_section_step_id: 2,
+      is_step_visited: false,
+      expected_emit_calls: false,
+      expected_event: undefined,
+      expected_step_id: undefined,
+    },
+  ].forEach(
+    ({
+      label,
+      current_section_id,
+      clicked_section_id,
+      first_section_step_id,
+      is_step_visited,
+      expected_emit_calls,
+      expected_event,
+      expected_step_id,
+    }) => {
+      it(label, done => {
+        const nav = createMockNav();
+        const nav_bar = createMockNavBar();
+        const options = {
+          uiStyler: createMockUiStyler(),
+          content: createMockContent(),
+          navBar: nav_bar,
+          nav: nav,
+          sidebar: createMockSidebar(),
+        };
+
+        const sut = Sut.extend({
+          'override hideErrors': function () {},
+          'override createDynamicContext': function (c) {},
+        })(options);
+
+        let emit_event_called = false;
+        let emitted_event = undefined;
+        let emitted_step_id = undefined;
+        sut.emit = (event_name, step_id) => {
+          emitted_event = event_name;
+          emitted_step_id = step_id;
+          emit_event_called = true;
+        };
+
+        nav.getCurrentSectionId = () => current_section_id;
+        nav.getFirstVisibleSectionStep = () => first_section_step_id;
+        nav.isStepVisited = () => is_step_visited;
+
+        nav_bar.on = (event_name, cb) => {
+          expect(event_name).to.equal('click');
+          cb(clicked_section_id);
+        };
+
+        sut.init();
+        expect(emit_event_called).to.be.equal(expected_emit_calls);
+        expect(emitted_event).to.be.equal(expected_event);
+        expect(emitted_step_id).to.be.equal(expected_step_id);
+        done();
+      });
+    }
+  );
 });
 
 function createMockStepUi() {
@@ -93,5 +192,48 @@ function createMockStepUi() {
       return;
     },
     isValid: () => true,
+  };
+}
+
+function createMockUiStyler() {
+  const styler = {
+    init: () => styler,
+    on: () => styler,
+  };
+  return styler;
+}
+
+function createMockContent() {
+  return {
+    find: () => createMockJquery(),
+  };
+}
+
+function createMockJquery() {
+  return {
+    find: () => createMockJquery(),
+    extend: () => createMockJquery(),
+    expr: () => {},
+    live: () => {},
+  };
+}
+
+function createMockNavBar() {
+  return {
+    on: () => {},
+  };
+}
+
+function createMockSidebar() {
+  return {
+    init: () => {},
+  };
+}
+
+function createMockNav() {
+  return {
+    getCurrentSectionId: () => '',
+    getFirstVisibleSectionStep: () => 0,
+    isStepVisited: () => true,
   };
 }

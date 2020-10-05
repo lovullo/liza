@@ -978,6 +978,7 @@ module.exports = Class('Server').extend(EventEmitter, {
 
   visitStep: function (step_id, request, quote, program) {
     if (
+      !program.isManageQuoteStep(step_id) &&
       !program.isStepVisible(
         program.classify(quote.getBucket().getData()),
         +step_id

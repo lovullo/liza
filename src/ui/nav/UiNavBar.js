@@ -47,16 +47,24 @@ module.exports = Class('UiNavBar').extend(EventEmitter, {
   'private _$bar': null,
 
   /**
+   * DOM element representing the section navigation bar (to hook)
+   * @type {jQuery}
+   */
+  'private _$section_bar': null,
+
+  /**
    * Initializes nav bar
    *
-   * @param {jQuery} jquery jQuery object
-   * @param {jQuery} $bar   HTML element representing navigation bar
+   * @param {jQuery} jquery       jQuery object
+   * @param {jQuery} $bar         navigation bar
+   * @param {jQuery} $section_bar section navigation bar
    *
    * @return {undefined}
    */
-  'public __construct': function (jquery, $bar) {
+  'public __construct': function (jquery, $bar, $section_bar) {
     this._jquery = jquery;
     this._$bar = $bar;
+    this._$section_bar = $section_bar;
 
     this._initNavBar();
   },
@@ -79,6 +87,18 @@ module.exports = Class('UiNavBar').extend(EventEmitter, {
           _self.emit('click', step_id);
         });
       }.call(this, i + 1));
+    });
+
+    this._$section_bar.find('li').each(function () {
+      const section_id = $(this).attr('data-section-id');
+      (function (section_id) {
+        _self._jquery(this).click(function (event) {
+          // prevent the URL from changing
+          event.preventDefault();
+
+          _self.emit('click', section_id);
+        });
+      }.call(this, section_id));
     });
   },
 });

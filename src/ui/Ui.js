@@ -347,11 +347,24 @@ module.exports = Class('Ui').extend(EventEmitter, {
    */
   _initNavBar: function () {
     var _self = this;
-    this._navBar.on('click', function (step_id) {
+    this._navBar.on('click', function (id) {
+      if (typeof id === 'string') {
+        // already on the current section do not need to navigate
+        if (id === _self.nav.getCurrentSectionId()) {
+          return;
+        }
+        // Navigate by section
+        _self.emit(
+          _self.__self.$('EVENT_STEP_CHANGE'),
+          _self.nav.getFirstVisibleSectionStep(id)
+        );
+        return;
+      }
+
       // do not permit navigation via nav bar if the user has not already
       // visited the step
-      if (_self.nav.isStepVisited(step_id)) {
-        _self.emit(_self.__self.$('EVENT_STEP_CHANGE'), step_id);
+      if (_self.nav.isStepVisited(id)) {
+        _self.emit(_self.__self.$('EVENT_STEP_CHANGE'), id);
       }
     });
   },
@@ -1356,7 +1369,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
     this.$content.toggleClass('is-internal', internal);
   },
 
-  'public createDynamicContext': function (c) {
+  'public virtual createDynamicContext': function (c) {
     var _self = this;
     c(DynamicContext(this._rootContext));
 

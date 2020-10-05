@@ -247,6 +247,53 @@ describe('Server#visitStep', () => {
 
     sut.visitStep(step_to_visit, request, quote, program);
   });
+
+  it('allowed to visit the Manage step', done => {
+    const step_to_visit = 1;
+    const current_step = 2;
+    const top_saved_step = 2;
+    const top_visited_step = 2;
+    const first_step_id = 1;
+    let error_is_sent = false;
+
+    const quote = createMockQuote(
+      current_step,
+      top_saved_step,
+      top_visited_step
+    );
+    // our mocked program sets up manage step as step 1
+    const program = createMockProgram(first_step_id);
+    const session = createMockSession();
+    const request = createMockRequest(session);
+    const response = createMockResponse();
+    const logger = createMockLogger();
+    const sut = getSut(response, undefined, undefined, logger);
+
+    // check that a response is sent to user w/no actions (do not kick back)
+    response.from = (_, __, action) => {
+      expect(error_is_sent).to.be.false;
+      expect(action).to.deep.equal(undefined);
+      expect(given_cur_step_id).to.be.equal(step_to_visit);
+      done();
+    };
+
+    // we want to test the manage quote step
+    program.isManageQuoteStep = step_id => true;
+
+    // manage step is not visible
+    program.isStepVisible = () => false;
+
+    let given_cur_step_id = undefined;
+    quote.setCurrentStepId = step_id => {
+      given_cur_step_id = step_id;
+    };
+
+    response.error = (_, action, __) => {
+      error_is_sent = true;
+    };
+
+    sut.visitStep(step_to_visit, request, quote, program);
+  });
 });
 
 describe('Server#handlePost', () => {
@@ -735,6 +782,7 @@ function createMockProgram(first_step_id, program_ver, next_step) {
     version: program_ver || '',
     getFirstStepId: () => first_step_id,
     isStepVisible: () => false,
+    isManageQuoteStep: () => false,
     steps: [
       ,
       {id: 'Manage Quote', type: 'manage'},
