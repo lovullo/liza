@@ -197,7 +197,8 @@ module.exports = Class('NavStyler', {
    * @return String class to apply to step element
    */
   _getSectionClass: function (step_id, section_id) {
-    section_class = '';
+    const last = this.nav.getTopVisitedStepId();
+    let section_class = '';
 
     if (this.nav.stepWithinSection(step_id, section_id)) {
       section_class = 'sectionCurrent';
