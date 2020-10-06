@@ -367,6 +367,20 @@ describe('Nav', () => {
         });
       }
     );
+
+    it('if top visited is not initialized it is not valid', () => {
+      $ = sinon.stub().returns({bind: () => {}});
+
+      let program = getMockProgram(getStepData(), true);
+      const sut = Sut(program);
+
+      program.getNextVisibleStep = (_, __) => 3;
+      program.isStepVisible = (_, __) => true;
+
+      // we haven't navigated to any step yet - step is not valid
+      expect(sut.getTopVisitedStepId()).to.equal(0);
+      expect(sut.isValidNextStep(2)).to.equal(false);
+    });
   });
 
   it('#getCurrentSectionId returns current section', () => {
