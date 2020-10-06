@@ -46,12 +46,20 @@ module.exports = Class('UiNotifyBar', {
   'private _$parent': null,
 
   /**
+   * Nav bar object
+   * @type {jQuery}
+   */
+  'private _$nav_bar': null,
+
+  /**
    * Creates a new notification bar and prepends to parent
    *
-   * @param {jQuery} $parent destination object
+   * @param {jQuery} $parent  destination object
+   * @param {jQuery} $nav_bar nav bar object
    */
-  'public __construct': function ($parent) {
+  'public __construct': function ($parent, $nav_bar) {
     this._$parent = $parent;
+    this._$nav_bar = $nav_bar;
 
     this._createBar();
   },
@@ -62,7 +70,8 @@ module.exports = Class('UiNotifyBar', {
    * @return {undefined}
    */
   'private _createBar': function () {
-    this._$bar = $('<div>').attr('id', 'notify-bar').prependTo(this._$parent);
+    this._$bar = $('<div>').attr('id', 'notify-bar');
+    this._$nav_bar.after(this._$bar);
   },
 
   /**

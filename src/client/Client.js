@@ -967,7 +967,7 @@ module.exports = Class('Client').extend(EventEmitter, {
       errorBox: errbox,
       sidebar: this._createSidebar($sidebar, this.elementStyler),
       dialog: this.uiDialog,
-      notifyBar: this._factory.createNotifyBar($rater_content),
+      notifyBar: this._factory.createNotifyBar($rater_content, this.$navBar),
 
       uiStyler: this._createUiStyler($error_box),
       navBar: this._factory.createUiNavBar(
