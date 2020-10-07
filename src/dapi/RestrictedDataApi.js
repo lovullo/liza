@@ -23,7 +23,8 @@
 
 var Class = require('easejs').Class,
   DataApi = require('./DataApi'),
-  EventEmitter = require('../events').EventEmitter;
+  EventEmitter = require('../events').EventEmitter,
+  {MissingParamError} = require('../error/MissingParamError');
 
 /**
  * Restricts a DataApi such that only declared params may be used in requests,
@@ -137,7 +138,7 @@ module.exports = Class('RestrictedDataApi')
 
         // the data is not set; if there's no default, then this is an error
         if (!def_val) {
-          throw Error('Missing param: ' + name);
+          throw new MissingParamError('Missing param: ' + name);
         }
 
         // sorry---we only support string defaults for now

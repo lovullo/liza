@@ -46,6 +46,11 @@ const {
     },
   },
 
+  error: {
+    NoPendingError: {NoPendingError},
+    MissingParamError: {MissingParamError},
+  },
+
   field: {FieldClassMatcher},
 
   server: {
@@ -1298,17 +1303,14 @@ module.exports = Class('Server').extend(EventEmitter, {
         })
         .then(quote => this._postDapi(quote.getId(), request, program))
         .catch(e => {
-          if (
-            /^No prior rate/.test(e.message) ||
-            /^No pending rates/.test(e.message)
-          ) {
+          if (Class.isA(NoPendingError, e)) {
             this.logger.log(
               this.logger.PRIORITY_INFO,
               'Did not rate on DAPI return (quote id %d): %s',
               quote.getId(),
               e.message
             );
-          } else if (!/^Missing param/.test(e.message)) {
+          } else if (!Class.isA(MissingParamError, e)) {
             this.logger.log(
               this.logger.PRIORITY_ERROR,
               'Failed to save metadata (quote id %d): %s',

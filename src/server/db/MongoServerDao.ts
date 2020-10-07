@@ -26,6 +26,7 @@ import {PositiveInteger} from '../../numeric';
 import {ServerSideQuote} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
+import {NoPendingError} from '../../error/NoPendingError';
 import {
   MongoCollection,
   MongoUpdate,
@@ -485,12 +486,18 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
             const ratedata = data[0].ratedata;
 
             if (!ratedata) {
-              reject(new Error('No prior rate for quote ' + quote.getId()));
+              reject(
+                new NoPendingError('No prior rate for quote ' + quote.getId())
+              );
               return;
             }
 
             if (!ratedata.__rate_pending || ratedata.__rate_pending <= 0) {
-              reject(new Error('No pending rates for quote ' + quote.getId()));
+              reject(
+                new NoPendingError(
+                  'No pending rates for quote ' + quote.getId()
+                )
+              );
               return;
             }
 
