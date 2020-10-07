@@ -169,7 +169,7 @@ exports.init = function (logger, enc_service, conf, env) {
                   request,
                   function (quote) {
                     dao
-                      .ensurePriorRate(quote)
+                      .ensurePendingRate(quote)
                       .then(_ => {
                         rating_service
                           .request(

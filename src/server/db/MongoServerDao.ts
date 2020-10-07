@@ -26,6 +26,7 @@ import {PositiveInteger} from '../../numeric';
 import {ServerSideQuote} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
+import {NoPendingError} from '../../error/NoPendingError';
 import {
   MongoCollection,
   MongoUpdate,
@@ -459,22 +460,19 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
   }
 
   /**
-   * Ensure the quote has been rated before
+   * Ensure the quote has pending rates
    *
    * @param quote - the quote to validate
    *
    * @returns a promise with the quote
    */
-  ensurePriorRate(quote: ServerSideQuote): Promise<ServerSideQuote> {
+  ensurePendingRate(quote: ServerSideQuote): Promise<ServerSideQuote> {
     return new Promise<ServerSideQuote>((resolve, reject) => {
       this._collection!.find(
         {id: quote.getId()},
         {
           limit: <PositiveInteger>1,
-          fields: {
-            'meta.liza_timestamp_initial_rated': 1,
-            lastPremDate: 1,
-          },
+          fields: {'ratedata.__rate_pending': 1},
         },
         (_err, cursor) => {
           cursor.toArray(function (_err: NullableError, data: any[]) {
@@ -485,26 +483,21 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
               return;
             }
 
-            if (data[0]?.lastPremDate > 0) {
-              resolve(quote);
+            const ratedata = data[0].ratedata;
+
+            if (!ratedata) {
+              reject(
+                new NoPendingError('No prior rate for quote ' + quote.getId())
+              );
               return;
             }
 
-            const meta = data[0].meta;
-
-            if (!meta) {
-              reject(new Error('No meta data for quote ' + quote.getId()));
-              return;
-            }
-
-            const initial_rated = meta.liza_timestamp_initial_rated;
-
-            if (
-              !initial_rated ||
-              initial_rated.length === 0 ||
-              +initial_rated[0] === 0
-            ) {
-              reject(new Error('No prior rate for quote ' + quote.getId()));
+            if (!ratedata.__rate_pending || ratedata.__rate_pending <= 0) {
+              reject(
+                new NoPendingError(
+                  'No pending rates for quote ' + quote.getId()
+                )
+              );
               return;
             }
 
