@@ -443,6 +443,11 @@ module.exports = Class('Nav').extend(EventEmitter, {
    * @return {boolean} Whether the provided step is a valid next step
    */
   isValidNextStep: function (step_id) {
+    // We have not properly initialized yet
+    if (this._topVisitedStepId === 0) {
+      return false;
+    }
+
     // We are jumping too far ahead
     if (step_id > this.getNextStepId(this._topVisitedStepId)) {
       return false;
