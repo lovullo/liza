@@ -121,9 +121,20 @@ describe('Ui', () => {
     },
     {
       label:
-        'Does not navigates to numeric step id when step has not been visited',
+        'Does not navigate to numeric step id when step has not been visited',
       current_section_id: 'foo',
       clicked_section_id: 2,
+      first_section_step_id: 2,
+      is_step_visited: false,
+      expected_emit_calls: false,
+      expected_event: undefined,
+      expected_step_id: undefined,
+    },
+    {
+      label:
+        'Does not navigate to string step id when first step in section has not been visited',
+      current_section_id: 'foo',
+      clicked_section_id: 'bar',
       first_section_step_id: 2,
       is_step_visited: false,
       expected_emit_calls: false,
@@ -172,6 +183,8 @@ describe('Ui', () => {
 
         nav_bar.on = (event_name, cb) => {
           expect(event_name).to.equal('click');
+
+          // for purpose of our test, just call the click event
           cb(clicked_section_id);
         };
 
