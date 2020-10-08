@@ -103,7 +103,7 @@ module.exports = Class('ClientQuote')
      *
      * @type {boolean}
      */
-    'private _dirty': false,
+    'private _dirty': true,
 
     /**
      * The timestamp of the last autosave
