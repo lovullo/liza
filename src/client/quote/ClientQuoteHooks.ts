@@ -79,6 +79,8 @@ export let createQuoteStagingHook = (
       return;
     }
 
-    quote.autosave(transport);
+    quote.autosave(transport, () => {
+      client.nav.setTopVisitedStepId(quote.getTopVisitedStepId());
+    });
   });
 };
