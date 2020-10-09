@@ -20,9 +20,7 @@
  */
 
 import {createConsole as sut} from '../../src/system/ConsoleFactory';
-import {Console} from 'console';
 import {expect} from 'chai';
-import * as fs from 'fs';
 
 describe('createConsole', () => {
   it('no input gives console', () => {
@@ -43,13 +41,5 @@ describe('createConsole', () => {
   it('empty input gives console', () => {
     const given = sut('');
     expect(given).to.be.equal(console);
-  });
-
-  it('real input creates new console', () => {
-    const log_location = 'debug.log';
-    const given = sut(log_location);
-    expect(given).to.not.be.equal(console);
-    expect(given).to.be.an.instanceof(Console);
-    fs.unlinkSync(log_location);
   });
 });
