@@ -443,6 +443,7 @@ describe('Cmatch', () => {
             shown_field: 'default',
             hidden_field: 'default',
           },
+          whens: fields,
         },
       });
 
@@ -480,6 +481,65 @@ describe('Cmatch', () => {
       sut.clearCmatchFields();
 
       expect(data).to.deep.equal(expected);
+    });
+
+    it('searches all fields in program whens', () => {
+      const whens = {
+        foo: [],
+        bar: [],
+        baz: [],
+      };
+
+      const expected = ['foo', 'bar', 'baz'];
+      const actual: string[] = [];
+
+      const cmatch = {};
+      const step_ui = createStubStepUi({});
+
+      const {sut, quote, visibility} = createStubs(cmatch, step_ui, {
+        program: {
+          defaults: {
+            shown_field: 'default',
+            hidden_field: 'default',
+          },
+          whens: whens,
+        },
+      });
+
+      quote.getDataByName = (name: string) => {
+        if (actual.indexOf(name) === -1) {
+          actual.push(name);
+        }
+
+        return <Record<string, any>>{};
+      };
+
+      sinon.stub(visibility, 'getBlueprints').callsFake(() => {
+        return [
+          {
+            name: 'foo',
+            cname: '--vis-foo',
+            show: [],
+            hide: [0],
+          },
+          {
+            name: 'bar',
+            cname: '--vis-bar',
+            show: [],
+            hide: [0],
+          },
+          {
+            name: 'baz',
+            cname: '--vis-baz',
+            show: [],
+            hide: [0],
+          },
+        ];
+      });
+
+      sut.clearCmatchFields();
+
+      expect(actual).to.deep.equal(expected);
     });
   });
 });
