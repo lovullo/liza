@@ -66,47 +66,29 @@ describe('ClientQuote', () => {
     expect(quote.getLastUpdatedByUserName()).to.equal(last_updated_by);
   });
 
-  [
-    {
-      label: 'isDirty is true when staging bucket is dirty',
-      bucket_dirty: true,
-      autosave_data: false,
-      expected_dirty: true,
-    },
-    {
-      label:
-        'isDirty is false when staging bucket is not dirty and no autosave occurs',
-      bucket_dirty: false,
-      autosave_data: false,
-      expected_dirty: false,
-    },
-    {
-      label:
-        'isDirty is true when staging bucket is not dirty but autosave occurs',
-      bucket_dirty: false,
-      autosave_data: true,
-      expected_dirty: true,
-    },
-  ].forEach(({label, bucket_dirty, autosave_data, expected_dirty}) => {
-    it(label, done => {
-      const bucket = createMockBucket(bucket_dirty);
-      const base_quote = createMockBaseQuote(bucket);
-      const data = {foo: 'bar'};
-      const transport = createMockTransport(data);
+  it('isDirty is true when autosave occurs', done => {
+    const bucket = createMockBucket();
+    const base_quote = createMockBaseQuote(bucket);
+    const data = {foo: 'bar'};
+    const transport = createMockTransport(data);
 
-      bucket.commit = () => {};
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
-      const sut = Sut(base_quote, {}, bucket => bucket);
-      if (autosave_data) {
-        sut.autosave(transport);
-      }
+    // test default is dirty
+    expect(sut.isDirty()).to.be.equal(true);
 
-      expect(sut.isDirty()).to.be.equal(expected_dirty);
-      done();
-    });
+    // test that save clears the dirty indication
+    sut.save(transport, function () {});
+    expect(sut.isDirty()).to.be.equal(false);
+
+    // autosave makes it dirty again
+    sut.autosave(transport);
+    expect(sut.isDirty()).to.be.equal(true);
+
+    done();
   });
 
-  it('quote is not dirty after step save', done => {
+  it('isDirty is false after step save', done => {
     const bucket = createMockBucket();
     const base_quote = createMockBaseQuote(bucket);
     const data = {foo: 'bar'};
@@ -117,28 +99,37 @@ describe('ClientQuote', () => {
       dirty_indication.push(sut.isDirty());
     };
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
+    // default is true
+    expect(sut.isDirty()).to.be.true;
 
-    expect(sut.isDirty()).to.be.false;
     sut.autosave(transport);
     sut.save(transport, function () {});
 
-    // autosave will commit the bucket and set the dirty true; step save will commit and clear dirty flag
+    // autosave will commit the bucket and set the dirty true;
+    // then step save will commit and clear dirty flag
     expect(dirty_indication).to.deep.equal([true, false]);
     done();
   });
 
-  it('autosave commits on transport success', done => {
+  it('autosave commits and sets top visited step on transport success', done => {
     const bucket = createMockBucket();
     const base_quote = createMockBaseQuote(bucket);
     const data = {foo: 'bar'};
     const transport = createMockTransport(data);
 
+    let current_step_id = 2;
+    let given_top_step_id = 0;
+    base_quote.setTopVisitedStepId = step_id => {
+      given_top_step_id = step_id;
+    };
+    base_quote.getCurrentStepId = () => current_step_id;
     bucket.commit = () => {
+      expect(given_top_step_id).to.be.equals(current_step_id);
       done();
     };
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     sut.autosave(transport);
   });
@@ -156,7 +147,7 @@ describe('ClientQuote', () => {
       commit_call_count++;
     };
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     sut.autosave(transport, () => {
       expect(commit_call_count).to.equal(0);
@@ -176,7 +167,7 @@ describe('ClientQuote', () => {
       commit_call_count++;
     };
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     transport.send = (_, cb) => {
       sut.invalidateAutosave();
@@ -196,7 +187,7 @@ describe('ClientQuote', () => {
 
     let send_call_count = 0;
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     let send_cb = () => {};
 
@@ -222,7 +213,7 @@ describe('ClientQuote', () => {
 
     let send_call_count = 0;
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     let send_cb = () => {};
 
@@ -251,7 +242,7 @@ describe('ClientQuote', () => {
       commit_call_count++;
     };
 
-    const sut = Sut(base_quote, {}, bucket => bucket);
+    const sut = getSut(base_quote, {}, bucket => bucket);
 
     let transport_send_called = false;
 
@@ -272,6 +263,14 @@ describe('ClientQuote', () => {
   });
 });
 
+function getSut(quote, data, staging_callback) {
+  return Sut.extend({
+    'override initQuote': function (quote, data) {
+      return quote;
+    },
+  })(quote, data, staging_callback);
+}
+
 function createMockBucket(bucket_dirty = false) {
   return {
     on: _ => {},
@@ -284,6 +283,9 @@ function createMockBaseQuote(bucket) {
   const quote = {
     visitData: cb => {
       cb(bucket);
+    },
+    getCurrentStepId: _ => {
+      return 0;
     },
     setData: _ => {
       return quote;

@@ -353,11 +353,14 @@ module.exports = Class('Ui').extend(EventEmitter, {
         if (id === _self.nav.getCurrentSectionId()) {
           return;
         }
-        // Navigate by section
-        _self.emit(
-          _self.__self.$('EVENT_STEP_CHANGE'),
-          _self.nav.getFirstVisibleSectionStep(id)
-        );
+
+        if (_self.nav.isStepVisited(_self.nav.getFirstVisibleSectionStep(id))) {
+          // Navigate by section
+          _self.emit(
+            _self.__self.$('EVENT_STEP_CHANGE'),
+            _self.nav.getFirstVisibleSectionStep(id)
+          );
+        }
         return;
       }
 

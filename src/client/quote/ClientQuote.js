@@ -103,7 +103,7 @@ module.exports = Class('ClientQuote')
      *
      * @type {boolean}
      */
-    'private _dirty': false,
+    'private _dirty': true,
 
     /**
      * The timestamp of the last autosave
@@ -468,6 +468,7 @@ module.exports = Class('ClientQuote')
       this._doSave(transport, function (data) {
         if (!data.hasError && _self._autosave_id === id) {
           _self._dirty = true;
+          _self._quote.setTopVisitedStepId(_self._quote.getCurrentStepId());
           _self._staging.commit();
         }
 
