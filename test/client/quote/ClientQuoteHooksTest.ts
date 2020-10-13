@@ -23,12 +23,10 @@ import {createQuoteStagingHook as sut} from '../../../src/client/quote/ClientQuo
 import {Client} from '../../../src/client/Client';
 import {ClientQuote} from '../../../src/client/quote/ClientQuote';
 import {Program} from '../../../src/program/Program';
-import {Nav} from '../../../src/client/nav/Nav';
 import {QuoteTransport} from '../../../src/client/transport/QuoteTransport';
 
 import {expect} from 'chai';
 import {Ui} from '../../../src/ui/Ui';
-import {PositiveInteger} from '../../../src/numeric';
 
 describe('createQuoteStagingHook', () => {
   it('Do not hook quote when autosave is missing', () => {
@@ -143,37 +141,6 @@ describe('createQuoteStagingHook', () => {
       });
     }
   );
-
-  it('Callback sets the top visited step', () => {
-    const {
-      client: client,
-      quote: quote,
-      nav: nav,
-      program: program,
-      transport: transport,
-    } = createStubs({foo: [1]});
-
-    program.autosave = true;
-
-    const top_step_id = <PositiveInteger>4;
-    quote.getTopVisitedStepId = () => top_step_id;
-
-    let given_top_step_id = <PositiveInteger>0;
-    nav.setTopVisitedStepId = (step_id: PositiveInteger) => {
-      given_top_step_id = step_id;
-    };
-
-    let autosave_called = false;
-    quote.autosave = (_: any, cb: any) => {
-      autosave_called = true;
-      cb();
-      return quote;
-    };
-
-    sut(client, program, transport)(quote);
-    expect(given_top_step_id).to.be.equals(top_step_id);
-    expect(autosave_called).to.be.true;
-  });
 });
 
 function createStubClientQuote(diff: any = {}) {
@@ -181,14 +148,12 @@ function createStubClientQuote(diff: any = {}) {
     on: (_: any, cb: any) => cb(diff),
     autosave: (_: any) => {},
     isLocked: () => false,
-    getTopVisitedStepId: () => 0,
     invalidateAutosave: () => false,
   });
 }
 
-function createStubClient(ui: Ui, navigation_pending: boolean, nav: Nav) {
+function createStubClient(ui: Ui, navigation_pending: boolean) {
   return <Client>(<unknown>{
-    nav: nav,
     isNavigating: () => navigation_pending,
     getUi: () => ui,
   });
@@ -197,12 +162,6 @@ function createStubClient(ui: Ui, navigation_pending: boolean, nav: Nav) {
 function createStubUi(save_pending: boolean) {
   return <Ui>(<unknown>{
     isSaving: () => save_pending,
-  });
-}
-
-function createStubNav() {
-  return <Nav>(<unknown>{
-    setTopVisitedStepId: (_: any) => {},
   });
 }
 
@@ -222,8 +181,7 @@ function createStubs(
   navigation_pending: boolean = false
 ) {
   const ui = createStubUi(save_pending);
-  const nav = createStubNav();
-  const client = createStubClient(ui, navigation_pending, nav);
+  const client = createStubClient(ui, navigation_pending);
   const quote = createStubClientQuote(diff);
   const program = createStubProgram();
   const transport = createStubTransport();
@@ -231,7 +189,6 @@ function createStubs(
   return {
     client: client,
     ui: ui,
-    nav: nav,
     quote: quote,
     program: program,
     transport: transport,
