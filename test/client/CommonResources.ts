@@ -110,7 +110,7 @@ export function createStubProgram(overrides: any = {}) {
       foo: 'default',
     },
     apis: {},
-    whens: {},
+    whens: overrides.whens ?? {},
     groupWhens: {},
     internal: {},
     autosave: false,
