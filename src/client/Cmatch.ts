@@ -219,6 +219,8 @@ export class Cmatch {
       throw TypeError('Cannot handle class match on undefined step');
     }
 
+    const fields = cur_step.getStep().getExclusiveFieldNames();
+
     // Prepare to keep track of any fields that show/hide in this process and
     // update the bucket if necessary
     const shown: VisibilityBucketUpdate = {};
@@ -226,6 +228,11 @@ export class Cmatch {
     const visq: VisibilityQueue = {};
 
     for (const field in cmatch) {
+      // ignore fields that are not on the current step
+      if (!fields[field]) {
+        continue;
+      }
+
       // if the match is still false, then we can rest assured
       // that nothing has changed (and skip the overhead)
       if (!force && cmatch[field] === false && this._cmatch[field] === false) {
@@ -469,7 +476,7 @@ export class Cmatch {
 
     const reset: CmatchData = {};
 
-    for (const name in program.whens) {
+    for (const name in step.getStep().getExclusiveFieldNames()) {
       const data = this._cmatchHidden[name];
 
       // if there is no data or we have been asked to retain this field's
