@@ -338,6 +338,29 @@ describe('Server#handlePost', () => {
     sut.handlePost(step_to_post, request, quote, program, session, autosave);
   });
 
+  it('Sets imported on concluding save', done => {
+    const {program, session, request, sut, quote} = getMocks();
+
+    let imported_set = false;
+
+    quote.setImported = val => {
+      imported_set = val;
+    };
+
+    const post_data = {
+      data: '{"foo": ["bar"]}',
+      concluding_save: 'true',
+    };
+
+    request.getPostData = c => {
+      c(post_data);
+      expect(imported_set).to.be.true;
+      done();
+    };
+
+    sut.handlePost(2, request, quote, program, session, false);
+  });
+
   [
     {
       label: 'Allows autosave when not next immediate step',
@@ -659,6 +682,24 @@ describe('Server#initQuote', () => {
   });
 });
 
+function getMocks() {
+  const quote = createMockQuote();
+  const program = createMockProgram();
+  const session = createMockSession();
+  const request = createMockRequest(session);
+  const response = createMockResponse();
+  const sut = getSut(response);
+
+  return {
+    quote: quote,
+    program: program,
+    session: session,
+    request: request,
+    response: response,
+    sut: sut,
+  };
+}
+
 function getSut(response, dao, prog_init, logger) {
   return new Sut(
     response,
@@ -745,7 +786,9 @@ function createMockRequest(session) {
   return {
     end: () => {},
     getSession: () => session,
-    getPostData: () => {},
+    getPostData: c => {
+      c();
+    },
   };
 }
 
@@ -773,14 +816,29 @@ function createMockSession(
 }
 
 function createMockDataProcessor() {
-  return sinon.createStubInstance(DataProcessor);
+  const processor = sinon.createStubInstance(DataProcessor);
+  const filtered = {};
+  const dapis = [];
+  const meta_clear = {};
+  const rdiff = {};
+
+  processor.processDiff = () => {
+    return {
+      filtered: filtered,
+      dapis: dapis,
+      meta_clear: meta_clear,
+      rdiff: rdiff,
+    };
+  };
+
+  return processor;
 }
 
 function createMockProgram(first_step_id, program_ver, next_step) {
   return {
     id: () => 'foo',
     version: program_ver || '',
-    getFirstStepId: () => first_step_id,
+    getFirstStepId: () => first_step_id || 1,
     isStepVisible: () => false,
     isManageQuoteStep: () => false,
     steps: [
@@ -794,8 +852,9 @@ function createMockProgram(first_step_id, program_ver, next_step) {
       {id: 'Step6', type: ''},
     ],
     processNaFields: () => {},
-    getNextVisibleStep: () => next_step || 0,
+    getNextVisibleStep: () => next_step || 2,
     classify: () => {},
+    secureFields: [],
   };
 }
 
@@ -824,7 +883,9 @@ function createMockDao(min_quote_id, max_quote_id) {
     pullQuote: () => {},
     saveQuote: () => {},
     saveQuoteMeta: () => {},
+    saveQuoteState: () => {},
     getMinQuoteId: c => c(min_quote_id || 0),
     getMaxQuoteId: c => c(max_quote_id || 999999),
+    mergeData: () => {},
   };
 }

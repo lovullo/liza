@@ -1176,7 +1176,7 @@ module.exports = Class('Server').extend(EventEmitter, {
           var rdelta_data;
           var parsed_data = JSON.parse(post_data.data);
           var bucket = quote.getBucket();
-          const concluding_save = post_data.concluding_save;
+          const concluding_save = post_data.concluding_save === 'true';
 
           const {
             filtered,
@@ -1194,15 +1194,19 @@ module.exports = Class('Server').extend(EventEmitter, {
           // Leave rdelta_data undefined if rdiff is an empty object
           // but if there is a concluding save we still want to send
           // the delta
-          if (concluding_save === 'true' || Object.keys(rdiff).length > 0) {
+          if (concluding_save || Object.keys(rdiff).length > 0) {
             rdelta_data = {
               'rdelta.data': {
                 data: rdiff,
-                concluding_save: concluding_save === 'true',
+                concluding_save: concluding_save,
                 timestamp: server._ts_ctor(),
                 step_id: step_id,
               },
             };
+          }
+
+          if (concluding_save) {
+            quote.setImported(true);
           }
 
           server._monitorMetadataPromise(
