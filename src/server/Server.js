@@ -734,7 +734,7 @@ module.exports = Class('Server').extend(EventEmitter, {
     }
 
     this._feature_flag
-      .isEnabled('liza_autosave', {user: session.userName()})
+      .isEnabled('liza_autosave', {user: program.id})
       .then(autosave_flag => {
         // decrypt bucket contents, if necessary, and return
         this._getBucketCipher(program).decrypt(bucket, function () {
