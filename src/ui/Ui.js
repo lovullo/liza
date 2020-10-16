@@ -1388,4 +1388,133 @@ module.exports = Class('Ui').extend(EventEmitter, {
 
     return this;
   },
+
+  showLockedNotification: function (internal) {
+    var __self = this,
+      explicit_step = this.quote.getExplicitLockStep();
+
+    var lock_msg =
+      this.quote.getExplicitLockReason() ||
+      'The quote is locked and cannot be modified.';
+
+    // if the step is locked to step 1, then there is no noticable effect;
+    // don't bother
+    if (explicit_step == 1) {
+      return;
+    }
+
+    // do not allow modification of programs that cannot be unlocked, or if
+    // we're not logged in as an internal user
+    if (!this._program.unlockable || !internal) {
+      // delay to permit repaint (prevent lockup in IE6)
+      setTimeout(function () {
+        __self.showNotifyBar(
+          $('<div>').append($('<div class="text">').html(lock_msg))
+        );
+      }, 25);
+
+      return;
+    }
+
+    // delay to permit repaint (prevent lockup in IE6)
+    setTimeout(function () {
+      var lock_str = 'This quote has been locked.';
+
+      if (explicit_step > 0) {
+        lock_str =
+          'The first ' +
+          explicit_step +
+          ' steps of this ' +
+          'quote have been locked.';
+      }
+
+      __self.showNotifyBar(
+        $('<div>')
+          .append(
+            $('<div class="text">').html(
+              lock_str +
+                ' If you wish to modify ' +
+                'it please click <strong>Unlock Quote</strong>.'
+            )
+          )
+          .append(
+            $('<button>')
+              .text('Unlock Quote')
+              .click(function () {
+                __self._modifyLockedQuote();
+              })
+          )
+      );
+    }, 25);
+  },
+
+  'private _modifyLockedQuote': function () {
+    var imported = this.quote.isImported();
+
+    // unlock the quote (not that this is client-side only; this does not
+    // affect the values on the server)
+    this.quote.clientSideUnlock();
+
+    // update UI to unlock quote for the user
+    this.hideNotifyBar().updateLocked();
+
+    // if the quote has been imported, then display a bar explaining the
+    // modification workflow and providing a "Done Modifying" button
+    if (imported) {
+      this.showNotifyBar(
+        $('<div>')
+          .append(
+            $('<div class="text">').html(
+              'When finished, please return ' +
+                'to the final step and click the ' +
+                '<strong>Done Modifying</strong> button.'
+            )
+          )
+          .append(this._createDoneModifyingButton())
+      );
+    }
+  },
+
+  /**
+   * Create "Done Modifying" button for lock bar
+   *
+   * @return {jQuery} hooked button
+   */
+  'private _createDoneModifyingButton': function () {
+    var __self = this;
+
+    var $btn = $('<button>')
+      .text('Done Modifying')
+      .click(
+        (function () {
+          return function () {
+            // first, initiate step save
+            __self.saveStep();
+
+            // re-lock
+            // client.clientSideRelock();
+            __self.updateLocked();
+
+            __self.emit('quoteRelock');
+            __self.showLockedNotification(true);
+          };
+        })(this)
+      )
+      // disable by default if not on the last step
+      .attr(
+        'disabled',
+        this.nav.isLastStep(this._quote.getCurrentStepId()) ? '' : 'disabled'
+      );
+    // TODO: remove hook when hiding button to free memory
+    this.on('stepChange', function (step_id) {
+      // if we've reached the last step, enable the button
+      if (__self.nav.isLastStep(step_id)) {
+        $btn.enable();
+      } else {
+        $btn.disable();
+      }
+    });
+
+    return $btn;
+  },
 });
