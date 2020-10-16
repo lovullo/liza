@@ -21,16 +21,17 @@
 
 import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
+import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
+import {DefaultController} from '../src/dullahan/controllers/DefaultController';
 import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
 import {IndicationController} from '../src/dullahan/controllers/IndicationController';
-import {DefaultController} from '../src/dullahan/controllers/DefaultController';
 import {Router} from '../src/system/network/Router';
-import {createConsole} from '../src/system/ConsoleFactory';
 import {StandardLogger} from '../src/system/StandardLogger';
-import * as promBundle from 'express-prom-bundle';
+import {accessLogger} from '../src/dullahan/middleware/AccessLogger';
+import {createConsole} from '../src/system/ConsoleFactory';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ const metricsMiddleware = promBundle({includePath: true});
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(metricsMiddleware);
+app.use(accessLogger());
 
 const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 const emitter = new EventEmitter();
