@@ -93,6 +93,7 @@ const {ContextParser} = require('../ui/context/ContextParser');
 const {DelegateEventHandler} = require('./event/DelegateEventHandler');
 const {DelayEventHandler} = require('./event/DelayEventHandler');
 const {KickbackEventHandler} = require('./event/KickbackEventHandler');
+const {LockEventHandler} = require('./event/LockEventHandler');
 const {GroupContext} = require('../ui/context/GroupContext');
 const {WindowFeatureFlag} = require('../system/flags/WindowFeatureFlag');
 const {GeneralStepUi} = require('../ui/step/GeneralStepUi');
@@ -418,6 +419,7 @@ module.exports = Class('ClientDependencyFactory', {
       delay: new DelayEventHandler(client),
       show: field_vis_handler,
       hide: field_vis_handler,
+      lock: new LockEventHandler(client),
     });
   },
 

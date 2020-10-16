@@ -74,7 +74,7 @@ export declare class BaseQuote implements Quote {
    *
    * @return self
    */
-  setExplicitLock(reason: string, step: number): this;
+  setExplicitLock(reason: string, step?: number): this;
 
   /**
    * Set the date that the premium was calculated as a Unix timestamp

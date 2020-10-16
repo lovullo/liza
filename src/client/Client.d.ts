@@ -86,6 +86,11 @@ export declare class Client {
   isSaving(): boolean;
 
   /**
+   * Whether we are an internal user
+   */
+  isInternal(): boolean;
+
+  /**
    * Whether there is a navigation event in progress
    */
   isNavigating(): boolean;

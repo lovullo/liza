@@ -908,13 +908,6 @@ module.exports = Class('Client').extend(EventEmitter, {
           '/quote/' + action.id + '/#' + action.quoteId;
         break;
 
-      case 'lock':
-        // we don't need the reason client-side
-        this._quote.setExplicitLock('quote server');
-        this.ui.updateLocked();
-        this._showLockedNotification(this.isInternal());
-        break;
-
       case 'unlock':
         this._quote.clearExplicitLock().setImported(false);
         this.ui.updateLocked();
@@ -928,6 +921,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         });
         break;
 
+      case 'lock':
       case 'kickBack':
       case 'delay':
         this._eventHandler.handle(action_type, function () {}, action);
