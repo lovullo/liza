@@ -762,7 +762,7 @@ module.exports = Class('Server').extend(EventEmitter, {
               startDate: quote.getStartDate(),
               initialRatedDate: quote.getInitialRatedDate(),
               lastPremDate: quote.getLastPremiumDate(),
-              autosave: program.autosave && autosave_flag,
+              autosave: autosave_flag,
 
               // set to undefined if not internal so it's not included in the
               // JSON response
