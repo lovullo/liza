@@ -328,6 +328,10 @@ module.exports = Class('Client').extend(EventEmitter, {
     return this.ui;
   },
 
+  getDocument: function () {
+    return this._document;
+  },
+
   /**
    * Returns the Element Styler object
    *
@@ -922,6 +926,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         break;
 
       case 'lock':
+      case 'navFreeze':
       case 'kickBack':
       case 'delay':
         this._eventHandler.handle(action_type, function () {}, action);

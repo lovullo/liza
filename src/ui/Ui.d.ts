@@ -56,4 +56,8 @@ export declare class Ui {
   updateLocked(): this;
 
   showLockedNotification(internal: boolean): void;
+
+  freezeNav(): this;
+
+  showNotifyBar(content: any): this;
 }

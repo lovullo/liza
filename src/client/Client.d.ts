@@ -49,6 +49,8 @@ export declare class Client {
    */
   getUi(): Ui;
 
+  getDocument(): HTMLDocument;
+
   /**
    * Returns the current quote
    */

@@ -1358,7 +1358,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
   },
 
   'public hideNotifyBar': function () {
-    this._notifyBar.hide();
+    this._notifyBar.setContent('').hide();
     return this;
   },
 
