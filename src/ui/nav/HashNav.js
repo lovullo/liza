@@ -84,7 +84,7 @@ module.exports = Class('HashNav', {
         );
       }
 
-      this._stepMap[i] = step_map[i].title.replace(/ /g, '_');
+      this._stepMap[i] = step_map[i].title.replace(/ /g, '_').replace(/'/g, '');
     }
   },
 
