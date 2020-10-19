@@ -248,5 +248,6 @@ function createMockNav() {
     getCurrentSectionId: () => '',
     getFirstVisibleSectionStep: () => 0,
     isStepVisited: () => true,
+    on: () => {},
   };
 }

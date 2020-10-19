@@ -211,6 +211,8 @@ function getStubs() {
     createUiNavBar: () => {},
     createUiStyler: () => ui_styler,
     createValidatorFormatter: () => {},
+    createNavStylerManager: () => {},
+    createMobileNav: () => {},
   };
 
   const sut = Sut(jquery, factory, undefined, jquery, doc, win);

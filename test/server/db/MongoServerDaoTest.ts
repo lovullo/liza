@@ -285,7 +285,7 @@ function createMockDb(on_update: any): MongoDb {
 }
 
 function createStubQuote(metadata: Record<string, any>) {
-  const program = <Program>{
+  const program = <Program>(<unknown>{
     clearNaFields: false,
     naFieldValue: '',
     getId: () => '1',
@@ -312,7 +312,7 @@ function createStubQuote(metadata: Record<string, any>) {
     classify: () => <ClassificationResult>{},
     hasNaField: () => false,
     hasKnownType: () => true,
-  };
+  });
 
   const quote = <ServerSideQuote>(<unknown>{
     getBucket: () =>

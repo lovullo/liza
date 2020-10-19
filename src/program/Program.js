@@ -805,4 +805,17 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
   isManageQuoteStep: function (step_id) {
     return this.steps[step_id].type === 'manage';
   },
+
+  /**
+   * Get the title for a step
+   *
+   * @param {number} step_id the step id
+   *
+   * @return {string} the title of the step or undefined if not found
+   */
+  getStepTitle(step_id) {
+    const step = this.steps[step_id];
+
+    return step !== undefined ? step.title : undefined;
+  },
 });
