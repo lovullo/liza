@@ -508,6 +508,8 @@ module.exports = Class('Client').extend(EventEmitter, {
 
       if (!data.content.autosave) {
         client.program.autosave = false;
+      } else {
+        client.program.autosave = true;
       }
 
       // stop any currently running XHRs to ensure they don't conflict
