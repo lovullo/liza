@@ -1503,7 +1503,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
       // disable by default if not on the last step
       .attr(
         'disabled',
-        this.nav.isLastStep(this._quote.getCurrentStepId()) ? '' : 'disabled'
+        this.nav.isLastStep(this.quote.getCurrentStepId()) ? '' : 'disabled'
       );
     // TODO: remove hook when hiding button to free memory
     this.on('stepChange', function (step_id) {
