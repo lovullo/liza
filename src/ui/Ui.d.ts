@@ -52,4 +52,12 @@ export declare class Ui {
    * Whether there is a current save event
    */
   isSaving(): boolean;
+
+  updateLocked(): this;
+
+  showLockedNotification(internal: boolean): void;
+
+  freezeNav(): this;
+
+  showNotifyBar(content: any): this;
 }

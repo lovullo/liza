@@ -49,6 +49,8 @@ export declare class Client {
    */
   getUi(): Ui;
 
+  getDocument(): HTMLDocument;
+
   /**
    * Returns the current quote
    */
@@ -84,6 +86,11 @@ export declare class Client {
    * Whether there is a current save event
    */
   isSaving(): boolean;
+
+  /**
+   * Whether we are an internal user
+   */
+  isInternal(): boolean;
 
   /**
    * Whether there is a navigation event in progress

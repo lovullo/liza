@@ -38,7 +38,8 @@ export type ClientActionType =
   | 'show'
   | 'hide'
   | 'set'
-  | 'action$cvv2Dialog';
+  | 'action$cvv2Dialog'
+  | 'navFreeze';
 
 /**
  * Action to be performed by the client
