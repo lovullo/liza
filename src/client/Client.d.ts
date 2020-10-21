@@ -70,7 +70,7 @@ export declare class Client {
    */
   handleEvent(
     event_name: string,
-    data: object,
+    data: Record<string, unknown>,
     callback?: (data: any) => void,
     error_callback?: (err: Error) => void
   ): Client;

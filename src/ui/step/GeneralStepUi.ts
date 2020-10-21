@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint @typescript-eslint/no-inferrable-types: "off", no-undef: "off", no-var: "off", @typescript-eslint/no-this-alias: "off", prefer-arrow-callback: "off", prefer-const: "off", no-extra-boolean-cast: "off", block-scoped-var: "off", no-redeclare: "off" */
+/* eslint @typescript-eslint/no-var-requires: "off", @typescript-eslint/no-inferrable-types: "off", no-undef: "off", no-var: "off", @typescript-eslint/no-this-alias: "off", prefer-arrow-callback: "off", prefer-const: "off", no-extra-boolean-cast: "off", block-scoped-var: "off", no-redeclare: "off" */
 /**
  * General UI logic for steps
  *

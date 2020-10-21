@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off" */
+/* eslint no-var: "off", @typescript-eslint/no-var-requires: "off" */
 /**
  * Liza Default Field Styler
  *

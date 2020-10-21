@@ -42,7 +42,7 @@ export class Router {
    */
   constructor(
     private readonly _app: express.Application,
-    private readonly _controller_factory: Function,
+    private readonly _controller_factory: (...args: any[]) => any,
     private readonly _event_emitter: EventEmitter
   ) {}
 

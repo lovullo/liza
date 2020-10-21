@@ -1,5 +1,5 @@
 /* TODO auto-generated eslint ignore, please fix! */
-/* eslint @typescript-eslint/no-this-alias: "off", @typescript-eslint/no-inferrable-types: "off", no-var: 'off', prefer-arrow-callback: 'off', no-unused-vars: 'off', prefer-const: 'off', no-undef: 'off' */
+/* eslint @typescript-eslint/no-var-requires: "off", @typescript-eslint/no-this-alias: "off", @typescript-eslint/no-inferrable-types: "off", no-var: 'off', prefer-arrow-callback: 'off', no-unused-vars: 'off', prefer-const: 'off', no-undef: 'off' */
 /**
  * General UI logic for groups
  *
