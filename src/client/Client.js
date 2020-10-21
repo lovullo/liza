@@ -1005,7 +1005,7 @@ module.exports = Class('Client').extend(EventEmitter, {
 
     ui.on('stepChange', function (step_id) {
       // don't do anything if navigation is frozen
-      if (ui.navFrozen) {
+      if (ui.navIsFrozen()) {
         window.console && console.log('Navigation is frozen. Ignoring input.');
         return;
       }

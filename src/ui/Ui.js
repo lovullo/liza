@@ -185,10 +185,10 @@ module.exports = Class('Ui').extend(EventEmitter, {
   sidebar: null,
 
   /**
-   * Whether navigation is frozen (prevent navigation)
-   * @type {boolean}
+   * Counter for whether navigation is frozen (prevent navigation)
+   * @type {number}
    */
-  navFrozen: false,
+  navFrozen: 0,
 
   /**
    * Handles dialog display
@@ -536,6 +536,8 @@ module.exports = Class('Ui').extend(EventEmitter, {
       step_id = step.getStep().getId(),
       prev_content = this._getStepContent(step);
 
+    this.freezeNav();
+
     var step_content = $('<div class="raterStepDiv" />')
       .attr('id', '__step' + step.getStep().getId())
       .append(prev_content || $(this.currentStep.getContent()));
@@ -818,8 +820,13 @@ module.exports = Class('Ui').extend(EventEmitter, {
         var $this = $(this),
           text = $this.text();
 
-        $this.disable().text('Please wait...');
         event.preventDefault();
+
+        if (ui.navIsFrozen()) {
+          return;
+        }
+
+        $this.disable().text('Please wait...');
 
         ui.saveStep(
           step,
@@ -861,10 +868,15 @@ module.exports = Class('Ui').extend(EventEmitter, {
         var $this = $(this),
           text = $this.text();
 
+        event.preventDefault();
+
+        if (ui.navIsFrozen()) {
+          return;
+        }
+
         if (!last_step) {
           $this.disable().text('Please wait...');
         }
-        event.preventDefault();
 
         ui.saveStep(
           step,
@@ -1270,8 +1282,9 @@ module.exports = Class('Ui').extend(EventEmitter, {
    */
   freezeNav: function () {
     // disable navigation bar
-    this.navFrozen = true;
     this.$navBar.addClass('frozen');
+
+    this.navFrozen++;
 
     // if we're not yet on a step, don't worry about nav buttons
     if (this.currentStep == null) {
@@ -1281,6 +1294,14 @@ module.exports = Class('Ui').extend(EventEmitter, {
     // store previous state of nav buttons and disable them
     this._getNavButtons(this.currentStep).each(function () {
       var $this = $(this);
+
+      const prev_disabled = $this.data('prevDisabled');
+
+      // Do not overwrite the previously disabled state if it exists
+      if (prev_disabled !== undefined) {
+        return;
+      }
+
       $this.data('prevDisabled', $this.attr('disabled'));
       $this.disable();
     });
@@ -1299,10 +1320,19 @@ module.exports = Class('Ui').extend(EventEmitter, {
    * @return Ui self to allow for method chaining
    */
   unfreezeNav: function (step) {
+    const __self = this;
+
     step = step || this.currentStep;
 
+    // Don't let the counter become negative
+    this.navFrozen = Math.max(this.navFrozen - 1, 0);
+
+    // Do not continue if we are still frozen
+    if (__self.navIsFrozen()) {
+      return;
+    }
+
     // enable navigation bar
-    this.navFrozen = false;
     this.$navBar.removeClass('frozen');
 
     // reset nav buttons to their previous state
@@ -1315,6 +1345,13 @@ module.exports = Class('Ui').extend(EventEmitter, {
     });
 
     return this;
+  },
+
+  /**
+   * Determine whether the nav is frozen
+   */
+  navIsFrozen: function () {
+    return this.navFrozen > 0;
   },
 
   /**

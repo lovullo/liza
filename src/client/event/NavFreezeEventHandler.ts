@@ -42,6 +42,12 @@ export class NavFreezeEventHandler implements EventHandler {
    * @param data - event data
    */
   handle(_type: ClientActionType, c: () => void, data: ClientAction): this {
+    if (this._client.getQuote().isLocked()) {
+      c();
+
+      return this;
+    }
+
     const lock_msg = data.value || 'Navigation is locked';
     const notify_content = this._client.getDocument().createElement('div');
 

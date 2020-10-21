@@ -26,6 +26,7 @@ import {Ui} from '../../../src/ui/Ui';
 import {Client} from '../../../src/client/Client';
 import {ClientAction} from '../../../src/client/action/ClientAction';
 import {NavFreezeEventHandler as Sut} from '../../../src/client/event/NavFreezeEventHandler';
+import {ClientQuote} from '../../../src/client/quote/ClientQuote';
 
 describe('NavFreezeEventHandler', () => {
   it('Calls callback', () => {
@@ -102,11 +103,19 @@ function getMockElement(): HTMLElement {
   });
 }
 
+function getMockQuote(): ClientQuote {
+  return <ClientQuote>(<unknown>{
+    isLocked: () => false,
+  });
+}
+
 function getMockClient(ui?: Ui): Client {
   const document = getMockDocument();
+  const quote = getMockQuote();
 
   return <Client>(<unknown>{
     getUi: () => ui || getMockUi(),
     getDocument: () => document,
+    getQuote: () => quote,
   });
 }

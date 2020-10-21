@@ -154,7 +154,7 @@ describe('Ui', () => {
     }) => {
       it(label, done => {
         const nav = createMockNav();
-        const nav_bar = createMockNavBar();
+        const nav_bar = createMockUiNavBar();
         const options = {
           uiStyler: createMockUiStyler(),
           content: createMockContent(),
@@ -196,16 +196,101 @@ describe('Ui', () => {
       });
     }
   );
+
+  [
+    {
+      label: 'calling freezeNav causes navIsFrozen to return true',
+      methods: ['freezeNav'],
+      expected_frozen: [true],
+    },
+    {
+      label: 'two freezeNav calls causes navIsFrozen to return true',
+      methods: ['freezeNav', 'freezeNav'],
+      expected_frozen: [true, true],
+    },
+    {
+      label: 'nav freezes stack and a single unfreeze does not clear them',
+      methods: ['freezeNav', 'freezeNav', 'unfreezeNav'],
+      expected_frozen: [true, true, true],
+    },
+    {
+      label: 'an equal number of unfreeze calls clears the freeze',
+      methods: ['freezeNav', 'freezeNav', 'unfreezeNav', 'unfreezeNav'],
+      expected_frozen: [true, true, true, false],
+    },
+    {
+      label: 'freeze counter does not go below zero if we unfreeze first',
+      methods: ['unfreezeNav', 'unfreezeNav', 'freezeNav', 'unfreezeNav'],
+      expected_frozen: [false, false, true, false],
+    },
+  ].forEach(({label, methods, expected_frozen}) => {
+    it(label, done => {
+      const nav = createMockNav();
+      const nav_bar = createMockUiNavBar();
+      const nav_btns = createMockNavButtons();
+      const step = createMockStepUi();
+      const content = createMockContent(undefined, nav_btns);
+      const options = {
+        uiStyler: createMockUiStyler(),
+        content: content,
+        navBar: nav_bar,
+        nav: nav,
+        sidebar: createMockSidebar(),
+        stepContainer: createMockStepParent(),
+        navStylerManager: createMockNavStylerManager(),
+        stepBuilder: (_id, c) => {
+          c(step);
+        },
+      };
+
+      $ = sinon.stub().returns(content);
+      $.each = () => {};
+
+      const sut = Sut.extend({
+        'override hideErrors': function () {},
+        'override createDynamicContext': function (c) {},
+      })(options);
+
+      sut.init();
+      sut.setQuote(createMockQuote(), createMockProgram());
+      sut.displayStep(1, () => {});
+
+      for (let i = 0; i < methods.length; i++) {
+        // Call the method with an empty object because we don't care about
+        // which step is being operated on
+        sut[methods[i]](step);
+        expect(sut.navIsFrozen()).to.equal(expected_frozen[i]);
+      }
+
+      done();
+    });
+  });
 });
 
 function createMockStepUi() {
-  return {
+  const step_ui = {
     getFirstInvalidField: () => ['', 1, true],
     scrollTo: () => {
       return;
     },
     isValid: () => true,
+    setActive: () => {},
+    getStep: () => {
+      return {
+        getId: () => 1,
+      };
+    },
+    getContent: () => {},
+    postAppend: () => {},
+    preRender: () => {},
+    lock: () => {},
+    hideAddRemove: () => {},
+    visit: () => {},
+    on: () => step_ui,
+    init: () => {},
   };
+
+  return step_ui;
 }
 
 function createMockUiStyler() {
@@ -216,10 +301,36 @@ function createMockUiStyler() {
   return styler;
 }
 
-function createMockContent() {
+function createMockStepParent() {
   return {
-    find: () => createMockJquery(),
+    append: () => {},
   };
+}
+
+function createMockContent(nav_bar, nav_btns) {
+  const content = {
+    find: selector => {
+      switch (selector) {
+        case 'ul.step-nav':
+          return nav_bar || createMockNavBar();
+        case '.navbtns > *':
+          return nav_btns || createMockNavButtons();
+        default:
+          return createMockJquery();
+      }
+    },
+    attr: () => content,
+    append: () => nav_btns,
+    each: () => {},
+    toggleClass: () => content,
+    text: () => content,
+    click: () => content,
+    addClass: () => content,
+    data: () => content,
+    removeData: () => content,
+  };
+
+  return content;
 }
 
 function createMockJquery() {
@@ -231,16 +342,60 @@ function createMockJquery() {
   };
 }
 
-function createMockNavBar() {
+function createMockUiNavBar() {
   return {
     on: () => {},
   };
 }
 
-function createMockSidebar() {
+function createMockNavBar() {
   return {
-    init: () => {},
+    addClass: () => {},
+    removeClass: () => {},
   };
+}
+
+function createMockNavButtons() {
+  const nav_btns = {
+    _btns: [createMockNavButton(), createMockNavButton()],
+    each: c => {
+      nav_btns._btns.forEach(c);
+    },
+    add: () => {
+      return nav_btns;
+    },
+    append: () => {},
+    find: () => nav_btns,
+    show: () => nav_btns,
+  };
+
+  return nav_btns;
+}
+
+function createMockNavButton() {
+  return {
+    _data: undefined,
+    data: (_key, val) => {
+      if (val !== undefined) {
+        this._data = val;
+      }
+
+      return this._data;
+    },
+    attr: () => {},
+    disable: () => {},
+  };
+}
+
+function createMockSidebar() {
+  const sidebar = {
+    init: () => {},
+    setProgramTitle: () => sidebar,
+    setQuoteId: () => sidebar,
+    setAgentId: () => sidebar,
+  };
+
+  return sidebar;
 }
 
 function createMockNav() {
@@ -249,5 +404,36 @@ function createMockNav() {
     getFirstVisibleSectionStep: () => 0,
     isStepVisited: () => true,
     on: () => {},
+    hasPrevStep: () => true,
+    isQuoteReviewStep: () => false,
+    getPrevStepId: () => 1,
+    setTopVisitedStepId: () => {},
+    getCurrentStepId: () => 1,
+    isLastStep: () => false,
+  };
+}
+
+function createMockProgram() {
+  return {
+    steps: [{}, {}],
+  };
+}
+
+function createMockQuote() {
+  return {
+    getId: () => 123,
+    getAgentId: () => 234,
+    getTopVisitedStepId: () => 1,
+    isLocked: () => false,
+    hasVisitedStep: () => false,
+    getCurrentStepId: () => 1,
+    getExplicitLockStep: () => 0,
+  };
+}
+
+function createMockNavStylerManager() {
+  return {
+    quoteLocked: () => false,
+    highlightStep: () => {},
   };
 }
