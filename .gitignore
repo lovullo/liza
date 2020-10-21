@@ -35,6 +35,8 @@ node_modules
 # typescript output
 bin/*.js
 tsconfig.tsbuildinfo
+.log/ti-*.log
+.log/tsserver.log
 
 debug.log
 
