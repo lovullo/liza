@@ -32,7 +32,9 @@ cd "$( dirname "$0" )/.." || exit 1
 dir="$( pwd -P )"
 
 NODE_PATH="$NODE_PATH:$dir/externals/src/node/program/rater/program"
-NODE_PATH="$NODE_PATH:$dir/externals/src/node/program/classify"
+NODE_PATH="$NODE_PATH:$dir/externals/src/node/"
+NODE_PATH="$NODE_PATH:$dir/externals/src/_gen/scripts"
+NODE_PATH="$NODE_PATH:$dir/src"
 export NODE_PATH
 
 exec "@NODE@" @NODE_FLAGS@ $NODE_FLAGS bin/dullahan.js "$@"

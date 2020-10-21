@@ -19,9 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import sinon = require('sinon');
+import {Program} from '../../../src/program/Program';
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
 import {IndicationController as Sut} from '../../../src/dullahan/controllers/IndicationController';
+import {ProgramFactory} from '../../../src/dullahan/program/ProgramFactory';
 import {Response} from 'node-fetch';
 import {expect} from 'chai';
 import {mockReq, mockRes} from 'sinon-express-mock';
@@ -41,7 +43,41 @@ describe('IndicationController', () => {
       expect(res.status.withArgs(422).callCount).to.equal(1);
     });
 
-    it('calls webhook when a valid request is processsed', () => {
+    it('fails when the program factory is not set', () => {
+      const http_client = createHttpClient();
+      const emitter = createEventEmitter();
+      const given = 'https://some.websitethatdoesnotexist.joe';
+
+      const emissions: string[] = [];
+      const expected = [
+        'No program factory found on the IndicationController.',
+      ];
+
+      emitter.emit = function (event, message) {
+        if (event === 'error') {
+          emissions.push(message);
+        }
+
+        return true;
+      };
+
+      sinon.stub(http_client, 'post').callsFake((url, _payload, _options) => {
+        expect(url).to.be.equal(given);
+        return Promise.resolve(<Response>{});
+      });
+
+      const sut = createSut({http_client, emitter});
+      const req = mockReq({});
+      const res = mockRes({});
+
+      req.query.callback = given;
+
+      sut.handle(req, res);
+
+      expect(emissions).to.deep.equal(expected);
+    });
+
+    it('calls webhook when a valid request is processed', () => {
       const http_client = createHttpClient();
       const given = 'https://some.websitethatdoesnotexist.joe';
 
@@ -53,6 +89,8 @@ describe('IndicationController', () => {
       const sut = createSut({http_client});
       const req = mockReq({});
       const res = mockRes({});
+
+      sut.program_factory = createProgramFactory();
 
       req.query.callback = given;
 
@@ -73,6 +111,8 @@ describe('IndicationController', () => {
       const sut = createSut({http_client});
       const req = mockReq({});
       const res = mockRes({});
+
+      sut.program_factory = createProgramFactory();
 
       req.query.callback = given;
 
@@ -95,7 +135,15 @@ const createSut = (dependencies: CommonObject = {}) => {
   const {emitter, http_client} = dependencies;
 
   return new Sut(
-    emitter ?? createEventEmitter(),
-    http_client ?? createHttpClient()
+    <EventEmitter>emitter ?? createEventEmitter(),
+    <HttpClient>http_client ?? createHttpClient()
   );
+};
+
+const createProgramFactory = () => {
+  return <ProgramFactory>{
+    createProgram() {
+      return <Program>{};
+    },
+  };
 };

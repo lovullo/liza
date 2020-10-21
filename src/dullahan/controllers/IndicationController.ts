@@ -21,8 +21,14 @@
 import {EventEmitter} from 'events';
 import express = require('express');
 import {HttpClient} from '../../system/network/HttpClient';
+import {ProgramFactory} from '../program/ProgramFactory';
 
 export class IndicationController {
+  /**
+   * Creates new program instances
+   */
+  private _program_factory: ProgramFactory | null = null;
+
   /**
    * Create a new indication controller
    *
@@ -34,6 +40,10 @@ export class IndicationController {
     private readonly _http: HttpClient
   ) {}
 
+  set program_factory(factory: ProgramFactory) {
+    this._program_factory = factory;
+  }
+
   /**
    * Handle the indication request
    *
@@ -42,6 +52,7 @@ export class IndicationController {
    */
   public handle(request: express.Request, response: express.Response) {
     let webhook = '';
+
     if (request.query && request.query.callback) {
       webhook = decodeURIComponent((<any>request.query).callback);
     }
@@ -62,7 +73,19 @@ export class IndicationController {
 
     this._emitter.emit('response-sent', {http_code: 202});
 
-    // TODO: Invoke rating
+    if (!this._program_factory) {
+      this._emitter.emit(
+        'error',
+        'No program factory found on the IndicationController.'
+      );
+
+      return;
+    } else {
+      const program = this._program_factory.createProgram();
+
+      // Temp - just to test that this is working
+      console.log(JSON.stringify(program).slice(0, 100) + '...');
+    }
 
     // Call back to webhook when rating has completed
     this._http.post(webhook, {}).then(() => {

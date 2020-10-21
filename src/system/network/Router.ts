@@ -52,9 +52,15 @@ export class Router {
    * @param endpoint   - endpoint
    * @param controller - controller to use
    * @param method     - controller method to use
+   * @param callback   - callback to run after controller is created
    */
-  public get(endpoint: string, controller: any, method: string) {
-    this._register(RequestType.GET, endpoint, controller, method);
+  public get<T>(
+    endpoint: string,
+    controller: Constructor<T>,
+    method: string,
+    callback?: (controller: T) => void
+  ) {
+    this._register(RequestType.GET, endpoint, controller, method, callback);
   }
 
   /**
@@ -63,9 +69,15 @@ export class Router {
    * @param endpoint   - endpoint
    * @param controller - controller to use
    * @param method     - controller method to use
+   * @param callback   - callback to run after controller is created
    */
-  public post(endpoint: string, controller: any, method: string) {
-    this._register(RequestType.POST, endpoint, controller, method);
+  public post<T>(
+    endpoint: string,
+    controller: Constructor<T>,
+    method: string,
+    callback?: (controller: T) => void
+  ) {
+    this._register(RequestType.POST, endpoint, controller, method, callback);
   }
 
   /**
@@ -75,12 +87,14 @@ export class Router {
    * @param endpoint     - endpoint
    * @param controller   - controller to use
    * @param method       - controller method to use
+   * @param callback     - callback to run after controller is created
    */
-  private _register(
+  private _register<T>(
     request_type: RequestType,
     endpoint: string,
-    controller: any,
-    method: string
+    controller: Constructor<T>,
+    method: string,
+    callback?: (controller: T) => void
   ) {
     this._app[request_type](
       endpoint,
@@ -90,7 +104,13 @@ export class Router {
           path: endpoint,
         });
 
-        this._controller_factory(controller)[method](req, res);
+        const c = this._controller_factory(controller);
+
+        if (callback !== undefined) {
+          callback(c);
+        }
+
+        c[method](req, res);
       }
     );
   }
