@@ -34,8 +34,15 @@
  * rather than `Brand` since searching for the former provides much better
  * literature on the topic, which will hopefully help in debugging when
  * errors are inevitable encountered.
+ *
+ * This also varies from other examples in the community in that the
+ * tag is dynamic based on `T`; this allows for recursive covariant nominal
+ * types, which works similarly to `extends`.
+ *
+ * Since nominal types are implemented as type definitions, they incur no
+ * runtime cost (they do not exist at runtime).
  */
-type NominalType<K, T> = K & {__nominal_type__: T};
+type NominalType<K, T extends string> = K & {__nominal__: {[P in T]: void}};
 
 /** Unit of time in seconds */
 type Seconds = NominalType<number, 'Seconds'>;
