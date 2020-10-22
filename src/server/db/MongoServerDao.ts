@@ -23,6 +23,7 @@
 
 import {ServerDao, Callback} from './ServerDao';
 import {PositiveInteger} from '../../numeric';
+import {DocumentId} from '../../document/Document';
 import {ServerSideQuote} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
@@ -567,34 +568,31 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    * Pulls quote data from the database
    *
    * @param quote_id - id of quote
-   * @param callback - function to call when data is available
    */
-  pullQuote(
-    quote_id: PositiveInteger,
-    callback: (data: Record<string, any> | null) => void
-  ): this {
-    var dao = this;
+  pullQuote(quote_id: DocumentId): Promise<Record<string, any> | null> {
+    return new Promise((resolve, reject) => {
+      // XXX: TODO: Do not read whole of record into memory; filter out
+      // revisions!
+      this._collection!.find(
+        {id: quote_id},
+        {limit: <PositiveInteger>1},
+        function (_err, cursor) {
+          cursor.toArray((err: NullableError, data: any[]) => {
+            if (err) {
+              return reject(err);
+            }
 
-    // XXX: TODO: Do not read whole of record into memory; filter out
-    // revisions!
-    this._collection!.find(
-      {id: quote_id},
-      {limit: <PositiveInteger>1},
-      function (_err, cursor) {
-        cursor.toArray(function (_err: NullableError, data: any[]) {
-          // was the quote found?
-          if (data.length == 0) {
-            callback.call(dao, null);
-            return;
-          }
+            // was the quote found?
+            if (data.length == 0) {
+              return resolve(null);
+            }
 
-          // return the quote data
-          callback.call(dao, data[0]);
-        });
-      }
-    );
-
-    return this;
+            // return the quote data
+            resolve(data[0]);
+          });
+        }
+      );
+    });
   }
 
   /**

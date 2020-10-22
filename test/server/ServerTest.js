@@ -505,11 +505,15 @@ describe('Server#initQuote', () => {
     let pull_quote_is_called = false;
 
     // make sure quote data is retrieved for our quote
-    dao.pullQuote = (quote_id, callback) => {
-      expect(quote_id).to.be.equal(expected_quote_id);
-      pull_quote_is_called = true;
-      callback(quote_data);
-    };
+    dao.pullQuote = quote_id =>
+      Promise.resolve(
+        (() => {
+          expect(quote_id).to.be.equal(expected_quote_id);
+          pull_quote_is_called = true;
+
+          return quote_data;
+        })()
+      );
 
     const default_bucket_data = {default: 'value'};
     let prog_init = createMockProgramInit();
@@ -608,11 +612,15 @@ describe('Server#initQuote', () => {
     let pull_quote_is_called = false;
 
     // return no quote data (new quote)
-    dao.pullQuote = (quote_id, callback) => {
-      expect(quote_id).to.be.equal(expected_quote_id);
-      pull_quote_is_called = true;
-      callback(undefined);
-    };
+    dao.pullQuote = quote_id =>
+      Promise.resolve(
+        (() => {
+          expect(quote_id).to.be.equal(expected_quote_id);
+          pull_quote_is_called = true;
+
+          return null;
+        })()
+      );
 
     const default_bucket_data = {default: 'value'};
     let prog_init = createMockProgramInit();

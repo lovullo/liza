@@ -320,7 +320,7 @@ module.exports = Class('Server').extend(EventEmitter, {
       agent_name = session.agentName();
 
     // get the data for this quote
-    this.dao.pullQuote(quote_id, function (quote_data) {
+    this.dao.pullQuote(quote_id).then(function (quote_data) {
       var new_quote = false;
       if (!quote_data) {
         quote_data = {};
