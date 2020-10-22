@@ -237,7 +237,6 @@ function _createDB(logger) {
     native_parser: false,
     safe: false,
     logger: logger,
-    w: 'majority',
   });
   return db;
 }

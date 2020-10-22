@@ -372,11 +372,6 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     failure: Callback = () => {},
     options: MongoQueryUpdateOptions = {}
   ): this {
-    if (!data || !Object.keys(data).length) {
-      success(quote);
-      return this;
-    }
-
     // we do not want to alter the original data; use it as a prototype
     var update = data;
 
