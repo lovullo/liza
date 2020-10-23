@@ -21,11 +21,15 @@
 import sinon = require('sinon');
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
-import {indication as Sut} from '../../../src/dullahan/controllers/IndicationController';
-import {ProgramFactory} from '../../../src/dullahan/program/ProgramFactory';
+import {
+  CustomRater,
+  DataRetriever,
+  ProgramFactory,
+} from '../../../src/dullahan/program/ProgramFactory';
 import {Program} from '../../../src/program/Program';
 import {Response} from 'node-fetch';
 import {expect} from 'chai';
+import {indication as Sut} from '../../../src/dullahan/controllers/IndicationController';
 import {mockReq, mockRes} from 'sinon-express-mock';
 
 describe('IndicationController', () => {
@@ -96,7 +100,15 @@ const createHttpClient = () => {
 const createProgramFactory = () => {
   return <ProgramFactory>{
     createProgram() {
-      return <Program>{};
+      return {bucket: <DataRetriever>{}, program: <Program>{}};
+    },
+
+    createRaters() {
+      return [
+        <CustomRater>{
+          rate() {},
+        },
+      ];
     },
   };
 };

@@ -21,6 +21,7 @@
 
 import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
+import * as fs from 'fs';
 import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
 import {EventEmitter} from 'events';
@@ -43,6 +44,7 @@ const env = process.env.NODE_ENV;
 const log_format = process.env.DULLAHAN_ACCESS_LOG_FORMAT;
 const port = process.env.NODE_PORT;
 const program_id = process.env.DULLAHAN_PROGRAM_ID;
+const rater_path = process.env.DULLAHAN_RATER_PATH;
 const service = 'dullahan';
 const log_console = createConsole(process.env.LOG_PATH_DEBUG);
 
@@ -54,6 +56,10 @@ if (!env) {
   throw new Error('Unable to read port from env.');
 } else if (!program_id) {
   throw new Error('Unable to read program_id from env.');
+
+  // This is set in the dullahan script, not the .env
+} else if (!rater_path) {
+  throw new Error('Unable to read rater_path from env.');
 }
 
 const metricsMiddleware = promBundle({includePath: true});
@@ -65,7 +71,12 @@ const program_path = `program/${program_id}/Program`;
 /* eslint-disable @typescript-eslint/no-var-requires */
 const program = require(program_path);
 /* eslint-enable @typescript-eslint/no-var-requires */
-const program_factory = new ProgramFactory(program);
+
+const rater_paths = fs
+  .readdirSync(rater_path)
+  .filter((file: string) => file.match(/\.js$/));
+
+const program_factory = new ProgramFactory(program, rater_paths);
 
 new EventMediator(logger, emitter);
 
