@@ -56,7 +56,6 @@ const StepUiBuilder = require('../ui/step/StepUiBuilder'),
   ClientDataProxy = require('./ClientDataProxy'),
   ElementStyler = require('../ui/ElementStyler'),
   FormErrorBox = require('../ui/sidebar/FormErrorBox'),
-  NavStyler = require('../ui/nav/NavStyler'),
   Sidebar = require('../ui/sidebar/Sidebar'),
   DataApiFactory = require('../dapi/DataApiFactory'),
   DataApiManager = require('../dapi/DataApiManager'),
@@ -113,6 +112,9 @@ const {GridGroupUi} = require('../ui/group/GridGroupUi');
 const {GroupStateManager} = require('../ui/group/GroupStateManager');
 const {Step} = require('../step/Step');
 const {multiSort} = require('../sort/MultiSort');
+const {MobileNav} = require('../ui/nav/MobileNav');
+const {NavStyler} = require('../ui/nav/NavStyler');
+const {NavStylerManager} = require('../ui/nav/NavStylerManager');
 const {
   createQuotePreStagingHook,
   createQuoteStagingHook,
@@ -143,7 +145,33 @@ module.exports = Class('ClientDependencyFactory', {
 
   createNav: Nav,
 
-  createNavStyler: NavStyler,
+  createNavStylerManager: function (document, nav) {
+    return new NavStylerManager([
+      this.createNavStyler(document, nav),
+      this.createMobileNavStyler(document, nav),
+    ]);
+  },
+
+  createNavStyler: function (document, nav) {
+    return new NavStyler(
+      nav,
+      document.querySelectorAll('.step-nav > li'),
+      document.querySelectorAll('.section-nav > li'),
+      document.querySelectorAll('.section-nav, .step-nav')
+    );
+  },
+
+  createMobileNavStyler: function (document, nav) {
+    return new NavStyler(
+      nav,
+      document.querySelectorAll(
+        '.mobile-nav > li.section-item > ul > li.step-item'
+      ),
+      document.querySelectorAll('.mobile-nav > li.section-item'),
+      document.querySelectorAll('.mobile-nav, .mobile-nav-header'),
+      true
+    );
+  },
 
   createHashNav: HashNav,
 
@@ -263,6 +291,7 @@ module.exports = Class('ClientDependencyFactory', {
   },
 
   createUiNavBar: UiNavBar,
+  createMobileNav: nav_menu => new MobileNav(nav_menu),
 
   createUiStyler: UiStyler,
   createDomFieldFactory: DomFieldFactory,

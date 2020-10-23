@@ -40,13 +40,13 @@ var DynamicContext = require('./context/DynamicContext');
  * @param {Object} options ui options
  *
  * Supported options:
- *   content:   {jQuery}        content to operate on
- *   styler:    {ElementStyler} element styler for misc. elements
- *   nav:       {Nav}           navigation object
- *   navStyler: {NavStyler}     navigation styler
- *   errorBox:  {FormErrorBox}  error box to use for form errors
- *   sidebar:   {Sidebar}       sidebar ui
- *   dialog:    {UiDialog}
+ *   content:          {jQuery}           content to operate on
+ *   styler:           {ElementStyler}    element styler for misc. elements
+ *   nav:              {Nav}              navigation object
+ *   navStylerManager: {navStylerManager} navigation styler
+ *   errorBox:         {FormErrorBox}     error box to use for form errors
+ *   sidebar:          {Sidebar}          sidebar ui
+ *   dialog:           {UiDialog}
  *
  *   stepContainer: {jQuery}   for the step HTML
  *   stepBuilder:   {Function} function used to instantiate new steps
@@ -113,10 +113,10 @@ module.exports = Class('Ui').extend(EventEmitter, {
   nav: null,
 
   /**
-   * Styles navigation menu
-   * @type {NavStyler}
+   * Manages nav stylers
+   * @type {navStylerManager}
    */
-  navStyler: null,
+  navStylerManager: null,
 
   /**
    * Navigation bar
@@ -215,6 +215,12 @@ module.exports = Class('Ui').extend(EventEmitter, {
   'private _navBar': null,
 
   /**
+   * Mobile Navigation
+   * @type {MobileNav}
+   */
+  'private _mobile_nav': null,
+
+  /**
    * Notification bar
    * @type {UiNotifyBar}
    */
@@ -251,7 +257,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
     this.$content = options.content;
     this.styler = options.styler;
     this.nav = options.nav;
-    this.navStyler = options.navStyler;
+    this.navStylerManager = options.navStylerManager;
     this.$navBar = this.$content.find('ul.step-nav');
     this.$stepParent = options.stepContainer;
     this.buildStep = options.stepBuilder;
@@ -260,6 +266,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
     this._dialog = options.dialog;
     this._uiStyler = options.uiStyler;
     this._navBar = options.navBar;
+    this._mobile_nav = options.mobile_nav;
     this._notifyBar = options.notifyBar;
     this._rootContext = options.rootContext;
     this._dataValidator = options.dataValidator;
@@ -276,6 +283,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
     this._initStyles();
     this._initKeys();
 
+    this._initMobileNav();
     this._initNavBar();
 
     this.sidebar.init();
@@ -346,30 +354,49 @@ module.exports = Class('Ui').extend(EventEmitter, {
    * @return void
    */
   _initNavBar: function () {
-    var _self = this;
-    this._navBar.on('click', function (id) {
-      if (typeof id === 'string') {
-        // already on the current section do not need to navigate
-        if (id === _self.nav.getCurrentSectionId()) {
-          return;
-        }
+    this._navBar.on('click', id => this._handleNavClick(id));
+  },
 
-        if (_self.nav.isStepVisited(_self.nav.getFirstVisibleSectionStep(id))) {
-          // Navigate by section
-          _self.emit(
-            _self.__self.$('EVENT_STEP_CHANGE'),
-            _self.nav.getFirstVisibleSectionStep(id)
-          );
-        }
+  /**
+   * Initialize the mobile nav
+   *
+   * @return void
+   */
+  _initMobileNav: function () {
+    this.nav.on('stepChange', id => {
+      const section_label = this.nav.getCurrentSectionId().replace('_', ' ');
+      const step_label = this._program.getStepTitle(id);
+      const header_label = this.nav.hasSubsteps()
+        ? section_label + ' - ' + step_label
+        : step_label;
+
+      this._mobile_nav.stepChanged(header_label);
+      this._mobile_nav.on('click', id => this._handleNavClick(id));
+    });
+  },
+
+  'private _handleNavClick': function (id) {
+    if (typeof id === 'string') {
+      // already on the current section do not need to navigate
+      if (id === this.nav.getCurrentSectionId()) {
         return;
       }
 
-      // do not permit navigation via nav bar if the user has not already
-      // visited the step
-      if (_self.nav.isStepVisited(id)) {
-        _self.emit(_self.__self.$('EVENT_STEP_CHANGE'), id);
+      if (this.nav.isStepVisited(this.nav.getFirstVisibleSectionStep(id))) {
+        // Navigate by section
+        this.emit(
+          this.__self.$('EVENT_STEP_CHANGE'),
+          this.nav.getFirstVisibleSectionStep(id)
+        );
       }
-    });
+      return;
+    }
+
+    // do not permit navigation via nav bar if the user has not already
+    // visited the step
+    if (this.nav.isStepVisited(id)) {
+      this.emit(this.__self.$('EVENT_STEP_CHANGE'), id);
+    }
   },
 
   /**
@@ -911,7 +938,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
 
     // update nav
     this.nav.setTopVisitedStepId(quote.getTopVisitedStepId());
-    this.navStyler.quoteLocked(quote.isLocked());
+    this.navStylerManager.quoteLocked(quote.isLocked());
     this._toggleLockedInd();
 
     this.sidebar
@@ -988,7 +1015,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
     );
 
     // ensure we apply the style
-    this.navStyler.highlightStep(this.quote.getCurrentStepId());
+    this.navStylerManager.highlightStep(this.quote.getCurrentStepId());
   },
 
   /**
@@ -1323,8 +1350,8 @@ module.exports = Class('Ui').extend(EventEmitter, {
     this._postRenderStep();
 
     // transform navigation
-    this.navStyler.quoteLocked(this.quote.isLocked());
-    this.navStyler.highlightStep(this.currentStep.getStep().getId());
+    this.navStylerManager.quoteLocked(this.quote.isLocked());
+    this.navStylerManager.highlightStep(this.currentStep.getStep().getId());
 
     return this;
   },
@@ -1347,7 +1374,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
   },
 
   redrawNav: function () {
-    this.navStyler.highlightStep(this.currentStep.getStep().getId());
+    this.navStylerManager.highlightStep(this.currentStep.getStep().getId());
     return this;
   },
 

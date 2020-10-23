@@ -100,7 +100,7 @@ export function createStubUi(step: StepUi | null) {
 }
 
 export function createStubProgram(overrides: any = {}) {
-  return <Program>{
+  return <Program>(<unknown>{
     clearNaFields: false,
     naFieldValue: '',
     getId: () => '1',
@@ -129,5 +129,5 @@ export function createStubProgram(overrides: any = {}) {
     classify: () => <ClassificationResult>{},
     hasNaField: () => false,
     hasKnownType: () => true,
-  };
+  });
 }

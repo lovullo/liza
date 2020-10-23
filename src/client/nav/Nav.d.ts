@@ -19,6 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import {EventEmitter} from 'events';
 import {PositiveInteger} from '../../numeric';
 
 /**
@@ -27,13 +28,20 @@ import {PositiveInteger} from '../../numeric';
  * The step_builder function should accept two arguments: the step id and a
  * callback to be executed once the step has reached its ready state.
  */
-export declare class Nav {
+export declare class Nav extends EventEmitter {
   /**
    * Returns the id of the current step
    *
    * @return Integer id of the current step
    */
   getCurrentStepId(): PositiveInteger;
+
+  /**
+   * Returns the id of the current section
+   *
+   * @return String id of the current section
+   */
+  getCurrentSectionId(): string;
 
   /**
    * Set the ID of the top visited step
@@ -49,4 +57,48 @@ export declare class Nav {
    * @param force   - Optionally force navigation which suppresses the UI dialog
    */
   navigateToStep(step_id: PositiveInteger, force?: boolean): void;
+
+  /**
+   * Check whether the nav has substeps
+   *
+   * @return true if the nav has substeps
+   */
+  hasSubsteps(): boolean;
+
+  /**
+   * Returns the highest step the user has gotten to
+   *
+   * @return top step id
+   */
+  getTopVisitedStepId(): number;
+
+  getMinStepId(): number;
+
+  /**
+   * Checks whether a step is visible
+   *
+   * @param step_id - The step to check
+   *
+   * @return true if the step is visible
+   */
+  stepIsVisible(step_id: number): boolean | undefined;
+
+  /**
+   * Determine whether a step is within a section
+   *
+   * @param step_id    - the step to check
+   * @param section_id - the section to check
+   *
+   * @return true if a step is within a section
+   */
+  stepWithinSection(step_id: number, section_id: string): boolean;
+
+  /**
+   * Check whether a section is visible
+   *
+   * @param section_id - the section id to check
+   *
+   * @return true if at least one step in a section is visible
+   */
+  sectionIsVisible(section_id: string): boolean;
 }

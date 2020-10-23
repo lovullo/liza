@@ -954,15 +954,15 @@ module.exports = Class('Client').extend(EventEmitter, {
       $error_box = $sidebar.find('#error-box'),
       $rater_content = this.$body.find('#rater-content'),
       errbox = this._factory.createFormErrorBox($error_box),
-      root_context = null;
+      root_context = null,
+      nav_menu = this._document.getElementById('nav_menu');
 
     var ui = this._factory.createUi({
       content: this.$body,
       styler: this.elementStyler,
       nav: nav,
-      navStyler: this._factory.createNavStyler(
-        this.$navBar,
-        this.$navBarSection,
+      navStylerManager: this._factory.createNavStylerManager(
+        this._document,
         nav
       ),
       errorBox: errbox,
@@ -976,6 +976,7 @@ module.exports = Class('Client').extend(EventEmitter, {
         this.$navBar,
         this.$navBarSection
       ),
+      mobile_nav: this._factory.createMobileNav(nav_menu),
 
       dataValidator: this._dataValidator,
 
