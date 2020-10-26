@@ -64,7 +64,7 @@ export class MobileNav extends EventEmitter {
       return;
     }
 
-    this._nav_header.onclick = () => this._toggleNav();
+    this._nav_header.onclick = () => this.toggleNav();
 
     const sections = this._nav.getElementsByClassName(this.SECTION_CLASS);
 
@@ -95,7 +95,7 @@ export class MobileNav extends EventEmitter {
    */
   stepChanged(header_label: string): this {
     this._updateHeader(header_label);
-    this._toggleNav(false);
+    this.toggleNav(false);
 
     return this;
   }
@@ -105,7 +105,7 @@ export class MobileNav extends EventEmitter {
    *
    * @param visible - (optional) if supplied, set the visibility explicitly
    */
-  private _toggleNav(visible?: boolean): this {
+  public toggleNav(visible?: boolean): this {
     if (visible !== undefined) {
       this._nav?.classList[visible ? 'remove' : 'add']('hidden');
       return this;

@@ -1374,6 +1374,7 @@ module.exports = Class('Ui').extend(EventEmitter, {
   },
 
   redrawNav: function () {
+    this._mobile_nav.toggleNav(false);
     this.navStylerManager.highlightStep(this.currentStep.getStep().getId());
     return this;
   },
