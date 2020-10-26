@@ -1,5 +1,5 @@
 /**
- *  Default Controller
+ *  System Controller
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -20,17 +20,14 @@
  */
 import express = require('express');
 
-export class DefaultController {
+export const system = {
   /**
-   * Handle the healthcheck request
+   * Make sure the system is online
    *
    * @param request  - request object
    * @param response - response object
    */
-  public handleHealthcheck(
-    _request: express.Request,
-    response: express.Response
-  ) {
+  healthcheck: (_request: express.Request) => (response: express.Response) => {
     response.status(204).send();
-  }
-}
+  },
+};

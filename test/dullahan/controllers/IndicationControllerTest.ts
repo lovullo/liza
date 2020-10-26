@@ -19,62 +19,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import sinon = require('sinon');
-import {Program} from '../../../src/program/Program';
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
-import {IndicationController as Sut} from '../../../src/dullahan/controllers/IndicationController';
+import {indication as Sut} from '../../../src/dullahan/controllers/IndicationController';
 import {ProgramFactory} from '../../../src/dullahan/program/ProgramFactory';
+import {Program} from '../../../src/program/Program';
 import {Response} from 'node-fetch';
 import {expect} from 'chai';
 import {mockReq, mockRes} from 'sinon-express-mock';
 
 describe('IndicationController', () => {
-  describe('handle', () => {
+  describe('create', () => {
     it('fails when an invalid webhook is provided', () => {
-      const sut = createSut();
+      const sut = createSutCreate();
       const req = mockReq({});
       const res = mockRes({});
 
-      expect(() => sut.handle(req, res)).to.throw(
+      expect(() => sut(req)(res)).to.throw(
         Error,
         'The provided URL is invalid:'
       );
 
       expect(res.status.withArgs(422).callCount).to.equal(1);
-    });
-
-    it('fails when the program factory is not set', () => {
-      const http_client = createHttpClient();
-      const emitter = createEventEmitter();
-      const given = 'https://some.websitethatdoesnotexist.joe';
-
-      const emissions: string[] = [];
-      const expected = [
-        'No program factory found on the IndicationController.',
-      ];
-
-      emitter.emit = function (event, message) {
-        if (event === 'error') {
-          emissions.push(message);
-        }
-
-        return true;
-      };
-
-      sinon.stub(http_client, 'post').callsFake((url, _payload, _options) => {
-        expect(url).to.be.equal(given);
-        return Promise.resolve(<Response>{});
-      });
-
-      const sut = createSut({http_client, emitter});
-      const req = mockReq({});
-      const res = mockRes({});
-
-      req.query.callback = given;
-
-      sut.handle(req, res);
-
-      expect(emissions).to.deep.equal(expected);
     });
 
     it('calls webhook when a valid request is processed', () => {
@@ -86,15 +52,13 @@ describe('IndicationController', () => {
         return Promise.resolve(<Response>{});
       });
 
-      const sut = createSut({http_client});
+      const sut = createSutCreate({http_client});
       const req = mockReq({});
       const res = mockRes({});
 
-      sut.program_factory = createProgramFactory();
-
       req.query.callback = given;
 
-      sut.handle(req, res);
+      sut(req)(res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });
@@ -108,15 +72,13 @@ describe('IndicationController', () => {
         return Promise.resolve(<Response>{});
       });
 
-      const sut = createSut({http_client});
+      const sut = createSutCreate({http_client});
       const req = mockReq({});
       const res = mockRes({});
 
-      sut.program_factory = createProgramFactory();
-
       req.query.callback = given;
 
-      sut.handle(req, res);
+      sut(req)(res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });
@@ -131,19 +93,18 @@ const createHttpClient = () => {
   return new (class extends HttpClient {})();
 };
 
-const createSut = (dependencies: CommonObject = {}) => {
-  const {emitter, http_client} = dependencies;
-
-  return new Sut(
-    <EventEmitter>emitter ?? createEventEmitter(),
-    <HttpClient>http_client ?? createHttpClient()
-  );
-};
-
 const createProgramFactory = () => {
   return <ProgramFactory>{
     createProgram() {
       return <Program>{};
     },
   };
+};
+
+const createSutCreate = (dependencies: CommonObject = {}) => {
+  const {emitter, http_client, program_factory} = dependencies;
+
+  return Sut.create(<EventEmitter>emitter ?? createEventEmitter())(
+    <HttpClient>http_client ?? createHttpClient()
+  )(<ProgramFactory>program_factory ?? createProgramFactory());
 };

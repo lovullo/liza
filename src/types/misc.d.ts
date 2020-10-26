@@ -78,12 +78,3 @@ type NullableError = Error | null;
  * Common objects are keyed with strings and can hold a value of any type.
  */
 type CommonObject = Record<string, unknown>;
-
-/**
- * Constructor
- *
- * An object that can create new instances of itself
- */
-type Constructor<T> = {
-  new (...args: any): T;
-};

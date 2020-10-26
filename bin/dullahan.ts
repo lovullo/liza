@@ -23,16 +23,16 @@ import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
 import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
-import {DefaultController} from '../src/dullahan/controllers/DefaultController';
 import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
-import {IndicationController} from '../src/dullahan/controllers/IndicationController';
+import {ProgramFactory} from '../src/dullahan/program/ProgramFactory';
 import {Router} from '../src/system/network/Router';
 import {StandardLogger} from '../src/system/StandardLogger';
 import {accessLogger} from '../src/dullahan/middleware/AccessLogger';
 import {createConsole} from '../src/system/ConsoleFactory';
-import {ProgramFactory} from '../src/dullahan/program/ProgramFactory';
+import {indication} from '../src/dullahan/controllers/IndicationController';
+import {system} from '../src/dullahan/controllers/SystemController';
 
 dotenv.config();
 
@@ -63,50 +63,22 @@ app.use(accessLogger(log_format));
 
 const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 const emitter = new EventEmitter();
-const http_client = new HttpClient();
+const http = new HttpClient();
 const logger = new StandardLogger(log_console, ts_ctor, env, service);
 
 new EventMediator(logger, emitter);
 
-/**
- * Create a quick factory to new-up controllers
- *
- * @param event_emitter - event emitter
- * @param http_client   - HTTP client
- *
- * @return controller maker
- */
-const controller_factory = (
-  event_emitter: EventEmitter,
-  http_client: HttpClient
-) => {
-  return (controller: Constructor<any>) => {
-    return new controller(event_emitter, http_client);
-  };
-};
-
-// Create a new router and set up all endpoints
-const route = new Router(
-  app,
-  controller_factory(emitter, http_client),
-  emitter
-);
-
+const route = new Router(app, emitter);
 const program_path = `program/${program_id}/Program`;
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const program = require(program_path);
 /* eslint-enable @typescript-eslint/no-var-requires */
 
-// Used to generate a new program when needed
 const program_factory = new ProgramFactory(program);
 
-// Callback that sets a program factory on a controller when the route is hit
-const set_program_factory = (c: IndicationController) =>
-  (c.program_factory = program_factory);
-
-route.get('/healthcheck', DefaultController, 'handleHealthcheck');
-route.post('/indication', IndicationController, 'handle', set_program_factory);
+route.get('/healthcheck', system.healthcheck);
+route.post('/indication', indication.create(emitter)(http)(program_factory));
 
 // Start the Express server
 const server = app.listen(port, () =>

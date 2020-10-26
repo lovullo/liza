@@ -18,39 +18,24 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {EventEmitter} from 'events';
 import express = require('express');
-import {HttpClient} from '../../system/network/HttpClient';
+import {EventEmitter} from 'events';
+import {HttpClient} from '../../../src/system/network/HttpClient';
 import {ProgramFactory} from '../program/ProgramFactory';
 
-export class IndicationController {
+export const indication = {
   /**
-   * Creates new program instances
-   */
-  private _program_factory: ProgramFactory | null = null;
-
-  /**
-   * Create a new indication controller
+   * Create a new indication
    *
-   * @param _emitter - event emitter
-   * @param _http    - HTTP client
+   * @param emitter         - event emitter
+   * @param http            - HTTP client
+   * @param program_factory - used to generate programs on demand
+   * @param request         - request object
+   * @param response        - response object
    */
-  constructor(
-    private readonly _emitter: EventEmitter,
-    private readonly _http: HttpClient
-  ) {}
-
-  set program_factory(factory: ProgramFactory) {
-    this._program_factory = factory;
-  }
-
-  /**
-   * Handle the indication request
-   *
-   * @param request  - request object
-   * @param response - response object
-   */
-  public handle(request: express.Request, response: express.Response) {
+  create: (emitter: EventEmitter) => (http: HttpClient) => (
+    program_factory: ProgramFactory
+  ) => (request: express.Request) => (response: express.Response) => {
     let webhook = '';
 
     if (request.query && request.query.callback) {
@@ -58,40 +43,31 @@ export class IndicationController {
     }
 
     try {
-      this._http.validateUrl(webhook);
+      http.validateUrl(webhook);
     } catch (e) {
       const error_message = 'Request must contain a valid webhook URL.';
 
       response.status(422).send(error_message);
 
-      this._emitter.emit('error', e);
+      emitter.emit('error', e);
       return;
     }
 
     // Send acceptance back to originator
     response.status(202).send('Request received.');
 
-    this._emitter.emit('response-sent', {http_code: 202});
+    emitter.emit('response-sent', {http_code: 202});
 
-    if (!this._program_factory) {
-      this._emitter.emit(
-        'error',
-        'No program factory found on the IndicationController.'
-      );
+    const program = program_factory.createProgram();
 
-      return;
-    } else {
-      const program = this._program_factory.createProgram();
-
-      // Temp - just to test that this is working
-      console.log(JSON.stringify(program).slice(0, 100) + '...');
-    }
+    // Temp - just to test that this is working
+    console.log(JSON.stringify(program).slice(0, 100) + '...');
 
     // Call back to webhook when rating has completed
-    this._http.post(webhook, {}).then(() => {
+    http.post(webhook, {}).then(() => {
       // Handle response
     });
 
-    this._emitter.emit('callback-sent', {target: webhook});
-  }
-}
+    emitter.emit('callback-sent', {target: webhook});
+  },
+};

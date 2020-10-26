@@ -23,6 +23,13 @@ import express = require('express');
 import {EventEmitter} from 'events';
 
 /**
+ * Route-based method to handle end points
+ */
+type RouteHandler = (
+  request: express.Request
+) => (response: express.Response) => void;
+
+/**
  * Permitted request types of the router
  */
 enum RequestType {
@@ -37,47 +44,31 @@ export class Router {
   /**
    * Create a new router
    * @param _app                - Express app
-   * @param _controller_factory - used by router to new-up controllers
    * @param _event_emitter      - event emitter
    */
   constructor(
     private readonly _app: express.Application,
-    private readonly _controller_factory: (...args: any[]) => any,
     private readonly _event_emitter: EventEmitter
   ) {}
 
   /**
    * Set up a GET endpoint
    *
-   * @param endpoint   - endpoint
-   * @param controller - controller to use
-   * @param method     - controller method to use
-   * @param callback   - callback to run after controller is created
+   * @param endpoint - endpoint
+   * @param handler  - controller method to use
    */
-  public get<T>(
-    endpoint: string,
-    controller: Constructor<T>,
-    method: string,
-    callback?: (controller: T) => void
-  ) {
-    this._register(RequestType.GET, endpoint, controller, method, callback);
+  public get(endpoint: string, handler: RouteHandler) {
+    this._register(RequestType.GET, endpoint, handler);
   }
 
   /**
    * Set up a POST endpoint
    *
-   * @param endpoint   - endpoint
-   * @param controller - controller to use
-   * @param method     - controller method to use
-   * @param callback   - callback to run after controller is created
+   * @param endpoint - endpoint
+   * @param handler  - controller method to use
    */
-  public post<T>(
-    endpoint: string,
-    controller: Constructor<T>,
-    method: string,
-    callback?: (controller: T) => void
-  ) {
-    this._register(RequestType.POST, endpoint, controller, method, callback);
+  public post(endpoint: string, handler: RouteHandler) {
+    this._register(RequestType.POST, endpoint, handler);
   }
 
   /**
@@ -85,16 +76,12 @@ export class Router {
    *
    * @param request_type - HTTP request type
    * @param endpoint     - endpoint
-   * @param controller   - controller to use
-   * @param method       - controller method to use
-   * @param callback     - callback to run after controller is created
+   * @param handler      - controller method to use
    */
-  private _register<T>(
+  private _register(
     request_type: RequestType,
     endpoint: string,
-    controller: Constructor<T>,
-    method: string,
-    callback?: (controller: T) => void
+    handler: RouteHandler
   ) {
     this._app[request_type](
       endpoint,
@@ -104,13 +91,7 @@ export class Router {
           path: endpoint,
         });
 
-        const c = this._controller_factory(controller);
-
-        if (callback !== undefined) {
-          callback(c);
-        }
-
-        c[method](req, res);
+        handler(req)(res);
       }
     );
   }
