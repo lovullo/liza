@@ -27,9 +27,11 @@ import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
 import {ProgramFactory} from '../src/dullahan/program/ProgramFactory';
-import {Router} from '../src/system/network/Router';
 import {StandardLogger} from '../src/system/StandardLogger';
-import {accessLogger} from '../src/dullahan/middleware/AccessLogger';
+import {
+  accessLogger,
+  routeAccessEmitter,
+} from '../src/dullahan/middleware/AccessLogger';
 import {createConsole} from '../src/system/ConsoleFactory';
 import {indication} from '../src/dullahan/controllers/IndicationController';
 import {system} from '../src/dullahan/controllers/SystemController';
@@ -55,30 +57,26 @@ if (!env) {
 }
 
 const metricsMiddleware = promBundle({includePath: true});
-
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
-app.use(metricsMiddleware);
-app.use(accessLogger(log_format));
-
 const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
 const emitter = new EventEmitter();
 const http = new HttpClient();
 const logger = new StandardLogger(log_console, ts_ctor, env, service);
-
-new EventMediator(logger, emitter);
-
-const route = new Router(app, emitter);
 const program_path = `program/${program_id}/Program`;
-
 /* eslint-disable @typescript-eslint/no-var-requires */
 const program = require(program_path);
 /* eslint-enable @typescript-eslint/no-var-requires */
-
 const program_factory = new ProgramFactory(program);
 
-route.get('/healthcheck', system.healthcheck);
-route.post('/indication', indication.create(emitter)(http)(program_factory));
+new EventMediator(logger, emitter);
+
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.json());
+app.use(metricsMiddleware);
+app.use(routeAccessEmitter(emitter));
+app.use(accessLogger(log_format));
+
+app.get('/healthcheck', system.healthcheck);
+app.post('/indication', indication.create(emitter)(http)(program_factory));
 
 // Start the Express server
 const server = app.listen(port, () =>

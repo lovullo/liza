@@ -35,7 +35,7 @@ describe('IndicationController', () => {
       const req = mockReq({});
       const res = mockRes({});
 
-      expect(() => sut(req)(res)).to.throw(
+      expect(() => sut(req, res)).to.throw(
         Error,
         'The provided URL is invalid:'
       );
@@ -58,7 +58,7 @@ describe('IndicationController', () => {
 
       req.query.callback = given;
 
-      sut(req)(res);
+      sut(req, res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });
@@ -78,7 +78,7 @@ describe('IndicationController', () => {
 
       req.query.callback = given;
 
-      sut(req)(res);
+      sut(req, res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });

@@ -28,7 +28,7 @@ describe('SystemController', () => {
       const req = mockReq({});
       const res = mockRes({});
 
-      Sut.healthcheck(req)(res);
+      Sut.healthcheck(req, res);
 
       expect(res.status.withArgs(204).callCount).to.equal(1);
     });

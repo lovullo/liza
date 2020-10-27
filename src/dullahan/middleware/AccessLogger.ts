@@ -21,8 +21,9 @@
 
 import * as fs from 'fs';
 import * as morgan from 'morgan';
+import {EventEmitter} from 'events';
 import {Options} from 'morgan';
-import {Request, Response} from 'express';
+import {NextFunction, Request, Response} from 'express';
 
 /**
  * The RSG Access Logger
@@ -32,6 +33,24 @@ import {Request, Response} from 'express';
 export const accessLogger = (format?: string) => {
   const config = accessLoggerConfigBuilder(format);
   return morgan(config.format, config.options);
+};
+
+/**
+ * Emit basic info about a request
+ *
+ * For use as middleware with express
+ */
+export const routeAccessEmitter = (emitter: EventEmitter) => (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  emitter.emit('request-received', {
+    http_method: req.method.toUpperCase(),
+    path: req.originalUrl,
+  });
+
+  next();
 };
 
 /**

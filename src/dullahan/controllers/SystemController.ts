@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import express = require('express');
+import {Request, Response} from 'express';
 
 export const system = {
   /**
@@ -27,7 +27,7 @@ export const system = {
    * @param request  - request object
    * @param response - response object
    */
-  healthcheck: (_request: express.Request) => (response: express.Response) => {
+  healthcheck: (_request: Request, response: Response) => {
     response.status(204).send();
   },
 };

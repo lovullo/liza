@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import express = require('express');
+import {Request, Response} from 'express';
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
 import {ProgramFactory} from '../program/ProgramFactory';
@@ -35,7 +35,7 @@ export const indication = {
    */
   create: (emitter: EventEmitter) => (http: HttpClient) => (
     program_factory: ProgramFactory
-  ) => (request: express.Request) => (response: express.Response) => {
+  ) => (request: Request, response: Response) => {
     let webhook = '';
 
     if (request.query && request.query.callback) {
