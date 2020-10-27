@@ -21,19 +21,21 @@
 import sinon = require('sinon');
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
-import {IndicationController as Sut} from '../../../src/dullahan/controllers/IndicationController';
+import {indication as Sut} from '../../../src/dullahan/controllers/IndicationController';
+import {ProgramFactory} from '../../../src/dullahan/program/ProgramFactory';
+import {Program} from '../../../src/program/Program';
 import {Response} from 'node-fetch';
 import {expect} from 'chai';
 import {mockReq, mockRes} from 'sinon-express-mock';
 
 describe('IndicationController', () => {
-  describe('handle', () => {
+  describe('create', () => {
     it('fails when an invalid webhook is provided', () => {
-      const sut = createSut();
+      const sut = createSutCreate();
       const req = mockReq({});
       const res = mockRes({});
 
-      expect(() => sut.handle(req, res)).to.throw(
+      expect(() => sut(req, res)).to.throw(
         Error,
         'The provided URL is invalid:'
       );
@@ -41,7 +43,7 @@ describe('IndicationController', () => {
       expect(res.status.withArgs(422).callCount).to.equal(1);
     });
 
-    it('calls webhook when a valid request is processsed', () => {
+    it('calls webhook when a valid request is processed', () => {
       const http_client = createHttpClient();
       const given = 'https://some.websitethatdoesnotexist.joe';
 
@@ -50,13 +52,13 @@ describe('IndicationController', () => {
         return Promise.resolve(<Response>{});
       });
 
-      const sut = createSut({http_client});
+      const sut = createSutCreate({http_client});
       const req = mockReq({});
       const res = mockRes({});
 
       req.query.callback = given;
 
-      sut.handle(req, res);
+      sut(req, res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });
@@ -70,13 +72,13 @@ describe('IndicationController', () => {
         return Promise.resolve(<Response>{});
       });
 
-      const sut = createSut({http_client});
+      const sut = createSutCreate({http_client});
       const req = mockReq({});
       const res = mockRes({});
 
       req.query.callback = given;
 
-      sut.handle(req, res);
+      sut(req, res);
 
       expect(res.status.withArgs(202).callCount).to.equal(1);
     });
@@ -91,11 +93,18 @@ const createHttpClient = () => {
   return new (class extends HttpClient {})();
 };
 
-const createSut = (dependencies: CommonObject = {}) => {
-  const {emitter, http_client} = dependencies;
+const createProgramFactory = () => {
+  return <ProgramFactory>{
+    createProgram() {
+      return <Program>{};
+    },
+  };
+};
 
-  return new Sut(
-    emitter ?? createEventEmitter(),
-    http_client ?? createHttpClient()
-  );
+const createSutCreate = (dependencies: CommonObject = {}) => {
+  const {emitter, http_client, program_factory} = dependencies;
+
+  return Sut.create(<EventEmitter>emitter ?? createEventEmitter())(
+    <HttpClient>http_client ?? createHttpClient()
+  )(<ProgramFactory>program_factory ?? createProgramFactory());
 };

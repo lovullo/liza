@@ -23,72 +23,60 @@ import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
 import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
-import {DefaultController} from '../src/dullahan/controllers/DefaultController';
 import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
-import {IndicationController} from '../src/dullahan/controllers/IndicationController';
-import {Router} from '../src/system/network/Router';
+import {ProgramFactory} from '../src/dullahan/program/ProgramFactory';
 import {StandardLogger} from '../src/system/StandardLogger';
-import {accessLogger} from '../src/dullahan/middleware/AccessLogger';
+import {
+  accessLogger,
+  routeAccessEmitter,
+} from '../src/dullahan/middleware/AccessLogger';
 import {createConsole} from '../src/system/ConsoleFactory';
+import {indication} from '../src/dullahan/controllers/IndicationController';
+import {system} from '../src/dullahan/controllers/SystemController';
 
 dotenv.config();
 
 const app = express();
 const env = process.env.NODE_ENV;
+const log_format = process.env.DULLAHAN_ACCESS_LOG_FORMAT;
 const port = process.env.NODE_PORT;
+const program_id = process.env.DULLAHAN_PROGRAM_ID;
 const service = 'dullahan';
 const log_console = createConsole(process.env.LOG_PATH_DEBUG);
 
 if (!env) {
   throw new Error('Unable to determine env.');
-}
-
-if (!port) {
+} else if (!log_format) {
+  throw new Error('Unable to read log_format from env.');
+} else if (!port) {
   throw new Error('Unable to read port from env.');
+} else if (!program_id) {
+  throw new Error('Unable to read program_id from env.');
 }
 
 const metricsMiddleware = promBundle({includePath: true});
+const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
+const emitter = new EventEmitter();
+const http = new HttpClient();
+const logger = new StandardLogger(log_console, ts_ctor, env, service);
+const program_path = `program/${program_id}/Program`;
+/* eslint-disable @typescript-eslint/no-var-requires */
+const program = require(program_path);
+/* eslint-enable @typescript-eslint/no-var-requires */
+const program_factory = new ProgramFactory(program);
+
+new EventMediator(logger, emitter);
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(metricsMiddleware);
-app.use(accessLogger());
+app.use(routeAccessEmitter(emitter));
+app.use(accessLogger(log_format));
 
-const ts_ctor = () => <UnixTimestamp>Math.floor(new Date().getTime() / 1000);
-const emitter = new EventEmitter();
-const http_client = new HttpClient();
-const logger = new StandardLogger(log_console, ts_ctor, env, service);
-
-new EventMediator(logger, emitter);
-
-/**
- * Create a quick factory to new-up controllers
- *
- * @param event_emitter - event emitter
- * @param http_client   - HTTP client
- *
- * @return controller maker
- */
-const controller_factory = (
-  event_emitter: EventEmitter,
-  http_client: HttpClient
-) => {
-  return (controller: Constructable<any>) => {
-    return new controller(event_emitter, http_client);
-  };
-};
-
-// Create a new router and set up all endpoints
-const route = new Router(
-  app,
-  controller_factory(emitter, http_client),
-  emitter
-);
-
-route.post('/indication', IndicationController, 'handle');
-route.get('/healthcheck', DefaultController, 'handleHealthcheck');
+app.get('/healthcheck', system.healthcheck);
+app.post('/indication', indication.create(emitter)(http)(program_factory));
 
 // Start the Express server
 const server = app.listen(port, () =>

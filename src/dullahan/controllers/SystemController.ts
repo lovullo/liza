@@ -1,5 +1,5 @@
 /**
- *  Tests for Default Controller
+ *  System Controller
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -18,20 +18,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {DefaultController as Sut} from '../../../src/dullahan/controllers/DefaultController';
-import {expect} from 'chai';
-import {mockReq, mockRes} from 'sinon-express-mock';
+import {Request, Response} from 'express';
 
-describe('DefaultController', () => {
-  describe('handleHealthcheck', () => {
-    it('response with 204 code when healthy', () => {
-      const sut = new Sut();
-      const req = mockReq({});
-      const res = mockRes({});
-
-      sut.handleHealthcheck(req, res);
-
-      expect(res.status.withArgs(204).callCount).to.equal(1);
-    });
-  });
-});
+export const system = {
+  /**
+   * Make sure the system is online
+   *
+   * @param request  - request object
+   * @param response - response object
+   */
+  healthcheck: (_request: Request, response: Response) => {
+    response.status(204).send();
+  },
+};

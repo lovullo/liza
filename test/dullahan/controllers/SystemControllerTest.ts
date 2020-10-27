@@ -1,5 +1,5 @@
 /**
- *  Default Controller
+ *  Tests for System Controller
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -18,19 +18,19 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import express = require('express');
+import {system as Sut} from '../../../src/dullahan/controllers/SystemController';
+import {expect} from 'chai';
+import {mockReq, mockRes} from 'sinon-express-mock';
 
-export class DefaultController {
-  /**
-   * Handle the healthcheck request
-   *
-   * @param request  - request object
-   * @param response - response object
-   */
-  public handleHealthcheck(
-    _request: express.Request,
-    response: express.Response
-  ) {
-    response.status(204).send();
-  }
-}
+describe('SystemController', () => {
+  describe('healthcheck', () => {
+    it('response with 204 code when healthy', () => {
+      const req = mockReq({});
+      const res = mockRes({});
+
+      Sut.healthcheck(req, res);
+
+      expect(res.status.withArgs(204).callCount).to.equal(1);
+    });
+  });
+});
