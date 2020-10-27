@@ -346,20 +346,18 @@ module.exports = Class('Server').extend(EventEmitter, {
               ._getDefaultBucket(program, quote_data)
               .then(default_bucket => {
                 program.processNaFields(default_bucket);
-                init_finish(program, default_bucket);
+                init_finish(default_bucket);
               });
           });
         });
       } else {
         // quote is not new; just continue
-        server.getProgram(quote_data.programId).then(function (quote_program) {
-          server
-            ._getDefaultBucket(quote_program, quote_data)
-            .then(default_bucket => init_finish(quote_program, default_bucket));
-        });
+        server
+          ._getDefaultBucket(program, quote_data)
+          .then(default_bucket => init_finish(default_bucket));
       }
 
-      function init_finish(quote_program, default_bucket) {
+      function init_finish(default_bucket) {
         // fill in the quote data (with reasonable defaults if the quote
         // does not yet exist); IMPORTANT: do not set pver to the
         // current version here; the quote will be repaired if it is not
@@ -376,23 +374,9 @@ module.exports = Class('Server').extend(EventEmitter, {
           .setImported(quote_data.importedInd || false)
           .setBound(quote_data.boundInd || false)
           .needsImport(quote_data.importDirty || false)
-          .setCurrentStepId(
-            Math.max(
-              quote_data.currentStepId || 0,
-              quote_program.getFirstStepId()
-            )
-          )
-          .setTopVisitedStepId(
-            quote_data.topVisitedStepId || quote_program.getFirstStepId()
-          )
-          // it is important that we set this to top visited to
-          // ensure that (a) they cannot init a quote and skip the
-          // first step and (b) that older quotes without this field
-          // are properly initialized
-          .setTopSavedStepId(
-            quote_data.topSavedStepId || quote.getTopVisitedStepId() - 1
-          )
-          .setProgram(quote_program)
+          .setCurrentStepId(quote_data.currentStepId || 0)
+          .setTopVisitedStepId(quote_data.topVisitedStepId)
+          .setTopSavedStepId(quote_data.topSavedStepId)
           .setProgramVersion(quote_data.pver || '')
           .setExplicitLock(
             quote_data.explicitLock || '',
@@ -581,6 +565,26 @@ module.exports = Class('Server').extend(EventEmitter, {
     var _self = this,
       args = arguments;
 
+    if (quote.getProgramId() !== program_id) {
+      // invalid program; change the program id
+      this.sendResponse(
+        request,
+        quote,
+        {
+          valid: false,
+        },
+        [
+          {
+            action: 'setProgram',
+            id: quote.getProgramId(),
+            quoteId: quote.getId(),
+          },
+        ]
+      );
+
+      return;
+    }
+
     this._checkQuotePver(quote, program, function (err, mod) {
       if (err) {
         // return as fatal
@@ -639,17 +643,6 @@ module.exports = Class('Server').extend(EventEmitter, {
     if (quote.getId() == 0) {
       this.sendNewQuote(request, quote_new);
       return this;
-    } else if (quote.getProgramId() !== program_id) {
-      // invalid program; change the program id
-      actions = [
-        {
-          action: 'setProgram',
-          id: quote.getProgramId(),
-          quoteId: quote.getId(),
-        },
-      ];
-
-      valid = false;
     } else if (quote.hasError()) {
       this.sendError(request, quote.getError());
       return this;

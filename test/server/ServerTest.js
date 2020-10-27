@@ -560,9 +560,7 @@ describe('Server#initQuote', () => {
     quote.setBound = () => quote;
     quote.needsImport = () => quote;
 
-    // will not set a current step that is less than the first step
-    const first_step = 2;
-    let program = createMockProgram(first_step);
+    let program = createMockProgram();
 
     let pcache = createMockCache();
     pcache.get = key => {
@@ -570,14 +568,9 @@ describe('Server#initQuote', () => {
     };
     let cache = createMockCache(pcache);
 
-    quote.setCurrentStepId = given_current_step => {
-      expect(given_current_step).to.be.equal(first_step);
-      return quote;
-    };
-
+    quote.setCurrentStepId = () => quote;
     quote.setTopVisitedStepId = () => quote;
     quote.setTopSavedStepId = () => quote;
-    quote.setProgram = () => quote;
     quote.setProgramVersion = () => quote;
     quote.setExplicitLock = () => quote;
     quote.setError = () => quote;
@@ -712,7 +705,6 @@ describe('Server#initQuote', () => {
     quote.setCurrentStepId = () => quote;
     quote.setTopVisitedStepId = () => quote;
     quote.setTopSavedStepId = () => quote;
-    quote.setProgram = () => quote;
     quote.setProgramVersion = () => quote;
     quote.setExplicitLock = () => quote;
     quote.setError = () => quote;
@@ -797,7 +789,6 @@ function createMockQuote(
     setCurrentStepId: () => {},
     setTopVisitedStepId: () => {},
     setTopSavedStepId: () => {},
-    setProgram: () => {},
     setProgramVersion: () => {},
     setExplicitLock: () => {},
     setError: () => {},
@@ -898,7 +889,7 @@ function createMockDataProcessor() {
 
 function createMockProgram(first_step_id, program_ver, next_step) {
   return {
-    id: () => 'foo',
+    getId: () => 'foo',
     version: program_ver || '',
     getFirstStepId: () => first_step_id || 1,
     isStepVisible: () => false,

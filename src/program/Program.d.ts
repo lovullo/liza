@@ -102,4 +102,9 @@ export declare abstract class Program {
    * Determine whether question QTYPE is known
    */
   hasKnownType(name: string): boolean;
+
+  /**
+   * First valid step id
+   */
+  getFirstStepId(): number;
 }

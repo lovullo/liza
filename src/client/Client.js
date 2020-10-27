@@ -521,10 +521,11 @@ module.exports = Class('Client').extend(EventEmitter, {
       client.dataProxy.abortAll();
 
       // create a new quote instance
-      client._quote = client._factory.createQuote(quote_id, data.content);
-
-      // TODO: this seems like it should be a ctor argument
-      client._quote.setProgram(client.program);
+      client._quote = client._factory.createQuote(
+        quote_id,
+        data.content,
+        client.program
+      );
 
       client.nav.setMinStepId(client._quote.getExplicitLockStep());
 

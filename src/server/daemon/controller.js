@@ -652,7 +652,7 @@ function createQuote(quote_id, program, request, callback, error_callback) {
   var bucket = QuoteDataBucket(),
     metabucket = QuoteDataBucket(),
     ratebucket = QuoteDataBucket(),
-    quote = Quote(quote_id, bucket);
+    quote = Quote(quote_id, bucket, program);
 
   quote.setMetabucket(metabucket);
   quote.setRateBucket(ratebucket);

@@ -361,6 +361,7 @@ function createStubQuote(metadata: Record<string, any>) {
     classify: () => <ClassificationResult>{},
     hasNaField: () => false,
     hasKnownType: () => true,
+    getFirstStepId: () => 0,
   });
 
   const quote = <ServerSideQuote>(<unknown>{
