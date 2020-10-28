@@ -348,7 +348,7 @@ module.exports = Class('Server').extend(EventEmitter, {
       .setAgentName(quote_data.agentName || agent_name)
       .setAgentEntityId(quote_data.agentEntityId || '')
       .setInitialRatedDate(quote_data.initialRatedDate || 0)
-      .setStartDate(quote_data.startDate || this._ts_ctor())
+      .setStartDate(quote_data.startDate || 0)
       .setImported(quote_data.importedInd || false)
       .setBound(quote_data.boundInd || false)
       .needsImport(quote_data.importDirty || false)
@@ -514,7 +514,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             agentId: session.agentId(),
             agentName: session.agentName(),
             agentEntityId: session.agentEntityId(),
-            startDate: quote.getStartDate(),
+            startDate: this._ts_ctor(),
             programId: quote.getProgramId(),
             initialRatedDate: 0,
             importedInd: quote.isImported() ? 1 : 0,
@@ -526,7 +526,6 @@ module.exports = Class('Server').extend(EventEmitter, {
             lastPremDate: 0,
             internal: session.isInternal() ? 1 : 0,
             pver: program.version,
-
             explicitLock: quote.getExplicitLockReason(),
             explicitLockStepId: quote.getExplicitLockStep(),
           }
