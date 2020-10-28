@@ -1,5 +1,5 @@
 /**
- * UserSession class
+ * Loads documents into memory
  *
  *  Copyright (C) 2010-2019 R-T Specialty, LLC.
  *
@@ -19,39 +19,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {PositiveInteger} from '../../numeric';
+import {IO} from 'fp-ts/IO';
+
+import {ServerSideQuote} from './ServerSideQuote';
+import {UserSession} from '../request/UserSession';
 
 /**
- * Session management
+ * Raw document data
+ *
+ * TODO: This is incomplete and should be moved into `MongoServerDao` once
+ * it's in a more accurate state.
  */
-export declare class UserSession {
-  /**
-   * Whether the user is logged in as an internal user
-   *
-   * @return true if internal user, otherwise false
-   */
-  isInternal(): boolean;
+type DocumentData = {
+  agentId?: number;
+  agentName?: string;
+};
 
-  /**
-   * Gets the agent id, if available
-   *
-   * @return agent id or undefined if unavailable
-   */
-  agentId(): PositiveInteger | undefined;
-
-  /**
-   * Gets the broker entity id, if available
-   *
-   * @return agent entity id or undefined if unavailable
-   */
-  agentEntityId(): PositiveInteger | undefined;
-
-  /**
-   * Gets the agent name, if available
-   *
-   * @return agent name or undefined if unavailable
-   */
-  agentName(): string | undefined;
-
-  userName(): string | undefined;
-}
+/**
+ * Populate a document (quote) with session data, giving precedence to data
+ * already present on the document
+ */
+export const loadSessionIntoQuote = (session: UserSession) => (
+  quote: ServerSideQuote
+) => (data: DocumentData): IO<ServerSideQuote> => () =>
+  quote
+    .setAgentId(data.agentId || session.agentId() || 0)
+    .setUserName(session.userName() || '')
+    .setAgentName(data.agentName || session.agentName() || '');

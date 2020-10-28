@@ -26,6 +26,7 @@
 
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
+const {loadSessionIntoQuote} = require('./quote/loader');
 
 const fs = require('fs');
 const util = require('util');
@@ -332,9 +333,8 @@ module.exports = Class('Server').extend(EventEmitter, {
 
   'private _loadDocumentIntoQuote'(quote, request, quote_data, bucket) {
     const session = request.getSession();
-    const agent_id = session.agentId();
-    const username = session.userName();
-    const agent_name = session.agentName();
+
+    loadSessionIntoQuote(session)(quote)(quote_data)();
 
     // fill in the quote data (with reasonable defaults if the quote
     // does not yet exist); IMPORTANT: do not set pver to the
@@ -343,9 +343,6 @@ module.exports = Class('Server').extend(EventEmitter, {
     quote
       .setData(bucket)
       .setMetadata(quote_data.meta || {})
-      .setUserName(username)
-      .setAgentId(quote_data.agentId || agent_id)
-      .setAgentName(quote_data.agentName || agent_name)
       .setAgentEntityId(quote_data.agentEntityId || '')
       .setInitialRatedDate(quote_data.initialRatedDate || 0)
       .setStartDate(quote_data.startDate || 0)

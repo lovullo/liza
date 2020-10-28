@@ -32,6 +32,10 @@ declare type RetryResult = {
 };
 
 export declare class ServerSideQuote extends BaseQuote {
+  setAgentId(id: number): this;
+
+  setAgentName(name: string): this;
+
   /**
    * Last rated date, if any
    *
