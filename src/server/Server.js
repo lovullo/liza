@@ -312,116 +312,60 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @return Server self to allow for method chaining
    */
   initQuote: function (quote, program, request, callback, error_callback) {
-    var server = this,
-      quote_id = quote.getId(),
-      session = request.getSession(),
-      agent_id = session.agentId(),
-      username = session.userName(),
-      agent_name = session.agentName();
+    const quote_id = quote.getId();
 
     // get the data for this quote
-    this.dao.pullQuote(quote_id).then(function (quote_data) {
-      var new_quote = false;
+    this.dao.pullQuote(quote_id).then(quote_data => {
       if (!quote_data) {
-        quote_data = {};
-        new_quote = true;
-
-        // ensure it's a valid quote id
-        server.dao.getMinQuoteId(function (min_id) {
-          // don't allow before the min quote id
-          if (quote_id < min_id) {
-            error_callback.call(server);
-            return;
-          }
-
-          server.dao.getMaxQuoteId(function (max_id) {
-            if (quote_id > max_id) {
-              // we has a problem
-              error_callback.call(server);
-              return;
-            }
-
-            // we're good
-            server
-              ._getDefaultBucket(program, quote_data)
-              .then(default_bucket => {
-                program.processNaFields(default_bucket);
-                init_finish(default_bucket);
-              });
-          });
-        });
-      } else {
-        // quote is not new; just continue
-        server
-          ._getDefaultBucket(program, quote_data)
-          .then(default_bucket => init_finish(default_bucket));
+        error_callback && error_callback.call(this);
+        return;
       }
 
-      function init_finish(default_bucket) {
-        // fill in the quote data (with reasonable defaults if the quote
-        // does not yet exist); IMPORTANT: do not set pver to the
-        // current version here; the quote will be repaired if it is not
-        // set
-        quote
-          .setData(default_bucket)
-          .setMetadata(quote_data.meta || {})
-          .setUserName(username)
-          .setAgentId(quote_data.agentId || agent_id)
-          .setAgentName(quote_data.agentName || agent_name)
-          .setAgentEntityId(quote_data.agentEntityId || '')
-          .setInitialRatedDate(quote_data.initialRatedDate || 0)
-          .setStartDate(quote_data.startDate || server._ts_ctor())
-          .setImported(quote_data.importedInd || false)
-          .setBound(quote_data.boundInd || false)
-          .needsImport(quote_data.importDirty || false)
-          .setCurrentStepId(quote_data.currentStepId || 0)
-          .setTopVisitedStepId(quote_data.topVisitedStepId)
-          .setTopSavedStepId(quote_data.topSavedStepId)
-          .setProgramVersion(quote_data.pver || '')
-          .setExplicitLock(
-            quote_data.explicitLock || '',
-            quote_data.explicitLockStepId || 0
-          )
-          .setError(quote_data.error || '')
-          .setCreditScoreRef(quote_data.creditScoreRef || 0)
-          .setLastPremiumDate(quote_data.lastPremDate || 0)
-          .setRatedDate(quote_data.initialRatedDate || 0)
-          .setRatingData(quote_data.ratedata || {})
-          .setRetryAttempts(quote_data.retryAttempts || 0);
-
-        // if no data was returned, then the quote doesn't exist in the
-        // database
-        if (new_quote) {
-          // initialize it
-          server.dao.saveQuote(quote, null, null, {
-            agentId: agent_id,
-            agentName: agent_name,
-            agentEntityId: session.agentEntityId(),
-            startDate: quote.getStartDate(),
-            programId: quote.getProgramId(),
-            initialRatedDate: 0,
-            importedInd: quote.isImported() ? 1 : 0,
-            boundInd: quote.isBound() ? 1 : 0,
-            importDirty: 0,
-            syncInd: 0,
-            notifyInd: 0,
-            syncDate: 0,
-            lastPremDate: 0,
-            internal: session.isInternal() ? 1 : 0,
-            pver: program.version,
-
-            explicitLock: quote.getExplicitLockReason(),
-            explicitLockStepId: quote.getExplicitLockStep(),
-          });
-
-          server.dao.saveQuoteMeta(quote);
-        }
-
-        callback.call(server);
-      }
+      this._getDefaultBucket(program, quote_data).then(default_bucket => {
+        this._loadDocumentIntoQuote(quote, request, quote_data, default_bucket);
+        callback.call(this);
+      });
     });
 
     return this;
+  },
+
+  'private _loadDocumentIntoQuote'(quote, request, quote_data, bucket) {
+    const session = request.getSession();
+    const agent_id = session.agentId();
+    const username = session.userName();
+    const agent_name = session.agentName();
+
+    // fill in the quote data (with reasonable defaults if the quote
+    // does not yet exist); IMPORTANT: do not set pver to the
+    // current version here; the quote will be repaired if it is not
+    // set
+    quote
+      .setData(bucket)
+      .setMetadata(quote_data.meta || {})
+      .setUserName(username)
+      .setAgentId(quote_data.agentId || agent_id)
+      .setAgentName(quote_data.agentName || agent_name)
+      .setAgentEntityId(quote_data.agentEntityId || '')
+      .setInitialRatedDate(quote_data.initialRatedDate || 0)
+      .setStartDate(quote_data.startDate || this._ts_ctor())
+      .setImported(quote_data.importedInd || false)
+      .setBound(quote_data.boundInd || false)
+      .needsImport(quote_data.importDirty || false)
+      .setCurrentStepId(quote_data.currentStepId || 0)
+      .setTopVisitedStepId(quote_data.topVisitedStepId)
+      .setTopSavedStepId(quote_data.topSavedStepId)
+      .setProgramVersion(quote_data.pver || '')
+      .setExplicitLock(
+        quote_data.explicitLock || '',
+        quote_data.explicitLockStepId || 0
+      )
+      .setError(quote_data.error || '')
+      .setCreditScoreRef(quote_data.creditScoreRef || 0)
+      .setLastPremiumDate(quote_data.lastPremDate || 0)
+      .setRatedDate(quote_data.initialRatedDate || 0)
+      .setRatingData(quote_data.ratedata || {})
+      .setRetryAttempts(quote_data.retryAttempts || 0);
   },
 
   'private _checkQuotePver': function (quote, program, callback) {
@@ -546,14 +490,49 @@ module.exports = Class('Server').extend(EventEmitter, {
    *
    * @return {Server} self
    */
-  sendNewQuote: function (request, quote_new) {
-    var server = this,
-      session = request.getSession();
+  sendNewQuote: function (request, quote_new, program) {
+    const session = request.getSession();
 
-    function donew(quote_id) {
-      var quote = quote_new(quote_id);
-      server.sendResponse(request, quote, {valid: false});
-    }
+    const donew = quote_id => {
+      const quote = quote_new(quote_id, program);
+
+      this._getDefaultBucket(program, {}).then(default_bucket => {
+        program.processNaFields(default_bucket);
+        this._loadDocumentIntoQuote(quote, request, {}, default_bucket);
+
+        // XXX: this doesn't handle failures! (this code used to live in
+        // #initQuote, and didn't handle failures there either)
+        this.dao.saveQuote(
+          quote,
+          () => {
+            this.dao.saveQuoteMeta(quote, null, () => {
+              this.sendResponse(request, quote, {valid: false});
+            });
+          },
+          null,
+          {
+            agentId: session.agentId(),
+            agentName: session.agentName(),
+            agentEntityId: session.agentEntityId(),
+            startDate: quote.getStartDate(),
+            programId: quote.getProgramId(),
+            initialRatedDate: 0,
+            importedInd: quote.isImported() ? 1 : 0,
+            boundInd: quote.isBound() ? 1 : 0,
+            importDirty: 0,
+            syncInd: 0,
+            notifyInd: 0,
+            syncDate: 0,
+            lastPremDate: 0,
+            internal: session.isInternal() ? 1 : 0,
+            pver: program.version,
+
+            explicitLock: quote.getExplicitLockReason(),
+            explicitLockStepId: quote.getExplicitLockStep(),
+          }
+        );
+      });
+    };
 
     // get the next available quote id
     this.dao.getNextQuoteId(donew);
@@ -565,7 +544,13 @@ module.exports = Class('Server').extend(EventEmitter, {
     var _self = this,
       args = arguments;
 
-    if (quote.getProgramId() !== program_id) {
+    // if no quote id was given, simply prompt for one for now
+    if (quote.getId() == 0) {
+      this.sendNewQuote(request, quote_new, program);
+      return this;
+    }
+
+    if (quote.getProgramId() !== program.getId()) {
       // invalid program; change the program id
       this.sendResponse(
         request,
@@ -639,11 +624,7 @@ module.exports = Class('Server').extend(EventEmitter, {
       session = request.getSession(),
       internal = session.isInternal();
 
-    // if no quote id was given, simply prompt for one for now
-    if (quote.getId() == 0) {
-      this.sendNewQuote(request, quote_new);
-      return this;
-    } else if (quote.hasError()) {
+    if (quote.hasError()) {
       this.sendError(request, quote.getError());
       return this;
     }

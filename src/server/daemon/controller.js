@@ -621,7 +621,7 @@ function doRoute(program, request, data, resolve, reject) {
 
       // otherwise, the given quote is invalid, but we can provide a new
       // one
-      server.sendNewQuote(request, createQuoteQuick);
+      server.sendNewQuote(request, createQuoteQuick, program);
     });
   }
 
@@ -649,13 +649,7 @@ function createQuote(quote_id, program, request, callback, error_callback) {
       server.logger.log(log.PRIORITY_ERROR, 'Invalid createQuote() callback');
     };
 
-  var bucket = QuoteDataBucket(),
-    metabucket = QuoteDataBucket(),
-    ratebucket = QuoteDataBucket(),
-    quote = Quote(quote_id, bucket, program);
-
-  quote.setMetabucket(metabucket);
-  quote.setRateBucket(ratebucket);
+  const quote = createQuoteQuick(quote_id, program);
 
   var controller = this;
   return server.initQuote(
@@ -671,8 +665,16 @@ function createQuote(quote_id, program, request, callback, error_callback) {
   );
 }
 
-function createQuoteQuick(id) {
-  return Quote(id, QuoteDataBucket());
+function createQuoteQuick(id, program) {
+  const bucket = QuoteDataBucket();
+  const metabucket = QuoteDataBucket();
+  const ratebucket = QuoteDataBucket();
+  const quote = Quote(id, bucket, program);
+
+  quote.setMetabucket(metabucket);
+  quote.setRateBucket(ratebucket);
+
+  return quote;
 }
 
 /**

@@ -597,14 +597,13 @@ describe('Server#initQuote', () => {
   });
 
   it('Defaults data on new quote and saves quote meta', function (done) {
-    this.timeout(0);
     let response = createMockResponse();
     let dao = createMockDao();
 
     const expected_quote_id = 12345;
     let pull_quote_is_called = false;
 
-    // return no quote data (new quote)
+    // should not be called for new quote
     dao.pullQuote = quote_id =>
       Promise.resolve(
         (() => {
@@ -655,7 +654,7 @@ describe('Server#initQuote', () => {
     quote.getStartDate = () => start_date;
     let program = createMockProgram(1, program_ver);
     let save_quote_is_called = false;
-    dao.saveQuote = (quote, success, failure, save_data) => {
+    dao.saveQuote = (quote, success, _failure, save_data) => {
       save_quote_is_called = true;
       const expected_data = {
         agentId: agent_id,
@@ -677,6 +676,7 @@ describe('Server#initQuote', () => {
         explicitLockStepId: 0,
       };
       expect(save_data).to.deep.equal(expected_data);
+      success();
     };
 
     let set_meta_data_calls = 0;
@@ -686,11 +686,13 @@ describe('Server#initQuote', () => {
       set_meta_data.push(meta_data);
       return quote;
     };
+    dao.getNextQuoteId = callback => callback(expected_quote_id);
 
     let save_quote_meta_is_called = false;
-    dao.saveQuoteMeta = given_quote => {
+    dao.saveQuoteMeta = (given_quote, _, success) => {
       save_quote_meta_is_called = true;
       expect(given_quote).to.be.equal(quote);
+      success();
     };
 
     quote.setUserName = () => quote;
@@ -718,10 +720,8 @@ describe('Server#initQuote', () => {
     const sut = getSut(response, dao, prog_init);
     sut.init(createMockCache(), createMockRater());
 
-    const request = createMockRequest(session);
-
     const callback = () => {
-      expect(pull_quote_is_called).to.be.true;
+      expect(pull_quote_is_called).to.be.false;
       expect(set_data_is_called).to.be.true;
       expect(save_quote_is_called).to.be.true;
 
@@ -732,7 +732,16 @@ describe('Server#initQuote', () => {
       done();
     };
 
-    sut.initQuote(quote, program, request, callback);
+    const quoteNew = (given_quote_id, given_program) => {
+      expect(given_quote_id).to.equal(expected_quote_id);
+      expect(given_program).to.equal(program);
+
+      return quote;
+    };
+
+    const request = createMockRequest(session, callback);
+
+    sut.sendNewQuote(request, quoteNew, program);
   });
 });
 
@@ -835,9 +844,9 @@ function createMockLogger() {
   };
 }
 
-function createMockRequest(session) {
+function createMockRequest(session, end_callback = () => {}) {
   return {
-    end: () => {},
+    end: end_callback,
     getSession: () => session,
     getPostData: c => {
       c();
