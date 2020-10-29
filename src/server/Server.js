@@ -26,7 +26,11 @@
 
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
-const {loadSessionIntoQuote, loadDocumentIntoQuote} = require('./quote/loader');
+const {
+  pullDocumentFromDao,
+  loadSessionIntoQuote,
+  loadDocumentIntoQuote,
+} = require('./quote/loader');
 
 const fs = require('fs');
 const util = require('util');
@@ -315,18 +319,24 @@ module.exports = Class('Server').extend(EventEmitter, {
   initQuote: function (quote, program, request, callback, error_callback) {
     const quote_id = quote.getId();
 
-    // get the data for this quote
-    this.dao.pullQuote(quote_id).then(quote_data => {
-      if (!quote_data) {
-        error_callback && error_callback.call(this);
-        return;
-      }
+    // note: this reference to `right` is because we're not yet importing
+    // fp-ts, given that this is a plain JS file; this function call is
+    // transitionary
+    const result = pullDocumentFromDao(this.dao)(quote_id)().then(
+      ({right: quote_data, left}) =>
+        left
+          ? error_callback && error_callback.call(this)
+          : this._getDefaultBucket(program, quote_data).then(default_bucket => {
+              this._loadDocumentIntoQuote(
+                quote,
+                request,
+                quote_data,
+                default_bucket
+              );
 
-      this._getDefaultBucket(program, quote_data).then(default_bucket => {
-        this._loadDocumentIntoQuote(quote, request, quote_data, default_bucket);
-        callback.call(this);
-      });
-    });
+              callback.call(this);
+            })
+    );
 
     return this;
   },

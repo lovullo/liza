@@ -19,11 +19,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import * as E from 'fp-ts/Either';
+import * as TE from 'fp-ts/TaskEither';
 import {IO} from 'fp-ts/IO';
+import {flow} from 'fp-ts/function';
 
-import {DocumentData} from '../db/MongoServerDao';
+import {MongoServerDao, DocumentData} from '../db/MongoServerDao';
 import {ServerSideQuote} from './ServerSideQuote';
 import {UserSession} from '../request/UserSession';
+
+/** Pull a document from a datasource using a DAO */
+export const pullDocumentFromDao = (dao: MongoServerDao) =>
+  flow(
+    TE.tryCatchK(dao.pullQuote.bind(dao), String),
+    TE.chainEitherKW(E.fromNullable('Quote not found'))
+  );
 
 /**
  * Populate a document (quote) with session data, giving precedence to data
