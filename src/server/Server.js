@@ -27,10 +27,10 @@
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
 const {
-  pullDocumentFromDao,
   defaultBucket,
   loadSessionIntoQuote,
   loadDocumentIntoQuote,
+  initDocument,
 } = require('./quote/loader');
 
 const fs = require('fs');
@@ -318,19 +318,11 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @return Server self to allow for method chaining
    */
   initQuote: function (quote, program, request, callback, error_callback) {
-    const quote_id = quote.getId();
-
-    // note: this reference to `right` is because we're not yet importing
-    // fp-ts, given that this is a plain JS file; this function call is
-    // transitionary
-    pullDocumentFromDao(this.dao)(quote_id)().then(
-      ({right: quote_data, left}) =>
-        left
-          ? error_callback && error_callback.call(this)
-          : defaultBucket(this._progInit)(program)(quote_data)().then(() => {
-              this._loadDocumentIntoQuote(quote, request, quote_data);
-              callback.call(this);
-            })
+    // Note that `left` is transitional (we're not importing fp-ts here)
+    initDocument(this.dao)(program)(this._progInit)(request.getSession())(
+      quote
+    )().then(({left}) =>
+      left ? error_callback && error_callback.call(this) : callback.call(this)
     );
 
     return this;

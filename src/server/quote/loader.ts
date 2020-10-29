@@ -23,7 +23,7 @@ import * as E from 'fp-ts/Either';
 import * as T from 'fp-ts/Task';
 import * as TE from 'fp-ts/TaskEither';
 import {IO} from 'fp-ts/IO';
-import {flow} from 'fp-ts/function';
+import {pipe, flow} from 'fp-ts/function';
 
 import {Program} from '../../program/Program';
 import {
@@ -99,3 +99,23 @@ export const loadDocumentIntoQuote = (quote: ServerSideQuote) => (
     .setRatedDate(quote_data.initialRatedDate || <UnixTimestamp>0)
     .setRatingData(quote_data.ratedata || {})
     .setRetryAttempts(quote_data.retryAttempts || 0);
+
+/**
+ * Initialize document using stored data
+ *
+ * This is an incremental transition from `Server#initQuote` and will
+ * continue to evolve.
+ */
+export const initDocument = (dao: MongoServerDao) => (program: Program) => (
+  prog_init: ProgramInit
+) => (session: UserSession) => (
+  quote: ServerSideQuote
+): TE.TaskEither<unknown, ServerSideQuote> => {
+  return pipe(
+    quote.getId(),
+    pullDocumentFromDao(dao),
+    TE.chain(flow(defaultBucket(prog_init)(program), TE.fromTask)),
+    TE.chainFirst(flow(loadSessionIntoQuote(session)(quote), TE.fromIO)),
+    TE.chain(flow(loadDocumentIntoQuote(quote), TE.fromIO))
+  );
+};
