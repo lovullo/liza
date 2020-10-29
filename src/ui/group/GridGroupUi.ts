@@ -484,4 +484,17 @@ export class GridGroupUi extends GroupUi {
 
     return super.removeIndex(index);
   }
+
+  /**
+   * Called on quote classification
+   */
+  protected onClassify(): void {
+    // TODO: This is only necessary because this class was implemented
+    // before group visibility classifications. The custom css class
+    // should be cleaned up along with the custom class when that is
+    // implemented on the program to support this.
+    //
+    // i.e. <class name="is-visible" when="foo" />
+    this._processClasses();
+  }
 }
