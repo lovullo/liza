@@ -20,13 +20,25 @@
  */
 
 import * as E from 'fp-ts/Either';
+import * as T from 'fp-ts/Task';
 import * as TE from 'fp-ts/TaskEither';
 import {IO} from 'fp-ts/IO';
 import {flow} from 'fp-ts/function';
 
-import {MongoServerDao, DocumentData} from '../db/MongoServerDao';
+import {Program} from '../../program/Program';
+import {
+  MongoServerDao,
+  DocumentData,
+  RawBucketData,
+} from '../db/MongoServerDao';
 import {ServerSideQuote} from './ServerSideQuote';
 import {UserSession} from '../request/UserSession';
+
+// TODO: This is transitionary; the will be merged into this file, since
+// having the logic in yet another place does not make sense
+declare class ProgramInit {
+  init(program: Program, doc_data: RawBucketData): Promise<RawBucketData>;
+}
 
 /** Pull a document from a datasource using a DAO */
 export const pullDocumentFromDao = (dao: MongoServerDao) =>
@@ -34,6 +46,17 @@ export const pullDocumentFromDao = (dao: MongoServerDao) =>
     TE.tryCatchK(dao.pullQuote.bind(dao), String),
     TE.chainEitherKW(E.fromNullable('Quote not found'))
   );
+
+/** Apply default bucket data for the given program */
+export const defaultBucket = (prog_init: ProgramInit) => (program: Program) => (
+  data: DocumentData
+): T.Task<DocumentData> => () =>
+  prog_init
+    .init(program, data.data || {})
+    .then((bucket_data: RawBucketData) => {
+      data.data = bucket_data;
+      return data;
+    });
 
 /**
  * Populate a document (quote) with session data, giving precedence to data

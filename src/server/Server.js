@@ -28,6 +28,7 @@ const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
 const {
   pullDocumentFromDao,
+  defaultBucket,
   loadSessionIntoQuote,
   loadDocumentIntoQuote,
 } = require('./quote/loader');
@@ -322,18 +323,12 @@ module.exports = Class('Server').extend(EventEmitter, {
     // note: this reference to `right` is because we're not yet importing
     // fp-ts, given that this is a plain JS file; this function call is
     // transitionary
-    const result = pullDocumentFromDao(this.dao)(quote_id)().then(
+    pullDocumentFromDao(this.dao)(quote_id)().then(
       ({right: quote_data, left}) =>
         left
           ? error_callback && error_callback.call(this)
-          : this._getDefaultBucket(program, quote_data).then(default_bucket => {
-              this._loadDocumentIntoQuote(
-                quote,
-                request,
-                quote_data,
-                default_bucket
-              );
-
+          : defaultBucket(this._progInit)(program)(quote_data)().then(() => {
+              this._loadDocumentIntoQuote(quote, request, quote_data);
               callback.call(this);
             })
     );
@@ -341,10 +336,8 @@ module.exports = Class('Server').extend(EventEmitter, {
     return this;
   },
 
-  'private _loadDocumentIntoQuote'(quote, request, quote_data, bucket) {
+  'private _loadDocumentIntoQuote'(quote, request, quote_data) {
     const session = request.getSession();
-
-    quote_data.data = bucket;
 
     loadSessionIntoQuote(session)(quote)(quote_data)();
     loadDocumentIntoQuote(quote)(quote_data)();
@@ -454,17 +447,6 @@ module.exports = Class('Server').extend(EventEmitter, {
   },
 
   /**
-   * Generates default bucket data for the given program
-   *
-   * @return {Object} default bucket data
-   */
-  'private _getDefaultBucket': function (program, quote_data) {
-    // TOOD: this duplicates some logic with ProgramQuoteCleaner; we
-    // probably do not need both of them
-    return this._progInit.init(program, quote_data.data);
-  },
-
-  /**
    * Sends a new quote initialization request to the client
    *
    * @param {HttpServerRequest} request
@@ -478,9 +460,9 @@ module.exports = Class('Server').extend(EventEmitter, {
     const donew = quote_id => {
       const quote = quote_new(quote_id, program);
 
-      this._getDefaultBucket(program, {}).then(default_bucket => {
-        program.processNaFields(default_bucket);
-        this._loadDocumentIntoQuote(quote, request, {}, default_bucket);
+      defaultBucket(this._progInit)(program)({})().then(quote_data => {
+        program.processNaFields(quote_data.data);
+        this._loadDocumentIntoQuote(quote, request, quote_data);
 
         // XXX: this doesn't handle failures! (this code used to live in
         // #initQuote, and didn't handle failures there either)
