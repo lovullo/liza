@@ -32,9 +32,29 @@ declare type RetryResult = {
 };
 
 export declare class ServerSideQuote extends BaseQuote {
+  setData(data: Record<string, unknown>): this;
+
   setAgentId(id: number): this;
 
   setAgentName(name: string): this;
+
+  setAgentEntityId(id: number): this;
+
+  setStartDate(date: number): this;
+
+  setImported(imported: boolean): this;
+
+  setBound(imported: boolean): this;
+
+  needsImport(imported: boolean): this;
+
+  setTopVisitedStepId(id: number): this;
+
+  setProgramVersion(ver: string): this;
+
+  setError(error: string): this;
+
+  setCreditScoreRef(ref: string): this;
 
   /**
    * Last rated date, if any

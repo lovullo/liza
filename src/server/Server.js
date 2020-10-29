@@ -26,7 +26,7 @@
 
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
-const {loadSessionIntoQuote} = require('./quote/loader');
+const {loadSessionIntoQuote, loadDocumentIntoQuote} = require('./quote/loader');
 
 const fs = require('fs');
 const util = require('util');
@@ -334,35 +334,10 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _loadDocumentIntoQuote'(quote, request, quote_data, bucket) {
     const session = request.getSession();
 
-    loadSessionIntoQuote(session)(quote)(quote_data)();
+    quote_data.data = bucket;
 
-    // fill in the quote data (with reasonable defaults if the quote
-    // does not yet exist); IMPORTANT: do not set pver to the
-    // current version here; the quote will be repaired if it is not
-    // set
-    quote
-      .setData(bucket)
-      .setMetadata(quote_data.meta || {})
-      .setAgentEntityId(quote_data.agentEntityId || '')
-      .setInitialRatedDate(quote_data.initialRatedDate || 0)
-      .setStartDate(quote_data.startDate || 0)
-      .setImported(quote_data.importedInd || false)
-      .setBound(quote_data.boundInd || false)
-      .needsImport(quote_data.importDirty || false)
-      .setCurrentStepId(quote_data.currentStepId || 0)
-      .setTopVisitedStepId(quote_data.topVisitedStepId)
-      .setTopSavedStepId(quote_data.topSavedStepId)
-      .setProgramVersion(quote_data.pver || '')
-      .setExplicitLock(
-        quote_data.explicitLock || '',
-        quote_data.explicitLockStepId || 0
-      )
-      .setError(quote_data.error || '')
-      .setCreditScoreRef(quote_data.creditScoreRef || 0)
-      .setLastPremiumDate(quote_data.lastPremDate || 0)
-      .setRatedDate(quote_data.initialRatedDate || 0)
-      .setRatingData(quote_data.ratedata || {})
-      .setRetryAttempts(quote_data.retryAttempts || 0);
+    loadSessionIntoQuote(session)(quote)(quote_data)();
+    loadDocumentIntoQuote(quote)(quote_data)();
   },
 
   'private _checkQuotePver': function (quote, program, callback) {

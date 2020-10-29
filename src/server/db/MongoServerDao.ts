@@ -39,6 +39,39 @@ const EventEmitter = require('events').EventEmitter;
 
 type ErrorCallback = (err: NullableError) => void;
 
+/** Bucket data directly from the database */
+export type RawBucketData = Record<string, any>;
+
+/**
+ * Document ("quote") record
+ *
+ * This structure was poorly planned and needs both cleanup (much of it is
+ * unnecessary or does not belong) and restructuring.
+ */
+export type DocumentData = {
+  agentEntityId?: number;
+  agentId?: number;
+  agentName?: string;
+  boundInd?: 0 | 1;
+  creditScoreRef?: string;
+  currentStepId?: number;
+  data?: RawBucketData;
+  error?: string;
+  explicitLock?: string;
+  explicitLockStepId?: number;
+  importDirty?: 0 | 1;
+  importedInd?: 0 | 1;
+  initialRatedDate?: UnixTimestamp;
+  lastPremDate?: UnixTimestamp;
+  meta?: RawBucketData;
+  pver?: string;
+  ratedata?: Record<string, any>;
+  retryAttempts?: number;
+  startDate: UnixTimestamp;
+  topSavedStepId?: number;
+  topVisitedStepId?: number;
+};
+
 /**
  * Uses MongoDB as a data store
  */
@@ -569,7 +602,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    *
    * @param quote_id - id of quote
    */
-  pullQuote(quote_id: DocumentId): Promise<Record<string, any> | null> {
+  pullQuote(quote_id: DocumentId): Promise<DocumentData | null> {
     return new Promise((resolve, reject) => {
       // XXX: TODO: Do not read whole of record into memory; filter out
       // revisions!

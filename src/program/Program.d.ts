@@ -32,8 +32,6 @@ export type QuestionTypes = Record<string, any>;
 export type AnswerRefs = Record<string, string>;
 
 export declare abstract class Program {
-  readonly ineligibleLockCount: number;
-
   clearNaFields: boolean;
 
   naFieldValue: string;
@@ -66,6 +64,8 @@ export declare abstract class Program {
   mapis: Record<string, string[]>;
 
   rateSteps: boolean[];
+
+  readonly ineligibleLockCount: number;
 
   getId(): string;
 
