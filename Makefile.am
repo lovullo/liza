@@ -33,7 +33,7 @@ EXTRA_DIST = $(path_src) package.json index.js $(path_src)/version.js \
 
 .PHONY: FORCE todo
 
-all-am: modindex
+all-am: modindex node_modules/liza.js
 
 dist-hook: check
 
@@ -99,6 +99,9 @@ test: tsc
 		      --recursive \
 		      @COV_ARGS@ \
 		      $(TESTARGS)
+
+node_modules/liza.js:
+	echo 'module.exports = require("..");' > $@
 
 check-local: test check-ts-out check-format check-lint
 
