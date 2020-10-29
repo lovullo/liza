@@ -28,6 +28,7 @@ import {EventEmitter} from 'events';
 import {EventMediator} from '../src/system/EventMediator';
 import {HttpClient} from '../src/system/network/HttpClient';
 import {ProgramFactory} from '../src/dullahan/program/ProgramFactory';
+import {RaterFactory} from '../src/dullahan/program/RaterFactory';
 import {StandardLogger} from '../src/system/StandardLogger';
 import {
   accessLogger,
@@ -76,7 +77,8 @@ const rater_paths = fs
   .readdirSync(rater_path)
   .filter((file: string) => file.match(/\.js$/));
 
-const program_factory = new ProgramFactory(program, rater_paths);
+const program_factory = new ProgramFactory(program);
+const rater_factory = new RaterFactory(rater_paths);
 
 new EventMediator(logger, emitter);
 
@@ -87,7 +89,10 @@ app.use(routeAccessEmitter(emitter));
 app.use(accessLogger(log_format));
 
 app.get('/healthcheck', system.healthcheck);
-app.post('/indication', indication.create(emitter)(http)(program_factory));
+app.post(
+  '/indication',
+  indication.create(emitter)(http)(program_factory)(rater_factory)
+);
 
 // Start the Express server
 const server = app.listen(port, () =>

@@ -21,12 +21,13 @@
 import {Request, Response} from 'express';
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
+import {ProgramFactory} from '../program/ProgramFactory';
 import {
   CustomRater,
-  ProgramFactory,
+  RaterFactory,
   getDummyQuote,
   getDummySession,
-} from '../program/ProgramFactory';
+} from '../program/RaterFactory';
 
 export const indication = {
   /**
@@ -40,7 +41,10 @@ export const indication = {
    */
   create: (emitter: EventEmitter) => (http: HttpClient) => (
     program_factory: ProgramFactory
-  ) => (request: Request, response: Response) => {
+  ) => (rater_factory: RaterFactory) => (
+    request: Request,
+    response: Response
+  ) => {
     let webhook = '';
 
     if (request.query && request.query.callback) {
@@ -77,7 +81,7 @@ export const indication = {
 
     const onFailure = (msg: string) => console.log('Failure:', {msg});
 
-    program_factory.createRaters().forEach((rater: CustomRater) => {
+    rater_factory.createRaters().forEach((rater: CustomRater) => {
       rater.rate(quote, session, indv, onSuccess, onFailure);
     });
 

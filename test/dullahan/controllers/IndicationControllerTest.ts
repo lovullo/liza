@@ -22,7 +22,6 @@ import sinon = require('sinon');
 import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
 import {
-  CustomRater,
   DataRetriever,
   ProgramFactory,
 } from '../../../src/dullahan/program/ProgramFactory';
@@ -31,6 +30,10 @@ import {Response} from 'node-fetch';
 import {expect} from 'chai';
 import {indication as Sut} from '../../../src/dullahan/controllers/IndicationController';
 import {mockReq, mockRes} from 'sinon-express-mock';
+import {
+  CustomRater,
+  RaterFactory,
+} from '../../../src/dullahan/program/RaterFactory';
 
 describe('IndicationController', () => {
   describe('create', () => {
@@ -102,7 +105,11 @@ const createProgramFactory = () => {
     createProgram() {
       return {bucket: <DataRetriever>{}, program: <Program>{}};
     },
+  };
+};
 
+const createRaterFactory = () => {
+  return <RaterFactory>{
     createRaters() {
       return [
         <CustomRater>{
@@ -114,9 +121,11 @@ const createProgramFactory = () => {
 };
 
 const createSutCreate = (dependencies: CommonObject = {}) => {
-  const {emitter, http_client, program_factory} = dependencies;
+  const {emitter, http_client, program_factory, rater_factory} = dependencies;
 
   return Sut.create(<EventEmitter>emitter ?? createEventEmitter())(
     <HttpClient>http_client ?? createHttpClient()
-  )(<ProgramFactory>program_factory ?? createProgramFactory());
+  )(<ProgramFactory>program_factory ?? createProgramFactory())(
+    <RaterFactory>rater_factory ?? createRaterFactory()
+  );
 };
