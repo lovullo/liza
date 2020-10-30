@@ -714,8 +714,17 @@ export class GroupUi extends EventEmitter {
           ? self.show()
           : self.hide();
       }
+      self.onClassify();
     });
   }
+
+  /**
+   * Called on quote classification
+   *
+   * Can be overridden in child classes
+   *
+   */
+  protected onClassify(): void {}
 
   /**
    * Get the class attributes and their classifiers

@@ -613,4 +613,48 @@ describe('GridGroup', () => {
       expect(sut.areDetailsOpen()).to.be.false;
     });
   });
+
+  describe('#onClassify', () => {
+    it('processes classes when called', () => {
+      const content = createBoxContent();
+      const quote = createQuote();
+      const sut = createSut(Sut, {content: content});
+
+      let contains_called = false;
+      let remove_called = false;
+      let quote_classify_cb = (_: any) => {};
+
+      quote.onClassifyAndNow = (cb: any) => {
+        quote_classify_cb = cb;
+      };
+
+      content.classList = {
+        contains: (class_str: string) => {
+          contains_called = true;
+
+          if (class_str === 'is-visible') {
+            return true;
+          }
+
+          return false;
+        },
+        add: () => {},
+        remove: () => {
+          remove_called = true;
+        },
+      };
+
+      sut.init(quote);
+
+      // Defaults to false
+      expect(sut.isVisible()).to.be.false;
+
+      quote_classify_cb({});
+
+      // Classes were processed after classification
+      expect(sut.isVisible()).to.be.true;
+      expect(contains_called).to.be.true;
+      expect(remove_called).to.be.true;
+    });
+  });
 });
