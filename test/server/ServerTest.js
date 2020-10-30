@@ -161,45 +161,85 @@ describe('Server#sendStep', () => {
 });
 
 describe('Server#visitStep', () => {
-  it('Valid step visit sets current step and sends response', done => {
-    const step_to_visit = 3;
-    const current_step = 2;
-    const top_saved_step = 5;
-    const top_visited_step = 5;
-    let error_is_sent = false;
-
-    const quote = createMockQuote(
+  [
+    {
+      label:
+        'Valid step visit for previous step sets current step and sends response',
+      step_to_visit: 3,
+      current_step: 5,
+      top_saved_step: 5,
+      top_visited_step: 5,
+      next_visible_step: 5,
+      expected_current_step: 3,
+    },
+    {
+      label:
+        'Valid step visit for next step sets current step and sends response',
+      step_to_visit: 5,
+      current_step: 4,
+      top_saved_step: 4,
+      top_visited_step: 4,
+      next_visible_step: 5,
+      expected_current_step: 5,
+    },
+    {
+      label:
+        'Valid step visit for next step (skip hidden) sets current step and sends response',
+      step_to_visit: 5,
+      current_step: 3,
+      top_saved_step: 3,
+      top_visited_step: 3,
+      next_visible_step: 5,
+      expected_current_step: 5,
+    },
+  ].forEach(
+    ({
+      label,
+      step_to_visit,
       current_step,
       top_saved_step,
-      top_visited_step
-    );
-    const program = createMockProgram();
-    const session = createMockSession();
-    const request = createMockRequest(session);
-    const response = createMockResponse();
-    const sut = getSut(response);
+      top_visited_step,
+      next_visible_step,
+      expected_current_step,
+    }) => {
+      it(label, done => {
+        let error_is_sent = false;
 
-    // check that a response is sent to user w/no actions (do not kick back)
-    response.from = (_, __, action) => {
-      expect(error_is_sent).to.be.false;
-      expect(action).to.deep.equal(undefined);
-      expect(given_cur_step_id).to.be.equal(step_to_visit);
-      done();
-    };
+        const quote = createMockQuote(
+          current_step,
+          top_saved_step,
+          top_visited_step
+        );
+        const program = createMockProgram();
+        const session = createMockSession();
+        const request = createMockRequest(session);
+        const response = createMockResponse();
+        const sut = getSut(response);
 
-    program.isStepVisible = () => true;
+        // check that a response is sent to user w/no actions (do not kick back)
+        response.from = (_, __, action) => {
+          expect(error_is_sent).to.be.false;
+          expect(action).to.deep.equal(undefined);
+          expect(given_cur_step_id).to.be.equal(expected_current_step);
+          done();
+        };
 
-    let given_cur_step_id = undefined;
-    quote.setCurrentStepId = step_id => {
-      given_cur_step_id = step_id;
-    };
+        program.isStepVisible = () => true;
+        program.getNextVisibleStep = () => next_visible_step;
 
-    response.error = (_, action, __) => {
-      error_is_sent = true;
-    };
+        let given_cur_step_id = undefined;
+        quote.setCurrentStepId = step_id => {
+          given_cur_step_id = step_id;
+        };
 
-    sut.visitStep(step_to_visit, request, quote, program);
-  });
+        response.error = (_, action, __) => {
+          error_is_sent = true;
+        };
+
+        sut.visitStep(step_to_visit, request, quote, program);
+      });
+    }
+  );
 
   it('Invisible step kicks user back to first step', done => {
     const step_to_visit = 3;

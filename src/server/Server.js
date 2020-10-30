@@ -835,7 +835,9 @@ module.exports = Class('Server').extend(EventEmitter, {
           ' has not yet reached step ' +
           step_id +
           '; forcing to step ' +
-          tostep_id
+          tostep_id +
+          '. Top allowed step is ' +
+          top_allowed_step
       );
 
       this.sendError(
@@ -982,12 +984,11 @@ module.exports = Class('Server').extend(EventEmitter, {
   },
 
   visitStep: function (step_id, request, quote, program) {
+    const classes = program.classify(quote.getBucket().getData());
+
     if (
       !program.isManageQuoteStep(step_id) &&
-      !program.isStepVisible(
-        program.classify(quote.getBucket().getData()),
-        +step_id
-      )
+      !program.isStepVisible(classes, +step_id)
     ) {
       this.logger.log(
         this.logger.PRIORITY_INFO,
@@ -1003,8 +1004,17 @@ module.exports = Class('Server').extend(EventEmitter, {
       return this;
     }
 
+    let top_allowed_step = program.getNextVisibleStep(
+      classes,
+      quote.getTopVisitedStepId()
+    );
+
+    if (!top_allowed_step) {
+      top_allowed_step = quote.getTopVisitedStepId() + 1;
+    }
+
     // update the quote step, if valid
-    if (step_id <= quote.getTopVisitedStepId() + 1) {
+    if (step_id <= top_allowed_step) {
       quote.setCurrentStepId(step_id);
     }
 
