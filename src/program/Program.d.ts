@@ -107,4 +107,7 @@ export declare abstract class Program {
    * First valid step id
    */
   getFirstStepId(): number;
+
+  /** Names of fields under a given group without linked groups' fields */
+  readonly groupExclusiveFields: Record<string, string[]>;
 }

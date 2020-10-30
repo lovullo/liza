@@ -27,7 +27,7 @@
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
 const {
-  defaultBucket,
+  applyDocumentDefaults,
   loadSessionIntoQuote,
   loadDocumentIntoQuote,
   initDocument,
@@ -128,12 +128,6 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _dataProcessor': null,
 
   /**
-   * Initializes program
-   * @type {ProgramInit}
-   */
-  'private _progInit': null,
-
-  /**
    * Constructs a timestamp
    * @type {function}
    */
@@ -164,7 +158,6 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @param {Logger}            logger         log manager
    * @param {EncryptionService} encsvc         encryption service
    * @param {DataProcessor}     data_processor data processor
-   * @param {ProgramInit}       init           program initializer
    * @param {function}          ts_ctor        timestamp constructor
    * @param {FeatureFlag}       feature_flag   a feature flag object
    */
@@ -174,7 +167,6 @@ module.exports = Class('Server').extend(EventEmitter, {
     logger,
     encsvc,
     data_processor,
-    init,
     ts_ctor,
     feature_flag
   ) {
@@ -187,7 +179,6 @@ module.exports = Class('Server').extend(EventEmitter, {
     this.logger = logger;
     this._encService = encsvc;
     this._dataProcessor = data_processor;
-    this._progInit = init;
     this._ts_ctor = ts_ctor;
     this._feature_flag = feature_flag;
   },
@@ -319,7 +310,7 @@ module.exports = Class('Server').extend(EventEmitter, {
    */
   initQuote: function (quote, program, request, callback, error_callback) {
     // Note that `left` is transitional (we're not importing fp-ts here)
-    initDocument(this.dao)(program)(this._progInit)(request.getSession())(
+    initDocument(this.dao)(program)(request.getSession())(
       quote
     )().then(({left}) =>
       left ? error_callback && error_callback.call(this) : callback.call(this)
@@ -451,42 +442,41 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     const donew = quote_id => {
       const quote = quote_new(quote_id, program);
+      const quote_data = applyDocumentDefaults(program)({})();
 
-      defaultBucket(this._progInit)(program)({})().then(quote_data => {
-        program.processNaFields(quote_data.data);
-        this._loadDocumentIntoQuote(quote, request, quote_data);
+      program.processNaFields(quote_data.data);
+      this._loadDocumentIntoQuote(quote, request, quote_data);
 
-        // XXX: this doesn't handle failures! (this code used to live in
-        // #initQuote, and didn't handle failures there either)
-        this.dao.saveQuote(
-          quote,
-          () => {
-            this.dao.saveQuoteMeta(quote, null, () => {
-              this.sendResponse(request, quote, {valid: false});
-            });
-          },
-          null,
-          {
-            agentId: session.agentId(),
-            agentName: session.agentName(),
-            agentEntityId: session.agentEntityId(),
-            startDate: this._ts_ctor(),
-            programId: quote.getProgramId(),
-            initialRatedDate: 0,
-            importedInd: quote.isImported() ? 1 : 0,
-            boundInd: quote.isBound() ? 1 : 0,
-            importDirty: 0,
-            syncInd: 0,
-            notifyInd: 0,
-            syncDate: 0,
-            lastPremDate: 0,
-            internal: session.isInternal() ? 1 : 0,
-            pver: program.version,
-            explicitLock: quote.getExplicitLockReason(),
-            explicitLockStepId: quote.getExplicitLockStep(),
-          }
-        );
-      });
+      // XXX: this doesn't handle failures! (this code used to live in
+      // #initQuote, and didn't handle failures there either)
+      this.dao.saveQuote(
+        quote,
+        () => {
+          this.dao.saveQuoteMeta(quote, null, () => {
+            this.sendResponse(request, quote, {valid: false});
+          });
+        },
+        null,
+        {
+          agentId: session.agentId(),
+          agentName: session.agentName(),
+          agentEntityId: session.agentEntityId(),
+          startDate: this._ts_ctor(),
+          programId: quote.getProgramId(),
+          initialRatedDate: 0,
+          importedInd: quote.isImported() ? 1 : 0,
+          boundInd: quote.isBound() ? 1 : 0,
+          importDirty: 0,
+          syncInd: 0,
+          notifyInd: 0,
+          syncDate: 0,
+          lastPremDate: 0,
+          internal: session.isInternal() ? 1 : 0,
+          pver: program.version,
+          explicitLock: quote.getExplicitLockReason(),
+          explicitLockStepId: quote.getExplicitLockStep(),
+        }
+      );
     };
 
     // get the next available quote id

@@ -1,5 +1,5 @@
 /**
- * Tests ProgramInit
+ * Tests document loading
  *
  *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
@@ -19,15 +19,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
+import {expect} from 'chai';
 
-const chai = require('chai');
-const expect = chai.expect;
-const {ProgramInit: Sut} = require('../../').program;
+import {applyDocumentDefaults} from '../../../src/server/quote/loader';
+import {Program} from '../../../src/program/Program';
+import {DocumentData} from '../../../src/server/db/MongoServerDao';
 
-chai.use(require('chai-as-promised'));
-
-describe('ProgramInit', () => {
+describe('loader.applyDocumentDefaults', () => {
   [
     {
       label: 'initializes defaults',
@@ -279,7 +277,6 @@ describe('ProgramInit', () => {
     ({
       label,
       doc_data,
-      id,
       defaults,
       meta,
       groupExclusiveFields,
@@ -288,13 +285,10 @@ describe('ProgramInit', () => {
       naFieldValue,
       whens,
       cretain,
-      hasNaField,
       hasKnownType,
     }) => {
       it(label, () => {
-        const sut = Sut(null);
-
-        const program = {
+        const program = <Program>(<unknown>{
           id: 'foo',
           defaults: defaults,
           meta: meta,
@@ -303,13 +297,12 @@ describe('ProgramInit', () => {
           clearNaFields,
           naFieldValue,
           cretain: cretain ? cretain : {},
-          hasNaField: () => (hasNaField ? hasNaField() : false),
           hasKnownType: hasKnownType ? hasKnownType : () => true,
-        };
+        });
 
-        return expect(sut.init(program, doc_data)).to.eventually.deep.equal(
-          expected
-        );
+        expect(
+          applyDocumentDefaults(program)(<DocumentData>{data: doc_data})().data
+        ).to.deep.equal(expected);
       });
     }
   );

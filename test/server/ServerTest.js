@@ -270,7 +270,7 @@ describe('Server#visitStep', () => {
     const request = createMockRequest(session);
     const response = createMockResponse();
     const logger = createMockLogger();
-    const sut = getSut(response, undefined, undefined, logger);
+    const sut = getSut(response, undefined, logger);
 
     // make this step invisible
     program.isStepVisible = () => false;
@@ -319,7 +319,7 @@ describe('Server#visitStep', () => {
     const response = createMockResponse();
     const logger = createMockLogger();
     const dao = createMockDao();
-    const sut = getSut(response, dao, undefined, logger);
+    const sut = getSut(response, dao, logger);
 
     // check that a response is sent to user w/no actions (do not kick back)
     response.from = (_, __, action) => {
@@ -515,12 +515,6 @@ describe('Server#initQuote', () => {
         })()
       );
 
-    const default_bucket_data = {default: 'value'};
-    let prog_init = createMockProgramInit();
-    prog_init.init = (program, data) => {
-      return Promise.resolve(default_bucket_data);
-    };
-
     const agent_id = '11111';
     const username = 'foo@bar';
     const agent_name = 'Some Agency';
@@ -535,9 +529,8 @@ describe('Server#initQuote', () => {
 
     let quote = createMockQuote(0, 0, 0, expected_quote_id);
     let set_data_is_called = false;
-    quote.setData = given_default_bucket => {
+    quote.setData = () => {
       set_data_is_called = true;
-      expect(given_default_bucket).to.deep.equal(default_bucket_data);
       return quote;
     };
 
@@ -581,7 +574,7 @@ describe('Server#initQuote', () => {
     quote.setRetryAttempts = () => quote;
     quote.on = () => quote;
 
-    const sut = getSut(response, dao, prog_init);
+    const sut = getSut(response, dao);
     sut.init(cache, createMockRater());
 
     const request = createMockRequest(session);
@@ -593,7 +586,7 @@ describe('Server#initQuote', () => {
       done();
     };
 
-    sut.initQuote(quote, program, request, callback);
+    sut.initQuote(quote, program, request, callback, e => console.error(e));
   });
 
   it('Defaults data on new quote and saves quote meta', function (done) {
@@ -613,12 +606,6 @@ describe('Server#initQuote', () => {
           return null;
         })()
       );
-
-    const default_bucket_data = {default: 'value'};
-    let prog_init = createMockProgramInit();
-    prog_init.init = (program, data) => {
-      return Promise.resolve(default_bucket_data);
-    };
 
     const agent_id = '11111';
     const username = 'foo@bar';
@@ -644,16 +631,24 @@ describe('Server#initQuote', () => {
       program_ver
     );
 
+    let program = createMockProgram(1, program_ver);
+
+    // Defaults are derived from this
+    program.defaults = {foo: 'foodefault'};
+    program.groupExclusiveFields = {foogroup: ['foo']};
+    program.hasKnownType = _ => true;
+
     let set_data_is_called = false;
     quote.setData = given_default_bucket => {
       set_data_is_called = true;
-      expect(given_default_bucket).to.deep.equal(default_bucket_data);
+      expect(given_default_bucket).to.deep.equal({foo: ['foodefault']});
       return quote;
     };
 
     quote.getStartDate = () => start_date;
-    let program = createMockProgram(1, program_ver);
+
     let save_quote_is_called = false;
+
     dao.saveQuote = (quote, success, _failure, save_data) => {
       save_quote_is_called = true;
       const expected_data = {
@@ -717,7 +712,7 @@ describe('Server#initQuote', () => {
     quote.setRetryAttempts = () => quote;
     quote.on = () => quote;
 
-    const sut = getSut(response, dao, prog_init);
+    const sut = getSut(response, dao);
     sut.init(createMockCache(), createMockRater());
 
     const callback = () => {
@@ -763,14 +758,13 @@ function getMocks() {
   };
 }
 
-function getSut(response, dao, prog_init, logger) {
+function getSut(response, dao, logger) {
   return new Sut(
     response,
     dao || createMockDao(),
     logger || createMockLogger(),
     {},
     createMockDataProcessor(),
-    prog_init || createMockProgramInit(),
     () => {},
     {}
   );
@@ -917,12 +911,8 @@ function createMockProgram(first_step_id, program_ver, next_step) {
     getNextVisibleStep: () => next_step || 2,
     classify: () => {},
     secureFields: [],
-  };
-}
-
-function createMockProgramInit() {
-  return {
-    init: () => {},
+    meta: {groups: {}},
+    groupExclusiveFields: {},
   };
 }
 

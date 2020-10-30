@@ -28,8 +28,6 @@ const {
 
   dapi: {DataApiManager},
 
-  program: {ProgramInit},
-
   server: {
     Server,
 
@@ -110,7 +108,6 @@ module.exports = Class('DocumentServer', {
           DapiMetaSource(QuoteDataBucket),
           StagingBucket
         ),
-        ProgramInit(),
         ts_ctor,
         feature_flag
       )
