@@ -6,6 +6,16 @@ const ProgramInit = require('../../program/ProgramInit');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 /**
+ * Data retriever is partial bucket implementation
+ *
+ * A dummy quote "API" needs to be able to return a bucket that can retrieve its
+ * data for rating.
+ */
+export interface DataRetriever {
+  getData(): CommonObject;
+}
+
+/**
  * Generates a new program on demand
  */
 export class ProgramFactory {
@@ -21,7 +31,7 @@ export class ProgramFactory {
    *
    * @return a new program
    */
-  public createProgram(): Program {
+  public createProgram(): {bucket: DataRetriever; program: Program} {
     const program = this.program();
     const bucket = QuoteDataBucket().setValues({});
 
@@ -29,6 +39,6 @@ export class ProgramFactory {
 
     ProgramInit().init(program, bucket);
 
-    return program;
+    return {bucket, program};
   }
 }
