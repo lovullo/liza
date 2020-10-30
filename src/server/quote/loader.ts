@@ -24,6 +24,7 @@ import * as TE from 'fp-ts/TaskEither';
 import {IO} from 'fp-ts/IO';
 import {pipe, flow} from 'fp-ts/function';
 
+import {DocumentId} from '../../document/Document';
 import {Program} from '../../program/Program';
 import {
   MongoServerDao,
@@ -47,6 +48,18 @@ export const applyDocumentDefaults = (program: Program) => (
   doc_data.data = defaulted;
   return doc_data;
 };
+
+/**
+ * Retrieve next available quote id from DB, with side-effects
+ *
+ * This will increment the counter in the database atomically.
+ *
+ * Other languages have conventions for side-effect-laden functions (e.g. a
+ * '!' suffix in Scheme), which we don't have here, so this is instead
+ * verbose to try to indicate what it's doing.
+ */
+export const incrementAndPersistNextQuoteId = (dao: MongoServerDao) =>
+  TE.tryCatch(dao.getNextQuoteId.bind(dao), E.toError);
 
 /**
  * Apply default bucket data for the given program
@@ -148,20 +161,40 @@ export const loadDocumentIntoQuote = (quote: ServerSideQuote) => (
     .setRatingData(quote_data.ratedata || {})
     .setRetryAttempts(quote_data.retryAttempts || 0);
 
-/**
- * Initialize document using stored data
- *
- * This is an incremental transition from `Server#initQuote` and will
- * continue to evolve.
- */
-export const initDocument = (dao: MongoServerDao) => (program: Program) => (
-  session: UserSession
-) => (quote: ServerSideQuote): TE.TaskEither<unknown, ServerSideQuote> => {
-  return pipe(
+/** Load data into a document (quote) */
+export const loadDocument = (
+  pullDocument: (id: DocumentId) => TE.TaskEither<unknown, DocumentData>
+) => (program: Program) => (session: UserSession) => (
+  quote: ServerSideQuote
+): TE.TaskEither<unknown, ServerSideQuote> =>
+  pipe(
     quote.getId(),
-    pullDocumentFromDao(dao),
+    pullDocument,
     TE.chain(flow(applyDocumentDefaults(program), TE.fromIO)),
     TE.chainFirst(flow(loadSessionIntoQuote(session)(quote), TE.fromIO)),
     TE.chain(flow(loadDocumentIntoQuote(quote), TE.fromIO))
   );
-};
+
+/** Load and initialize an existing document */
+export const initExistingDocument = flow(pullDocumentFromDao, loadDocument);
+
+const processNaFields = (program: Program) => (data: DocumentData) => () =>
+  program.processNaFields(data.data || {});
+
+/** Prepare initial data for a new document (quote) */
+export const prepareNewDocument = (program: Program) =>
+  pipe(
+    applyDocumentDefaults(program)(<DocumentData>{}),
+    TE.fromIO,
+    TE.chainFirst(flow(processNaFields(program), TE.fromIO))
+  );
+
+/** Initialize a new document that has not yet been persisted */
+export const initNewDocument = (dao: MongoServerDao) => (
+  quote_new: (id: number) => ServerSideQuote
+) => (program: Program) => (session: UserSession) =>
+  pipe(
+    incrementAndPersistNextQuoteId(dao),
+    TE.map(quote_new),
+    TE.chain(loadDocument(() => prepareNewDocument(program))(program)(session))
+  );

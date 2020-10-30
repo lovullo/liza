@@ -655,7 +655,7 @@ describe('Server#initQuote', () => {
         agentId: agent_id,
         agentName: agent_name,
         agentEntityId: entity_id,
-        startDate: quote.getStartDate(),
+        startDate: start_date,
         programId: program_id,
         initialRatedDate: 0,
         importedInd: 0,
@@ -681,7 +681,7 @@ describe('Server#initQuote', () => {
       set_meta_data.push(meta_data);
       return quote;
     };
-    dao.getNextQuoteId = callback => callback(expected_quote_id);
+    dao.getNextQuoteId = () => Promise.resolve(expected_quote_id);
 
     let save_quote_meta_is_called = false;
     dao.saveQuoteMeta = (given_quote, _, success) => {
@@ -712,7 +712,7 @@ describe('Server#initQuote', () => {
     quote.setRetryAttempts = () => quote;
     quote.on = () => quote;
 
-    const sut = getSut(response, dao);
+    const sut = getSut(response, dao, undefined, start_date);
     sut.init(createMockCache(), createMockRater());
 
     const callback = () => {
@@ -758,14 +758,14 @@ function getMocks() {
   };
 }
 
-function getSut(response, dao, logger) {
+function getSut(response, dao, logger, start_ts = 0) {
   return new Sut(
     response,
     dao || createMockDao(),
     logger || createMockLogger(),
     {},
     createMockDataProcessor(),
-    () => {},
+    () => start_ts,
     {}
   );
 }

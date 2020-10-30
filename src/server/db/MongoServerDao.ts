@@ -670,29 +670,29 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    *
    * @param callback - function to call with next available quote id
    */
-  getNextQuoteId(callback: (quote_id: number) => void): this {
+  getNextQuoteId(): Promise<number> {
     var dao = this;
 
-    this._seqCollection!.findAndModify(
-      {_id: this.SEQ_QUOTE_ID},
-      [['val', 'descending']],
-      {$inc: {val: 1}},
-      {new: true},
+    return new Promise((accept, reject) => {
+      this._seqCollection!.findAndModify(
+        {_id: this.SEQ_QUOTE_ID},
+        [['val', 'descending']],
+        {$inc: {val: 1}},
+        {new: true},
 
-      function (err, doc) {
-        if (err) {
-          dao.emit('seqError', err);
+        function (err, doc) {
+          if (err) {
+            dao.emit('seqError', err);
 
-          callback.call(dao, 0);
-          return;
+            reject(err);
+            return;
+          }
+
+          // return the new id
+          accept(doc.val);
         }
-
-        // return the new id
-        callback.call(dao, doc.val);
-      }
-    );
-
-    return this;
+      );
+    });
   }
 
   /**

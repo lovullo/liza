@@ -108,6 +108,8 @@ export declare abstract class Program {
    */
   getFirstStepId(): number;
 
+  processNaFields(data: Record<string, any>): void;
+
   /** Names of fields under a given group without linked groups' fields */
   readonly groupExclusiveFields: Record<string, string[]>;
 }

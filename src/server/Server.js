@@ -27,10 +27,8 @@
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
 const {
-  applyDocumentDefaults,
-  loadSessionIntoQuote,
-  loadDocumentIntoQuote,
-  initDocument,
+  initExistingDocument,
+  initNewDocument,
 } = require('./quote/loader');
 
 const fs = require('fs');
@@ -310,20 +308,13 @@ module.exports = Class('Server').extend(EventEmitter, {
    */
   initQuote: function (quote, program, request, callback, error_callback) {
     // Note that `left` is transitional (we're not importing fp-ts here)
-    initDocument(this.dao)(program)(request.getSession())(
+    initExistingDocument(this.dao)(program)(request.getSession())(
       quote
     )().then(({left}) =>
       left ? error_callback && error_callback.call(this) : callback.call(this)
     );
 
     return this;
-  },
-
-  'private _loadDocumentIntoQuote'(quote, request, quote_data) {
-    const session = request.getSession();
-
-    loadSessionIntoQuote(session)(quote)(quote_data)();
-    loadDocumentIntoQuote(quote)(quote_data)();
   },
 
   'private _checkQuotePver': function (quote, program, callback) {
@@ -440,47 +431,42 @@ module.exports = Class('Server').extend(EventEmitter, {
   sendNewQuote: function (request, quote_new, program) {
     const session = request.getSession();
 
-    const donew = quote_id => {
-      const quote = quote_new(quote_id, program);
-      const quote_data = applyDocumentDefaults(program)({})();
-
-      program.processNaFields(quote_data.data);
-      this._loadDocumentIntoQuote(quote, request, quote_data);
-
-      // XXX: this doesn't handle failures! (this code used to live in
-      // #initQuote, and didn't handle failures there either)
-      this.dao.saveQuote(
-        quote,
-        () => {
-          this.dao.saveQuoteMeta(quote, null, () => {
-            this.sendResponse(request, quote, {valid: false});
-          });
-        },
-        null,
-        {
-          agentId: session.agentId(),
-          agentName: session.agentName(),
-          agentEntityId: session.agentEntityId(),
-          startDate: this._ts_ctor(),
-          programId: quote.getProgramId(),
-          initialRatedDate: 0,
-          importedInd: quote.isImported() ? 1 : 0,
-          boundInd: quote.isBound() ? 1 : 0,
-          importDirty: 0,
-          syncInd: 0,
-          notifyInd: 0,
-          syncDate: 0,
-          lastPremDate: 0,
-          internal: session.isInternal() ? 1 : 0,
-          pver: program.version,
-          explicitLock: quote.getExplicitLockReason(),
-          explicitLockStepId: quote.getExplicitLockStep(),
-        }
-      );
-    };
-
-    // get the next available quote id
-    this.dao.getNextQuoteId(donew);
+    // XXX: this doesn't handle failures! (this code used to live in
+    // #initQuote, and didn't handle failures there either)
+    initNewDocument(this.dao)(id => quote_new(id, program))(program)(
+      session
+    )().then(({left, right: quote}) => {
+      left
+        ? this.sendError('Failed to create new quote: ' + left)
+        : this.dao.saveQuote(
+            quote,
+            () => {
+              this.dao.saveQuoteMeta(quote, null, () => {
+                this.sendResponse(request, quote, {valid: false});
+              });
+            },
+            null,
+            {
+              agentId: session.agentId(),
+              agentName: session.agentName(),
+              agentEntityId: session.agentEntityId(),
+              startDate: this._ts_ctor(),
+              programId: quote.getProgramId(),
+              initialRatedDate: 0,
+              importedInd: quote.isImported() ? 1 : 0,
+              boundInd: quote.isBound() ? 1 : 0,
+              importDirty: 0,
+              syncInd: 0,
+              notifyInd: 0,
+              syncDate: 0,
+              lastPremDate: 0,
+              internal: session.isInternal() ? 1 : 0,
+              pver: program.version,
+              explicitLock: quote.getExplicitLockReason(),
+              explicitLockStepId: quote.getExplicitLockStep(),
+            }
+          );
+    });
 
     return this;
   },
