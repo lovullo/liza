@@ -214,22 +214,33 @@ describe('Server#visitStep', () => {
         const session = createMockSession();
         const request = createMockRequest(session);
         const response = createMockResponse();
-        const sut = getSut(response);
+
+        let dao = createMockDao();
+        const sut = getSut(response, dao);
 
         // check that a response is sent to user w/no actions (do not kick back)
         response.from = (_, __, action) => {
           expect(error_is_sent).to.be.false;
           expect(action).to.deep.equal(undefined);
           expect(given_cur_step_id).to.be.equal(expected_current_step);
+          expect(save_quote_state_is_called).to.be.true;
           done();
         };
 
         program.isStepVisible = () => true;
         program.getNextVisibleStep = () => next_visible_step;
 
+        // make sure current step is set
         let given_cur_step_id = undefined;
         quote.setCurrentStepId = step_id => {
           given_cur_step_id = step_id;
+        };
+
+        // current and top step ids are persisted
+        let save_quote_state_is_called = false;
+        dao.saveQuoteState = (quote, success_cb) => {
+          save_quote_state_is_called = true;
+          success_cb();
         };
 
         response.error = (_, action, __) => {
@@ -307,7 +318,8 @@ describe('Server#visitStep', () => {
     const request = createMockRequest(session);
     const response = createMockResponse();
     const logger = createMockLogger();
-    const sut = getSut(response, undefined, undefined, logger);
+    const dao = createMockDao();
+    const sut = getSut(response, dao, undefined, logger);
 
     // check that a response is sent to user w/no actions (do not kick back)
     response.from = (_, __, action) => {
@@ -316,6 +328,8 @@ describe('Server#visitStep', () => {
       expect(given_cur_step_id).to.be.equal(step_to_visit);
       done();
     };
+
+    dao.saveQuoteState = (quote, success_cb) => success_cb();
 
     // we want to test the manage quote step
     program.isManageQuoteStep = step_id => true;
