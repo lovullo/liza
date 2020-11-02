@@ -250,8 +250,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     failure: Callback = () => {},
     save_data?: any,
     push_data?: any,
-    force_publish: boolean = true,
-    options: Record<string, any> = {upsert: true}
+    force_publish: boolean = true
   ): this {
     var dao = this;
 
@@ -331,7 +330,7 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
       document,
 
       // create record if it does not yet exist
-      options,
+      {upsert: true},
 
       // on complete
       function (err, _docs) {

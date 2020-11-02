@@ -1422,8 +1422,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             },
             save_data,
             rdelta_data,
-            force_publish,
-            {upsert: true, j: true}
+            force_publish
           );
         });
       },
