@@ -1016,9 +1016,13 @@ module.exports = Class('Server').extend(EventEmitter, {
     // update the quote step, if valid
     if (step_id <= top_allowed_step) {
       quote.setCurrentStepId(step_id);
+      this.dao.saveQuoteState(quote, () =>
+        this.sendResponse(request, quote, {})
+      );
+    } else {
+      this.sendResponse(request, quote, {});
     }
 
-    this.sendResponse(request, quote, {});
     return this;
   },
 
