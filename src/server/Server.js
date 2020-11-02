@@ -403,15 +403,7 @@ module.exports = Class('Server').extend(EventEmitter, {
           .setLastPremiumDate(quote_data.lastPremDate || 0)
           .setRatedDate(quote_data.initialRatedDate || 0)
           .setRatingData(quote_data.ratedata || {})
-          .setRetryAttempts(quote_data.retryAttempts || 0)
-          .on('stepChange', function (step_id) {
-            // save the quote state (we don't care if it succeeds or
-            // fails because (a) failures will be automatically
-            // logged and (b) we may not be dealing with a request,
-            // so we may not be able to send a response to the
-            // client)
-            server.dao.saveQuoteState(quote);
-          });
+          .setRetryAttempts(quote_data.retryAttempts || 0);
 
         // if no data was returned, then the quote doesn't exist in the
         // database
