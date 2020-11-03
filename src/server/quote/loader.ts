@@ -21,7 +21,10 @@
 
 import * as E from 'fp-ts/Either';
 import * as TE from 'fp-ts/TaskEither';
-import {IO} from 'fp-ts/IO';
+import * as IO from 'fp-ts/IO';
+import * as A from 'fp-ts/Array';
+import * as O from 'fp-ts/Option';
+
 import {pipe, flow, constant} from 'fp-ts/function';
 
 import {DocumentId} from '../../document/Document';
@@ -70,7 +73,7 @@ export const incrementAndPersistNextQuoteId = (dao: MongoServerDao) =>
  */
 export const applyBucketDefaults = (program: Program) => (
   data: RawBucketData
-): IO<RawBucketData> => () => {
+): IO.IO<RawBucketData> => () => {
   const {
     defaults = {},
     meta: {groups = {}},
@@ -126,7 +129,7 @@ export const applyBucketDefaults = (program: Program) => (
  */
 export const loadSessionIntoQuote = (session: UserSession) => (
   quote: ServerSideQuote
-) => (data: DocumentData): IO<ServerSideQuote> => () =>
+) => (data: DocumentData): IO.IO<ServerSideQuote> => () =>
   quote
     .setAgentId(data.agentId || session.agentId() || 0)
     .setUserName(session.userName() || '')
@@ -137,7 +140,7 @@ export const loadSessionIntoQuote = (session: UserSession) => (
  */
 export const loadDocumentIntoQuote = (quote: ServerSideQuote) => (
   quote_data: DocumentData
-): IO<ServerSideQuote> => () =>
+): IO.IO<ServerSideQuote> => () =>
   quote
     .setData(quote_data.data || {})
     .setMetadata(quote_data.meta || {})
@@ -214,22 +217,29 @@ export const documentUsesProgram = (program: Program) => (
 export const cleanDocument = (program: Program) => (quote: ServerSideQuote) =>
   pipe(
     quote,
-    // consider it an error to attempt cleaning a quote with the incorrect
+    // Consider it an error to attempt cleaning a quote with the incorrect
     // program, which would surely corrupt it [even further]
     TE.fromPredicate(
       documentUsesProgram(program),
       constant(Error('Quote/program mismatch'))
     ),
-    TE.map(quote => {
-      const class_data = program.classify(quote.getBucket().getData());
-
-      // correct group indexes
-      Object.keys(program.groupIndexField || {}).forEach(group_id =>
-        fixGroup(program)(quote)(class_data)(group_id)()
-      );
-
-      return quote;
-    }),
+    // Fix groups
+    TE.chainFirst(
+      flow(
+        flow(fixGroup(program), O.of),
+        // TODO: get rid of this extra expensive classify, considering that
+        // a previous part of the system probably already did it!
+        O.ap(O.of(program.classify(quote.getBucket().getData()))),
+        O.map(f =>
+          A.array.traverse(IO.io)(
+            Object.keys(program.groupIndexField || {}),
+            f
+          )()
+        ),
+        TE.fromOption(constant(Error('fixGroup failure')))
+      )
+    ),
+    // Fix metadata
     TE.chain(flow(fixMeta(program), TE.fromIO))
   );
 

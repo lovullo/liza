@@ -20,6 +20,7 @@
  */
 
 import {expect} from 'chai';
+import * as E from 'fp-ts/Either';
 
 import {
   applyDocumentDefaults,
@@ -364,7 +365,7 @@ describe('cleanQuote', () => {
         hasKnownType: (name: string) => name !== 'unknown_ignore_me',
       },
     ].forEach(test =>
-      it(test.label, done => {
+      it(test.label, () => {
         const quote = createStubQuote(test.existing, {});
         const program = createStubProgram({});
 
@@ -388,9 +389,9 @@ describe('cleanQuote', () => {
           return quote;
         };
 
-        cleanDocument(<Program>program)(quote)().then(() => {
+        return cleanDocument(<Program>program)(quote)().then(result => {
+          expect(E.isRight(result)).to.be.true;
           expect(updates).to.deep.equal(test.expected);
-          done();
         });
       })
     );
@@ -586,7 +587,7 @@ describe('cleanQuote', () => {
         hasNaField: () => false,
       },
     ].forEach(test =>
-      it(test.label, done => {
+      it(test.label, () => {
         const quote = createStubQuote(test.existing, {});
         const program = createStubProgram({});
 
@@ -620,9 +621,9 @@ describe('cleanQuote', () => {
           return quote;
         };
 
-        cleanDocument(<Program>program)(quote)().then(() => {
+        return cleanDocument(<Program>program)(quote)().then(result => {
+          expect(E.isRight(result)).to.be.true;
           expect(updates).to.deep.equal(test.expected);
-          done();
         });
       })
     );
@@ -649,13 +650,13 @@ describe('cleanQuote', () => {
         expected: {foo: [1], baz: [2]},
       },
     ].forEach(({label, existing, fields, expected}) =>
-      it(label, done => {
+      it(label, () => {
         const quote = createStubQuote({}, existing);
         const program = createStubProgram(fields);
 
-        cleanDocument(<Program>program)(quote)().then(() => {
+        return cleanDocument(<Program>program)(quote)().then(result => {
+          expect(E.isRight(result)).to.be.true;
           expect(quote.getMetabucket().getData()).to.deep.equal(expected);
-          done();
         });
       })
     );
