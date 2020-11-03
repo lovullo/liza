@@ -22,7 +22,7 @@
 import * as E from 'fp-ts/Either';
 import * as TE from 'fp-ts/TaskEither';
 import {IO} from 'fp-ts/IO';
-import {pipe, flow} from 'fp-ts/function';
+import {pipe, flow, constant} from 'fp-ts/function';
 
 import {DocumentId} from '../../document/Document';
 import {Program} from '../../program/Program';
@@ -200,6 +200,10 @@ export const initNewDocument = (dao: MongoServerDao) => (
     TE.chain(loadDocument(() => prepareNewDocument(program))(program)(session))
   );
 
+export const documentUsesProgram = (program: Program) => (
+  quote: ServerSideQuote
+) => quote.getProgramId() === program.getId();
+
 /**
  * "Clean" quote, getting it into a stable state
  *
@@ -207,29 +211,27 @@ export const initNewDocument = (dao: MongoServerDao) => (
  * same number of indexes as its leader, and that meta fields are
  * initialized.  This is useful when questions or meta fields are added.
  */
-export const cleanDocument = (program: Program) => (
-  quote: ServerSideQuote
-) => () =>
-  new Promise(accept => {
+export const cleanDocument = (program: Program) => (quote: ServerSideQuote) =>
+  pipe(
+    quote,
     // consider it an error to attempt cleaning a quote with the incorrect
     // program, which would surely corrupt it [even further]
-    if (quote.getProgramId() !== program.getId()) {
-      // TODO: this should be an error; we shouldn't ignore!
-      accept();
-      return;
-    }
+    TE.fromPredicate(
+      documentUsesProgram(program),
+      constant(Error('Quote/program mismatch'))
+    ),
+    TE.map(quote => {
+      const class_data = program.classify(quote.getBucket().getData());
 
-    const class_data = program.classify(quote.getBucket().getData());
+      // correct group indexes
+      Object.keys(program.groupIndexField || {}).forEach(group_id =>
+        fixGroup(program)(quote)(class_data)(group_id)()
+      );
 
-    // correct group indexes
-    Object.keys(program.groupIndexField || {}).forEach(group_id =>
-      fixGroup(program)(quote)(group_id)(class_data)
-    );
-
-    fixMeta(program)(quote);
-
-    accept();
-  });
+      return quote;
+    }),
+    TE.chain(flow(fixMeta(program), TE.fromIO))
+  );
 
 /**
  * Correct group fields to be at least the length of the leader
@@ -243,8 +245,8 @@ export const cleanDocument = (program: Program) => (
  * validated on save.
  */
 const fixGroup = (program: Program) => (quote: ServerSideQuote) => (
-  group_id: string
-) => (class_data: ClassData) => {
+  class_data: ClassData
+) => (group_id: string) => () => {
   const length = groupLength(program)(quote)(group_id);
 
   // if we cannot accurately determine the length then it's too
@@ -314,7 +316,7 @@ const groupLength = (program: Program) => (quote: ServerSideQuote) => (
  * This is similar to bucket initialization, except there are no leaders
  * or default values---just empty arrays.  That may change in the future.
  */
-const fixMeta = (program: Program) => (quote: ServerSideQuote) => {
+const fixMeta = (program: Program) => (quote: ServerSideQuote) => () => {
   const {fields = {}} = program.meta;
   const metabucket = quote.getMetabucket();
   const metadata = metabucket.getData();

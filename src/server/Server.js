@@ -328,14 +328,14 @@ module.exports = Class('Server').extend(EventEmitter, {
     // wrong with the build that generates it: always clean in this case to
     // be safe
     if (program.version && quote.getProgramVersion() === program.version) {
-      callback(false, false);
+      callback(null, false);
       return;
     }
 
     // TODO: this is transitional; it'll go away
     if (!this._createCleaner) {
       // error out
-      callback(true, false);
+      callback(Error('Missing cleaner'), false);
       return;
     }
 
@@ -349,9 +349,9 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     // trigger the event and let someone (hopefully) take care of this
     try {
-      this._createCleaner(program)(quote)().then(() => {
+      this._createCleaner(program)(quote)().then(({left}) => {
         quote.setProgramVersion(program.version);
-        callback(false, true);
+        callback(left, true);
       });
     } catch (e) {
       // this is an unhandled exception, as far as we're concerned;
@@ -363,7 +363,7 @@ module.exports = Class('Server').extend(EventEmitter, {
         quote.getId()
       );
 
-      callback(true, false);
+      callback(e, false);
     }
   },
 
@@ -450,15 +450,24 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     this._checkQuotePver(quote, program, function (err, mod) {
       if (err) {
+        _self.logger.log(
+          _self.logger.PRIORITY_ERROR,
+          'Quote ' +
+            quote.getId() +
+            ' migration failed: ' +
+            err.message +
+            '; manual pver update and inspection may be required'
+        );
+
         // return as fatal
-        _self.sendError(request, 'Quote sanitization failed');
+        _self.sendError(request, 'Quote migration failed: ' + err.message);
         return;
       }
 
       // save the quote updates (but only if it was modified)
       if (mod) {
         var error_cb = function () {
-          _self.sendError(request, 'Quote sanitization failed to commit');
+          _self.sendError(request, 'Quote migration failed to commit');
         };
 
         _self.dao.saveQuote(
