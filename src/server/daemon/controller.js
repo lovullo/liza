@@ -138,13 +138,9 @@ exports.init = function (logger, enc_service, conf, env) {
           // let them know that we're going to be a moment
           var c = event.wait();
 
-          getCleaner(program).clean(quote, function (err) {
-            // report on our success/failure
-            if (err) {
-              event.bad(err);
-            } else {
-              event.good();
-            }
+          // TODO: The cleaner doesn't even return errors! ._.
+          getCleaner(program).clean(quote).then(() => {
+            event.good();
 
             // we're done
             c();

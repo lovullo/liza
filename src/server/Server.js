@@ -26,10 +26,7 @@
 
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
-const {
-  initExistingDocument,
-  initNewDocument,
-} = require('./quote/loader');
+const {initExistingDocument, initNewDocument} = require('./quote/loader');
 
 const fs = require('fs');
 const util = require('util');

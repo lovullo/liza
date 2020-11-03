@@ -329,10 +329,8 @@ describe('ProgramQuoteCleaner', () => {
         quote.setData = given =>
           Object.keys(given).forEach(k => (updates[k] = given[k]));
 
-        Sut(program).clean(quote, err => {
-          expect(err).to.deep.equal(null);
+        Sut(program).clean(quote).then(() => {
           expect(updates).to.deep.equal(test.expected);
-
           done();
         });
       })
@@ -364,10 +362,8 @@ describe('ProgramQuoteCleaner', () => {
         const quote = createStubQuote({}, existing);
         const program = createStubProgram(fields);
 
-        Sut(program).clean(quote, err => {
-          expect(err).to.equal(null);
+        Sut(program).clean(quote).then(() => {
           expect(quote.getMetabucket().getData()).to.deep.equal(expected);
-
           done();
         });
       })

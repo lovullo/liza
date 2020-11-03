@@ -43,27 +43,29 @@ module.exports = Class('ProgramQuoteCleaner', {
    * same number of indexes as its leader, and that meta fields are
    * initialized.  This is useful when questions or meta fields are added.
    *
-   * @param {Quote}    quote    target quote
-   * @param {Function} callback continuation
+   * @param {Quote} quote target quote
    */
-  'public clean': function (quote, callback) {
-    // consider it an error to attempt cleaning a quote with the incorrect
-    // program, which would surely corrupt it [even further]
-    if (quote.getProgramId() !== this._program.getId()) {
-      callback(null);
-      return;
-    }
+  'public clean': function (quote) {
+    return new Promise(accept => {
+      // consider it an error to attempt cleaning a quote with the incorrect
+      // program, which would surely corrupt it [even further]
+      if (quote.getProgramId() !== this._program.getId()) {
+        // TODO: this should be an error; we shouldn't ignore!
+        accept();
+        return;
+      }
 
-    const class_data = this._program.classify(quote.getBucket().getData());
+      const class_data = this._program.classify(quote.getBucket().getData());
 
-    // correct group indexes
-    Object.keys(this._program.groupIndexField || {}).forEach(group_id =>
-      this._fixGroup(group_id, quote, class_data)
-    );
+      // correct group indexes
+      Object.keys(this._program.groupIndexField || {}).forEach(group_id =>
+        this._fixGroup(group_id, quote, class_data)
+      );
 
-    this._fixMeta(quote);
+      this._fixMeta(quote);
 
-    callback(null);
+      accept();
+    });
   },
 
   /**
