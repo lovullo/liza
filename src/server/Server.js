@@ -147,14 +147,21 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _rater': null,
 
   /**
+   * Quote cleaner for version migration
+   * @type {Program => ProgramQuoteCleaner}
+   */
+  'private _createCleaner': null,
+
+  /**
    *
-   * @param {JsonResponse}      response       server Response
-   * @param {ServerDao}         dao            server DAO
-   * @param {Logger}            logger         log manager
-   * @param {EncryptionService} encsvc         encryption service
-   * @param {DataProcessor}     data_processor data processor
-   * @param {function}          ts_ctor        timestamp constructor
-   * @param {FeatureFlag}       feature_flag   a feature flag object
+   * @param {JsonResponse}        response       server Response
+   * @param {ServerDao}           dao            server DAO
+   * @param {Logger}              logger         log manager
+   * @param {EncryptionService}   encsvc         encryption service
+   * @param {DataProcessor}       data_processor data processor
+   * @param {function}            ts_ctor        timestamp constructor
+   * @param {FeatureFlag}         feature_flag   a feature flag object
+   * @param {ProgramQuoteCleaner} cleaner        quote cleaner for migration
    */
   'public __construct': function (
     response,
@@ -163,7 +170,8 @@ module.exports = Class('Server').extend(EventEmitter, {
     encsvc,
     data_processor,
     ts_ctor,
-    feature_flag
+    feature_flag,
+    createCleaner
   ) {
     if (!Class.isA(DataProcessor, data_processor)) {
       throw TypeError('Expected DataProcessor');
@@ -176,6 +184,7 @@ module.exports = Class('Server').extend(EventEmitter, {
     this._dataProcessor = data_processor;
     this._ts_ctor = ts_ctor;
     this._feature_flag = feature_flag;
+    this._createCleaner = createCleaner;
   },
 
   'public init': function (cache, rater) {
@@ -323,7 +332,12 @@ module.exports = Class('Server').extend(EventEmitter, {
       return;
     }
 
-    var _self = this;
+    // TODO: this is transitional; it'll go away
+    if (!this._createCleaner) {
+      // error out
+      callback(true, false);
+      return;
+    }
 
     this.logger.log(
       this.logger.PRIORITY_INFO,
@@ -333,88 +347,26 @@ module.exports = Class('Server').extend(EventEmitter, {
       program.version
     );
 
-    // TODO: thread
-    // service any other requests first, and then proceed to cleaning
-    process.nextTick(function () {
-      var nwait = 0,
-        msg = [],
-        handled = false;
-
-      // by default, clear is undefined; event handlers should call the
-      // appropriate function to state whether the quote has been properly
-      // upgraded; if no handlers indicate success, or if any indiciate
-      // failure, then disallow servicing the quote
-      var clear = undefined,
-        event = {
-          good: function () {
-            // if undefined, then we're good, otherwise keep the
-            // existing value (we cannot override bad)
-            clear = clear === undefined ? true : clear;
-          },
-
-          bad: function (s) {
-            // bad trumps all
-            clear = false;
-            msg.push(s);
-          },
-
-          wait: function () {
-            nwait++;
-            return c;
-          },
-        };
-
-      // trigger the event and let someone (hopefully) take care of this
-      try {
-        _self.emit('quotePverUpdate', quote, program, event);
-      } catch (e) {
-        // ruh roh...
-        event.bad(e.message);
-        nwait = 0;
-
-        // this is an unhandled exception, as far as we're concerned;
-        // re-throw so that we have a stack trace, but do so after we're
-        // done processing
-        process.nextTick(function () {
-          throw e;
-        });
-      }
-
-      function c() {
-        // do nothing until we're done waiting
-        if (--nwait > 0) {
-          return;
-        }
-
-        if (clear === true) {
-          // clear for version update
+    // trigger the event and let someone (hopefully) take care of this
+    try {
+      this._createCleaner(program)
+        .clean(quote)
+        .then(() => {
           quote.setProgramVersion(program.version);
-        } else {
-          // default message
-          if (msg.length === 0) {
-            msg.push('' + clear);
-          }
+          callback(false, true);
+        });
+    } catch (e) {
+      // this is an unhandled exception, as far as we're concerned;
+      // re-throw so that we have a stack trace, but do so after we're
+      // done processing
+      this.logger.log(
+        this.logger.PRIORITY_ERROR,
+        'Quote %s scan failed (' + e.message + ')',
+        quote.getId()
+      );
 
-          // see comments for clear var above
-          _self.logger.log(
-            _self.logger.PRIORITY_ERROR,
-            'Quote %s scan failed (' + msg.join('; ') + ')',
-            quote.getId()
-          );
-        }
-
-        if (!handled) {
-          handled = true;
-          callback(!clear, true);
-        }
-      }
-
-      // if nothing has requested that we wait, then continue immediately
-      if (!handled && nwait === 0) {
-        handled = true;
-        c();
-      }
-    });
+      callback(true, false);
+    }
   },
 
   /**

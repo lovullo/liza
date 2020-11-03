@@ -64,7 +64,7 @@ const {
 
     lock: {Semaphore},
 
-    quote: {ServerSideQuote: Quote, ProgramQuoteCleaner},
+    quote: {ServerSideQuote: Quote},
 
     service: {
       export: {ExportService},
@@ -133,67 +133,54 @@ exports.init = function (logger, enc_service, conf, env) {
         c1_export_service = service;
       });
 
-      server
-        .on('quotePverUpdate', function (quote, program, event) {
-          // let them know that we're going to be a moment
-          var c = event.wait();
-
-          // TODO: The cleaner doesn't even return errors! ._.
-          getCleaner(program).clean(quote).then(() => {
-            event.good();
-
-            // we're done
-            c();
-          });
-        })
-        .onDapiReturn(function (quote_id, request, program) {
-          return new Promise((resolve, reject) => {
-            // We will be calling this function from within a post call
-            // which has its own write lock. This call should be made
-            // asynchronously so we avoid deadlocks.
-            //
-            // It is also necessary that we free this lock manually
-            // because the underlying request may have been resolved
-            // already
-            acquireWriteLock(
-              quote_id,
-              request,
-              function (free) {
-                createQuote(
-                  quote_id,
-                  program,
-                  request,
-                  function (quote) {
-                    dao
-                      .ensurePendingRate(quote)
-                      .then(_ => {
-                        rating_service
-                          .request(
-                            request.getSession(),
-                            quote,
-                            '',
-                            !quote.isLocked()
-                          )
-                          .then(() => {
-                            free();
-                            resolve();
-                          });
-                      })
-                      .catch(e => {
-                        free();
-                        reject(e);
-                      });
-                  },
-                  function (error) {
-                    free();
-                    reject(error);
-                  }
-                );
-              },
-              true
-            );
-          });
+      server.onDapiReturn(function (quote_id, request, program) {
+        return new Promise((resolve, reject) => {
+          // We will be calling this function from within a post call
+          // which has its own write lock. This call should be made
+          // asynchronously so we avoid deadlocks.
+          //
+          // It is also necessary that we free this lock manually
+          // because the underlying request may have been resolved
+          // already
+          acquireWriteLock(
+            quote_id,
+            request,
+            function (free) {
+              createQuote(
+                quote_id,
+                program,
+                request,
+                function (quote) {
+                  dao
+                    .ensurePendingRate(quote)
+                    .then(_ => {
+                      rating_service
+                        .request(
+                          request.getSession(),
+                          quote,
+                          '',
+                          !quote.isLocked()
+                        )
+                        .then(() => {
+                          free();
+                          resolve();
+                        });
+                    })
+                    .catch(e => {
+                      free();
+                      reject(e);
+                    });
+                },
+                function (error) {
+                  free();
+                  reject(error);
+                }
+              );
+            },
+            true
+          );
         });
+      });
     });
   });
 };
@@ -689,10 +676,6 @@ function has_skey(user_request) {
   }
 
   return user_request.getGetData().skey === exports.skey;
-}
-
-function getCleaner(program) {
-  return ProgramQuoteCleaner(program);
 }
 
 /**

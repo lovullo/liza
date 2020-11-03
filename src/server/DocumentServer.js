@@ -33,6 +33,8 @@ const {
 
     meta: {DapiMetaSource},
 
+    quote: {ProgramQuoteCleaner},
+
     request: {
       DataProcessor: {DataProcessor},
       JsonServerResponse,
@@ -109,7 +111,8 @@ module.exports = Class('DocumentServer', {
           StagingBucket
         ),
         ts_ctor,
-        feature_flag
+        feature_flag,
+        ProgramQuoteCleaner
       )
     );
   },
