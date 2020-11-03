@@ -349,12 +349,10 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     // trigger the event and let someone (hopefully) take care of this
     try {
-      this._createCleaner(program)
-        .clean(quote)
-        .then(() => {
-          quote.setProgramVersion(program.version);
-          callback(false, true);
-        });
+      this._createCleaner(program)(quote)().then(() => {
+        quote.setProgramVersion(program.version);
+        callback(false, true);
+      });
     } catch (e) {
       // this is an unhandled exception, as far as we're concerned;
       // re-throw so that we have a stack trace, but do so after we're

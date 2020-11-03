@@ -33,6 +33,7 @@ import {
 } from '../db/MongoServerDao';
 import {ServerSideQuote} from './ServerSideQuote';
 import {UserSession} from '../request/UserSession';
+import {ClassData} from '../../client/Cmatch';
 
 /** Pull a document from a datasource using a DAO */
 export const pullDocumentFromDao = (dao: MongoServerDao) =>
@@ -198,3 +199,131 @@ export const initNewDocument = (dao: MongoServerDao) => (
     TE.map(quote_new),
     TE.chain(loadDocument(() => prepareNewDocument(program))(program)(session))
   );
+
+/**
+ * "Clean" quote, getting it into a stable state
+ *
+ * Quote cleaning will ensure that all group fields share at least the
+ * same number of indexes as its leader, and that meta fields are
+ * initialized.  This is useful when questions or meta fields are added.
+ */
+export const cleanDocument = (program: Program) => (
+  quote: ServerSideQuote
+) => () =>
+  new Promise(accept => {
+    // consider it an error to attempt cleaning a quote with the incorrect
+    // program, which would surely corrupt it [even further]
+    if (quote.getProgramId() !== program.getId()) {
+      // TODO: this should be an error; we shouldn't ignore!
+      accept();
+      return;
+    }
+
+    const class_data = program.classify(quote.getBucket().getData());
+
+    // correct group indexes
+    Object.keys(program.groupIndexField || {}).forEach(group_id =>
+      fixGroup(program)(quote)(group_id)(class_data)
+    );
+
+    fixMeta(program)(quote);
+
+    accept();
+  });
+
+/**
+ * Correct group fields to be at least the length of the leader
+ *
+ * If a group is part of a link, then its leader may be part of another
+ * group, and the length of the fields of all linked groups will match
+ * be at least the length of the leader.
+ *
+ * Unlike previous implementations, this _does not_ truncate fields,
+ * since that risks data loss.  Instead, field length should be
+ * validated on save.
+ */
+const fixGroup = (program: Program) => (quote: ServerSideQuote) => (
+  group_id: string
+) => (class_data: ClassData) => {
+  const length = groupLength(program)(quote)(group_id);
+
+  // if we cannot accurately determine the length then it's too
+  // dangerous to proceed and risk screwing up the data; abort
+  // processing this group (this should never happen unless a program
+  // is either not properly compiled or is out of date)
+  if (isNaN(length)) {
+    return;
+  }
+
+  const update: Record<string, string[]> = {};
+  const group_fields = program.groupExclusiveFields[group_id];
+
+  group_fields.forEach(field => {
+    const flen = (quote.getDataByName(field) || []).length;
+
+    // generated questions with no types should never be part of
+    // the bucket
+    if (!program.hasKnownType(field)) {
+      return;
+    }
+
+    if (flen >= length) {
+      return;
+    }
+
+    const data = [];
+    const field_default = program.defaults[field] || '';
+
+    for (let i = flen; i < length; i++) {
+      data[i] =
+        program.clearNaFields && program.hasNaField(field, class_data, i)
+          ? program.naFieldValue
+          : field_default;
+    }
+
+    update[field] = data;
+  });
+
+  quote.setData(update);
+};
+
+/**
+ * Determine length of group GROUP_ID
+ *
+ * The length of a group is the length of its leader, which may be part
+ * of another group (if the group is linked).
+ */
+const groupLength = (program: Program) => (quote: ServerSideQuote) => (
+  group_id: string
+) => {
+  const index_field = program.groupIndexField[group_id];
+
+  // we don't want to give the wrong answer, so just abort
+  if (!index_field) {
+    return NaN;
+  }
+
+  const data = quote.getDataByName(index_field);
+
+  return Array.isArray(data) ? data.length : NaN;
+};
+
+/**
+ * Initialize missing metadata
+ *
+ * This is similar to bucket initialization, except there are no leaders
+ * or default values---just empty arrays.  That may change in the future.
+ */
+const fixMeta = (program: Program) => (quote: ServerSideQuote) => {
+  const {fields = {}} = program.meta;
+  const metabucket = quote.getMetabucket();
+  const metadata = metabucket.getData();
+
+  Object.keys(fields).forEach(field_name => {
+    if (Array.isArray(metadata[field_name])) {
+      return;
+    }
+
+    metabucket.setValues({[field_name]: []});
+  });
+};

@@ -34,6 +34,8 @@ declare type RetryResult = {
 export declare class ServerSideQuote extends BaseQuote {
   setData(data: Record<string, unknown>): this;
 
+  getDataByName(field: string): unknown[];
+
   setAgentId(id: number): this;
 
   setAgentName(name: string): this;

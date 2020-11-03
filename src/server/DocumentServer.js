@@ -33,7 +33,9 @@ const {
 
     meta: {DapiMetaSource},
 
-    quote: {ProgramQuoteCleaner},
+    quote: {
+      loader: {cleanDocument},
+    },
 
     request: {
       DataProcessor: {DataProcessor},
@@ -112,7 +114,7 @@ module.exports = Class('DocumentServer', {
         ),
         ts_ctor,
         feature_flag,
-        ProgramQuoteCleaner
+        cleanDocument
       )
     );
   },

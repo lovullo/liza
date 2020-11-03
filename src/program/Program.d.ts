@@ -112,4 +112,6 @@ export declare abstract class Program {
 
   /** Names of fields under a given group without linked groups' fields */
   readonly groupExclusiveFields: Record<string, string[]>;
+
+  readonly groupIndexField: Record<string, string>;
 }

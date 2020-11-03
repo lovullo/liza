@@ -132,5 +132,6 @@ export function createStubProgram(overrides: any = {}) {
     getFirstStepId: () => 0,
     groupExclusiveFields: {},
     processNaFields: () => {},
+    groupIndexField: {},
   });
 }

@@ -21,9 +21,13 @@
 
 import {expect} from 'chai';
 
-import {applyDocumentDefaults} from '../../../src/server/quote/loader';
+import {
+  applyDocumentDefaults,
+  cleanDocument,
+} from '../../../src/server/quote/loader';
 import {Program} from '../../../src/program/Program';
 import {DocumentData} from '../../../src/server/db/MongoServerDao';
+import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
 
 describe('loader.applyDocumentDefaults', () => {
   [
@@ -307,3 +311,387 @@ describe('loader.applyDocumentDefaults', () => {
     }
   );
 });
+
+describe('cleanQuote', () => {
+  describe('group cleaning', () => {
+    [
+      {
+        label: 'expands indexes of linked and non-linked groups',
+
+        group_index: {
+          one: 'field11', // linked
+          two: 'field11', // linked
+          three: 'field31',
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+          two: ['field21', 'field22'],
+          three: ['field31', 'field32', 'unknown_ignore_me'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+          field21: {type: 'text'},
+          field22: {type: 'text'},
+          field31: {type: 'text'},
+
+          // ancient pre-"liza" data representation
+          field32: 'text',
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+          field21: ['e'],
+          field22: ['I', 'II'],
+          field31: ['i', 'ii'], // leader three
+          field32: ['x'],
+        },
+
+        expected: {
+          field12: [, , '12default'],
+          field21: [, '', ''],
+          field22: [, , ''],
+          field32: [, ''],
+        },
+
+        hasKnownType: (name: string) => name !== 'unknown_ignore_me',
+      },
+    ].forEach(test =>
+      it(test.label, done => {
+        const quote = createStubQuote(test.existing, {});
+        const program = createStubProgram({});
+
+        program.defaults = test.defaults;
+        program.groupIndexField = test.group_index;
+        program.groupExclusiveFields = test.exclusive;
+        program.meta.qtypes = test.qtypes;
+        program.whens = {
+          field11: ['--vis-field11'],
+          field12: ['--vis-field12'],
+        };
+        program.hasNaField = () => false;
+        program.hasKnownType = test.hasKnownType
+          ? test.hasKnownType
+          : () => true;
+
+        const updates: Record<string, any> = {};
+
+        quote.setData = given => {
+          Object.keys(given).forEach(k => (updates[k] = given[k]));
+          return quote;
+        };
+
+        cleanDocument(<Program>program)(quote)().then(() => {
+          expect(updates).to.deep.equal(test.expected);
+          done();
+        });
+      })
+    );
+  });
+
+  describe('fixGroup', () => {
+    [
+      {
+        label: 'clears NA fields when vector',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , ''],
+        },
+
+        bucket: {
+          field11: [1, 1, 0],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {is: true, indexes: [1, 1, 0]},
+          '--vis-field12': {is: true, indexes: [1, 1]},
+        },
+      },
+
+      {
+        label: 'clears NA fields when matrix',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , ''],
+        },
+
+        bucket: {
+          field11: [1, 1, 0],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+              [0, 0, 0],
+            ],
+          },
+          '--vis-field12': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+            ],
+          },
+        },
+      },
+      {
+        label: 'applies default values when visible as vector',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , '12default'],
+        },
+
+        bucket: {
+          field11: [1, 1, 1],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {is: true, indexes: [1, 1, 1]},
+          '--vis-field12': {is: true, indexes: [1, 1]},
+        },
+
+        hasNaField: () => false,
+      },
+      {
+        label: 'applies default values when visible as matrix',
+
+        group_index: {
+          one: 'field11', // linked
+        },
+
+        exclusive: {
+          one: ['field11', 'field12'],
+        },
+
+        defaults: {
+          field12: '12default',
+        },
+
+        qtypes: {
+          field11: {type: 'text'},
+          field12: {type: 'text'},
+        },
+
+        existing: {
+          field11: ['1', '', '3'], // leader one, two
+          field12: ['a', 'b'],
+        },
+
+        expected: {
+          field12: [, , '12default'],
+        },
+
+        bucket: {
+          field11: [1, 1, 1],
+          field12: [1, 1],
+        },
+
+        classify: {
+          '--vis-field11': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+              [0, 1, 0],
+            ],
+          },
+          '--vis-field12': {
+            is: true,
+            indexes: [
+              [1, 1, 1],
+              [1, 1, 1],
+            ],
+          },
+        },
+
+        hasNaField: () => false,
+      },
+    ].forEach(test =>
+      it(test.label, done => {
+        const quote = createStubQuote(test.existing, {});
+        const program = createStubProgram({});
+
+        program.defaults = test.defaults;
+        program.groupIndexField = test.group_index;
+        program.groupExclusiveFields = test.exclusive;
+        program.meta.qtypes = test.qtypes;
+        program.clearNaFields = true;
+        program.naFieldValue = '';
+        program.whens = {
+          field11: ['--vis-field11'],
+          field12: ['--vis-field12'],
+        };
+
+        program.hasNaField = test.hasNaField ? test.hasNaField : () => true;
+        program.hasKnownType = () => true;
+
+        program.classify = () => test.classify;
+
+        quote.getBucket = () =>
+          <any>{
+            getData() {
+              return test.bucket;
+            },
+          };
+
+        const updates: Record<string, any> = {};
+
+        quote.setData = given => {
+          Object.keys(given).forEach(k => (updates[k] = given[k]));
+          return quote;
+        };
+
+        cleanDocument(<Program>program)(quote)().then(() => {
+          expect(updates).to.deep.equal(test.expected);
+          done();
+        });
+      })
+    );
+  });
+
+  describe('metadata cleaning', () => {
+    [
+      {
+        label: 'populates all fields when empty',
+        existing: {},
+        fields: {foo: {}, bar: {}},
+        expected: {foo: [], bar: []},
+      },
+      {
+        label: 'populates only missing fields when non-empty',
+        existing: {foo: [1], baz: [2]},
+        fields: {foo: {}, bar: {}},
+        expected: {foo: [1], bar: [], baz: [2]},
+      },
+      {
+        label: 'does nothing with no fields',
+        existing: {foo: [1], baz: [2]},
+        fields: {},
+        expected: {foo: [1], baz: [2]},
+      },
+    ].forEach(({label, existing, fields, expected}) =>
+      it(label, done => {
+        const quote = createStubQuote({}, existing);
+        const program = createStubProgram(fields);
+
+        cleanDocument(<Program>program)(quote)().then(() => {
+          expect(quote.getMetabucket().getData()).to.deep.equal(expected);
+          done();
+        });
+      })
+    );
+  });
+});
+
+function createStubQuote(
+  data: Record<string, any[]>,
+  metadata: Record<string, any>
+) {
+  return <ServerSideQuote>(<unknown>{
+    getProgramId: () => 'foo',
+    setData: () => {},
+    getDataByName: (name: string) => data[name],
+    getMetabucket: () => ({
+      getDataByName: (name: string) => metadata[name],
+      getData: () => metadata,
+      setValues: (data: Record<string, any>) => {
+        Object.keys(data).forEach(
+          field_name => (metadata[field_name] = data[field_name])
+        );
+      },
+    }),
+    getBucket: () => ({
+      getData() {
+        return {};
+      },
+    }),
+  });
+}
+
+function createStubProgram(meta_fields: Record<string, any>) {
+  return <Record<string, any>>{
+    getId: () => 'foo',
+    meta: {fields: meta_fields},
+    defaults: {},
+    classify: () => ({}),
+  };
+}
