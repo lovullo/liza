@@ -67,29 +67,30 @@ export const indication = {
 
     emitter.emit('response-sent', {http_code: 202});
 
-    const {bucket, program} = program_factory.createProgram();
-
-    // Temp - just to test that this is working
-    console.log(JSON.stringify(program).slice(0, 100) + '...');
+    const {bucket} = program_factory.createProgram(request.body);
 
     const quote = getDummyQuote(bucket);
     const session = getDummySession();
     const indv = '';
 
-    const onSuccess = (rdata: CommonObject, actions: CommonObject) =>
-      console.log({rdata, actions});
+    const onSuccess = (rdata: CommonObject, _actions: CommonObject) => {
+      // Call back to webhook when rating has completed
+      http
+        .post(webhook, rdata)
+        .then(response => {
+          emitter.emit('callback-success', {response});
+        })
+        .catch(error => {
+          emitter.emit('callback-failure', {error});
+        });
 
-    const onFailure = (msg: string) => console.log('Failure:', {msg});
+      emitter.emit('callback-sent', {target: webhook});
+    };
+
+    const onFailure = (msg: string) => emitter.emit('rate-error', {msg});
 
     rater_factory.createRaters().forEach((rater: CustomRater) => {
       rater.rate(quote, session, indv, onSuccess, onFailure);
     });
-
-    // Call back to webhook when rating has completed
-    http.post(webhook, {}).then(() => {
-      // Handle response
-    });
-
-    emitter.emit('callback-sent', {target: webhook});
   },
 };

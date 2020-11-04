@@ -20,7 +20,8 @@
  */
 
 import {Program} from './Program';
+import {StagingBucket} from '../bucket/StagingBucket';
 
 export class ProgramInit {
-  public init(program: Program, doc_data: CommonObject): Promise<CommonObject>;
+  public init(program: Program, doc_data: StagingBucket): Promise<CommonObject>;
 }
