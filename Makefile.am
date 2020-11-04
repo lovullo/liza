@@ -95,7 +95,6 @@ format: .prettiertmp tsc
 test: tsc modindex
 	PATH="$(PATH):$(CURDIR)/node_modules/.bin" \
 		@CODE_COV@ mocha @NODE_DESTRUCTURE@ \
-		      --require $(path_test)/pre.js \
 		      --recursive \
 		      @COV_ARGS@ \
 		      $(TESTARGS)
