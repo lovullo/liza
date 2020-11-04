@@ -114,4 +114,7 @@ export declare abstract class Program {
   readonly groupExclusiveFields: Record<string, string[]>;
 
   readonly groupIndexField: Record<string, string>;
+
+  /** Map of question ids to the steps that declare them */
+  readonly qstep: Record<string, number>;
 }
