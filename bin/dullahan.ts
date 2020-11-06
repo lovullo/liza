@@ -21,7 +21,6 @@
 
 import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
-import * as fs from 'fs';
 import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
 import {EventEmitter} from 'events';
@@ -76,9 +75,7 @@ const getQuoteDataBucket = require('../src/bucket/QuoteDataBucket');
 const getProgramInit = require('../src/program/ProgramInit');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
-const rater_paths = fs
-  .readdirSync(rater_path)
-  .filter((file: string) => file.match(/\.js$/));
+const rater_src = `${rater_path}/${process.env.DULLAHAN_PROGRAM_ID}.js`;
 
 const program_factory = new ProgramFactory(
   program,
@@ -86,7 +83,7 @@ const program_factory = new ProgramFactory(
   () => getProgramInit()
 );
 
-const rater_factory = new RaterFactory(rater_paths);
+const rater_factory = new RaterFactory(rater_src);
 
 new EventMediator(logger, emitter);
 

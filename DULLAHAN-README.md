@@ -28,7 +28,18 @@ $ ./bin/dullahan
 
 ## Configuring the .env
 
-Configuration for `.env` is an extension of Liza's main `.env` file. Dullahan currently requires values set for `NODE_PORT` and `NODE_ENV` which are `6047` and `local` respectively for local development. It is advisable to add the values to a separate `.env.local` file.
+Configuration for `.env` is an extension of Liza's main `.env` file. Dullahan currently requires values set for `NODE_PORT` and `NODE_ENV`, `DULLAHAN_PROGRAM_ID` which are `6047`, `local`, and `mega` respectively for local development. It is advisable to add the values to a separate `.env.local` file.
+
+## Transferring Rater Dependencies (local dev only)
+
+Raters and programs must be manually copied into `liza/externals/src` for Dullahan to access them.
+
+```bash
+  cd ~/gitrepos/liza
+  mkdir -p externals/src
+  cp -r ../connector/src/_gen externals/src/
+  cp -r ../connector/src/node externals/src/
+```
 
 ## Testing responses via cURL
 

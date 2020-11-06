@@ -20,9 +20,9 @@ export class ProgramFactory {
   /**
    * Create a new ProgramFactory
    *
-   * @param programMaker   - creates a program
-   * @param bucketMaker    - creates a bucket
-   * @param programInitter - inits a program
+   * @param programMaker     - creates a program
+   * @param bucketMaker      - creates a bucket
+   * @param programInitMaker - inits a program
 
    */
   constructor(

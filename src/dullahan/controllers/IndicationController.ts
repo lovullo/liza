@@ -23,7 +23,6 @@ import {EventEmitter} from 'events';
 import {HttpClient} from '../../../src/system/network/HttpClient';
 import {ProgramFactory} from '../program/ProgramFactory';
 import {
-  CustomRater,
   RaterFactory,
   getDummyQuote,
   getDummySession,
@@ -68,7 +67,6 @@ export const indication = {
     emitter.emit('response-sent', {http_code: 202});
 
     const {bucket} = program_factory.createProgram(request.body);
-
     const quote = getDummyQuote(bucket);
     const session = getDummySession();
     const indv = '';
@@ -89,8 +87,8 @@ export const indication = {
 
     const onFailure = (msg: string) => emitter.emit('rate-error', {msg});
 
-    rater_factory.createRaters().forEach((rater: CustomRater) => {
-      rater.rate(quote, session, indv, onSuccess, onFailure);
-    });
+    rater_factory
+      .createRater()
+      .rate(quote, session, indv, onSuccess, onFailure);
   },
 };

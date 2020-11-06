@@ -7,17 +7,17 @@ export class RaterFactory {
   /**
    * Create a new RaterFactory
    *
-   * @param rater - path to raters
+   * @param rater - path to rater
    */
-  constructor(private readonly raters: string[]) {}
+  constructor(private readonly rater: string) {}
 
   /**
    * Create raters
    *
    * @return raters
    */
-  public createRaters(): CustomRater[] {
-    return this.raters.map((rater: string) => require(rater));
+  public createRater(): CustomRater {
+    return require(this.rater);
   }
 }
 
