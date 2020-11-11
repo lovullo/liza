@@ -121,6 +121,55 @@ describe('MongoServerDao', () => {
       });
     });
 
+    describe('bound by username', () => {
+      [
+        {
+          label: 'will set bound_by_username when quote is imported',
+          username: 'foo@foo.com',
+          expected_bound_username: ['foo@foo.com'],
+          is_imported: true,
+        },
+        {
+          label: 'will not set bound_by_username when quote is not imported',
+          username: 'foo@foo.com',
+          expected_bound_username: undefined,
+          is_imported: false,
+        },
+      ].forEach(({label, username, expected_bound_username, is_imported}) => {
+        it(label, done => {
+          const quote = createStubQuote({});
+
+          quote.getUserName = () => username;
+          quote.isImported = () => is_imported;
+
+          const sut = new Sut(
+            createMockDb(
+              // update
+              (_selector: MongoSelector, data: MongoUpdate) => {
+                expect(data.$set['meta.bound_by_username']).to.deep.equal(
+                  expected_bound_username
+                );
+
+                done();
+              }
+            ),
+            'test',
+            () => {
+              return <UnixTimestamp>123;
+            }
+          );
+
+          sut.init(() =>
+            sut.saveQuote(
+              quote,
+              () => {},
+              () => {}
+            )
+          );
+        });
+      });
+    });
+
     describe('with force_publish', () => {
       it('forced_reset resets published indicator', done => {
         const expected_ts = <UnixTimestamp>12345;
