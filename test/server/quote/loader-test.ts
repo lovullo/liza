@@ -667,7 +667,7 @@ function createStubQuote(
   data: Record<string, any[]>,
   metadata: Record<string, any>
 ) {
-  return <ServerSideQuote>(<unknown>{
+  const quote = <ServerSideQuote>(<unknown>{
     getProgramId: () => 'foo',
     setData: () => {},
     getDataByName: (name: string) => data[name],
@@ -685,7 +685,12 @@ function createStubQuote(
         return {};
       },
     }),
+    classify: () => ({}),
+    getFieldState: () => ({}),
+    getLastPersistedFieldState: () => ({}),
   });
+
+  return quote;
 }
 
 function createStubProgram(meta_fields: Record<string, any>) {

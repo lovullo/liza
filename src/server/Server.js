@@ -1001,8 +1001,10 @@ module.exports = Class('Server').extend(EventEmitter, {
       return this;
     }
 
+    const class_data = quote.classify();
+
     let top_allowed_step = program.getNextVisibleStep(
-      program.classify(quote.getBucket().getData()),
+      class_data,
       quote.getTopSavedStepId()
     );
 

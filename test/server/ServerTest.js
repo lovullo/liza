@@ -777,7 +777,7 @@ function createMockQuote(
   quote_id,
   program_id
 ) {
-  return {
+  const quote = {
     setData: () => {},
     setMetadata: () => {},
     setUserName: () => {},
@@ -816,7 +816,11 @@ function createMockQuote(
     getBucket: () => {
       return {getData: () => {}};
     },
+    classify: () => ({}),
+    setLastPersistedFieldState: () => quote,
   };
+
+  return quote;
 }
 
 function createMockLogger() {

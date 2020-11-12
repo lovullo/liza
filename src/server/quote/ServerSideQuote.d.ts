@@ -21,7 +21,7 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-import {Program} from '../../program/Program';
+import {Program, ClassificationResult} from '../../program/Program';
 import {BaseQuote} from '../../quote/BaseQuote';
 import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
 import {RateResult} from '../rater/Rater';
@@ -155,6 +155,15 @@ export declare class ServerSideQuote extends BaseQuote {
    */
   getExpirationDate(): number;
 
-  /** State of each currently applicable field */
+  /** Classify this quote and update field state */
+  classify(): ClassificationResult;
+
+  /** State of each currently applicable field (relies on #classify) */
   getFieldState(): FieldState | undefined;
+
+  /** Set applicability of quote as it existed the last save */
+  setLastPersistedFieldState(state: FieldState): this;
+
+  /** Applicability of each field the last time the quote was saved */
+  getLastPersistedFieldState(): FieldState;
 }

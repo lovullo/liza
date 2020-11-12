@@ -143,6 +143,7 @@ export const loadDocumentIntoQuote = (quote: ServerSideQuote) => (
 ): IO.IO<ServerSideQuote> => () =>
   quote
     .setData(quote_data.data || {})
+    .setLastPersistedFieldState(quote_data.fieldState || {})
     .setMetadata(quote_data.meta || {})
     .setAgentEntityId(quote_data.agentEntityId || 0)
     .setInitialRatedDate(quote_data.initialRatedDate || 0)
@@ -229,7 +230,7 @@ export const cleanDocument = (program: Program) => (quote: ServerSideQuote) =>
         flow(fixGroup(program), O.of),
         // TODO: get rid of this extra expensive classify, considering that
         // a previous part of the system probably already did it!
-        O.ap(O.of(program.classify(quote.getBucket().getData()))),
+        O.ap(O.of(quote.classify())),
         O.map(f =>
           A.array.traverse(IO.io)(
             Object.keys(program.groupIndexField || {}),
