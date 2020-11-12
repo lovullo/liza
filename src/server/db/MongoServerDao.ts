@@ -24,7 +24,7 @@
 import {ServerDao, Callback} from './ServerDao';
 import {PositiveInteger} from '../../numeric';
 import {DocumentId} from '../../document/Document';
-import {ServerSideQuote} from '../quote/ServerSideQuote';
+import {ServerSideQuote, FieldState} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
 import {NoPendingError} from '../../error/NoPendingError';
@@ -70,6 +70,7 @@ export type DocumentData = {
   startDate: UnixTimestamp;
   topSavedStepId?: number;
   topVisitedStepId?: number;
+  fieldState?: FieldState;
 };
 
 /**
@@ -489,11 +490,20 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     success: Callback = () => {},
     failure: Callback = () => {}
   ): this {
-    var update = {
+    var update: Record<string, any> = {
       currentStepId: quote.getCurrentStepId(),
       topVisitedStepId: quote.getTopVisitedStepId(),
       topSavedStepId: quote.getTopSavedStepId(),
     };
+
+    const field_state = quote.getFieldState();
+
+    // Do not wipe out field state if it's not provided (having
+    // getFieldState run the classifier automatically would be dangerous
+    // since it is so expensive)
+    if (field_state && Object.keys(field_state).length > 0) {
+      update.fieldState = field_state;
+    }
 
     return this.mergeData(quote, update, success, failure);
   }

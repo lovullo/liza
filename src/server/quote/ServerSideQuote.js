@@ -64,6 +64,9 @@ module.exports = Class('ServerSideQuote')
      */
     'private _retry_attempts': 0,
 
+    /** State of each currently applicable field */
+    'private _field_state': undefined,
+
     'public setProgramVersion': function (version) {
       this._pver = '' + version;
       return this;
@@ -243,5 +246,10 @@ module.exports = Class('ServerSideQuote')
         field_count: retry_field_count,
         true_count: retry_true_count,
       };
+    },
+
+    /** State of each currently applicable field */
+    getFieldState() {
+      return this._field_state;
     },
   });

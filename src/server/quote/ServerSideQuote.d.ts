@@ -31,6 +31,8 @@ declare type RetryResult = {
   true_count: number;
 };
 
+export type FieldState = Record<string, number | Array<number | number[]>>;
+
 export declare class ServerSideQuote extends BaseQuote {
   setData(data: Record<string, unknown>): this;
 
@@ -152,4 +154,7 @@ export declare class ServerSideQuote extends BaseQuote {
    * @return quote's expiration date
    */
   getExpirationDate(): number;
+
+  /** State of each currently applicable field */
+  getFieldState(): FieldState | undefined;
 }
