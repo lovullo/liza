@@ -341,17 +341,38 @@ module.exports = Class('Server').extend(EventEmitter, {
 
     this.logger.log(
       this.logger.PRIORITY_INFO,
-      'Quote %s program version change (%s -> %s); will be scanned.',
+      'Quote %s program version change (%s -> %s); will be migrated',
       quote.getId(),
       quote.getProgramVersion(),
       program.version
     );
 
+    // user may be kicked back during migration, so let's record where they
+    // left off for later logging
+    const pre_migrate_step_id = quote.getCurrentStepId();
+
     // trigger the event and let someone (hopefully) take care of this
     try {
       this._createCleaner(program)(quote)().then(({left}) => {
+        if (left) {
+          callback(left, true);
+          return;
+        }
+
+        // Migration to this version of the Program has completed
         quote.setProgramVersion(program.version);
-        callback(left, true);
+
+        this.logger.log(
+          this.logger.PRIORITY_INFO,
+          'Quote %s migrated to program version %s (kickback step %d -> %d)',
+          quote.getId(),
+          program.version,
+          pre_migrate_step_id,
+          quote.getCurrentStepId()
+        );
+
+        // Migration may have caused a kickback
+        this.dao.saveQuoteState(quote, () => callback(left, true));
       });
     } catch (e) {
       // this is an unhandled exception, as far as we're concerned;
