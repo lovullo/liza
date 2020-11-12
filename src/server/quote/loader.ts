@@ -19,13 +19,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as E from 'fp-ts/Either';
-import * as TE from 'fp-ts/TaskEither';
-import * as IO from 'fp-ts/IO';
 import * as A from 'fp-ts/Array';
+import * as B from 'fp-ts/Bounded';
+import * as E from 'fp-ts/Either';
+import * as IOE from 'fp-ts/IOEither';
+import * as IO from 'fp-ts/IO';
+import * as M from 'fp-ts/Monoid';
 import * as O from 'fp-ts/Option';
+import * as R from 'fp-ts/Record';
+import * as TE from 'fp-ts/TaskEither';
 
 import {pipe, flow, constant} from 'fp-ts/function';
+import {between, ordNumber} from 'fp-ts/Ord';
+
+const {isArray} = Array;
 
 import {DocumentId} from '../../document/Document';
 import {Program} from '../../program/Program';
@@ -34,7 +41,7 @@ import {
   DocumentData,
   RawBucketData,
 } from '../db/MongoServerDao';
-import {ServerSideQuote} from './ServerSideQuote';
+import {ServerSideQuote, FieldState} from './ServerSideQuote';
 import {UserSession} from '../request/UserSession';
 import {ClassData} from '../../client/Cmatch';
 
@@ -208,6 +215,100 @@ export const documentUsesProgram = (program: Program) => (
   quote: ServerSideQuote
 ) => quote.getProgramId() === program.getId();
 
+/** Whether the automatic step kickback system is enabled */
+const featureKickbackEnabled = (quote: ServerSideQuote) =>
+  quote.getDataByName('__feature_pver_kickback')?.[0] === '1';
+
+/**
+ * Kick document back to the earliest field that is now applicable that was
+ * not previously
+ */
+export const kickBackToNewlyApplicable = (program: Program) => (
+  quote: ServerSideQuote
+): IOE.IOEither<Error, ServerSideQuote> => () =>
+  pipe(
+    pipe(
+      quote.getFieldState(),
+      E.fromNullable(Error('Field state is not available'))
+    ),
+
+    // Determine kickback step, if any, not to exceed the current step
+    E.map(
+      flow(
+        fieldsNowApplicable(quote.getLastPersistedFieldState()),
+        A.map(fieldStep(program)),
+        A.filter(betweenPermittedKickbackRange(quote)),
+        M.fold(meetBeforeCurrentStep(quote))
+      )
+    ),
+
+    // Impose step as upper bound on quote
+    E.map(kickback_step_id =>
+      quote
+        .setCurrentStepId(kickback_step_id)
+        .setTopVisitedStepId(kickback_step_id)
+    )
+  );
+
+/**
+ * If only one of the provided values is an array, convert the other into an
+ * array by broadcasting to an array of the same length as the other
+ */
+const normalizeIndexes = <T>(a: T | T[], b: T | T[]) =>
+  isArray(a) && !isArray(b)
+    ? [a, a.map(_ => b)]
+    : !isArray(a) && isArray(b)
+    ? [b.map(_ => a), b]
+    : [a, b];
+
+/**
+ * Whether a given field has indexes that are applicable when they were not
+ * previously
+ */
+const fieldNewlyApplicable = ([x, y]: any[]) =>
+  isArray(x) ? x.some((v: number, i: number) => v && v !== y[i]) : x && x !== y;
+
+/** List of fields that are now applicable but were not previously */
+export const fieldsNowApplicable = (last: FieldState) => (cur: FieldState) =>
+  pipe(
+    cur,
+    R.filterWithIndex((key, state) =>
+      fieldNewlyApplicable(normalizeIndexes(state, last[key] || 0))
+    ),
+    R.keys
+  );
+
+/** Step field is assigned to within the given program, otherwise Infinity **/
+const fieldStep = (program: Program) => (field: string) =>
+  program.qstep[field] ?? Infinity;
+
+/** Meet (minimum) of the given array of values, defaulting to current step */
+const meetBeforeCurrentStep = (quote: ServerSideQuote) =>
+  M.getMeetMonoid({
+    ...B.boundedNumber,
+    top: quote.getCurrentStepId(),
+  });
+
+/**
+ * Whether the given step id is within the range permissable for kickback
+ *
+ * A kickback will not occur if the feature flag is not set on the
+ * document.  The will be removed for release.
+ *
+ * If a document it locked, it'll be kicked back no lower than the lock step
+ * if one is set; if there is no lock step but the document is locked, then
+ * it will not be kicked back at all.
+ *
+ * The document will never be kicked back prior to the current step.
+ */
+const betweenPermittedKickbackRange = (quote: ServerSideQuote) =>
+  between(ordNumber)(
+    quote.isLocked() || !featureKickbackEnabled(quote)
+      ? quote.getExplicitLockStep() || quote.getCurrentStepId()
+      : -Infinity,
+    quote.getCurrentStepId()
+  );
+
 /**
  * "Clean" quote, getting it into a stable state
  *
@@ -218,12 +319,14 @@ export const documentUsesProgram = (program: Program) => (
 export const cleanDocument = (program: Program) => (quote: ServerSideQuote) =>
   pipe(
     quote,
+
     // Consider it an error to attempt cleaning a quote with the incorrect
     // program, which would surely corrupt it [even further]
     TE.fromPredicate(
       documentUsesProgram(program),
       constant(Error('Quote/program mismatch'))
     ),
+
     // Fix groups
     TE.chainFirst(
       flow(
@@ -240,8 +343,12 @@ export const cleanDocument = (program: Program) => (quote: ServerSideQuote) =>
         TE.fromOption(constant(Error('fixGroup failure')))
       )
     ),
+
     // Fix metadata
-    TE.chain(flow(fixMeta(program), TE.fromIO))
+    TE.chainFirst(flow(fixMeta(program), TE.fromIO)),
+
+    // Kick user back to newly applicable fields
+    TE.chainIOEitherKW(kickBackToNewlyApplicable(program))
   );
 
 /**

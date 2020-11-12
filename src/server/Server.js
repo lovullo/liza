@@ -526,7 +526,7 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @todo generate quote # rather than prompting
    */
   _processInit: function (request, quote, program, quote_new, prev) {
-    var actions = null,
+    var actions = [],
       valid = true,
       program_id = program.getId(),
       session = request.getSession(),
@@ -606,6 +606,11 @@ module.exports = Class('Server').extend(EventEmitter, {
 
       lock = 'Quote is locked due to concurrent access.';
     }
+
+    actions.push({
+      action: 'gostep',
+      id: quote.getCurrentStepId(),
+    });
 
     this._feature_flag
       .isEnabled('liza_autosave', {user: program.id})

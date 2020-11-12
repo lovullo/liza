@@ -21,14 +21,17 @@
 
 import {expect} from 'chai';
 import * as E from 'fp-ts/Either';
+import {___Writable} from 'naughty';
 
 import {
   applyDocumentDefaults,
   cleanDocument,
+  kickBackToNewlyApplicable,
 } from '../../../src/server/quote/loader';
 import {Program} from '../../../src/program/Program';
 import {DocumentData} from '../../../src/server/db/MongoServerDao';
 import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
+import {PositiveInteger} from '../../../src/numeric';
 
 describe('loader.applyDocumentDefaults', () => {
   [
@@ -663,6 +666,374 @@ describe('cleanQuote', () => {
   });
 });
 
+describe('loader.kickBackToNewlyApplicable', () => {
+  it('fails if field state is not available', () => {
+    const program = createStubProgram({});
+    const quote = createStubQuote({}, {});
+
+    quote.getFieldState = () => undefined;
+
+    const result = kickBackToNewlyApplicable(program)(quote)();
+    expect(E.isLeft(result)).to.be.true;
+  });
+
+  type TestData = {
+    label: string;
+    field_state: Record<string, number | number[]>;
+    last_field_state: Record<string, number | number[]>;
+    qstep: Record<string, number>;
+    data: Record<string, string[]>;
+    locked?: boolean;
+    lock_step?: PositiveInteger;
+    current_step_id: number;
+    expected_step_id: number;
+  };
+
+  (<TestData[]>[
+    // If no fields have changed applicability, then we want to leave the user
+    // at whatever step they left off on.
+    {
+      label: 'keeps document at current step if no fields changed',
+
+      // Identical field states
+      field_state: {foo: [1, 0]},
+      last_field_state: {foo: [1, 0]},
+
+      // We must provide some mapping to ensure the system fails if it
+      // _thinks_ there is some sort of change, and _this must be less than
+      // current_step_id below_
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 3,
+    },
+
+    {
+      label: 'kicks back to step on single index change',
+
+      // Second index changes
+      field_state: {foo: [1, 1]},
+      last_field_state: {foo: [1, 0]},
+
+      // And so should kick back to this step
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 2,
+    },
+
+    {
+      label: 'kicks back to step on multiple index change',
+
+      // Both indexes change
+      field_state: {foo: [1, 1]},
+      last_field_state: {foo: [0, 0]},
+
+      // And so should kick back to this step
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 2,
+    },
+
+    {
+      label: 'does not kick back on single index change to N/A',
+
+      // The first index changed, but we're now N/A, so there's no use
+      // kicking the user back to address something that can't be seen
+      field_state: {foo: [0, 0]},
+      last_field_state: {foo: [1, 0]},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 3,
+    },
+
+    {
+      label: 'does not kick back on multiple index change to N/A',
+
+      // Both index changed, but we're now N/A, so there's no use
+      // kicking the user back to address something that can't be seen
+      field_state: {foo: [0, 0]},
+      last_field_state: {foo: [1, 1]},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 3,
+    },
+
+    {
+      label: 'missing prior field state is implicitly zero (no kickback)',
+
+      // No change, because it should be implicitly [0, 0]
+      field_state: {foo: [0, 0]},
+      last_field_state: {},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+      expected_step_id: 3,
+    },
+
+    {
+      label: 'missing prior field state is implicitly zero (kickback)',
+
+      // Change, because it should be implicitly [0, 0]
+      field_state: {foo: [1, 0]},
+      last_field_state: {},
+
+      // And so there should be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 1,
+    },
+
+    {
+      label: 'missing current field state is ignored (implicitly NA)',
+
+      // It's okay that we're now implicitly [0, 0]; we shouldn't kick back
+      // to something that's N/A
+      field_state: {},
+      last_field_state: {foo: [1, 1]},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    {
+      label: 'current field state is scalar, last was vector, no kickback',
+
+      // Current field state is broadcasted into [1, 1], which matches the
+      // last field state
+      field_state: {foo: 1},
+      last_field_state: {foo: [1, 1]},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    {
+      label: 'current field state is scalar, last was vector, kickback',
+
+      // Current field state is broadcasted into [1, 1], which differs from
+      // the last field state
+      field_state: {foo: 1},
+      last_field_state: {foo: [1, 0]},
+
+      // And so there should be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 1,
+    },
+
+    {
+      label: 'last field state was scalar, current is vector, no kickback',
+
+      // Last field state is broadcasted into [1, 1], which matches the
+      // current field state
+      field_state: {foo: [1, 1]},
+      last_field_state: {foo: 1},
+
+      // And so there should _not_ be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    {
+      label: 'last field state was scalar, current is vector, kickback',
+
+      // Last field state is broadcasted into [1, 1], which differs from
+      // the current field state
+      field_state: {foo: [1, 0]},
+      // (Though note that this won't actually happen, since it'd be stripped
+      // out, and if this were 1, this test would have to make current 0,
+      // which means N/A, and therefore wouldn't kick back)
+      last_field_state: {foo: 0},
+
+      // And so there should be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 1,
+    },
+
+    {
+      label: 'does not kick forward past current step',
+
+      // Field state differs
+      field_state: {foo: [1]},
+      last_field_state: {foo: [0]},
+
+      // And the field is on this step
+      qstep: {foo: 7},
+
+      // But that's _past_ the current step, and so we should not make the
+      // change, otherwise we'd be kicking _forward_
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    {
+      label: 'kicks back to lowest of applicable step ids',
+
+      // Multiple field states differ
+      field_state: {foo: 1, bar: 1, baz: 1, quux: 1},
+      last_field_state: {quux: 1},
+
+      // Each located on these steps (one intentionally > current_step_id)
+      qstep: {foo: 7, bar: 2, baz: 3, quux: 1},
+
+      // We should kick back to the lowest of each of the above, which will
+      // be all except for quux, having filtered out foo for being greater
+      // than the current_step_id
+      current_step_id: 4,
+      expected_step_id: 2,
+    },
+
+    {
+      label: 'does not kick back if quote is locked without lock step',
+
+      // Field state differs
+      field_state: {foo: [1]},
+      last_field_state: {foo: [0]},
+
+      // And the field is on this step
+      qstep: {foo: 1},
+
+      // But our quote is locked, without an explicit lock step, meaning no
+      // modifications to any step are possible
+      locked: true,
+      lock_step: 0,
+
+      // And so we should not kick back at all, despite the kickback step
+      // being less than our current step
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    {
+      label: 'kicks back, but not before explicit lock step',
+
+      // Field state differs
+      field_state: {foo: [1], bar: [1], baz: [1]},
+      last_field_state: {foo: [0], bar: [0], baz: [0]},
+
+      // Foo is before the lock step, bar is after but before the current
+      // step, and baz is after the current step
+      qstep: {foo: 1, bar: 3, baz: 9},
+      //                   ^ kick back here
+
+      // Our quote is locked at this step
+      locked: true,
+      lock_step: 2,
+
+      // And so we should not kick back to before the lock, but we should
+      // kick back after the lock but before the current step
+      current_step_id: 4,
+      expected_step_id: 3,
+    },
+
+    // This feature flag test will be removed with the flag for release
+    {
+      label: 'does not kick back if feature flag is not set',
+
+      // Field state differs
+      field_state: {foo: [1]},
+      last_field_state: {foo: [0]},
+
+      // And the field is on this step
+      qstep: {foo: 1},
+
+      // But the feature flag is cleared
+      data: {__feature_pver_kickback: ['0']},
+
+      // And so we should not kick back at all, despite the kickback step
+      // being less than our current step
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+
+    // This feature flag test will be removed with the flag for release
+    {
+      label: 'does not kick back if feature flag is undefined',
+
+      // Field state differs
+      field_state: {foo: [1]},
+      last_field_state: {foo: [0]},
+
+      // And the field is on this step
+      qstep: {foo: 1},
+
+      // But the feature flag does not exist at all
+      data: {},
+
+      // And so we should not kick back at all, despite the kickback step
+      // being less than our current step
+      current_step_id: 4,
+      expected_step_id: 4,
+    },
+  ]).forEach(({label, ...tdata}) =>
+    it(label, () => {
+      const program = createStubProgram({});
+      const quote = createStubQuote({}, {});
+
+      quote.getFieldState = () => tdata.field_state;
+      quote.getLastPersistedFieldState = () => tdata.last_field_state;
+      quote.getCurrentStepId = () => tdata.current_step_id;
+
+      // This is the mapping from field -> step id
+      program.qstep = tdata.qstep;
+
+      let given_current = NaN;
+      let given_top = NaN;
+
+      // These will be called regardless of whether the step actually differs
+      // from the current
+      quote.setCurrentStepId = given_id => {
+        given_current = given_id;
+        return quote;
+      };
+      quote.setTopVisitedStepId = given_id => {
+        given_top = given_id;
+        return quote;
+      };
+
+      // The bucket is consulted for the feature flag, which is temporary
+      // until release.  Default to on, so that we don't have to pollute all
+      // of our test cases, but note that this should default to `0` in the
+      // real bucket (configured via program.xml)
+      const {data = {__feature_pver_kickback: ['1']}} = tdata;
+      quote.getDataByName = (field: string) => data[field];
+
+      // These are only relevent to a couple of test cases above, meant to
+      // play well with the locking system
+      quote.isLocked = () => tdata.locked || false;
+      quote.getExplicitLockStep = () => tdata.lock_step || <PositiveInteger>0;
+
+      const result = kickBackToNewlyApplicable(program)(quote)();
+
+      expect(E.isRight(result)).to.be.true;
+      expect(given_current).to.equal(tdata.expected_step_id);
+      expect(given_top).to.equal(tdata.expected_step_id);
+    })
+  );
+});
+
 function createStubQuote(
   data: Record<string, any[]>,
   metadata: Record<string, any>
@@ -685,19 +1056,24 @@ function createStubQuote(
         return {};
       },
     }),
+    getCurrentStepId: () => 0,
+    setCurrentStepId: () => quote,
+    setTopVisitedStepId: () => quote,
     classify: () => ({}),
     getFieldState: () => ({}),
     getLastPersistedFieldState: () => ({}),
+    isLocked: () => false,
+    getExplicitLockStep: () => 0,
   });
 
   return quote;
 }
 
 function createStubProgram(meta_fields: Record<string, any>) {
-  return <Record<string, any>>{
+  return <___Writable<Program>>(<unknown>{
     getId: () => 'foo',
     meta: {fields: meta_fields},
     defaults: {},
     classify: () => ({}),
-  };
+  });
 }
