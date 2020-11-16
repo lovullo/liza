@@ -1,9 +1,7 @@
-import {Program} from '../../../src/program/Program';
-
-/* eslint-disable @typescript-eslint/no-var-requires */
-const QuoteDataBucket = require('../../bucket/QuoteDataBucket');
-const ProgramInit = require('../../program/ProgramInit');
-/* eslint-enable @typescript-eslint/no-var-requires */
+import {ProgramInit} from '../../program/ProgramInit';
+import {Program} from '../../program/Program';
+import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
+import {StagingBucket} from '../../bucket/StagingBucket';
 
 /**
  * Data retriever is partial bucket implementation
@@ -22,22 +20,31 @@ export class ProgramFactory {
   /**
    * Create a new ProgramFactory
    *
-   * @param program - required program dependency
+   * @param programMaker     - creates a program
+   * @param bucketMaker      - creates a bucket
+   * @param programInitMaker - inits a program
+
    */
-  constructor(private readonly program: () => Program) {}
+  constructor(
+    private readonly programMaker: () => Program,
+    private readonly bucketMaker: () => QuoteDataBucket,
+    private readonly programInitMaker: () => ProgramInit
+  ) {}
 
   /**
    * Create a new program
    *
    * @return a new program
    */
-  public createProgram(): {bucket: DataRetriever; program: Program} {
-    const program = this.program();
-    const bucket = QuoteDataBucket().setValues({});
+  public createProgram(
+    bucket_data: CommonObject = {}
+  ): {bucket: DataRetriever; program: Program} {
+    const program = this.programMaker();
+    const bucket = <StagingBucket>this.bucketMaker().setValues(bucket_data);
 
     program.initQuote(bucket, false);
 
-    ProgramInit().init(program, bucket);
+    this.programInitMaker().init(program, bucket);
 
     return {bucket, program};
   }

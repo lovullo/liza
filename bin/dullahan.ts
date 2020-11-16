@@ -21,7 +21,6 @@
 
 import * as dotenv from 'dotenv-flow';
 import * as express from 'express';
-import * as fs from 'fs';
 import * as promBundle from 'express-prom-bundle';
 import bodyParser = require('body-parser');
 import {EventEmitter} from 'events';
@@ -69,16 +68,22 @@ const emitter = new EventEmitter();
 const http = new HttpClient();
 const logger = new StandardLogger(log_console, ts_ctor, env, service);
 const program_path = `program/${program_id}/Program`;
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const program = require(program_path);
+const getQuoteDataBucket = require('../src/bucket/QuoteDataBucket');
+const getProgramInit = require('../src/program/ProgramInit');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
-const rater_paths = fs
-  .readdirSync(rater_path)
-  .filter((file: string) => file.match(/\.js$/));
+const rater_src = `${rater_path}/${process.env.DULLAHAN_PROGRAM_ID}.js`;
 
-const program_factory = new ProgramFactory(program);
-const rater_factory = new RaterFactory(rater_paths);
+const program_factory = new ProgramFactory(
+  program,
+  () => getQuoteDataBucket(),
+  () => getProgramInit()
+);
+
+const rater_factory = new RaterFactory(rater_src);
 
 new EventMediator(logger, emitter);
 
@@ -89,6 +94,7 @@ app.use(routeAccessEmitter(emitter));
 app.use(accessLogger(log_format));
 
 app.get('/healthcheck', system.healthcheck);
+
 app.post(
   '/indication',
   indication.create(emitter)(http)(program_factory)(rater_factory)

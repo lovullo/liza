@@ -74,6 +74,18 @@ export class EventMediator {
       this._log.notice(`Callback Sent`, ctx)
     );
 
+    this._emitter.on('callback-success', (ctx = {}) =>
+      this._log.notice(`Callback Success`, ctx)
+    );
+
+    this._emitter.on('callback-failure', (ctx = {}) =>
+      this._log.notice(`Callback Failure`, ctx)
+    );
+
+    this._emitter.on('rate-error', (ctx = {}) =>
+      this._log.error(`Rate Error`, ctx)
+    );
+
     this._emitter.on('error', arg => this._handleError(arg));
   }
 

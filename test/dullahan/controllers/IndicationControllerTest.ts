@@ -103,20 +103,26 @@ const createHttpClient = () => {
 const createProgramFactory = () => {
   return <ProgramFactory>{
     createProgram() {
-      return {bucket: <DataRetriever>{}, program: <Program>{}};
+      return {
+        bucket: <DataRetriever>{
+          getData() {
+            return {};
+          },
+        },
+        program: <Program>{
+          classify(_data: CommonObject) {},
+        },
+      };
     },
   };
 };
 
 const createRaterFactory = () => {
   return <RaterFactory>{
-    createRaters() {
-      return [
-        <CustomRater>{
-          rate() {},
-        },
-      ];
-    },
+    createRater: () =>
+      <CustomRater>{
+        rate() {},
+      },
   };
 };
 
