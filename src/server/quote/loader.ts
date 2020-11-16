@@ -30,7 +30,7 @@ import * as R from 'fp-ts/Record';
 import * as TE from 'fp-ts/TaskEither';
 
 import {pipe, flow, constant} from 'fp-ts/function';
-import {between, ordNumber} from 'fp-ts/Ord';
+import {between, ordNumber, contramap} from 'fp-ts/Ord';
 
 const {isArray} = Array;
 
@@ -44,6 +44,7 @@ import {
 import {ServerSideQuote, FieldState} from './ServerSideQuote';
 import {UserSession} from '../request/UserSession';
 import {ClassData} from '../../client/Cmatch';
+import {invalidate} from '../../validate/invalid';
 
 /** Pull a document from a datasource using a DAO */
 export const pullDocumentFromDao = (dao: MongoServerDao) =>
@@ -236,9 +237,10 @@ export const kickBackToNewlyApplicable = (program: Program) => (
     E.map(
       flow(
         fieldsNowApplicable(quote.getLastPersistedFieldState()),
-        A.map(fieldStep(program)),
-        A.filter(betweenPermittedKickbackRange(quote)),
-        M.fold(meetBeforeCurrentStep(quote))
+        R.mapWithIndex(fieldStep(program)),
+        R.filter(betweenPermittedKickbackRange(quote)),
+        invalidateFields(quote),
+        R.foldMap(meetBeforeCurrentStep(quote))(stepIdFromPair)
       )
     ),
 
@@ -247,6 +249,31 @@ export const kickBackToNewlyApplicable = (program: Program) => (
       quote
         .setCurrentStepId(kickback_step_id)
         .setTopVisitedStepId(kickback_step_id)
+    )
+  );
+
+/**
+ * Whether the given step id is within the range permissable for kickback
+ *
+ * A kickback will not occur if the feature flag is not set on the
+ * document.  The will be removed for release.
+ *
+ * If a document it locked, it'll be kicked back no lower than the lock step
+ * if one is set; if there is no lock step but the document is locked, then
+ * it will not be kicked back at all.
+ *
+ * The document will never be kicked back prior to the current step.
+ */
+const betweenPermittedKickbackRange = (quote: ServerSideQuote) =>
+  between(ordPairStepId)(
+    pairFromStepId(
+      quote.isLocked() || !featureKickbackEnabled(quote)
+        ? quote.getExplicitLockStep() || quote.getCurrentStepId()
+        : -Infinity
+    ),
+
+    pairFromStepId(
+      featureKickbackEnabled(quote) ? quote.getCurrentStepId() : -Infinity
     )
   );
 
@@ -264,23 +291,30 @@ const normalizeIndexes = <T>(a: T | T[], b: T | T[]) =>
 /**
  * Whether a given field has indexes that are applicable when they were not
  * previously
+ *
+ * The returned value, if `some`, has all indexes cleared except for those
+ * indexes that have become applicable.
  */
 const fieldNewlyApplicable = ([x, y]: any[]) =>
-  isArray(x) ? x.some((v: number, i: number) => v && v !== y[i]) : x && x !== y;
+  pipe(
+    isArray(x) ? x.map((v, i: number) => +(v && v !== y[i])) : +(x && x !== y),
+    O.fromPredicate(x => (isArray(x) ? x.some(v => !!v) : !!x))
+  );
 
 /** List of fields that are now applicable but were not previously */
 export const fieldsNowApplicable = (last: FieldState) => (cur: FieldState) =>
   pipe(
     cur,
-    R.filterWithIndex((key, state) =>
+    R.filterMapWithIndex((key, state) =>
       fieldNewlyApplicable(normalizeIndexes(state, last[key] || 0))
-    ),
-    R.keys
+    )
   );
 
 /** Step field is assigned to within the given program, otherwise Infinity **/
-const fieldStep = (program: Program) => (field: string) =>
-  program.qstep[field] ?? Infinity;
+const fieldStep = (program: Program) => (
+  field: string,
+  state: State
+): StateStepPair => [state, program.qstep[field] ?? Infinity];
 
 /** Meet (minimum) of the given array of values, defaulting to current step */
 const meetBeforeCurrentStep = (quote: ServerSideQuote) =>
@@ -289,25 +323,45 @@ const meetBeforeCurrentStep = (quote: ServerSideQuote) =>
     top: quote.getCurrentStepId(),
   });
 
+type State = RecordValue<FieldState>;
+type StepId = number;
+type StateStepPair = [State, StepId];
+
+const pairFromStepId = (id: StepId): StateStepPair => [[], id];
+const stateFromPair = (pair: StateStepPair) => pair[0];
+const stepIdFromPair = (pair: StateStepPair) => pair[1];
+const ordPairStepId = contramap(stepIdFromPair)(ordNumber);
+
 /**
- * Whether the given step id is within the range permissable for kickback
+ * Invalidate all newly applicable fields, by index
  *
- * A kickback will not occur if the feature flag is not set on the
- * document.  The will be removed for release.
- *
- * If a document it locked, it'll be kicked back no lower than the lock step
- * if one is set; if there is no lock step but the document is locked, then
- * it will not be kicked back at all.
- *
- * The document will never be kicked back prior to the current step.
+ * All indexes that are set for a given field will be set to the invalid
+ * value `invalidValue`, which will cause a validation failure and force the
+ * user to change its value.
  */
-const betweenPermittedKickbackRange = (quote: ServerSideQuote) =>
-  between(ordNumber)(
-    quote.isLocked() || !featureKickbackEnabled(quote)
-      ? quote.getExplicitLockStep() || quote.getCurrentStepId()
-      : -Infinity,
-    quote.getCurrentStepId()
+const invalidateFields = (quote: ServerSideQuote) => (
+  fields: Record<string, StateStepPair>
+) => {
+  pipe(
+    fields,
+    R.map(stateFromPair),
+    R.mapWithIndex(broadcastScalar(quote)),
+    R.map(invalidDelta),
+    quote.setData.bind(quote)
   );
+
+  return fields;
+};
+
+type InvalidDelta = undefined | string | InvalidDelta[];
+
+/** Generate a value for an invalid delta from the given `State` */
+const invalidDelta = (x: State): InvalidDelta =>
+  isArray(x) ? x.map(invalidDelta) : [undefined, invalidate('')][x];
+
+/** Broadcast a scalar value onto a vector */
+const broadcastScalar = (quote: ServerSideQuote) => (field: string, x: State) =>
+  isArray(x) ? x : quote.getDataByName(field).map(_ => x);
 
 /**
  * "Clean" quote, getting it into a stable state

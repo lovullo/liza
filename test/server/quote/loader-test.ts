@@ -32,6 +32,7 @@ import {Program} from '../../../src/program/Program';
 import {DocumentData} from '../../../src/server/db/MongoServerDao';
 import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
 import {PositiveInteger} from '../../../src/numeric';
+import {invalidate} from '../../../src/validate/invalid';
 
 describe('loader.applyDocumentDefaults', () => {
   [
@@ -687,6 +688,7 @@ describe('loader.kickBackToNewlyApplicable', () => {
     lock_step?: PositiveInteger;
     current_step_id: number;
     expected_step_id: number;
+    expected_data: Record<string, Array<undefined | string>>;
   };
 
   (<TestData[]>[
@@ -706,6 +708,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 3,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -720,6 +725,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 2,
+
+      // And should invalidate only the changed index
+      expected_data: {foo: [undefined, invalidate('')]},
     },
 
     {
@@ -734,6 +742,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 2,
+
+      // And should invalidate both changed indexes
+      expected_data: {foo: [invalidate(''), invalidate('')]},
     },
 
     {
@@ -749,6 +760,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 3,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -764,6 +778,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 3,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -778,6 +795,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 3,
       expected_step_id: 3,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -792,6 +812,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 1,
+
+      // And so should invalidate only the changed index
+      expected_data: {foo: [invalidate(''), undefined]},
     },
 
     {
@@ -807,6 +830,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -822,6 +848,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -837,6 +866,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 1,
+
+      // And so should invalidate only the changed index
+      expected_data: {foo: [undefined, invalidate('')]},
     },
 
     {
@@ -852,6 +884,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -870,6 +905,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       current_step_id: 4,
       expected_step_id: 1,
+
+      // And so should invalidate only the changed index
+      expected_data: {foo: [invalidate(''), undefined]},
     },
 
     {
@@ -886,14 +924,17 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // change, otherwise we'd be kicking _forward_
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
       label: 'kicks back to lowest of applicable step ids',
 
       // Multiple field states differ
-      field_state: {foo: 1, bar: 1, baz: 1, quux: 1},
-      last_field_state: {quux: 1},
+      field_state: {foo: [1], bar: [1], baz: [1], quux: [1]},
+      last_field_state: {quux: [1]},
 
       // Each located on these steps (one intentionally > current_step_id)
       qstep: {foo: 7, bar: 2, baz: 3, quux: 1},
@@ -903,6 +944,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // than the current_step_id
       current_step_id: 4,
       expected_step_id: 2,
+
+      // And so should invalidate only the fields prior to the current step
+      expected_data: {bar: [invalidate('')], baz: [invalidate('')]},
     },
 
     {
@@ -924,6 +968,9 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // being less than our current step
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And so should not invalidate anything
+      expected_data: {},
     },
 
     {
@@ -946,6 +993,10 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // kick back after the lock but before the current step
       current_step_id: 4,
       expected_step_id: 3,
+
+      // And so should invalidate the fields after the lock but before the
+      // current step
+      expected_data: {bar: [invalidate('')]},
     },
 
     // This feature flag test will be removed with the flag for release
@@ -953,11 +1004,11 @@ describe('loader.kickBackToNewlyApplicable', () => {
       label: 'does not kick back if feature flag is not set',
 
       // Field state differs
-      field_state: {foo: [1]},
-      last_field_state: {foo: [0]},
+      field_state: {foo: [1], samestep: [1]},
+      last_field_state: {foo: [0], samestep: [0]},
 
-      // And the field is on this step
-      qstep: {foo: 1},
+      // One field is on a prior step, one is on the same step
+      qstep: {foo: 1, samestep: 4},
 
       // But the feature flag is cleared
       data: {__feature_pver_kickback: ['0']},
@@ -966,6 +1017,11 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // being less than our current step
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And we should not invalidate anything, _including_ the field on the
+      // same step (that is, the feature flag being unset must filter _all_
+      // fields, not just restrict them to the current step)
+      expected_data: {},
     },
 
     // This feature flag test will be removed with the flag for release
@@ -973,11 +1029,11 @@ describe('loader.kickBackToNewlyApplicable', () => {
       label: 'does not kick back if feature flag is undefined',
 
       // Field state differs
-      field_state: {foo: [1]},
-      last_field_state: {foo: [0]},
+      field_state: {foo: [1], samestep: [1]},
+      last_field_state: {foo: [0], samestep: [0]},
 
-      // And the field is on this step
-      qstep: {foo: 1},
+      // One field is on a prior step, one is on the same step
+      qstep: {foo: 1, samestep: 4},
 
       // But the feature flag does not exist at all
       data: {},
@@ -986,6 +1042,46 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // being less than our current step
       current_step_id: 4,
       expected_step_id: 4,
+
+      // And we should not invalidate anything, _including_ the field on the
+      // same step (that is, the feature flag being unset must filter _all_
+      // fields, not just restrict them to the current step)
+      expected_data: {},
+    },
+
+    // Be careful with this one.  This _should_ be safe, because if we have
+    // a scalar 0, that surely means that all indexes were hidden.
+    //
+    // There is a situation where this could potentially be wrong: if the
+    // indexes within a group somehow got out-of-sync and the cleaner fixed
+    // them up.  That would be a bug, but it could potentially cause data to
+    // be overwritten.  But the user would at least be forced to re-enter
+    // those data, so the error is recoverable in a safe (albeit
+    // inconvenient) way.
+    {
+      label: 'invalidation broadcasts scalar state onto bucket field',
+
+      // Both states are scalar, where foo is now applicable for all
+      // indexes, whereas before it was applicable for none
+      field_state: {foo: 1},
+      last_field_state: {foo: 0},
+
+      // And so there should be a kickback to this step
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+      expected_step_id: 1,
+
+      // The bucket contains two indexes for this field
+      data: {
+        foo: ['bar', 'baz'],
+        __feature_pver_kickback: ['1'],
+      },
+
+      // And so we should broadcast the above state to two indexes so that
+      // it overwrites both bucket values (since neither was applicable
+      // previously, according to `last_field_state`)
+      expected_data: {foo: [invalidate(''), invalidate('')]},
     },
   ]).forEach(({label, ...tdata}) =>
     it(label, () => {
@@ -1001,6 +1097,7 @@ describe('loader.kickBackToNewlyApplicable', () => {
 
       let given_current = NaN;
       let given_top = NaN;
+      let given_data = {};
 
       // These will be called regardless of whether the step actually differs
       // from the current
@@ -1024,12 +1121,17 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // play well with the locking system
       quote.isLocked = () => tdata.locked || false;
       quote.getExplicitLockStep = () => tdata.lock_step || <PositiveInteger>0;
+      quote.setData = given => {
+        given_data = given;
+        return quote;
+      };
 
       const result = kickBackToNewlyApplicable(program)(quote)();
 
       expect(E.isRight(result)).to.be.true;
       expect(given_current).to.equal(tdata.expected_step_id);
       expect(given_top).to.equal(tdata.expected_step_id);
+      expect(given_data).to.deep.equal(tdata.expected_data);
     })
   );
 });
