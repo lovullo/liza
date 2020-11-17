@@ -21,6 +21,8 @@
 
 import {expect} from 'chai';
 import * as E from 'fp-ts/Either';
+import * as IOE from 'fp-ts/IOEither';
+import {pipe} from 'fp-ts/function';
 import {___Writable} from 'naughty';
 
 import {
@@ -668,30 +670,66 @@ describe('cleanQuote', () => {
 });
 
 describe('loader.kickBackToNewlyApplicable', () => {
-  it('fails if field state is not available', () => {
-    const program = createStubProgram({});
-    const quote = createStubQuote({}, {});
-
-    quote.getFieldState = () => undefined;
-
-    const result = kickBackToNewlyApplicable(program)(quote)();
-    expect(E.isLeft(result)).to.be.true;
-  });
-
   type TestData = {
     label: string;
-    field_state: Record<string, number | number[]>;
-    last_field_state: Record<string, number | number[]>;
+    field_state?: Record<string, number | number[]>;
+    last_field_state?: Record<string, number | number[]>;
     qstep: Record<string, number>;
     data: Record<string, string[]>;
     locked?: boolean;
     lock_step?: PositiveInteger;
     current_step_id: number;
-    expected_step_id: number;
+    expected_step_id?: number;
+    expected_error?: boolean;
     expected_data: Record<string, Array<undefined | string>>;
   };
 
   (<TestData[]>[
+    {
+      label: 'fails if field state is not available',
+
+      // Current field state is not available
+      field_state: undefined,
+      last_field_state: {},
+
+      // We'll include this anyway just to make sure that we do nothing even
+      // if a kickback would have otherwise occurred.
+      qstep: {foo: 2},
+
+      current_step_id: 3,
+
+      // No current field data represents a bug in the system---the
+      // classifier was not invoked when it was expected to have been, or
+      // the logic that populates the value is not functioning correctly.
+      expected_error: true,
+
+      // And we should invalidate nothing
+      expected_data: {},
+    },
+
+    // Note that this is different than _empty_ last field state (`{}`),
+    // which is valid an implicitly 0 for all indexes.
+    {
+      label: 'fails when last persisted field state is missing',
+
+      // Current field state, but no prior field state
+      field_state: {foo: 1},
+      last_field_state: undefined,
+
+      // We'll include this anyway just to make sure that we do nothing even
+      // if a kickback would have otherwise occurred.
+      qstep: {foo: 1},
+
+      current_step_id: 4,
+
+      // Since we have no prior field data, we cannot confidently succeed;
+      // let's abort rather than risk screwing up the quote.
+      expected_error: true,
+
+      // And we should invalidate nothing
+      expected_data: {},
+    },
+
     // If no fields have changed applicability, then we want to leave the user
     // at whatever step they left off on.
     {
@@ -1083,6 +1121,32 @@ describe('loader.kickBackToNewlyApplicable', () => {
       // previously, according to `last_field_state`)
       expected_data: {foo: [invalidate(''), invalidate('')]},
     },
+
+    // If the feature flag is not set, we shouldn't blow up on something we
+    // have no intent on acting on.  This also enables us to release the
+    // change to start gathering data before actually permitting kickbacks
+    // to be triggered.
+    {
+      label: 'does nothing when last state is missing with unset feature flag',
+
+      // Current field state, but no prior field state
+      field_state: {foo: 1},
+      last_field_state: undefined,
+
+      // We'll include this anyway just to make sure that we do nothing even
+      // if a kickback would have otherwise occurred.
+      qstep: {foo: 1},
+
+      // But the feature flag is cleared, so we should not error
+      data: {__feature_pver_kickback: ['0']},
+
+      // No kickback should occur
+      current_step_id: 4,
+      expected_step_id: 4,
+
+      // And we should invalidate nothing
+      expected_data: {},
+    },
   ]).forEach(({label, ...tdata}) =>
     it(label, () => {
       const program = createStubProgram({});
@@ -1126,12 +1190,25 @@ describe('loader.kickBackToNewlyApplicable', () => {
         return quote;
       };
 
-      const result = kickBackToNewlyApplicable(program)(quote)();
+      pipe(
+        kickBackToNewlyApplicable(program)(quote),
 
-      expect(E.isRight(result)).to.be.true;
-      expect(given_current).to.equal(tdata.expected_step_id);
-      expect(given_top).to.equal(tdata.expected_step_id);
-      expect(given_data).to.deep.equal(tdata.expected_data);
+        IOE.fold(
+          left => () => {
+            expect(tdata.expected_error).to.equal(
+              true,
+              'unexpected Left: ' + left
+            );
+          },
+
+          right => () => {
+            expect(given_current).to.equal(tdata.expected_step_id);
+            expect(given_top).to.equal(tdata.expected_step_id);
+            expect(given_data).to.deep.equal(tdata.expected_data);
+            expect(right).to.equal(quote);
+          }
+        )
+      )();
     })
   );
 });

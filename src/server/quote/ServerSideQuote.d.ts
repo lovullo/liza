@@ -162,8 +162,8 @@ export declare class ServerSideQuote extends BaseQuote {
   getFieldState(): FieldState | undefined;
 
   /** Set applicability of quote as it existed the last save */
-  setLastPersistedFieldState(state: FieldState): this;
+  setLastPersistedFieldState(state?: FieldState): this;
 
   /** Applicability of each field the last time the quote was saved */
-  getLastPersistedFieldState(): FieldState;
+  getLastPersistedFieldState(): FieldState | undefined;
 }

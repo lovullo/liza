@@ -151,7 +151,7 @@ export const loadDocumentIntoQuote = (quote: ServerSideQuote) => (
 ): IO.IO<ServerSideQuote> => () =>
   quote
     .setData(quote_data.data || {})
-    .setLastPersistedFieldState(quote_data.fieldState || {})
+    .setLastPersistedFieldState(quote_data.fieldState || undefined)
     .setMetadata(quote_data.meta || {})
     .setAgentEntityId(quote_data.agentEntityId || 0)
     .setInitialRatedDate(quote_data.initialRatedDate || 0)
@@ -221,6 +221,40 @@ const featureKickbackEnabled = (quote: ServerSideQuote) =>
   quote.getDataByName('__feature_pver_kickback')?.[0] === '1';
 
 /**
+ * Field state as of when the user last interacted with the document
+ *
+ * If the feature is not enabled, this will return the _current_ field
+ * state, which will effectively result in a noop if kickback logic is
+ * run.  Kickback logic should _not_ be run, since the flag applies there as
+ * well, but this value is safe in that, if there happens to be a bug where
+ * it is run, we won't wipe out a ton of user data.
+ *
+ * Note that an empty object means that the user sees no fields.  This could
+ * be a legitimate scenario (e.g. maybe a static message is shown), but it's
+ * important that we do not act on it if it's not legitimate, since that
+ * would cause all applicable fields to be set to an invalid state.
+ *
+ * _If this fails and the feature flag has been removed, migration will not
+ * be possible._  This represents a corrupt document.  To recover, update
+ * the `pver` on the document to skip migration, and manually inspect, then
+ * figure out how that could have possibly happened.
+ */
+const lastPersistedFieldState = (quote: ServerSideQuote) =>
+  pipe(
+    featureKickbackEnabled(quote)
+      ? quote.getLastPersistedFieldState()
+      : quote.getFieldState(),
+    E.fromNullable(Error('Last field state is not available'))
+  );
+
+/** Current field state, as of this moment, with the current Program */
+const currentFieldState = (quote: ServerSideQuote) =>
+  pipe(
+    quote.getFieldState(),
+    E.fromNullable(Error('Current field state is not available'))
+  );
+
+/**
  * Kick document back to the earliest field that is now applicable that was
  * not previously
  */
@@ -228,15 +262,17 @@ export const kickBackToNewlyApplicable = (program: Program) => (
   quote: ServerSideQuote
 ): IOE.IOEither<Error, ServerSideQuote> => () =>
   pipe(
+    // Determine which fields are now applicable that were not previously,
+    // failing if one of the arguments is not available
     pipe(
-      quote.getFieldState(),
-      E.fromNullable(Error('Field state is not available'))
+      E.of<Error, typeof fieldsNowApplicable>(fieldsNowApplicable),
+      E.ap(lastPersistedFieldState(quote)),
+      E.ap(currentFieldState(quote))
     ),
 
     // Determine kickback step, if any, not to exceed the current step
     E.map(
       flow(
-        fieldsNowApplicable(quote.getLastPersistedFieldState()),
         R.mapWithIndex(fieldStep(program)),
         R.filter(betweenPermittedKickbackRange(quote)),
         invalidateFields(quote),
