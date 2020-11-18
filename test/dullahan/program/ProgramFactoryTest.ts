@@ -23,7 +23,6 @@ import {expect} from 'chai';
 import {ProgramFactory as Sut} from '../../../src/dullahan/program/ProgramFactory';
 import {QuoteDataBucket} from '../../../src/bucket/QuoteDataBucket';
 import {StagingBucket} from '../../../src/bucket/StagingBucket';
-import {ProgramInit} from '../../../src/program/ProgramInit';
 
 let data: CommonObject | null = null;
 
@@ -34,14 +33,14 @@ before(function () {
 describe('ProgramFactory', () => {
   describe('createProgram', () => {
     it('returns a bucket and a program from a passed in bucket', () => {
-      const sut = new Sut(createProgram, createBucket, createProgramInit);
+      const sut = new Sut(createProgram, createBucket);
       const data = {foo: 'bar'};
       const {bucket} = sut.createProgram(data);
       expect(bucket.getData()).to.deep.equal(data);
     });
 
     it('returns a bucket and a program with no bucket passed in', () => {
-      const sut = new Sut(createProgram, createBucket, createProgramInit);
+      const sut = new Sut(createProgram, createBucket);
       const {bucket} = sut.createProgram();
       expect(bucket.getData()).to.deep.equal({});
     });
@@ -51,16 +50,8 @@ describe('ProgramFactory', () => {
 const createProgram = () => {
   return <Program>{
     initQuote(_bucket: StagingBucket, _store_only: boolean): void {},
-  };
-};
-
-const createProgramInit = () => {
-  return <ProgramInit>{
-    init(_program: Program, _doc_data: QuoteDataBucket): Promise<CommonObject> {
-      return new Promise(resolve => {
-        resolve({});
-      });
-    },
+    meta: {groups: {}},
+    groupExclusiveFields: {},
   };
 };
 

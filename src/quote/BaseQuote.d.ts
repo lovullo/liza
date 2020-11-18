@@ -99,6 +99,9 @@ export declare class BaseQuote implements Quote {
    */
   getBucket(): QuoteDataBucket;
 
+  /** Whether quote is locked, for any reason */
+  isLocked(): boolean;
+
   /**
    * Retrieves the reason for an explicit lock
    *

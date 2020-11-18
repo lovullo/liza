@@ -33,6 +33,7 @@
     "easejs":               "0.2.x",
     "express":              "~4.17.1",
     "express-prom-bundle":  "6.1.0",
+    "fp-ts":                "2.8.4",
     "memcached":            "2.2.2",
     "mongodb":              "1.2.14",
     "morgan":               "^1.10.0",

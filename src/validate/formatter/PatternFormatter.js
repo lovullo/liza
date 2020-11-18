@@ -21,8 +21,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var Class = require('easejs').Class,
-  ValidatorFormatter = require('../ValidatorFormatter');
+const Class = require('easejs').Class;
+const ValidatorFormatter = require('../ValidatorFormatter');
+const {isInvalid, recoverValue} = require('../invalid');
 
 /**
  * Data validation and formatting based on patterns and their
@@ -78,6 +79,15 @@ module.exports = Class('VFormat')
 
       // cast all data to a string
       data = '' + data;
+
+      // First character of NACK indicates that the field is invalid and
+      // needs correction (the remainder of the string represents the
+      // invalidated value, if any)
+      if (isInvalid(data)) {
+        throw Error(
+          "Field value has been invalidated: '" + recoverValue(data) + "'"
+        );
+      }
 
       var match;
       for (var i = 0, len = this._dfn.length; i < len; i += 2) {

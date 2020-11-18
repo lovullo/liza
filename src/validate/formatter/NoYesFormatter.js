@@ -1,9 +1,9 @@
 /**
- * Pre-test setup
+ * Validator for noyes question type
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
- *  This file is part of liza.
+ *  This file is part of the Liza Data Collection Framework.
  *
  *  liza is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,5 +19,4 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// polyfill for ancient environments
-require('es6-promise').polyfill();
+module.exports = require('./PatternFormatter')([/^[01]?$/, '$&']);

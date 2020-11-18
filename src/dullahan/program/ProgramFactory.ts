@@ -1,7 +1,7 @@
-import {ProgramInit} from '../../program/ProgramInit';
 import {Program} from '../../program/Program';
 import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
 import {StagingBucket} from '../../bucket/StagingBucket';
+import {applyBucketDefaults} from '../../../src/server/quote/loader';
 
 /**
  * Data retriever is partial bucket implementation
@@ -27,8 +27,7 @@ export class ProgramFactory {
    */
   constructor(
     private readonly programMaker: () => Program,
-    private readonly bucketMaker: () => QuoteDataBucket,
-    private readonly programInitMaker: () => ProgramInit
+    private readonly bucketMaker: () => QuoteDataBucket
   ) {}
 
   /**
@@ -40,11 +39,11 @@ export class ProgramFactory {
     bucket_data: CommonObject = {}
   ): {bucket: DataRetriever; program: Program} {
     const program = this.programMaker();
-    const bucket = <StagingBucket>this.bucketMaker().setValues(bucket_data);
+    const bucket = <StagingBucket>(
+      this.bucketMaker().setValues(applyBucketDefaults(program)(bucket_data)())
+    );
 
     program.initQuote(bucket, false);
-
-    this.programInitMaker().init(program, bucket);
 
     return {bucket, program};
   }
