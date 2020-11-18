@@ -350,7 +350,10 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     save_data._stack = new Error().stack;
 
     // only set created by on initial document insert
-    const insert_only = {'meta.created_by_username': [quote.getUserName()]};
+    const insert_only = {
+      'meta.created_by_username': [quote.getUserName()],
+      'meta.retail_agency': [quote.getAgencyNumber()],
+    };
 
     // only set bind username on concluding save
     if (quote.isImported() && last_updated_by !== '') {

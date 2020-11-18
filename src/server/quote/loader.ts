@@ -141,6 +141,7 @@ export const loadSessionIntoQuote = (session: UserSession) => (
   quote
     .setAgentId(data.agentId || session.agentId() || 0)
     .setUserName(session.userName() || '')
+    .setAgencyNumber(session.agencyNumber() || '')
     .setAgentName(data.agentName || session.agentName() || '');
 
 /**

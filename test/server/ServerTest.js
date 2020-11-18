@@ -517,6 +517,7 @@ describe('Server#initQuote', () => {
 
     const agent_id = '11111';
     const username = 'foo@bar';
+    const agency_num = 'AGT12345';
     const agent_name = 'Some Agency';
     const entity_id = '9988776';
     const session = createMockSession(
@@ -524,7 +525,8 @@ describe('Server#initQuote', () => {
       agent_id,
       username,
       agent_name,
-      entity_id
+      entity_id,
+      agency_num
     );
 
     let quote = createMockQuote(0, 0, 0, expected_quote_id);
@@ -541,6 +543,13 @@ describe('Server#initQuote', () => {
     quote.setUserName = given_user_name => {
       set_username_is_called = true;
       expect(given_user_name).to.be.equal(username);
+      return quote;
+    };
+
+    let set_agency_num_is_called = false;
+    quote.setAgencyNumber = given_agency_num => {
+      set_agency_num_is_called = true;
+      expect(given_agency_num).to.be.equal(agency_num);
       return quote;
     };
 
@@ -694,6 +703,7 @@ describe('Server#initQuote', () => {
     quote.setAgentId = () => quote;
     quote.setAgentName = () => quote;
     quote.setAgentEntityId = () => quote;
+    quote.setAgencyNumber = () => quote;
     quote.setInitialRatedDate = () => quote;
     quote.setStartDate = () => quote;
     quote.setImported = () => quote;
@@ -784,6 +794,7 @@ function createMockQuote(
     setAgentId: () => {},
     setAgentName: () => {},
     setAgentEntityId: () => {},
+    setAgencyNumber: () => {},
     setInitialRatedDate: () => {},
     setStartDate: () => {},
     setImported: () => {},
@@ -864,7 +875,8 @@ function createMockSession(
   agent_id,
   username,
   agent_name,
-  entity_id
+  entity_id,
+  agency_num
 ) {
   return {
     isInternal: () => internal,
@@ -872,6 +884,7 @@ function createMockSession(
     userName: () => username || '',
     agentName: () => agent_name || '',
     agentEntityId: () => entity_id || '',
+    agencyNumber: () => agency_num || '',
   };
 }
 

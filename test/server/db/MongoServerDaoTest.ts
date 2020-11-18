@@ -84,13 +84,14 @@ describe('MongoServerDao', () => {
       it('saves initial rated individually', done => {
         const expected = 123321;
         const expected_username = 'foo@foo.com';
+        const expected_agency_num = 'AGT123';
         const quote = createStubQuote({});
 
         quote.getRatedDate = () => {
           return <UnixTimestamp>expected;
         };
         quote.getUserName = () => expected_username;
-
+        quote.getAgencyNumber = () => expected_agency_num;
         const sut = new Sut(
           createMockDb(
             // update
@@ -102,6 +103,10 @@ describe('MongoServerDao', () => {
               expect(
                 data.$setOnInsert['meta.created_by_username']
               ).to.deep.equal([expected_username]);
+
+              expect(data.$setOnInsert['meta.retail_agency']).to.deep.equal([
+                expected_agency_num,
+              ]);
 
               expect(data.$push).to.equal(undefined);
 
@@ -458,6 +463,7 @@ function createStubQuote(metadata: Record<string, any>) {
     getProgramVersion: () => 'Foo',
     getLastPremiumDate: () => <UnixTimestamp>0,
     getUserName: () => 'foo@foo.com',
+    getAgencyNumber: () => '',
     getRatedDate: () => <UnixTimestamp>0,
     getExplicitLockReason: () => '',
     getExplicitLockStep: () => <PositiveInteger>1,

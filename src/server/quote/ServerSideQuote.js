@@ -41,6 +41,12 @@ module.exports = Class('ServerSideQuote')
     'private _creditScoreRef': 0,
 
     /**
+     * Agency number associated to quote
+     * @type {string}
+     */
+    'private _agency_number': null,
+
+    /**
      * Unix timestamp containing date of first premium calculation
      * @type {number}
      */
@@ -83,6 +89,25 @@ module.exports = Class('ServerSideQuote')
 
     'public getCreditScoreRef': function () {
       return this._creditScoreRef;
+    },
+
+    /**
+     * Gets the retail agency number
+     *
+     * @return agency number
+     */
+    'public getAgencyNumber': function () {
+      return this._agency_number;
+    },
+
+    /**
+     * Sets the retail agency number
+     *
+     * @param agency_num represents the retail agency
+     */
+    'public setAgencyNumber': function (agency_num) {
+      this._agency_number = '' + (agency_num || '');
+      return this;
     },
 
     /**
