@@ -25,13 +25,16 @@ describe('UserSession', () => {
   it('session data is unserialized', () => {
     const session_id = '1234234';
     const session_data =
-      'agentID|s:6:"900000";user_name|s:11:"foo@bar.com";agentNAME|s:3:"Foo";';
+      'agentID|s:6:"900000";retail_agency_num|s:8:"AGT12345";user_name|s:11:"foo@bar.com";agentNAME|s:3:"Foo";';
+
     const expected_username = 'foo@bar.com';
     const expected_agent_name = 'Foo';
     const expected_agent_id = 900000;
+    const expected_agency_num = 'AGT12345';
     const expected_data = {
       agentID: '900000',
       agentNAME: 'Foo',
+      retail_agency_num: 'AGT12345',
       user_name: 'foo@bar.com',
     };
 
@@ -47,6 +50,7 @@ describe('UserSession', () => {
     expect(sut.userName()).to.equal(expected_username);
     expect(sut.agentName()).to.equal(expected_agent_name);
     expect(sut.agentId()).to.equal(expected_agent_id);
+    expect(sut.agencyNumber()).to.equal(expected_agency_num);
   });
 
   describe('UserSession#isInternal', () => {

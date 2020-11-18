@@ -94,6 +94,15 @@ export class UserSession extends EventEmitter {
   }
 
   /**
+   * Gets the agency number, if available
+   *
+   * @return agency number or undefined if unavailable
+   */
+  agencyNumber(): string | undefined {
+    return this._data.retail_agency_num || undefined;
+  }
+
+  /**
    * Gets the user name, if available
    *
    * @return user name or undefined if unavailable
