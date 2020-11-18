@@ -23,7 +23,8 @@
 
 var AbstractClass = require('easejs').AbstractClass,
   liza = require('../..'),
-  MemcachedClient = require('memcached');
+  MemcachedClient = require('memcached'),
+  UserSession = require('../request/UserSession').UserSession;
 
 /**
  * Facade handling core logic for the daemon
@@ -215,8 +216,8 @@ module.exports = AbstractClass('Daemon', {
     return liza.server.request.UserRequest;
   },
 
-  'protected getUserSession': function () {
-    return liza.server.request.UserSession;
+  'protected getUserSession': function (sess_id, memcache) {
+    return new UserSession(sess_id, memcache);
   },
 
   'protected getMemcacheClient': function () {
@@ -456,7 +457,7 @@ module.exports = AbstractClass('Daemon', {
     function request_builder(request, response) {
       return _self.getUserRequest()(request, response, function (sess_id) {
         // build a new user session from the given session id
-        return _self.getUserSession()(sess_id, _self._memcache);
+        return _self.getUserSession(sess_id, _self._memcache);
       });
     }
 
