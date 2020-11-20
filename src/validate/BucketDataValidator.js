@@ -219,7 +219,7 @@ module.exports = Class('BucketDataValidator', {
       // ignore empty/undefined/null values (explicitly; avoid casting
       // magic)
       if (value === '' || value === undefined || value === null) {
-        ret[i] = '';
+        ret[i] = method === 'retrieve' ? '' : value;
         continue;
       }
 
