@@ -29,7 +29,9 @@ const {QuoteDataBucket} = require('../../../').bucket;
 
 describe('ClientQuote', () => {
   it('Getters retrieve the correct data', () => {
-    const base_quote = BaseQuote(123, QuoteDataBucket());
+    const base_quote = BaseQuote(123, QuoteDataBucket(), {
+      getFirstStepId: () => 0,
+    });
     const start_date = 12345;
     const agent_id = 90000;
     const agent_name = 'John Doe';

@@ -13,9 +13,7 @@
 @maintenance{The @srcrefjs{server/daemon,Daemon} monolith and
                @srcrefjs{server,Server},
                  among other things,
-                 need refactoring.
-             Quote initialization code should be moved into
-               @srcrefjs{server,ProgramInit}.}
+                 need refactoring.}
 
 @helpwanted{}
 

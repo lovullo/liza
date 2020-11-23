@@ -270,7 +270,7 @@ describe('Server#visitStep', () => {
     const request = createMockRequest(session);
     const response = createMockResponse();
     const logger = createMockLogger();
-    const sut = getSut(response, undefined, undefined, logger);
+    const sut = getSut(response, undefined, logger);
 
     // make this step invisible
     program.isStepVisible = () => false;
@@ -319,7 +319,7 @@ describe('Server#visitStep', () => {
     const response = createMockResponse();
     const logger = createMockLogger();
     const dao = createMockDao();
-    const sut = getSut(response, dao, undefined, logger);
+    const sut = getSut(response, dao, logger);
 
     // check that a response is sent to user w/no actions (do not kick back)
     response.from = (_, __, action) => {
@@ -505,17 +505,15 @@ describe('Server#initQuote', () => {
     let pull_quote_is_called = false;
 
     // make sure quote data is retrieved for our quote
-    dao.pullQuote = (quote_id, callback) => {
-      expect(quote_id).to.be.equal(expected_quote_id);
-      pull_quote_is_called = true;
-      callback(quote_data);
-    };
+    dao.pullQuote = quote_id =>
+      Promise.resolve(
+        (() => {
+          expect(quote_id).to.be.equal(expected_quote_id);
+          pull_quote_is_called = true;
 
-    const default_bucket_data = {default: 'value'};
-    let prog_init = createMockProgramInit();
-    prog_init.init = (program, data) => {
-      return Promise.resolve(default_bucket_data);
-    };
+          return quote_data;
+        })()
+      );
 
     const agent_id = '11111';
     const username = 'foo@bar';
@@ -531,9 +529,8 @@ describe('Server#initQuote', () => {
 
     let quote = createMockQuote(0, 0, 0, expected_quote_id);
     let set_data_is_called = false;
-    quote.setData = given_default_bucket => {
+    quote.setData = () => {
       set_data_is_called = true;
-      expect(given_default_bucket).to.deep.equal(default_bucket_data);
       return quote;
     };
 
@@ -556,9 +553,7 @@ describe('Server#initQuote', () => {
     quote.setBound = () => quote;
     quote.needsImport = () => quote;
 
-    // will not set a current step that is less than the first step
-    const first_step = 2;
-    let program = createMockProgram(first_step);
+    let program = createMockProgram();
 
     let pcache = createMockCache();
     pcache.get = key => {
@@ -566,14 +561,9 @@ describe('Server#initQuote', () => {
     };
     let cache = createMockCache(pcache);
 
-    quote.setCurrentStepId = given_current_step => {
-      expect(given_current_step).to.be.equal(first_step);
-      return quote;
-    };
-
+    quote.setCurrentStepId = () => quote;
     quote.setTopVisitedStepId = () => quote;
     quote.setTopSavedStepId = () => quote;
-    quote.setProgram = () => quote;
     quote.setProgramVersion = () => quote;
     quote.setExplicitLock = () => quote;
     quote.setError = () => quote;
@@ -584,7 +574,7 @@ describe('Server#initQuote', () => {
     quote.setRetryAttempts = () => quote;
     quote.on = () => quote;
 
-    const sut = getSut(response, dao, prog_init);
+    const sut = getSut(response, dao);
     sut.init(cache, createMockRater());
 
     const request = createMockRequest(session);
@@ -596,29 +586,26 @@ describe('Server#initQuote', () => {
       done();
     };
 
-    sut.initQuote(quote, program, request, callback);
+    sut.initQuote(quote, program, request, callback, e => console.error(e));
   });
 
   it('Defaults data on new quote and saves quote meta', function (done) {
-    this.timeout(0);
     let response = createMockResponse();
     let dao = createMockDao();
 
     const expected_quote_id = 12345;
     let pull_quote_is_called = false;
 
-    // return no quote data (new quote)
-    dao.pullQuote = (quote_id, callback) => {
-      expect(quote_id).to.be.equal(expected_quote_id);
-      pull_quote_is_called = true;
-      callback(undefined);
-    };
+    // should not be called for new quote
+    dao.pullQuote = quote_id =>
+      Promise.resolve(
+        (() => {
+          expect(quote_id).to.be.equal(expected_quote_id);
+          pull_quote_is_called = true;
 
-    const default_bucket_data = {default: 'value'};
-    let prog_init = createMockProgramInit();
-    prog_init.init = (program, data) => {
-      return Promise.resolve(default_bucket_data);
-    };
+          return null;
+        })()
+      );
 
     const agent_id = '11111';
     const username = 'foo@bar';
@@ -644,23 +631,31 @@ describe('Server#initQuote', () => {
       program_ver
     );
 
+    let program = createMockProgram(1, program_ver);
+
+    // Defaults are derived from this
+    program.defaults = {foo: 'foodefault'};
+    program.groupExclusiveFields = {foogroup: ['foo']};
+    program.hasKnownType = _ => true;
+
     let set_data_is_called = false;
     quote.setData = given_default_bucket => {
       set_data_is_called = true;
-      expect(given_default_bucket).to.deep.equal(default_bucket_data);
+      expect(given_default_bucket).to.deep.equal({foo: ['foodefault']});
       return quote;
     };
 
     quote.getStartDate = () => start_date;
-    let program = createMockProgram(1, program_ver);
+
     let save_quote_is_called = false;
-    dao.saveQuote = (quote, success, failure, save_data) => {
+
+    dao.saveQuote = (quote, success, _failure, save_data) => {
       save_quote_is_called = true;
       const expected_data = {
         agentId: agent_id,
         agentName: agent_name,
         agentEntityId: entity_id,
-        startDate: quote.getStartDate(),
+        startDate: start_date,
         programId: program_id,
         initialRatedDate: 0,
         importedInd: 0,
@@ -676,6 +671,7 @@ describe('Server#initQuote', () => {
         explicitLockStepId: 0,
       };
       expect(save_data).to.deep.equal(expected_data);
+      success();
     };
 
     let set_meta_data_calls = 0;
@@ -685,11 +681,13 @@ describe('Server#initQuote', () => {
       set_meta_data.push(meta_data);
       return quote;
     };
+    dao.getNextQuoteId = () => Promise.resolve(expected_quote_id);
 
     let save_quote_meta_is_called = false;
-    dao.saveQuoteMeta = given_quote => {
+    dao.saveQuoteMeta = (given_quote, _, success) => {
       save_quote_meta_is_called = true;
       expect(given_quote).to.be.equal(quote);
+      success();
     };
 
     quote.setUserName = () => quote;
@@ -704,7 +702,6 @@ describe('Server#initQuote', () => {
     quote.setCurrentStepId = () => quote;
     quote.setTopVisitedStepId = () => quote;
     quote.setTopSavedStepId = () => quote;
-    quote.setProgram = () => quote;
     quote.setProgramVersion = () => quote;
     quote.setExplicitLock = () => quote;
     quote.setError = () => quote;
@@ -715,13 +712,11 @@ describe('Server#initQuote', () => {
     quote.setRetryAttempts = () => quote;
     quote.on = () => quote;
 
-    const sut = getSut(response, dao, prog_init);
+    const sut = getSut(response, dao, undefined, start_date);
     sut.init(createMockCache(), createMockRater());
 
-    const request = createMockRequest(session);
-
     const callback = () => {
-      expect(pull_quote_is_called).to.be.true;
+      expect(pull_quote_is_called).to.be.false;
       expect(set_data_is_called).to.be.true;
       expect(save_quote_is_called).to.be.true;
 
@@ -732,7 +727,16 @@ describe('Server#initQuote', () => {
       done();
     };
 
-    sut.initQuote(quote, program, request, callback);
+    const quoteNew = (given_quote_id, given_program) => {
+      expect(given_quote_id).to.equal(expected_quote_id);
+      expect(given_program).to.equal(program);
+
+      return quote;
+    };
+
+    const request = createMockRequest(session, callback);
+
+    sut.sendNewQuote(request, quoteNew, program);
   });
 });
 
@@ -754,15 +758,14 @@ function getMocks() {
   };
 }
 
-function getSut(response, dao, prog_init, logger) {
+function getSut(response, dao, logger, start_ts = 0) {
   return new Sut(
     response,
     dao || createMockDao(),
     logger || createMockLogger(),
     {},
     createMockDataProcessor(),
-    prog_init || createMockProgramInit(),
-    () => {},
+    () => start_ts,
     {}
   );
 }
@@ -774,7 +777,7 @@ function createMockQuote(
   quote_id,
   program_id
 ) {
-  return {
+  const quote = {
     setData: () => {},
     setMetadata: () => {},
     setUserName: () => {},
@@ -789,7 +792,6 @@ function createMockQuote(
     setCurrentStepId: () => {},
     setTopVisitedStepId: () => {},
     setTopSavedStepId: () => {},
-    setProgram: () => {},
     setProgramVersion: () => {},
     setExplicitLock: () => {},
     setError: () => {},
@@ -814,7 +816,11 @@ function createMockQuote(
     getBucket: () => {
       return {getData: () => {}};
     },
+    classify: () => ({}),
+    setLastPersistedFieldState: () => quote,
   };
+
+  return quote;
 }
 
 function createMockLogger() {
@@ -836,9 +842,9 @@ function createMockLogger() {
   };
 }
 
-function createMockRequest(session) {
+function createMockRequest(session, end_callback = () => {}) {
   return {
-    end: () => {},
+    end: end_callback,
     getSession: () => session,
     getPostData: c => {
       c();
@@ -890,7 +896,7 @@ function createMockDataProcessor() {
 
 function createMockProgram(first_step_id, program_ver, next_step) {
   return {
-    id: () => 'foo',
+    getId: () => 'foo',
     version: program_ver || '',
     getFirstStepId: () => first_step_id || 1,
     isStepVisible: () => false,
@@ -909,12 +915,8 @@ function createMockProgram(first_step_id, program_ver, next_step) {
     getNextVisibleStep: () => next_step || 2,
     classify: () => {},
     secureFields: [],
-  };
-}
-
-function createMockProgramInit() {
-  return {
-    init: () => {},
+    meta: {groups: {}},
+    groupExclusiveFields: {},
   };
 }
 

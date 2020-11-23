@@ -818,4 +818,55 @@ exports.Program = AbstractClass('Program').extend(EventEmitter, {
 
     return step !== undefined ? step.title : undefined;
   },
+
+  /**
+   * Map of `whens` to questions
+   *
+   * `whens` holds an array of classification names, but modern code only
+   * makes use of a single classification.  As such, we only need to take
+   * the first one when mapping to questions.
+   *
+   * This is a getter to create the illusion that this was compiled.  We
+   * choose to generate it so as not to bloat the already huge Program.js
+   * file with redundant information.  The result is cached.
+   *
+   * This filters out whens for non-questions (e.g. displays).
+   */
+  get whenq() {
+    // easejs workaround (accesses too early, during class extension)
+    if (!this.whens) return undefined;
+
+    return (this._whenq_cache =
+      this._whenq_cache ||
+      Object.fromEntries(
+        Object.entries(this.whens)
+          .filter(
+            ([q]) =>
+              (this.meta.qtypes[q] || {type: 'undefined'}).type !== 'undefined'
+          )
+          .map(([question, [when]]) => [when, question])
+      ));
+  },
+
+  /**
+   * Map of question ids to the steps that declare them
+   *
+   * This is a getter to create the illusion that this was compiled.  We
+   * choose to generate it so as not to bloat the already huge Program.js
+   * file with redundant information.  The result is cached.
+   */
+  get qstep() {
+    // easejs workaround (accesses too early, during class extension)
+    if (!this.steps || !this.groupExclusiveFields) return undefined;
+
+    return (this._qstep_cache =
+      this._qstep_cache ||
+      Object.fromEntries(
+        this.steps.flatMap((step, step_index) =>
+          step.groups.flatMap(group =>
+            this.groupExclusiveFields[group].map(qid => [qid, step_index])
+          )
+        )
+      ));
+  },
 });

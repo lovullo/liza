@@ -26,6 +26,7 @@
 
 const {Class} = require('easejs');
 const {EventEmitter} = require('../events');
+const {initExistingDocument, initNewDocument} = require('./quote/loader');
 
 const fs = require('fs');
 const util = require('util');
@@ -122,12 +123,6 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _dataProcessor': null,
 
   /**
-   * Initializes program
-   * @type {ProgramInit}
-   */
-  'private _progInit': null,
-
-  /**
    * Constructs a timestamp
    * @type {function}
    */
@@ -152,15 +147,21 @@ module.exports = Class('Server').extend(EventEmitter, {
   'private _rater': null,
 
   /**
+   * Quote cleaner for version migration
+   * @type {Program => ProgramQuoteCleaner}
+   */
+  'private _createCleaner': null,
+
+  /**
    *
-   * @param {JsonResponse}      response       server Response
-   * @param {ServerDao}         dao            server DAO
-   * @param {Logger}            logger         log manager
-   * @param {EncryptionService} encsvc         encryption service
-   * @param {DataProcessor}     data_processor data processor
-   * @param {ProgramInit}       init           program initializer
-   * @param {function}          ts_ctor        timestamp constructor
-   * @param {FeatureFlag}       feature_flag   a feature flag object
+   * @param {JsonResponse}        response       server Response
+   * @param {ServerDao}           dao            server DAO
+   * @param {Logger}              logger         log manager
+   * @param {EncryptionService}   encsvc         encryption service
+   * @param {DataProcessor}       data_processor data processor
+   * @param {function}            ts_ctor        timestamp constructor
+   * @param {FeatureFlag}         feature_flag   a feature flag object
+   * @param {ProgramQuoteCleaner} cleaner        quote cleaner for migration
    */
   'public __construct': function (
     response,
@@ -168,9 +169,9 @@ module.exports = Class('Server').extend(EventEmitter, {
     logger,
     encsvc,
     data_processor,
-    init,
     ts_ctor,
-    feature_flag
+    feature_flag,
+    createCleaner
   ) {
     if (!Class.isA(DataProcessor, data_processor)) {
       throw TypeError('Expected DataProcessor');
@@ -181,9 +182,9 @@ module.exports = Class('Server').extend(EventEmitter, {
     this.logger = logger;
     this._encService = encsvc;
     this._dataProcessor = data_processor;
-    this._progInit = init;
     this._ts_ctor = ts_ctor;
     this._feature_flag = feature_flag;
+    this._createCleaner = createCleaner;
   },
 
   'public init': function (cache, rater) {
@@ -312,130 +313,12 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @return Server self to allow for method chaining
    */
   initQuote: function (quote, program, request, callback, error_callback) {
-    var server = this,
-      quote_id = quote.getId(),
-      session = request.getSession(),
-      agent_id = session.agentId(),
-      username = session.userName(),
-      agent_name = session.agentName();
-
-    // get the data for this quote
-    this.dao.pullQuote(quote_id, function (quote_data) {
-      var new_quote = false;
-      if (!quote_data) {
-        quote_data = {};
-        new_quote = true;
-
-        // ensure it's a valid quote id
-        server.dao.getMinQuoteId(function (min_id) {
-          // don't allow before the min quote id
-          if (quote_id < min_id) {
-            error_callback.call(server);
-            return;
-          }
-
-          server.dao.getMaxQuoteId(function (max_id) {
-            if (quote_id > max_id) {
-              // we has a problem
-              error_callback.call(server);
-              return;
-            }
-
-            // we're good
-            server
-              ._getDefaultBucket(program, quote_data)
-              .then(default_bucket => {
-                program.processNaFields(default_bucket);
-                init_finish(program, default_bucket);
-              });
-          });
-        });
-      } else {
-        // quote is not new; just continue
-        server.getProgram(quote_data.programId).then(function (quote_program) {
-          server
-            ._getDefaultBucket(quote_program, quote_data)
-            .then(default_bucket => init_finish(quote_program, default_bucket));
-        });
-      }
-
-      function init_finish(quote_program, default_bucket) {
-        // fill in the quote data (with reasonable defaults if the quote
-        // does not yet exist); IMPORTANT: do not set pver to the
-        // current version here; the quote will be repaired if it is not
-        // set
-        quote
-          .setData(default_bucket)
-          .setMetadata(quote_data.meta || {})
-          .setUserName(username)
-          .setAgentId(quote_data.agentId || agent_id)
-          .setAgentName(quote_data.agentName || agent_name)
-          .setAgentEntityId(quote_data.agentEntityId || '')
-          .setInitialRatedDate(quote_data.initialRatedDate || 0)
-          .setStartDate(quote_data.startDate || server._ts_ctor())
-          .setImported(quote_data.importedInd || false)
-          .setBound(quote_data.boundInd || false)
-          .needsImport(quote_data.importDirty || false)
-          .setCurrentStepId(
-            Math.max(
-              quote_data.currentStepId || 0,
-              quote_program.getFirstStepId()
-            )
-          )
-          .setTopVisitedStepId(
-            quote_data.topVisitedStepId || quote_program.getFirstStepId()
-          )
-          // it is important that we set this to top visited to
-          // ensure that (a) they cannot init a quote and skip the
-          // first step and (b) that older quotes without this field
-          // are properly initialized
-          .setTopSavedStepId(
-            quote_data.topSavedStepId || quote.getTopVisitedStepId() - 1
-          )
-          .setProgram(quote_program)
-          .setProgramVersion(quote_data.pver || '')
-          .setExplicitLock(
-            quote_data.explicitLock || '',
-            quote_data.explicitLockStepId || 0
-          )
-          .setError(quote_data.error || '')
-          .setCreditScoreRef(quote_data.creditScoreRef || 0)
-          .setLastPremiumDate(quote_data.lastPremDate || 0)
-          .setRatedDate(quote_data.initialRatedDate || 0)
-          .setRatingData(quote_data.ratedata || {})
-          .setRetryAttempts(quote_data.retryAttempts || 0);
-
-        // if no data was returned, then the quote doesn't exist in the
-        // database
-        if (new_quote) {
-          // initialize it
-          server.dao.saveQuote(quote, null, null, {
-            agentId: agent_id,
-            agentName: agent_name,
-            agentEntityId: session.agentEntityId(),
-            startDate: quote.getStartDate(),
-            programId: quote.getProgramId(),
-            initialRatedDate: 0,
-            importedInd: quote.isImported() ? 1 : 0,
-            boundInd: quote.isBound() ? 1 : 0,
-            importDirty: 0,
-            syncInd: 0,
-            notifyInd: 0,
-            syncDate: 0,
-            lastPremDate: 0,
-            internal: session.isInternal() ? 1 : 0,
-            pver: program.version,
-
-            explicitLock: quote.getExplicitLockReason(),
-            explicitLockStepId: quote.getExplicitLockStep(),
-          });
-
-          server.dao.saveQuoteMeta(quote);
-        }
-
-        callback.call(server);
-      }
-    });
+    // Note that `left` is transitional (we're not importing fp-ts here)
+    initExistingDocument(this.dao)(program)(request.getSession())(
+      quote
+    )().then(({left}) =>
+      left ? error_callback && error_callback.call(this) : callback.call(this)
+    );
 
     return this;
   },
@@ -445,113 +328,64 @@ module.exports = Class('Server').extend(EventEmitter, {
     // wrong with the build that generates it: always clean in this case to
     // be safe
     if (program.version && quote.getProgramVersion() === program.version) {
-      callback(false, false);
+      callback(null, false);
       return;
     }
 
-    var _self = this;
+    // TODO: this is transitional; it'll go away
+    if (!this._createCleaner) {
+      // error out
+      callback(Error('Missing cleaner'), false);
+      return;
+    }
 
     this.logger.log(
       this.logger.PRIORITY_INFO,
-      'Quote %s program version change (%s -> %s); will be scanned.',
+      'Quote %s program version change (%s -> %s); will be migrated',
       quote.getId(),
       quote.getProgramVersion(),
       program.version
     );
 
-    // TODO: thread
-    // service any other requests first, and then proceed to cleaning
-    process.nextTick(function () {
-      var nwait = 0,
-        msg = [],
-        handled = false;
+    // user may be kicked back during migration, so let's record where they
+    // left off for later logging
+    const pre_migrate_step_id = quote.getCurrentStepId();
 
-      // by default, clear is undefined; event handlers should call the
-      // appropriate function to state whether the quote has been properly
-      // upgraded; if no handlers indicate success, or if any indiciate
-      // failure, then disallow servicing the quote
-      var clear = undefined,
-        event = {
-          good: function () {
-            // if undefined, then we're good, otherwise keep the
-            // existing value (we cannot override bad)
-            clear = clear === undefined ? true : clear;
-          },
-
-          bad: function (s) {
-            // bad trumps all
-            clear = false;
-            msg.push(s);
-          },
-
-          wait: function () {
-            nwait++;
-            return c;
-          },
-        };
-
-      // trigger the event and let someone (hopefully) take care of this
-      try {
-        _self.emit('quotePverUpdate', quote, program, event);
-      } catch (e) {
-        // ruh roh...
-        event.bad(e.message);
-        nwait = 0;
-
-        // this is an unhandled exception, as far as we're concerned;
-        // re-throw so that we have a stack trace, but do so after we're
-        // done processing
-        process.nextTick(function () {
-          throw e;
-        });
-      }
-
-      function c() {
-        // do nothing until we're done waiting
-        if (--nwait > 0) {
+    // trigger the event and let someone (hopefully) take care of this
+    try {
+      this._createCleaner(program)(quote)().then(({left}) => {
+        if (left) {
+          callback(left, true);
           return;
         }
 
-        if (clear === true) {
-          // clear for version update
-          quote.setProgramVersion(program.version);
-        } else {
-          // default message
-          if (msg.length === 0) {
-            msg.push('' + clear);
-          }
+        // Migration to this version of the Program has completed
+        quote.setProgramVersion(program.version);
 
-          // see comments for clear var above
-          _self.logger.log(
-            _self.logger.PRIORITY_ERROR,
-            'Quote %s scan failed (' + msg.join('; ') + ')',
-            quote.getId()
-          );
-        }
+        this.logger.log(
+          this.logger.PRIORITY_INFO,
+          'Quote %s migrated to program version %s (kickback step %d -> %d)',
+          quote.getId(),
+          program.version,
+          pre_migrate_step_id,
+          quote.getCurrentStepId()
+        );
 
-        if (!handled) {
-          handled = true;
-          callback(!clear, true);
-        }
-      }
+        // Migration may have caused a kickback
+        this.dao.saveQuoteState(quote, () => callback(left, true));
+      });
+    } catch (e) {
+      // this is an unhandled exception, as far as we're concerned;
+      // re-throw so that we have a stack trace, but do so after we're
+      // done processing
+      this.logger.log(
+        this.logger.PRIORITY_ERROR,
+        'Quote %s scan failed (' + e.message + ')',
+        quote.getId()
+      );
 
-      // if nothing has requested that we wait, then continue immediately
-      if (!handled && nwait === 0) {
-        handled = true;
-        c();
-      }
-    });
-  },
-
-  /**
-   * Generates default bucket data for the given program
-   *
-   * @return {Object} default bucket data
-   */
-  'private _getDefaultBucket': function (program, quote_data) {
-    // TOOD: this duplicates some logic with ProgramQuoteCleaner; we
-    // probably do not need both of them
-    return this._progInit.init(program, quote_data.data);
+      callback(e, false);
+    }
   },
 
   /**
@@ -562,17 +396,45 @@ module.exports = Class('Server').extend(EventEmitter, {
    *
    * @return {Server} self
    */
-  sendNewQuote: function (request, quote_new) {
-    var server = this,
-      session = request.getSession();
+  sendNewQuote: function (request, quote_new, program) {
+    const session = request.getSession();
 
-    function donew(quote_id) {
-      var quote = quote_new(quote_id);
-      server.sendResponse(request, quote, {valid: false});
-    }
-
-    // get the next available quote id
-    this.dao.getNextQuoteId(donew);
+    // XXX: this doesn't handle failures! (this code used to live in
+    // #initQuote, and didn't handle failures there either)
+    initNewDocument(this.dao)(id => quote_new(id, program))(program)(
+      session
+    )().then(({left, right: quote}) => {
+      left
+        ? this.sendError('Failed to create new quote: ' + left)
+        : this.dao.saveQuote(
+            quote,
+            () => {
+              this.dao.saveQuoteMeta(quote, null, () => {
+                this.sendResponse(request, quote, {valid: false});
+              });
+            },
+            null,
+            {
+              agentId: session.agentId(),
+              agentName: session.agentName(),
+              agentEntityId: session.agentEntityId(),
+              startDate: this._ts_ctor(),
+              programId: quote.getProgramId(),
+              initialRatedDate: 0,
+              importedInd: quote.isImported() ? 1 : 0,
+              boundInd: quote.isBound() ? 1 : 0,
+              importDirty: 0,
+              syncInd: 0,
+              notifyInd: 0,
+              syncDate: 0,
+              lastPremDate: 0,
+              internal: session.isInternal() ? 1 : 0,
+              pver: program.version,
+              explicitLock: quote.getExplicitLockReason(),
+              explicitLockStepId: quote.getExplicitLockStep(),
+            }
+          );
+    });
 
     return this;
   },
@@ -581,17 +443,52 @@ module.exports = Class('Server').extend(EventEmitter, {
     var _self = this,
       args = arguments;
 
+    // if no quote id was given, simply prompt for one for now
+    if (quote.getId() == 0) {
+      this.sendNewQuote(request, quote_new, program);
+      return this;
+    }
+
+    if (quote.getProgramId() !== program.getId()) {
+      // invalid program; change the program id
+      this.sendResponse(
+        request,
+        quote,
+        {
+          valid: false,
+        },
+        [
+          {
+            action: 'setProgram',
+            id: quote.getProgramId(),
+            quoteId: quote.getId(),
+          },
+        ]
+      );
+
+      return;
+    }
+
     this._checkQuotePver(quote, program, function (err, mod) {
       if (err) {
+        _self.logger.log(
+          _self.logger.PRIORITY_ERROR,
+          'Quote ' +
+            quote.getId() +
+            ' migration failed: ' +
+            err.message +
+            '; manual pver update and inspection may be required'
+        );
+
         // return as fatal
-        _self.sendError(request, 'Quote sanitization failed');
+        _self.sendError(request, 'Quote migration failed: ' + err.message);
         return;
       }
 
       // save the quote updates (but only if it was modified)
       if (mod) {
         var error_cb = function () {
-          _self.sendError(request, 'Quote sanitization failed to commit');
+          _self.sendError(request, 'Quote migration failed to commit');
         };
 
         _self.dao.saveQuote(
@@ -629,28 +526,13 @@ module.exports = Class('Server').extend(EventEmitter, {
    * @todo generate quote # rather than prompting
    */
   _processInit: function (request, quote, program, quote_new, prev) {
-    var actions = null,
+    var actions = [],
       valid = true,
       program_id = program.getId(),
       session = request.getSession(),
       internal = session.isInternal();
 
-    // if no quote id was given, simply prompt for one for now
-    if (quote.getId() == 0) {
-      this.sendNewQuote(request, quote_new);
-      return this;
-    } else if (quote.getProgramId() !== program_id) {
-      // invalid program; change the program id
-      actions = [
-        {
-          action: 'setProgram',
-          id: quote.getProgramId(),
-          quoteId: quote.getId(),
-        },
-      ];
-
-      valid = false;
-    } else if (quote.hasError()) {
+    if (quote.hasError()) {
       this.sendError(request, quote.getError());
       return this;
     }
@@ -724,6 +606,11 @@ module.exports = Class('Server').extend(EventEmitter, {
 
       lock = 'Quote is locked due to concurrent access.';
     }
+
+    actions.push({
+      action: 'gostep',
+      id: quote.getCurrentStepId(),
+    });
 
     this._feature_flag
       .isEnabled('liza_autosave', {user: program.id})
@@ -1140,8 +1027,10 @@ module.exports = Class('Server').extend(EventEmitter, {
       return this;
     }
 
+    const class_data = quote.classify();
+
     let top_allowed_step = program.getNextVisibleStep(
-      program.classify(quote.getBucket().getData()),
+      class_data,
       quote.getTopSavedStepId()
     );
 

@@ -21,6 +21,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+const {clearInvalid} = require('../validate/invalid');
+
 function _each(data, value, callback) {
   var data_len = data.length,
     result = [],
@@ -33,6 +35,13 @@ function _each(data, value, callback) {
     }
 
     cur_val = value[i] !== undefined ? value[i] : cur_val;
+
+    // TODO: Until we have a proper abstraction for the new bucket states,
+    // which will prevent us from reading invalid fields at all, this
+    // workaround is needed in situations where calculated values execute
+    // before the vformatters are able to clear the bucket values
+    // (e.g. running calculated values on init)
+    clearInvalid(cur_val);
 
     result.push(callback(data[i], cur_val, i));
   }
