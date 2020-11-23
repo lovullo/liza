@@ -24,10 +24,7 @@
 import {MongoServerDao as Sut} from '../../../src/server/db/MongoServerDao';
 import {MongoSelector, MongoUpdate, MongoDb} from 'mongodb';
 import {expect, use as chai_use} from 'chai';
-import {
-  ServerSideQuote,
-  FieldState,
-} from '../../../src/server/quote/ServerSideQuote';
+import {ServerSideQuote} from '../../../src/server/quote/ServerSideQuote';
 import {PositiveInteger} from '../../../src/numeric';
 import {ClassificationResult, Program} from '../../../src/program/Program';
 import {RateResult} from '../../../src/server/rater/Rater';
@@ -303,77 +300,6 @@ describe('MongoServerDao', () => {
       });
     });
   });
-
-  describe('#saveState', () => {
-    type TestData = {
-      label: string;
-      given: FieldState | undefined;
-      expected: FieldState | undefined;
-    };
-
-    (<TestData[]>[
-      {
-        label: 'does not set field state if undefined',
-        given: undefined,
-        expected: undefined,
-      },
-
-      {
-        label: 'does not set field state if empty',
-        given: {},
-        expected: undefined,
-      },
-
-      {
-        label: 'sets field state if non-empty',
-        given: {foo: 1},
-        expected: {foo: 1},
-      },
-    ]).forEach(({label, given, expected}) =>
-      it(label, done => {
-        let update_data: Record<string, any> = {__not: 'updated'};
-
-        const sut = new Sut(
-          createMockDb(
-            // update
-            (
-              _selector: MongoSelector,
-              data: MongoUpdate,
-              _options: any,
-              callback: NodeCallback<unknown, unknown>
-            ) => {
-              update_data = data;
-              callback(null, null);
-            }
-          ),
-          'test',
-          () => <UnixTimestamp>123
-        );
-
-        sut.connect(() => {});
-
-        const quote = createStubQuote({});
-        quote.getFieldState = () => given;
-
-        const success = () => {
-          expect(update_data['$set'].fieldState).to.deep.equal(expected);
-
-          if (expected === undefined) {
-            expect(
-              Object.prototype.hasOwnProperty.call(update_data, 'fieldState')
-            ).to.be.false;
-          }
-
-          done();
-        };
-        const failure = (e: any) => {
-          throw e;
-        };
-
-        sut.saveQuoteState(quote, success, failure);
-      })
-    );
-  });
 });
 
 function createMockDb(on_update: any): MongoDb {
@@ -435,10 +361,6 @@ function createStubQuote(metadata: Record<string, any>) {
     classify: () => <ClassificationResult>{},
     hasNaField: () => false,
     hasKnownType: () => true,
-    getFirstStepId: () => 0,
-    groupExclusiveFields: {},
-    processNaFields: () => {},
-    groupIndexField: {},
   });
 
   const quote = <ServerSideQuote>(<unknown>{

@@ -25,6 +25,7 @@
 
 var Class = require('easejs').Class,
   Quote = require('./Quote'),
+  Program = require('../program/Program').Program,
   EventEmitter = require('../events').EventEmitter;
 
 /**
@@ -161,10 +162,9 @@ module.exports = Class('BaseQuote')
      *
      * @return {undefined}
      */
-    'public __construct': function (id, bucket, program) {
+    'public __construct': function (id, bucket) {
       this._id = id;
       this._bucket = bucket;
-      this._program = program;
     },
 
     /**
@@ -187,6 +187,22 @@ module.exports = Class('BaseQuote')
      */
     'public getBucket': function () {
       return this._bucket;
+    },
+
+    /**
+     * Sets the program id to associate with the quote
+     *
+     * @param {string} id program id
+     *
+     * @return {Quote} self
+     */
+    'public setProgram': function (program) {
+      if (!Class.isA(Program, program)) {
+        throw Error('Program expected; given ' + program);
+      }
+
+      this._program = program;
+      return this;
     },
 
     /**
@@ -546,7 +562,7 @@ module.exports = Class('BaseQuote')
      * @return {Quote} self
      */
     'public setTopVisitedStepId': function (step_id) {
-      step_id = +step_id || this._program.getFirstStepId();
+      step_id = +step_id;
 
       this._topVisitedStepId =
         step_id < this._currentStepId ? this._currentStepId : step_id;
@@ -571,7 +587,7 @@ module.exports = Class('BaseQuote')
      * @return {Quote} self
      */
     'public setCurrentStepId': function (step_id) {
-      step_id = Math.max(+step_id, this._program.getFirstStepId());
+      step_id = +step_id;
 
       this._currentStepId = step_id;
 
@@ -590,7 +606,7 @@ module.exports = Class('BaseQuote')
     },
 
     'public setTopSavedStepId': function (id) {
-      this._topSavedStepId = +id || this.getTopVisitedStepId() - 1;
+      this._topSavedStepId = +id;
       return this;
     },
 

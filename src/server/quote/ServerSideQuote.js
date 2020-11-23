@@ -64,9 +64,6 @@ module.exports = Class('ServerSideQuote')
      */
     'private _retry_attempts': 0,
 
-    /** State of each currently applicable field */
-    'private _field_state': undefined,
-
     'public setProgramVersion': function (version) {
       this._pver = '' + version;
       return this;
@@ -246,65 +243,5 @@ module.exports = Class('ServerSideQuote')
         field_count: retry_field_count,
         true_count: retry_true_count,
       };
-    },
-
-    /** Classify this quote and update field state */
-    classify() {
-      const program = this.getProgram();
-      const class_data = program.classify(this.getBucket().getData());
-
-      /**
-       * Force class matrices into vectors
-       *
-       * If `xs` is not a matrix, the return value is unchanged from `xs`.
-       *
-       * The idea is that fields should never have matrix classification
-       * data, because bucket data is always a vector.  This was overly
-       * accommodating for convenience, and has bit us; in the future, the
-       * compiler will force things to vectors for us, and we won't have to
-       * worry about this.
-       */
-      const matrixToVec = xs =>
-        !isArray(xs) ? xs : xs.map(x => (isArray(x) ? +x.some(v => !!v) : x));
-
-      const {isArray} = Array;
-      const qvisState = visq => class_data =>
-        Object.fromEntries(
-          Object.entries(class_data)
-            .map(
-              ([c, {is, indexes}]) =>
-                is && visq[c] && [visq[c], matrixToVec(indexes)]
-            )
-            .filter(isArray)
-        );
-      const filtered = qvisState(program.whenq)(class_data);
-
-      this._field_state = filtered;
-
-      return class_data;
-    },
-
-    /**
-     * State of each currently applicable field
-     *
-     * This is updated by `#classify`, and so will be `undefined` if that
-     * has not yet been invoked.  Since classifying is a potentially
-     * expensive operation, do not expect that field state will always be
-     * available, and do not expect that the classifier would be
-     * automatically invoked to acquire it.
-     */
-    getFieldState() {
-      return this._field_state;
-    },
-
-    /** Set applicability of quote as it existed the last save */
-    setLastPersistedFieldState(state) {
-      this._last_persisted_field_state = state;
-      return this;
-    },
-
-    /** Applicability of each field the last time the quote was saved */
-    getLastPersistedFieldState() {
-      return this._last_persisted_field_state;
     },
   });

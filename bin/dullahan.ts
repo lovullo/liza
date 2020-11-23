@@ -72,11 +72,16 @@ const program_path = `program/${program_id}/Program`;
 /* eslint-disable @typescript-eslint/no-var-requires */
 const program = require(program_path);
 const getQuoteDataBucket = require('../src/bucket/QuoteDataBucket');
+const getProgramInit = require('../src/program/ProgramInit');
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const rater_src = `${rater_path}/${process.env.DULLAHAN_PROGRAM_ID}.js`;
 
-const program_factory = new ProgramFactory(program, () => getQuoteDataBucket());
+const program_factory = new ProgramFactory(
+  program,
+  () => getQuoteDataBucket(),
+  () => getProgramInit()
+);
 
 const rater_factory = new RaterFactory(rater_src);
 

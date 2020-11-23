@@ -52,7 +52,6 @@ module.exports = function (type_map) {
       email: formatter.EmailFormatter,
       name: formatter.NameFormatter,
       nonPoBoxAddress: formatter.NonPoBoxAddressFormatter,
-      noyes: formatter.NoYesFormatter,
       initial: formatter.InitialFormatter,
       number: Base.use(formatter.Number)(),
       personalId: formatter.PersonalIdFormatter,
@@ -76,6 +75,7 @@ module.exports = function (type_map) {
 
       // no validators for these (yet)
       select: formatter.VoidFormatter,
+      noyes: formatter.VoidFormatter,
       radio: formatter.VoidFormatter,
       legacyradio: formatter.VoidFormatter,
       text: formatter.VoidFormatter,

@@ -25,13 +25,8 @@ import {PositiveInteger} from '../numeric';
 
 /**
  * Document identifier
- *
- * This type is a safety net to indicate that particular functions must not
- * be used before the document id has been validated, also indicating via
- * the function signature that the function does not perform such validation
- * itself.
  */
-export type DocumentId = NominalType<PositiveInteger, 'DocumentId'>;
+export type DocumentId = NominalType<number, 'DocumentId'>;
 
 /**
  * Quote (Document) id

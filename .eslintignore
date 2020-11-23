@@ -1,7 +1,6 @@
 test/*
 
 # TODO: eslint failed to parse these as of 2020-09-09
-src/server/quote/loader.ts
 src/server/request/DataProcessor.ts
 src/system/DeltaProcessor.ts
 src/system/MetricsCollector.ts

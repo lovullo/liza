@@ -28,14 +28,12 @@ const {
 
   dapi: {DataApiManager},
 
+  program: {ProgramInit},
+
   server: {
     Server,
 
     meta: {DapiMetaSource},
-
-    quote: {
-      loader: {cleanDocument},
-    },
 
     request: {
       DataProcessor: {DataProcessor},
@@ -112,9 +110,9 @@ module.exports = Class('DocumentServer', {
           DapiMetaSource(QuoteDataBucket),
           StagingBucket
         ),
+        ProgramInit(),
         ts_ctor,
-        feature_flag,
-        cleanDocument
+        feature_flag
       )
     );
   },

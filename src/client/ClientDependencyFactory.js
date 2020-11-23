@@ -218,9 +218,9 @@ module.exports = Class('ClientDependencyFactory', {
     );
   },
 
-  createQuote: function (quote_id, data, program) {
+  createQuote: function (quote_id, data) {
     return ClientQuote(
-      BaseQuote(quote_id, this.createDataBucket(), program),
+      BaseQuote(quote_id, this.createDataBucket()),
       data,
       bucket => {
         return this.createStagingBucket(bucket);

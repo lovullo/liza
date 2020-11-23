@@ -113,7 +113,7 @@ describe('ServerSideQuote', () => {
         value: QuoteDataBucket(),
       },
     ].forEach(testCase => {
-      const quote = Sut(123, {}, {getFirstStepId: () => 0});
+      const quote = Sut(123, {});
       const property = testCase.property;
       const title_cased = property.charAt(0).toUpperCase() + property.slice(1);
       const setter = (testCase.mutator || 'set') + title_cased;

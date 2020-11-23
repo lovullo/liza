@@ -566,6 +566,13 @@ module.exports = Class('ClientQuote')
     'public proxy getProgramId': '_quote',
 
     /**
+     * Sets the program id associated with the quote
+     *
+     * @return {string} program id
+     */
+    'public proxy setProgram': '_quote',
+
+    /**
      * Returns the quote start date
      *
      * @return {number} quote start date

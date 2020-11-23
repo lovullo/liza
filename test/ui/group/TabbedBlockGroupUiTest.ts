@@ -260,7 +260,7 @@ function createQuote() {
   };
 
   const staging_callback = sinon.stub().returns(bucket);
-  const quote = new BaseQuote(1, bucket, {getFirstStepId: () => 0});
+  const quote = new BaseQuote(1, bucket);
 
   quote.visitData = (cb: any) => cb(bucket);
 

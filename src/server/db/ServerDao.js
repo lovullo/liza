@@ -19,9 +19,6 @@
  *
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * TODO: Just remove this; it's so out of sync with `MongoServerDao` as to
- * be useless.  We can revisit a general interface in the future.
  */
 
 var Interface = require('easejs').Interface;
@@ -52,6 +49,8 @@ exports.ServerDao = Interface.extend({
   'public getMinQuoteId': ['callback'],
 
   'public getMaxQuoteId': ['callback'],
+
+  'public getNextQuoteId': ['callback'],
 
   /**
    * Create a new revision with the provided quote data

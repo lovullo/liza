@@ -32,6 +32,8 @@ export type QuestionTypes = Record<string, any>;
 export type AnswerRefs = Record<string, string>;
 
 export declare abstract class Program {
+  readonly ineligibleLockCount: number;
+
   clearNaFields: boolean;
 
   naFieldValue: string;
@@ -64,8 +66,6 @@ export declare abstract class Program {
   mapis: Record<string, string[]>;
 
   rateSteps: boolean[];
-
-  readonly ineligibleLockCount: number;
 
   getId(): string;
 
@@ -102,19 +102,4 @@ export declare abstract class Program {
    * Determine whether question QTYPE is known
    */
   hasKnownType(name: string): boolean;
-
-  /**
-   * First valid step id
-   */
-  getFirstStepId(): number;
-
-  processNaFields(data: Record<string, any>): void;
-
-  /** Names of fields under a given group without linked groups' fields */
-  readonly groupExclusiveFields: Record<string, string[]>;
-
-  readonly groupIndexField: Record<string, string>;
-
-  /** Map of question ids to the steps that declare them */
-  readonly qstep: Record<string, number>;
 }

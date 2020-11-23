@@ -52,6 +52,4 @@ export declare class UserSession {
    * @return agent name or undefined if unavailable
    */
   agentName(): string | undefined;
-
-  userName(): string | undefined;
 }
