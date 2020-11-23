@@ -635,14 +635,21 @@ export class GroupUi extends EventEmitter {
 
     this.emit(this.EVENT_INDEX_REMOVE, index);
 
+    return this;
+  }
+
+  /**
+   * Call GroupContext to remove an index
+   *
+   * @param index - index that has been removed
+   */
+  protected contextRemoveIndex(index: number): void {
     var fields = this.group.getExclusiveFieldNames();
     this.context.removeIndex(
       fields,
       <PositiveInteger>index,
       <PositiveInteger>this.getCurrentIndexCount()
     );
-
-    return this;
   }
 
   /**

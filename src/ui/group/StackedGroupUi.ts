@@ -98,8 +98,9 @@ export class StackedGroupUi extends GroupUi {
    * @param index - index that has been removed (0-indexed)
    */
   protected removeIndex(index: number): this {
-    const item = this._container.querySelector('dl:last-child');
+    this.contextRemoveIndex(index);
 
+    const item = this._container.querySelector('dl:last-child');
     this.styler.remove(this.jquery(item));
 
     return super.removeIndex(index);

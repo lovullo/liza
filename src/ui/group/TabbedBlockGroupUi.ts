@@ -360,6 +360,7 @@ export class TabbedBlockGroupUi extends GroupUi {
   }
 
   public removeIndex(index: number): this {
+    this.contextRemoveIndex(index);
     this._removeTab(this.getCurrentIndexCount() - 1);
     super.removeIndex(index);
     return this;

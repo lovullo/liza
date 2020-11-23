@@ -255,6 +255,7 @@ export class TabbedGroupUi extends GroupUi {
   }
 
   public removeIndex(index: number): this {
+    this.contextRemoveIndex(index);
     // decrement after we do our own stuff
     this.removeTab();
     super.removeIndex(index);
