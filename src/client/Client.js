@@ -1472,6 +1472,15 @@ module.exports = Class('Client').extend(EventEmitter, {
    */
   'private _forceStepValidate'() {
     this._quote.visitData(bucket => {
+      const enabled =
+        (bucket.getDataByName('__feature_pver_kickback') || [])[0] === '1';
+
+      // this feature is gated behind the quote-level kickback feature flag
+      // TODO: remove flag
+      if (!enabled) {
+        return;
+      }
+
       const fields = Object.keys(
         this.ui.getCurrentStep().getStep().getExclusiveFieldNames()
       );
