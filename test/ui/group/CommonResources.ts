@@ -65,6 +65,7 @@ export const createContext = () => {
     setOptions: () => {},
     setValueByName: () => {},
     show: () => {},
+    removeIndex: () => {},
   };
 };
 

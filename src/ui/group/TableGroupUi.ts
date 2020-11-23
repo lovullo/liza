@@ -303,6 +303,7 @@ export class TableGroupUi extends GroupUi {
   }
 
   public removeIndex(index: number): this {
+    this.contextRemoveIndex(index);
     // remove our stuff before decrementing our id
     this.removeRow();
     super.removeIndex(index);

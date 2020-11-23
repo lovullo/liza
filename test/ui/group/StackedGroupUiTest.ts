@@ -26,8 +26,10 @@ import {StackedGroupUi as Sut} from '../../../src/ui/group/StackedGroupUi';
 import {
   createSut,
   createQuote,
+  createGroup,
   createContent,
   createContainer,
+  createContext,
 } from './CommonResources';
 
 describe('ui.group.StackedGroupUi', () => {
@@ -126,6 +128,61 @@ describe('ui.group.StackedGroupUi', () => {
 
         expect(addClass.calledOnce).to.be.true;
       });
+    });
+  });
+
+  describe('removeIndex', () => {
+    it('calls GroupContext and ElementStyler remove methods', () => {
+      const container = createContainer();
+      const content = createContent();
+
+      const index = 1;
+
+      content.querySelector
+        .withArgs('div.stacked-container')
+        .returns(container);
+
+      let styler_remove_called = false;
+      let context_remove_index_is_called = false;
+      let group_get_fields_is_called = false;
+
+      const styler = {
+        remove: () => {
+          styler_remove_called = true;
+          return;
+        },
+      };
+
+      const context = createContext();
+
+      context.removeIndex = () => {
+        context_remove_index_is_called = true;
+      };
+
+      const group = createGroup('foo');
+
+      group.getExclusiveFieldNames = () => {
+        group_get_fields_is_called = true;
+      };
+
+      const sut = createSut(Sut, {
+        context: context,
+        content: content,
+        group: group,
+        styler: styler,
+      });
+
+      sut.getCurrentIndex = sinon.stub().returns(10);
+      sut.hasVisibleField = sinon.stub().withArgs(index).returns(false);
+
+      const quote = createQuote();
+
+      sut.init(quote);
+      sut.removeIndex(index);
+
+      expect(styler_remove_called).to.be.true;
+      expect(context_remove_index_is_called).to.be.true;
+      expect(group_get_fields_is_called).to.be.true;
     });
   });
 });
