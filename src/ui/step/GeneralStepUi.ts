@@ -687,6 +687,11 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
     var _self = this,
       bucket = this.getStep().getBucket();
 
+    // clearing values on `undefined` is gated behind the quote-level
+    // kickback feature flag
+    const clear_enabled =
+      bucket.getDataByName('__feature_pver_kickback')?.[0] === '1';
+
     // first, clear all the elements
     for (var group in this.groups) {
       this.groups[group].preEmptyBucket(bucket);
@@ -708,10 +713,12 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
       _self._formatter.format(data, true);
 
       for (var name in data) {
-        var values = data[name],
-          i = values.length;
+        const values = data[name];
+        let i = values.length;
 
         while (i--) {
+          let value = values[i];
+
           // set the data and do /not/ trigger the change event
           var group = _self.getElementGroup(name);
           if (!group) {
@@ -726,9 +733,20 @@ export class GeneralStepUi extends EventEmitter implements StepUi {
             continue;
           }
 
-          _self
-            .getElementGroup(name)
-            ?.setValueByName(name, i, values[i], false);
+          // Note the broader context here: we are emptying the
+          // bucket.  This means that any undefined value has surely come
+          // from the formatter, which means that the provided value in the
+          // bucket is now invalid.  Since the DOM may be populated with a
+          // default value (which does not actually reflect the underlying
+          // bucket state), we should forcefully clear this field so that
+          // the user can re-enter a valid value.
+          //
+          // TODO: remove flag after testing
+          if (clear_enabled && value === undefined) {
+            value = '';
+          }
+
+          _self.getElementGroup(name)?.setValueByName(name, i, value, false);
         }
       }
 

@@ -78,3 +78,6 @@ type NullableError = Error | null;
  * Common objects are keyed with strings and can hold a value of any type.
  */
 type CommonObject = Record<string, unknown>;
+
+/** Infer `V` of provided `Record<K, V>` */
+type RecordValue<R> = R extends Record<infer _K, infer V> ? V : never;

@@ -127,7 +127,7 @@ describe('BaseQuote', () => {
         value: 'ERROR',
       },
     ].forEach(testCase => {
-      const quote = BaseQuote(123, {});
+      const quote = BaseQuote(123, {}, createStubProgram());
       const property = testCase.property;
       const title_cased = property.charAt(0).toUpperCase() + property.slice(1);
       const setter = (testCase.mutator || 'set') + title_cased;
@@ -533,7 +533,11 @@ describe('BaseQuote', () => {
         };
       }
       const bucket = createStubBucket(bucket_data);
-      const quote = BaseQuote(123, bucket);
+      const quote = BaseQuote(
+        123,
+        bucket,
+        createStubProgram(testCase.lockTimeout)
+      );
       const description = 'Expiration is correct for ' + testCase.description;
       const start_date = testCase.startDate;
       const initial_rated_date = testCase.initialRatedDate;
@@ -543,8 +547,6 @@ describe('BaseQuote', () => {
           ? testCase.expirationDate * 1000
           : undefined;
       const expired = testCase.expired;
-
-      quote.setProgram(createStubProgram(testCase.lockTimeout));
 
       it(description, () => {
         if (start_date !== undefined) {

@@ -21,7 +21,7 @@
  * @todo Use ``document'' terminology in place of ``quote''
  */
 
-import {Program} from '../../program/Program';
+import {Program, ClassificationResult} from '../../program/Program';
 import {BaseQuote} from '../../quote/BaseQuote';
 import {QuoteDataBucket} from '../../bucket/QuoteDataBucket';
 import {RateResult} from '../rater/Rater';
@@ -31,7 +31,35 @@ declare type RetryResult = {
   true_count: number;
 };
 
+export type FieldState = Record<string, number | Array<number | number[]>>;
+
 export declare class ServerSideQuote extends BaseQuote {
+  setData(data: Record<string, unknown>): this;
+
+  getDataByName(field: string): unknown[];
+
+  setAgentId(id: number): this;
+
+  setAgentName(name: string): this;
+
+  setAgentEntityId(id: number): this;
+
+  setStartDate(date: number): this;
+
+  setImported(imported: boolean): this;
+
+  setBound(imported: boolean): this;
+
+  needsImport(imported: boolean): this;
+
+  setTopVisitedStepId(id: number): this;
+
+  setProgramVersion(ver: string): this;
+
+  setError(error: string): this;
+
+  setCreditScoreRef(ref: string): this;
+
   /**
    * Last rated date, if any
    *
@@ -126,4 +154,16 @@ export declare class ServerSideQuote extends BaseQuote {
    * @return quote's expiration date
    */
   getExpirationDate(): number;
+
+  /** Classify this quote and update field state */
+  classify(): ClassificationResult;
+
+  /** State of each currently applicable field (relies on #classify) */
+  getFieldState(): FieldState | undefined;
+
+  /** Set applicability of quote as it existed the last save */
+  setLastPersistedFieldState(state?: FieldState): this;
+
+  /** Applicability of each field the last time the quote was saved */
+  getLastPersistedFieldState(): FieldState | undefined;
 }

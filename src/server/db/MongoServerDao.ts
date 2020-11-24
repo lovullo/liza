@@ -23,7 +23,8 @@
 
 import {ServerDao, Callback} from './ServerDao';
 import {PositiveInteger} from '../../numeric';
-import {ServerSideQuote} from '../quote/ServerSideQuote';
+import {DocumentId} from '../../document/Document';
+import {ServerSideQuote, FieldState} from '../quote/ServerSideQuote';
 import {QuoteId} from '../../document/Document';
 import {WorksheetData} from '../rater/Rater';
 import {NoPendingError} from '../../error/NoPendingError';
@@ -37,6 +38,40 @@ import {
 const EventEmitter = require('events').EventEmitter;
 
 type ErrorCallback = (err: NullableError) => void;
+
+/** Bucket data directly from the database */
+export type RawBucketData = Record<string, any>;
+
+/**
+ * Document ("quote") record
+ *
+ * This structure was poorly planned and needs both cleanup (much of it is
+ * unnecessary or does not belong) and restructuring.
+ */
+export type DocumentData = {
+  agentEntityId?: number;
+  agentId?: number;
+  agentName?: string;
+  boundInd?: 0 | 1;
+  creditScoreRef?: string;
+  currentStepId?: number;
+  data?: RawBucketData;
+  error?: string;
+  explicitLock?: string;
+  explicitLockStepId?: number;
+  importDirty?: 0 | 1;
+  importedInd?: 0 | 1;
+  initialRatedDate?: UnixTimestamp;
+  lastPremDate?: UnixTimestamp;
+  meta?: RawBucketData;
+  pver?: string;
+  ratedata?: Record<string, any>;
+  retryAttempts?: number;
+  startDate: UnixTimestamp;
+  topSavedStepId?: number;
+  topVisitedStepId?: number;
+  fieldState?: FieldState;
+};
 
 /**
  * Uses MongoDB as a data store
@@ -455,11 +490,20 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
     success: Callback = () => {},
     failure: Callback = () => {}
   ): this {
-    var update = {
+    var update: Record<string, any> = {
       currentStepId: quote.getCurrentStepId(),
       topVisitedStepId: quote.getTopVisitedStepId(),
       topSavedStepId: quote.getTopSavedStepId(),
     };
+
+    const field_state = quote.getFieldState();
+
+    // Do not wipe out field state if it's not provided (having
+    // getFieldState run the classifier automatically would be dangerous
+    // since it is so expensive)
+    if (field_state && Object.keys(field_state).length > 0) {
+      update.fieldState = field_state;
+    }
 
     return this.mergeData(quote, update, success, failure);
   }
@@ -567,34 +611,31 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    * Pulls quote data from the database
    *
    * @param quote_id - id of quote
-   * @param callback - function to call when data is available
    */
-  pullQuote(
-    quote_id: PositiveInteger,
-    callback: (data: Record<string, any> | null) => void
-  ): this {
-    var dao = this;
+  pullQuote(quote_id: DocumentId): Promise<DocumentData | null> {
+    return new Promise((resolve, reject) => {
+      // XXX: TODO: Do not read whole of record into memory; filter out
+      // revisions!
+      this._collection!.find(
+        {id: quote_id},
+        {limit: <PositiveInteger>1},
+        function (_err, cursor) {
+          cursor.toArray((err: NullableError, data: any[]) => {
+            if (err) {
+              return reject(err);
+            }
 
-    // XXX: TODO: Do not read whole of record into memory; filter out
-    // revisions!
-    this._collection!.find(
-      {id: quote_id},
-      {limit: <PositiveInteger>1},
-      function (_err, cursor) {
-        cursor.toArray(function (_err: NullableError, data: any[]) {
-          // was the quote found?
-          if (data.length == 0) {
-            callback.call(dao, null);
-            return;
-          }
+            // was the quote found?
+            if (data.length == 0) {
+              return resolve(null);
+            }
 
-          // return the quote data
-          callback.call(dao, data[0]);
-        });
-      }
-    );
-
-    return this;
+            // return the quote data
+            resolve(data[0]);
+          });
+        }
+      );
+    });
   }
 
   /**
@@ -639,29 +680,29 @@ export class MongoServerDao extends EventEmitter implements ServerDao {
    *
    * @param callback - function to call with next available quote id
    */
-  getNextQuoteId(callback: (quote_id: number) => void): this {
+  getNextQuoteId(): Promise<number> {
     var dao = this;
 
-    this._seqCollection!.findAndModify(
-      {_id: this.SEQ_QUOTE_ID},
-      [['val', 'descending']],
-      {$inc: {val: 1}},
-      {new: true},
+    return new Promise((accept, reject) => {
+      this._seqCollection!.findAndModify(
+        {_id: this.SEQ_QUOTE_ID},
+        [['val', 'descending']],
+        {$inc: {val: 1}},
+        {new: true},
 
-      function (err, doc) {
-        if (err) {
-          dao.emit('seqError', err);
+        function (err, doc) {
+          if (err) {
+            dao.emit('seqError', err);
 
-          callback.call(dao, 0);
-          return;
+            reject(err);
+            return;
+          }
+
+          // return the new id
+          accept(doc.val);
         }
-
-        // return the new id
-        callback.call(dao, doc.val);
-      }
-    );
-
-    return this;
+      );
+    });
   }
 
   /**

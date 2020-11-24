@@ -463,6 +463,7 @@ module.exports = Class('Client').extend(EventEmitter, {
       .on('stepChange', function (step_id) {
         client.ui.displayStep(step_id, function () {
           client._cmatch.forceCmatchAction();
+          client._forceStepValidate();
         });
 
         client._currentStepId = step_id;
@@ -521,10 +522,11 @@ module.exports = Class('Client').extend(EventEmitter, {
       client.dataProxy.abortAll();
 
       // create a new quote instance
-      client._quote = client._factory.createQuote(quote_id, data.content);
-
-      // TODO: this seems like it should be a ctor argument
-      client._quote.setProgram(client.program);
+      client._quote = client._factory.createQuote(
+        quote_id,
+        data.content,
+        client.program
+      );
 
       client.nav.setMinStepId(client._quote.getExplicitLockStep());
 
@@ -1462,6 +1464,44 @@ module.exports = Class('Client').extend(EventEmitter, {
   },
 
   /**
+   * Force validations on all fields on the currents step
+   *
+   * This will catch any data issues that may have resulted from server-side
+   * operations, including field invalidations resulting from Program
+   * migrations.
+   */
+  'private _forceStepValidate'() {
+    this._quote.visitData(bucket => {
+      const enabled =
+        (bucket.getDataByName('__feature_pver_kickback') || [])[0] === '1';
+
+      // this feature is gated behind the quote-level kickback feature flag
+      // TODO: remove flag
+      if (!enabled) {
+        return;
+      }
+
+      const fields = Object.keys(
+        this.ui.getCurrentStep().getStep().getExclusiveFieldNames()
+      );
+      const bucket_data = bucket.getData();
+
+      // TODO: let's add an Object.{entries,fromEntries} polyfill
+      const step_data = {};
+      fields.forEach(field_name => {
+        step_data[field_name] = bucket_data[field_name];
+      });
+
+      // trigger validations on existing data in case (a) the server
+      // purposefully invalidated data or (b) the domain has since changed
+      // due to a Program version change
+      this._dataValidator
+        .validate(step_data, undefined, () => {})
+        .catch(this.handleError.bind(this));
+    });
+  },
+
+  /**
    * Saves a step
    *
    * @param StepUi stepui step to save
@@ -1476,6 +1516,8 @@ module.exports = Class('Client').extend(EventEmitter, {
       // well we didn't get very far
       callback(false);
     }
+
+    this._forceStepValidate();
 
     if (this._quote.isLocked() === true) {
       // we still want to call the callback

@@ -64,7 +64,7 @@ const {
 
     lock: {Semaphore},
 
-    quote: {ServerSideQuote: Quote, ProgramQuoteCleaner},
+    quote: {ServerSideQuote: Quote},
 
     service: {
       export: {ExportService},
@@ -133,71 +133,54 @@ exports.init = function (logger, enc_service, conf, env) {
         c1_export_service = service;
       });
 
-      server
-        .on('quotePverUpdate', function (quote, program, event) {
-          // let them know that we're going to be a moment
-          var c = event.wait();
-
-          getCleaner(program).clean(quote, function (err) {
-            // report on our success/failure
-            if (err) {
-              event.bad(err);
-            } else {
-              event.good();
-            }
-
-            // we're done
-            c();
-          });
-        })
-        .onDapiReturn(function (quote_id, request, program) {
-          return new Promise((resolve, reject) => {
-            // We will be calling this function from within a post call
-            // which has its own write lock. This call should be made
-            // asynchronously so we avoid deadlocks.
-            //
-            // It is also necessary that we free this lock manually
-            // because the underlying request may have been resolved
-            // already
-            acquireWriteLock(
-              quote_id,
-              request,
-              function (free) {
-                createQuote(
-                  quote_id,
-                  program,
-                  request,
-                  function (quote) {
-                    dao
-                      .ensurePendingRate(quote)
-                      .then(_ => {
-                        rating_service
-                          .request(
-                            request.getSession(),
-                            quote,
-                            '',
-                            !quote.isLocked()
-                          )
-                          .then(() => {
-                            free();
-                            resolve();
-                          });
-                      })
-                      .catch(e => {
-                        free();
-                        reject(e);
-                      });
-                  },
-                  function (error) {
-                    free();
-                    reject(error);
-                  }
-                );
-              },
-              true
-            );
-          });
+      server.onDapiReturn(function (quote_id, request, program) {
+        return new Promise((resolve, reject) => {
+          // We will be calling this function from within a post call
+          // which has its own write lock. This call should be made
+          // asynchronously so we avoid deadlocks.
+          //
+          // It is also necessary that we free this lock manually
+          // because the underlying request may have been resolved
+          // already
+          acquireWriteLock(
+            quote_id,
+            request,
+            function (free) {
+              createQuote(
+                quote_id,
+                program,
+                request,
+                function (quote) {
+                  dao
+                    .ensurePendingRate(quote)
+                    .then(_ => {
+                      rating_service
+                        .request(
+                          request.getSession(),
+                          quote,
+                          '',
+                          !quote.isLocked()
+                        )
+                        .then(() => {
+                          free();
+                          resolve();
+                        });
+                    })
+                    .catch(e => {
+                      free();
+                      reject(e);
+                    });
+                },
+                function (error) {
+                  free();
+                  reject(error);
+                }
+              );
+            },
+            true
+          );
         });
+      });
     });
   });
 };
@@ -621,7 +604,7 @@ function doRoute(program, request, data, resolve, reject) {
 
       // otherwise, the given quote is invalid, but we can provide a new
       // one
-      server.sendNewQuote(request, createQuoteQuick);
+      server.sendNewQuote(request, createQuoteQuick, program);
     });
   }
 
@@ -649,13 +632,7 @@ function createQuote(quote_id, program, request, callback, error_callback) {
       server.logger.log(log.PRIORITY_ERROR, 'Invalid createQuote() callback');
     };
 
-  var bucket = QuoteDataBucket(),
-    metabucket = QuoteDataBucket(),
-    ratebucket = QuoteDataBucket(),
-    quote = Quote(quote_id, bucket);
-
-  quote.setMetabucket(metabucket);
-  quote.setRateBucket(ratebucket);
+  const quote = createQuoteQuick(quote_id, program);
 
   var controller = this;
   return server.initQuote(
@@ -671,8 +648,16 @@ function createQuote(quote_id, program, request, callback, error_callback) {
   );
 }
 
-function createQuoteQuick(id) {
-  return Quote(id, QuoteDataBucket());
+function createQuoteQuick(id, program) {
+  const bucket = QuoteDataBucket();
+  const metabucket = QuoteDataBucket();
+  const ratebucket = QuoteDataBucket();
+  const quote = Quote(id, bucket, program);
+
+  quote.setMetabucket(metabucket);
+  quote.setRateBucket(ratebucket);
+
+  return quote;
 }
 
 /**
@@ -691,10 +676,6 @@ function has_skey(user_request) {
   }
 
   return user_request.getGetData().skey === exports.skey;
-}
-
-function getCleaner(program) {
-  return ProgramQuoteCleaner(program);
 }
 
 /**
