@@ -1,9 +1,7 @@
-/* TODO auto-generated eslint ignore, please fix! */
-/* eslint no-var: "off", node/no-missing-require: "off", prefer-arrow-callback: "off" */
 /**
  * UserSession class
  *
- *  Copyright (C) 2010-2019 R-T Specialty, LLC.
+ *  Copyright (C) 2010-2020 R-T Specialty, LLC.
  *
  *  This file is part of the Liza Data Collection Framework.
  *
@@ -23,156 +21,155 @@
  * @todo this is very tightly coupled with LoVullo's system
  */
 
-// php compatibility
-var Class = require('easejs').Class,
-  php = require('php-serialize');
+import {EventEmitter} from 'events';
+import {unserialize} from 'php-serialize';
+import {PositiveInteger} from '../../numeric';
 
 /**
- * Stores/retrieves user PHP session data from memcached
+ * Session management
  */
-module.exports = Class.extend(require('../../events').EventEmitter, {
-  /**
-   * Session id
-   * @type {string}
-   */
-  'private _id': '',
-
-  /**
-   * Memcache client
-   * @type {memcache.Client}
-   */
-  'private _memcache': null,
-
-  /**
-   * Session data
-   * @type {object}
-   */
-  'private _data': {},
+export class UserSession extends EventEmitter {
+  /** Session Data */
+  private _data: Record<string, any> = {};
 
   /**
    * Initializes a session from an existing PHP session
    *
-   * @param String          id       session id
-   * @param memcache.Client memcache memcache client used to access session
+   * @param _id       - session id
+   * @param _memcache - memcache client used to access session
+   * @param _data     - session data
    *
    * @return undefined
    */
-  __construct: function (id, memcache) {
-    this._id = id || '';
-    this._memcache = memcache;
-    this._data = {};
-
+  constructor(
+    private readonly _id: string = '',
+    private readonly _memcache: any
+  ) {
+    super();
     // parse the session data
-    var _self = this;
-    this._getSessionData(function (data) {
-      _self._data = data === null ? {} : data;
+    this._getSessionData(data => {
+      this._data = data === null ? {} : data;
 
       // session data is now available
-      _self.emit('ready', data);
+      this.emit('ready', data);
     });
-  },
+  }
 
   /**
    * Returns the session data
    *
-   * @return Object session data
+   * @return session data
    */
-  getData: function () {
+  getData(): Record<string, any> {
     return this._data;
-  },
+  }
 
   /**
    * Returns whether the user is currently logged in
    *
    * This is determined simply by whether the agent id is available.
    *
-   * @return Boolean
+   * @return whether the user is logged in or not
    */
-  isLoggedIn: function () {
+  isLoggedIn(): boolean {
     return this._data.agentID !== undefined ? true : false;
-  },
+  }
 
   /**
    * Gets the agent id, if available
    *
-   * @return Integer|undefined agent id or undefined if unavailable
+   * @return agent id or undefined if unavailable
    */
-  agentId: function () {
-    return this._data.agentID || undefined;
-  },
+  agentId(): number | undefined {
+    return this._data.agentID !== undefined ? +this._data.agentID : undefined;
+  }
 
   /**
    * Gets the agent name, if available
    *
-   * @return String|undefined agent name or undefined if unavailable
+   * @return agent name or undefined if unavailable
    */
-  agentName: function () {
+  agentName(): string | undefined {
     return this._data.agentNAME || undefined;
-  },
+  }
+
+  /**
+   * Gets the agency number, if available
+   *
+   * @return agency number or undefined if unavailable
+   */
+  agencyNumber(): string | undefined {
+    return this._data.retail_agency_num || undefined;
+  }
 
   /**
    * Gets the user name, if available
    *
-   * @return String|undefined user name or undefined if unavailable
+   * @return user name or undefined if unavailable
    */
-  userName: function () {
+  userName(): string | undefined {
     return this._data.user_name || undefined;
-  },
+  }
 
   /**
    * Whether the user is logged in as an internal user rather than a broker
    *
-   * @return {boolean} true if internal user, otherwise false
+   * @return true if internal user, otherwise false
    */
-  isInternal: function () {
-    return this.agentId() === '900000' ? true : false;
-  },
+  isInternal(): boolean {
+    return this.agentId() === 900000 ? true : false;
+  }
 
-  'public setAgentId': function (id) {
+  /**
+   * Sets the agent id
+   *
+   * @param id - the agent id
+   */
+  setAgentId(id: number) {
     this._data.agentID = id;
     return this;
-  },
+  }
 
   /**
    * Gets the broker entity id, if available
    *
-   * @return Integer|undefined agent entity id or undefined if unavailable
+   * @return agent entity id or undefined if unavailable
    */
-  agentEntityId: function () {
+  agentEntityId(): PositiveInteger | undefined {
     return this._data.broker_entity_id || undefined;
-  },
+  }
 
   /**
    * Parses PHP session data from memcache and returns an object with the data
    *
-   * @param {function(data)} callback function to call with parsed data
+   * @param callback - function to call with parsed data
    *
    * @return Object parsed session data
    */
-  'private _getSessionData': function (callback) {
-    this._memcache.get(this._id, function (err, data) {
+  private _getSessionData(callback: (data: any) => void): void {
+    this._memcache.get(this._id, (err: any, data: any) => {
       if (err || data === null) {
         // failure
         callback(null);
         return;
       }
 
-      var session_data = {};
+      const session_data: Record<string, any> = {};
 
       if (data) {
         // Due to limitations of Javascript's regex engine, we need to do
         // this in a series of steps. First, split the string to find the
         // keys and their serialized values.
-        var splits = data.split(/(\w+?)\|/),
-          len = splits.length;
+        const splits = data.split(/(\w+?)\|/);
+        const len = splits.length;
 
         // associate the keys with their values
-        for (var i = 1; i < len; i++) {
-          var key = splits[i],
-            val = splits[++i];
+        for (let i = 1; i < len; i++) {
+          const key: string = splits[i];
+          let val: string = splits[++i];
 
           // the values are serialized PHP data; unserialize them
-          val = php.unserialize(val);
+          val = unserialize(val);
 
           // add to the session data
           session_data[key] = val;
@@ -182,5 +179,5 @@ module.exports = Class.extend(require('../../events').EventEmitter, {
       // return the parsed session data
       callback(session_data);
     });
-  },
-});
+  }
+}

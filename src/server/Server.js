@@ -415,7 +415,7 @@ module.exports = Class('Server').extend(EventEmitter, {
             },
             null,
             {
-              agentId: session.agentId(),
+              agentId: '' + session.agentId(),
               agentName: session.agentName(),
               agentEntityId: session.agentEntityId(),
               startDate: this._ts_ctor(),
@@ -539,7 +539,7 @@ module.exports = Class('Server').extend(EventEmitter, {
     // ensure that the agent id matches the quote's agent (unless internal)
     else if (
       internal === false &&
-      request.getSession().agentId() != quote.getAgentId()
+      request.getSession().agentId() !== quote.getAgentId()
     ) {
       // todo: generate a new quote #
       actions = [{action: 'quotePrompt'}];

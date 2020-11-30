@@ -44,6 +44,10 @@ export declare class ServerSideQuote extends BaseQuote {
 
   setAgentEntityId(id: number): this;
 
+  getAgencyNumber(): string;
+
+  setAgencyNumber(agency_num: string): this;
+
   setStartDate(date: number): this;
 
   setImported(imported: boolean): this;
